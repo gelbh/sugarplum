@@ -12,22 +12,28 @@ export function occlusionMaskScrollTop(
   return Math.min(maxScroll, Math.max(0, centerY - shellH / 2));
 }
 
-/** Scale + origin so a tile viewport focuses the padded mask. */
+/**
+ * Scale + translate so a tile viewport focuses the padded mask.
+ * Scale fits both padded axes; translate pulls the mask center toward the
+ * element midpoint (parent clips with overflow:hidden).
+ */
 export function occlusionTileFocusTransform(
   mask: OcclusionNormBox,
   opts?: { pad?: number; maxScale?: number },
 ): { transformOrigin: string; transform: string } {
   const pad = opts?.pad ?? 0.12;
   const maxScale = opts?.maxScale ?? 4;
-  const cx = (mask.x + mask.w / 2) * 100;
-  const cy = (mask.y + mask.h / 2) * 100;
+  const cx = mask.x + mask.w / 2;
+  const cy = mask.y + mask.h / 2;
   const bw = Math.max(mask.w + pad * 2, 1e-6);
   const bh = Math.max(mask.h + pad * 2, 1e-6);
-  const scale = Math.min(maxScale, Math.max(1, 1 / bw, 1 / bh));
+  const scale = Math.min(maxScale, Math.max(1, Math.min(1 / bw, 1 / bh)));
   const rounded = Math.round(scale * 1000) / 1000;
+  const tx = roundPct((0.5 - cx) * 100);
+  const ty = roundPct((0.5 - cy) * 100);
   return {
-    transformOrigin: `${roundPct(cx)}% ${roundPct(cy)}%`,
-    transform: `scale(${rounded})`,
+    transformOrigin: `${roundPct(cx * 100)}% ${roundPct(cy * 100)}%`,
+    transform: `translate(${tx}%, ${ty}%) scale(${rounded})`,
   };
 }
 

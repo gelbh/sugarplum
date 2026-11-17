@@ -193,19 +193,48 @@ function StudyMedia({
 }) {
   const shellRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-
-  const scrollToMask = () => {
-    if (!mask || !shellRef.current || !contentRef.current) return;
-    shellRef.current.scrollTop = occlusionMaskScrollTop(
-      mask,
-      contentRef.current.offsetHeight,
-      shellRef.current.clientHeight,
-    );
-  };
+  const maskX = mask?.x;
+  const maskY = mask?.y;
+  const maskW = mask?.w;
+  const maskH = mask?.h;
 
   useEffect(() => {
-    scrollToMask();
-  }, [imageKey, mask?.x, mask?.y, mask?.w, mask?.h]);
+    if (
+      maskX === undefined ||
+      maskY === undefined ||
+      maskW === undefined ||
+      maskH === undefined
+    ) {
+      return;
+    }
+    const shell = shellRef.current;
+    const content = contentRef.current;
+    if (!shell || !content) return;
+    shell.scrollTop = occlusionMaskScrollTop(
+      { x: maskX, y: maskY, w: maskW, h: maskH },
+      content.offsetHeight,
+      shell.clientHeight,
+    );
+  }, [imageKey, maskX, maskY, maskW, maskH]);
+
+  const onImageLoad = () => {
+    if (
+      maskX === undefined ||
+      maskY === undefined ||
+      maskW === undefined ||
+      maskH === undefined
+    ) {
+      return;
+    }
+    const shell = shellRef.current;
+    const content = contentRef.current;
+    if (!shell || !content) return;
+    shell.scrollTop = occlusionMaskScrollTop(
+      { x: maskX, y: maskY, w: maskW, h: maskH },
+      content.offsetHeight,
+      shell.clientHeight,
+    );
+  };
 
   if (mask) {
     return (
@@ -233,7 +262,7 @@ function StudyMedia({
             alt="Card media"
             draggable={false}
             onDragStart={(event) => event.preventDefault()}
-            onLoad={scrollToMask}
+            onLoad={onImageLoad}
             sx={{
               display: "block",
               width: "100%",
@@ -360,10 +389,6 @@ export default function CardFace({
     flipBack();
   };
 
-  const faceBodySx = occlusion
-    ? { ...FACE_BODY_SX, overflowY: "hidden" as const }
-    : FACE_BODY_SX;
-
   return (
     <FlipCardPlate
       revealed={revealed}
@@ -372,8 +397,9 @@ export default function CardFace({
         cursor: canReveal || canFlipBack ? "pointer" : "default",
         ...(occlusion
           ? {
+              // Absolute faces need a definite plate height (faceMotionSx).
               aspectRatio: "auto",
-              height: "auto",
+              height: "min(85vh, 640px)",
               maxHeight: "min(100%, 85vh)",
               width: "min(100%, 420px)",
               maxWidth: "min(100%, 420px)",
@@ -382,7 +408,7 @@ export default function CardFace({
       }}
       overlineTrailing={notesTrailing}
       front={
-        <Box data-card-face-content sx={faceBodySx}>
+        <Box data-card-face-content sx={FACE_BODY_SX}>
           <Box sx={PROMPT_SX}>
             {imageKey ? (
               <StudyMedia
@@ -415,7 +441,7 @@ export default function CardFace({
         </Box>
       }
       back={
-        <Box data-card-face-content sx={faceBodySx}>
+        <Box data-card-face-content sx={FACE_BODY_SX}>
           {occlusion && imageKey ? (
             <StudyMedia
               imageKey={imageKey}

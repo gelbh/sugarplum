@@ -16,14 +16,15 @@ describe("occlusionMaskScrollTop", () => {
 });
 
 describe("occlusionTileFocusTransform", () => {
-  it("scales up small masks and pins transform-origin to mask center", () => {
+  it("scales to fit both axes, translates mask center, pins origin", () => {
     const mask = { x: 0.7, y: 0.1, w: 0.15, h: 0.1 };
     const t = occlusionTileFocusTransform(mask, { pad: 0.12, maxScale: 4 });
     expect(t.transformOrigin).toBe("77.5% 15%");
-    expect(t.transform).toMatch(/^scale\(/);
+    expect(t.transform).toMatch(/^translate\(-27\.5%, 35%\) scale\(/);
     const scale = Number(/scale\(([^)]+)\)/.exec(t.transform)?.[1]);
+    // min(1/0.39, 1/0.34) ≈ 2.564
     expect(scale).toBeGreaterThan(1);
-    expect(scale).toBeLessThanOrEqual(4);
+    expect(scale).toBeLessThanOrEqual(2.6);
   });
 
   it("does not scale below 1 when mask already fills the tile", () => {
@@ -31,6 +32,16 @@ describe("occlusionTileFocusTransform", () => {
       { x: 0, y: 0, w: 1, h: 1 },
       { pad: 0.05 },
     );
-    expect(t.transform).toBe("scale(1)");
+    expect(t.transform).toBe("translate(0%, 0%) scale(1)");
+  });
+
+  it("uses the tighter axis so wide short masks are not over-scaled", () => {
+    const t = occlusionTileFocusTransform(
+      { x: 0, y: 0.45, w: 1, h: 0.1 },
+      { pad: 0.12, maxScale: 4 },
+    );
+    const scale = Number(/scale\(([^)]+)\)/.exec(t.transform)?.[1]);
+    // bw=1.24 → 1/bw < 1; bh=0.34 → ~2.94; min with max(1,…) → scale 1
+    expect(scale).toBe(1);
   });
 });
