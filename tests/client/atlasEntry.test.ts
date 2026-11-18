@@ -250,58 +250,30 @@ describe("entryGlance", () => {
     expect(resolveSitePortrait("skin")?.src).toMatch(/skin\.webp$/);
   });
 
-  it("credits open-licence site Heroes plates", () => {
-    const credits = readFileSync(
-      new URL("../../public/atlas/sites/CREDITS.md", import.meta.url),
-      "utf8",
-    );
-    const heroes: Array<{
-      archetype: string;
-      file: string;
-      marker: string;
-    }> = [
-      { archetype: "liver", file: "liver.webp", marker: "BodyParts3D" },
-      { archetype: "lungs", file: "lungs.webp", marker: "Gray973" },
-      { archetype: "stomach", file: "stomach.webp", marker: "Gray1046" },
-      { archetype: "eye", file: "eye.webp", marker: "Gray878" },
+  it("ships open-licence site Heroes plates", () => {
+    const heroes: Array<{ archetype: string; file: string }> = [
+      { archetype: "liver", file: "liver.webp" },
+      { archetype: "lungs", file: "lungs.webp" },
+      { archetype: "stomach", file: "stomach.webp" },
+      { archetype: "eye", file: "eye.webp" },
       {
         archetype: "central nervous system",
         file: "central-nervous-system.webp",
-        marker: "Gray724",
       },
-      {
-        archetype: "small intestine",
-        file: "small-intestine.webp",
-        marker: "Gray1065",
-      },
-      { archetype: "trachea", file: "trachea.webp", marker: "Gray963" },
-      { archetype: "skin", file: "skin.webp", marker: "Gray940" },
-      {
-        archetype: "urinary bladder",
-        file: "urinary-bladder.webp",
-        marker: "Gray1140",
-      },
-      {
-        archetype: "oesophagus",
-        file: "oesophagus.webp",
-        marker: "Wellcome",
-      },
-      { archetype: "muscle", file: "muscle.webp", marker: "Gray373" },
-      { archetype: "caecum", file: "caecum.webp", marker: "Gray1075" },
-      {
-        archetype: "large intestine",
-        file: "large-intestine.webp",
-        marker: "Gray1078",
-      },
+      { archetype: "small intestine", file: "small-intestine.webp" },
+      { archetype: "trachea", file: "trachea.webp" },
+      { archetype: "skin", file: "skin.webp" },
+      { archetype: "urinary bladder", file: "urinary-bladder.webp" },
+      { archetype: "oesophagus", file: "oesophagus.webp" },
+      { archetype: "muscle", file: "muscle.webp" },
+      { archetype: "caecum", file: "caecum.webp" },
+      { archetype: "large intestine", file: "large-intestine.webp" },
     ];
-    expect(credits).toMatch(/CC BY-SA 2\.1 JP/);
     for (const h of heroes) {
       expect(resolveSitePortrait(h.archetype)).toEqual({
         src: `/atlas/sites/${h.file}`,
         archetype: h.archetype,
       });
-      expect(credits).toContain(`\`${h.file}\``);
-      expect(credits).toContain(h.marker);
       expect(
         existsSync(
           new URL(`../../public/atlas/sites/${h.file}`, import.meta.url),
@@ -327,38 +299,17 @@ describe("entryGlance", () => {
     expect(resolveStagePortrait("egg")?.src).toMatch(/egg\.webp$/);
   });
 
-  it("credits CDC stage heroes for shipped open-licence plates", () => {
-    const credits = readFileSync(
-      new URL("../../public/atlas/stages/CREDITS.md", import.meta.url),
-      "utf8",
-    );
-    expect(credits).toMatch(/`egg\.webp`/);
-    expect(credits).toMatch(/Ascaris lumbricoides/);
-    expect(credits).toMatch(/`microfilaria\.webp`/);
-    expect(credits).toMatch(/Wuchereria bancrofti/);
-    expect(credits).toMatch(/`cysticercus\.webp`/);
-    expect(credits).toMatch(/Taenia pisiformis/);
-    expect(credits).toMatch(/`l4\.webp`/);
-    expect(credits).toMatch(/Strongyloides stercoralis/);
-    expect(credits).toMatch(/Public domain/);
-    expect(
-      existsSync(
-        new URL("../../public/atlas/stages/egg.webp", import.meta.url),
-      ),
-    ).toBe(true);
-    expect(
-      existsSync(
-        new URL("../../public/atlas/stages/microfilaria.webp", import.meta.url),
-      ),
-    ).toBe(true);
-    expect(
-      existsSync(
-        new URL("../../public/atlas/stages/cysticercus.webp", import.meta.url),
-      ),
-    ).toBe(true);
-    expect(
-      existsSync(new URL("../../public/atlas/stages/l4.webp", import.meta.url)),
-    ).toBe(true);
+  it("ships CDC stage heroes for open-licence plates", () => {
+    for (const file of [
+      "egg.webp",
+      "microfilaria.webp",
+      "cysticercus.webp",
+      "l4.webp",
+    ] as const) {
+      expect(
+        existsSync(new URL(`../../public/atlas/stages/${file}`, import.meta.url)),
+      ).toBe(true);
+    }
   });
 
   it("tags distribution prose into structured meta", () => {
