@@ -18,6 +18,8 @@ import {
   atlasFirst,
   atlasRun,
   initAtlasState,
+  type AtlasMaterialRow,
+  type AtlasRow,
 } from "./atlas-test-handlers";
 import type { AchievementDefSeed } from "./gamification-seeds";
 
@@ -245,6 +247,8 @@ export type TestEnv = Env & {
   seedSubject: (row: SubjectRow) => void;
   seedDeck: (row: DeckRow) => void;
   seedMaterial: (row: MaterialRow) => void;
+  seedAtlas: (row: AtlasRow) => void;
+  seedAtlasMaterial: (row: AtlasMaterialRow) => void;
   seedSession: (id: string, userId: string, ttlMs?: number) => void;
   seedSessionRecord: (id: string, record: SessionRecord) => void;
   seedUserSecret: (row: UserSecretRow) => void;
@@ -258,6 +262,8 @@ export type TestEnv = Env & {
   seedReviewLog: (row: ReviewLogRow) => void;
   seedR2: (key: string, value: string) => void;
   getMaterials: () => MaterialRow[];
+  getAtlases: () => AtlasRow[];
+  getAtlasMaterials: () => AtlasMaterialRow[];
   getExportJobs: () => ExportJobRow[];
   getGenerationJobs: () => GenerationJobRow[];
   getUserSecrets: () => UserSecretRow[];
@@ -4880,6 +4886,12 @@ export function createTestEnv(opts?: {
     seedMaterial(row) {
       materials.set(row.id, row);
     },
+    seedAtlas(row) {
+      atlasState.atlases.set(row.id, row);
+    },
+    seedAtlasMaterial(row) {
+      atlasState.materials.set(row.id, row);
+    },
     seedSession(id, userId, ttlMs = 60_000) {
       const record: SessionRecord = {
         userId,
@@ -4921,6 +4933,8 @@ export function createTestEnv(opts?: {
       r2.set(key, value);
     },
     getMaterials: () => [...materials.values()],
+    getAtlases: () => [...atlasState.atlases.values()],
+    getAtlasMaterials: () => [...atlasState.materials.values()],
     getExportJobs: () => [...exportJobs.values()],
     getGenerationJobs: () => [...generationJobs.values()],
     getUserSecrets: () => [...userSecrets.values()],

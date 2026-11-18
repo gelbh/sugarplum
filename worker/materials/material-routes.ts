@@ -37,7 +37,6 @@ import {
   type OcrPageText,
 } from "./ocr-sidecar";
 import { isSourceRole } from "../../src/lib/sourceRole";
-import { refreshAtlasFocusForDeck } from "../atlas/focus";
 import type { Env } from "../env";
 import type { AppEnv, MaterialRow } from "./types";
 import { requireOwnedMaterial } from "./ownership";
@@ -373,8 +372,6 @@ materialRoutes.delete("/:id", async (c) => {
     }
   }
 
-  await refreshAtlasFocusForDeck(db, c.env, material.deck_id);
-
   return c.body(null, 204);
 });
 
@@ -421,8 +418,6 @@ materialRoutes.patch("/:id", async (c) => {
     .prepare("UPDATE materials SET source_role = ? WHERE id = ?")
     .bind(sourceRole, materialId)
     .run();
-
-  await refreshAtlasFocusForDeck(db, c.env, material.deck_id);
 
   return c.json({
     id: material.id,
@@ -566,8 +561,6 @@ materialRoutes.post("/:id/complete", async (c) => {
     manual_occlusion = result.manual_occlusion;
   }
 
-  await refreshAtlasFocusForDeck(db, c.env, material.deck_id);
-
   return c.json({
     id: material.id,
     deck_id: material.deck_id,
@@ -685,7 +678,6 @@ materialRoutes.post("/:id/ocr-pages", async (c) => {
       merged,
       nextUnstudied,
     );
-    await refreshAtlasFocusForDeck(db, c.env, material.deck_id);
   }
   return c.json({ stored: merged.length });
 });

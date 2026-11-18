@@ -215,6 +215,63 @@ describe("admin impersonation D1 clone", () => {
     );
   });
 
+  it("clones atlas course pack materials and R2 objects", async () => {
+    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
+    seedAdminAndLearnerWithLibrary(env);
+    const packR2 = "atlas/atlas-alice/pack-1.txt";
+    env.seedAtlas({
+      id: "atlas-alice",
+      user_id: "u-alice",
+      template_key: "parasite",
+      created_at: NOW,
+    });
+    env.seedAtlasMaterial({
+      id: "pack-1",
+      atlas_id: "atlas-alice",
+      kind: "paste",
+      r2_key: packR2,
+      filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
+      page_count: null,
+      status: "ready",
+      created_at: NOW,
+      content_hash: "pack-hash",
+      source_role: "tutorial",
+    });
+    env.seedR2(packR2, "Fasciola hepatica tutorial notes");
+
+    const start = await app.request(
+      "/api/admin/users/u-alice/impersonate",
+      { method: "POST", headers: adminHeaders },
+      env,
+    );
+    expect(start.status).toBe(200);
+    const body = (await start.json()) as {
+      impersonation: { sandboxUserId: string };
+    };
+    const sandboxId = body.impersonation.sandboxUserId;
+
+    const sandboxAtlases = env
+      .getAtlases()
+      .filter((a) => a.user_id === sandboxId);
+    expect(sandboxAtlases).toHaveLength(1);
+    expect(sandboxAtlases[0]!.id).not.toBe("atlas-alice");
+
+    const sandboxPack = env
+      .getAtlasMaterials()
+      .filter((m) => m.atlas_id === sandboxAtlases[0]!.id);
+    expect(sandboxPack).toHaveLength(1);
+    expect(sandboxPack[0]!.id).not.toBe("pack-1");
+    expect(sandboxPack[0]!.source_role).toBe("tutorial");
+    expect(sandboxPack[0]!.r2_key).not.toBe(packR2);
+    const copied = env.getR2(sandboxPack[0]!.r2_key!);
+    const copiedText =
+      typeof copied === "string"
+        ? copied
+        : new TextDecoder().decode(copied as ArrayBuffer);
+    expect(copiedText).toBe("Fasciola hepatica tutorial notes");
+    expect(env.getR2(packR2)).toBe("Fasciola hepatica tutorial notes");
+  });
+
   it("study edit mutates sandbox only; source unchanged after Exit", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearnerWithLibrary(env);
@@ -340,7 +397,7 @@ describe("admin impersonation D1 clone", () => {
 
     const db = getDb(env);
     await expect(
-      cloneUserGraph(db, "u-alice", "sandbox-tmp", { maxCards: 0 }),
+      cloneUserGraph(db, env, "u-alice", "sandbox-tmp", { maxCards: 0 }),
     ).rejects.toBeInstanceOf(CloneLimitExceededError);
 
     expect(

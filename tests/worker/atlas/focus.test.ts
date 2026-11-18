@@ -34,45 +34,48 @@ function authHeaders(json = false): HeadersInit {
   };
 }
 
+async function createAtlas(
+  env: ReturnType<typeof createTestEnv>,
+): Promise<string> {
+  const created = await app.request(
+    "/api/atlas",
+    { method: "POST", headers: authHeaders() },
+    env,
+  );
+  expect(created.status).toBe(201);
+  const atlas = (await created.json()) as { id: string };
+  return atlas.id;
+}
+
+async function pasteAtlasPack(
+  env: ReturnType<typeof createTestEnv>,
+  atlasId: string,
+  opts: { text: string; filename: string; source_role?: string },
+) {
+  return app.request(
+    `/api/atlas/${atlasId}/materials/paste`,
+    {
+      method: "POST",
+      headers: authHeaders(true),
+      body: JSON.stringify(opts),
+    },
+    env,
+  );
+}
+
 describe("atlas focus persistence helpers", () => {
   it("GET shows override even when refresh never rewrote tier", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    env.seedDeck({
-      id: "deck-1",
-      user_id: "user-a",
-      title: "Parasitology deck",
-      subject_hint: null,
-      subject_id: "sub-1",
-      created_at: "2026-01-01T00:00:00.000Z",
+    const atlasId = await createAtlas(env);
+
+    const paste = await pasteAtlasPack(env, atlasId, {
+      text: "Intro to flukes",
+      filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
     });
-
-    const created = await app.request(
-      "/api/atlas",
-      { method: "POST", headers: authHeaders() },
-      env,
-    );
-    expect(created.status).toBe(201);
-    const atlas = (await created.json()) as { id: string };
-    const atlasId = atlas.id;
-
-    const paste = await app.request(
-      "/api/decks/deck-1/materials/paste",
-      {
-        method: "POST",
-        headers: authHeaders(true),
-        body: JSON.stringify({
-          text: "Intro to flukes",
-          filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
-        }),
-      },
-      env,
-    );
     expect(paste.status).toBe(201);
 
-    // Simulate setFocusOverride without a following refresh: demote while
-    // leaving cached scan tier as key.
-    await setFocusOverride(env.DB, atlas.id, "fasciola-hepatica", "standard");
+    await setFocusOverride(env.DB, atlasId, "fasciola-hepatica", "standard");
 
     const list = await app.request(
       `/api/atlas/${atlasId}/entries`,
@@ -87,8 +90,7 @@ describe("atlas focus persistence helpers", () => {
       reason: "Manual demote",
     });
 
-    // Clear override without refresh: pure scan tier must resurface.
-    await setFocusOverride(env.DB, atlas.id, "fasciola-hepatica", null);
+    await setFocusOverride(env.DB, atlasId, "fasciola-hepatica", null);
     const cleared = await app.request(
       `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
@@ -106,48 +108,24 @@ describe("atlas focus persistence helpers", () => {
   it("heals partial null focus when materials exist", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    env.seedDeck({
-      id: "deck-1",
-      user_id: "user-a",
-      title: "Parasitology deck",
-      subject_hint: null,
-      subject_id: "sub-1",
-      created_at: "2026-01-01T00:00:00.000Z",
+    const atlasId = await createAtlas(env);
+
+    const paste = await pasteAtlasPack(env, atlasId, {
+      text: "Intro to flukes",
+      filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
     });
-
-    const created = await app.request(
-      "/api/atlas",
-      { method: "POST", headers: authHeaders() },
-      env,
-    );
-    expect(created.status).toBe(201);
-    const atlas = (await created.json()) as { id: string };
-
-    const paste = await app.request(
-      "/api/decks/deck-1/materials/paste",
-      {
-        method: "POST",
-        headers: authHeaders(true),
-        body: JSON.stringify({
-          text: "Intro to flukes",
-          filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
-        }),
-      },
-      env,
-    );
     expect(paste.status).toBe(201);
 
-    // Leave a partial map: one missing row while others remain (legacy sparse).
     await env.DB.prepare(
       `DELETE FROM atlas_entry_focus WHERE atlas_id = ? AND entry_key = ?`,
     )
-      .bind(atlas.id, "giardia-duodenalis")
+      .bind(atlasId, "giardia-duodenalis")
       .run();
 
     const focusBefore = await env.DB.prepare(
       `SELECT entry_key FROM atlas_entry_focus WHERE atlas_id = ?`,
     )
-      .bind(atlas.id)
+      .bind(atlasId)
       .all<{ entry_key: string }>();
     const keysBefore = new Set(
       (focusBefore.results ?? []).map((r) => r.entry_key),
@@ -156,7 +134,7 @@ describe("atlas focus persistence helpers", () => {
     expect(keysBefore.has("giardia-duodenalis")).toBe(false);
 
     const list = await app.request(
-      `/api/atlas/${atlas.id}/entries`,
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -169,7 +147,7 @@ describe("atlas focus persistence helpers", () => {
     const healedRow = await env.DB.prepare(
       `SELECT tier FROM atlas_entry_focus WHERE atlas_id = ? AND entry_key = ?`,
     )
-      .bind(atlas.id, "giardia-duodenalis")
+      .bind(atlasId, "giardia-duodenalis")
       .first<{ tier: string }>();
     expect(healedRow?.tier).toBeTruthy();
   });
@@ -221,14 +199,14 @@ describe("atlas focus persistence helpers", () => {
           },
           async all<T>() {
             if (
-              normalized.includes("FROM materials m") &&
-              normalized.includes("d.user_id")
+              normalized.includes("FROM atlas_materials") &&
+              normalized.includes("WHERE atlas_id =")
             ) {
               return {
                 results: [
                   {
                     id: "m1",
-                    deck_id: "d1",
+                    atlas_id: "a1",
                     kind: "paste",
                     r2_key: null,
                     filename: "notes.pdf",
@@ -318,8 +296,6 @@ describe("atlas focus persistence helpers", () => {
       ),
     ).toBe(false);
 
-    // Mid-flight invariant: after first upsert, map is never empty while
-    // stale rows still exist or new rows are present.
     expect(focus.has("stale-key")).toBe(false);
     expect(focus.size).toBeGreaterThan(0);
   });
@@ -369,36 +345,12 @@ describe("atlas focus empty materials and lazy GET", () => {
   it("keeps override rows when scannable materials become empty", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    env.seedDeck({
-      id: "deck-1",
-      user_id: "user-a",
-      title: "Parasitology deck",
-      subject_hint: null,
-      subject_id: "sub-1",
-      created_at: "2026-01-01T00:00:00.000Z",
+    const atlasId = await createAtlas(env);
+
+    const paste = await pasteAtlasPack(env, atlasId, {
+      text: "Intro",
+      filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
     });
-
-    const created = await app.request(
-      "/api/atlas",
-      { method: "POST", headers: authHeaders() },
-      env,
-    );
-    expect(created.status).toBe(201);
-    const atlas = (await created.json()) as { id: string };
-    const atlasId = atlas.id;
-
-    const paste = await app.request(
-      "/api/decks/deck-1/materials/paste",
-      {
-        method: "POST",
-        headers: authHeaders(true),
-        body: JSON.stringify({
-          text: "Intro",
-          filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
-        }),
-      },
-      env,
-    );
     expect(paste.status).toBe(201);
     const material = (await paste.json()) as { id: string };
 
@@ -413,7 +365,7 @@ describe("atlas focus empty materials and lazy GET", () => {
     );
     expect(pin.status).toBe(200);
 
-    const del = await app.request(`/api/materials/${material.id}`, {
+    const del = await app.request(`/api/atlas/materials/${material.id}`, {
       method: "DELETE",
       headers: authHeaders(),
     }, env);
@@ -433,7 +385,6 @@ describe("atlas focus empty materials and lazy GET", () => {
       reason: "Manual pin",
     });
 
-    // Focus PATCH must stick even with no materials left.
     const demote = await app.request(
       `/api/atlas/${atlasId}/entries/fasciola-hepatica/focus`,
       {
@@ -453,13 +404,7 @@ describe("atlas focus empty materials and lazy GET", () => {
   it("rejects a null JSON body on focus PATCH", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    const created = await app.request(
-      "/api/atlas",
-      { method: "POST", headers: authHeaders() },
-      env,
-    );
-    expect(created.status).toBe(201);
-    const { id: atlasId } = (await created.json()) as { id: string };
+    const atlasId = await createAtlas(env);
 
     const res = await app.request(
       `/api/atlas/${atlasId}/entries/fasciola-hepatica/focus`,
@@ -473,35 +418,21 @@ describe("atlas focus empty materials and lazy GET", () => {
     expect(res.status).toBe(400);
   });
 
-  it("lazy-refreshes Focus on GET when cache is empty but ready materials exist", async () => {
+  it("lazy-refreshes Focus on GET when cache is empty but ready pack materials exist", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    env.seedDeck({
-      id: "deck-1",
-      user_id: "user-a",
-      title: "Parasitology deck",
-      subject_hint: null,
-      subject_id: "sub-1",
-      created_at: "2026-01-01T00:00:00.000Z",
-    });
-    const created = await app.request(
-      "/api/atlas",
-      { method: "POST", headers: authHeaders() },
-      env,
-    );
-    expect(created.status).toBe(201);
-    const { id: atlasId } = (await created.json()) as { id: string };
+    const atlasId = await createAtlas(env);
 
-    // Seed after atlas create so focus cache stays empty until GET.
-    env.seedMaterial({
+    env.seedAtlasMaterial({
       id: "mat-pre",
-      deck_id: "deck-1",
+      atlas_id: atlasId,
       kind: "pdf",
-      r2_key: "materials/deck-1/mat-pre.pdf",
+      r2_key: `atlas/${atlasId}/mat-pre.pdf`,
       filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
       page_count: null,
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
+      content_hash: null,
       source_role: "tutorial",
     });
 
@@ -520,33 +451,78 @@ describe("atlas focus empty materials and lazy GET", () => {
     });
   });
 
-  it("ignores non-ready materials during Focus refresh", async () => {
+  it("clears stale automatic Focus on GET when the pack is empty", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    env.seedDeck({
-      id: "deck-1",
-      user_id: "user-a",
-      title: "Parasitology deck",
-      subject_hint: null,
-      subject_id: "sub-1",
-      created_at: "2026-01-01T00:00:00.000Z",
-    });
-    const created = await app.request(
-      "/api/atlas",
-      { method: "POST", headers: authHeaders() },
+    const atlasId = await createAtlas(env);
+    const now = "2026-01-01T00:00:00.000Z";
+
+    await env.DB.prepare(
+      `INSERT INTO atlas_entry_focus (
+         atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        atlasId,
+        "fasciola-hepatica",
+        "key",
+        'Named in lecture "old-deck.pdf"',
+        '["deck-mat-1"]',
+        null,
+        now,
+      )
+      .run();
+    await env.DB.prepare(
+      `INSERT INTO atlas_entry_focus (
+         atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        atlasId,
+        "toxoplasma-gondii",
+        "standard",
+        "Standard",
+        "[]",
+        "key",
+        now,
+      )
+      .run();
+
+    const list = await app.request(
+      `/api/atlas/${atlasId}/entries`,
+      { headers: authHeaders() },
       env,
     );
-    expect(created.status).toBe(201);
-    const { id: atlasId } = (await created.json()) as { id: string };
-    env.seedMaterial({
+    expect(list.status).toBe(200);
+    const body = (await list.json()) as { entries: AtlasEntryView[] };
+    expect(
+      body.entries.find((e) => e.id === "fasciola-hepatica"),
+    ).toMatchObject({
+      tier: null,
+      reason: null,
+    });
+    expect(
+      body.entries.find((e) => e.id === "toxoplasma-gondii"),
+    ).toMatchObject({
+      tier: "key",
+      reason: "Manual pin",
+    });
+  });
+
+  it("ignores non-ready pack materials during Focus refresh", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    env.seedAtlasMaterial({
       id: "mat-uploading",
-      deck_id: "deck-1",
+      atlas_id: atlasId,
       kind: "pdf",
-      r2_key: "materials/deck-1/mat-uploading.pdf",
+      r2_key: `atlas/${atlasId}/mat-uploading.pdf`,
       filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
       page_count: null,
       status: "uploading",
       created_at: "2026-01-01T00:00:00.000Z",
+      content_hash: null,
       source_role: "tutorial",
     });
 
@@ -560,5 +536,65 @@ describe("atlas focus empty materials and lazy GET", () => {
     expect(
       body.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
     ).toBeNull();
+  });
+
+  it("deck-only ready materials do not Key; atlas pack paste can", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedDeck({
+      id: "deck-1",
+      user_id: "user-a",
+      title: "Parasitology deck",
+      subject_hint: null,
+      subject_id: "sub-1",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const atlasId = await createAtlas(env);
+
+    env.seedMaterial({
+      id: "deck-mat",
+      deck_id: "deck-1",
+      kind: "pdf",
+      r2_key: "materials/deck-1/deck-mat.pdf",
+      filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+      source_role: "tutorial",
+    });
+
+    const listDeckOnly = await app.request(
+      `/api/atlas/${atlasId}/entries`,
+      { headers: authHeaders() },
+      env,
+    );
+    expect(listDeckOnly.status).toBe(200);
+    const deckOnly = (await listDeckOnly.json()) as {
+      entries: AtlasEntryView[];
+    };
+    expect(
+      deckOnly.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
+    ).toBeNull();
+
+    const paste = await pasteAtlasPack(env, atlasId, {
+      text: "Fasciola hepatica appears on page 1 of this tutorial.",
+      filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
+      source_role: "tutorial",
+    });
+    expect(paste.status).toBe(201);
+
+    const listPack = await app.request(
+      `/api/atlas/${atlasId}/entries`,
+      { headers: authHeaders() },
+      env,
+    );
+    expect(listPack.status).toBe(200);
+    const withPack = (await listPack.json()) as { entries: AtlasEntryView[] };
+    expect(
+      withPack.entries.find((e) => e.id === "fasciola-hepatica"),
+    ).toMatchObject({
+      tier: "key",
+      reason: expect.stringMatching(/tutorial/i),
+    });
   });
 });

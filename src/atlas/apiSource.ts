@@ -127,3 +127,14 @@ export function makeAtlasCards(
     json: body,
   });
 }
+
+export function patchEntryFocus(
+  atlasId: string,
+  entryId: string,
+  override: "key" | "frequent" | "standard" | null,
+) {
+  return api<AtlasEntryView>(entryPath(atlasId, entryId, "/focus"), {
+    method: "PATCH",
+    json: { override },
+  });
+}

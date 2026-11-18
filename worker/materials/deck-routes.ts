@@ -28,7 +28,6 @@ import {
 } from "./hub-create-card";
 import { parsePasteMaterialBody } from "./paste-material";
 import { createR2PutUrl } from "./r2-presign";
-import { refreshAtlasFocusForDeck } from "../atlas/focus";
 import type { AppEnv, MaterialRow } from "./types";
 import {
   deckJson,
@@ -613,8 +612,6 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
     content_hash: contentHash,
     source_role: sourceRole,
   };
-
-  await refreshAtlasFocusForDeck(db, c.env, deckId);
 
   return c.json({ ...material, jobId }, 201);
 });

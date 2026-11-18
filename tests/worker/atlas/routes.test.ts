@@ -435,21 +435,13 @@ describe("atlas user-owned routes", () => {
     );
   });
 
-  it("exposes Key tier after a subject tutorial material is added", async () => {
+  it("exposes Key tier after an atlas pack tutorial material is added", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    env.seedDeck({
-      id: "deck-1",
-      user_id: "user-a",
-      title: "Parasitology deck",
-      subject_hint: null,
-      subject_id: "sub-1",
-      created_at: "2026-01-01T00:00:00.000Z",
-    });
     const { id: atlasId } = await createAtlas(env);
 
     const paste = await app.request(
-      "/api/decks/deck-1/materials/paste",
+      `/api/atlas/${atlasId}/materials/paste`,
       {
         method: "POST",
         headers: authHeaders(true),
@@ -480,18 +472,10 @@ describe("atlas user-owned routes", () => {
   it("lets a focus override pin win and clear restore the scan", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    env.seedDeck({
-      id: "deck-1",
-      user_id: "user-a",
-      title: "Parasitology deck",
-      subject_hint: null,
-      subject_id: "sub-1",
-      created_at: "2026-01-01T00:00:00.000Z",
-    });
     const { id: atlasId } = await createAtlas(env);
 
     const paste = await app.request(
-      "/api/decks/deck-1/materials/paste",
+      `/api/atlas/${atlasId}/materials/paste`,
       {
         method: "POST",
         headers: authHeaders(true),
@@ -533,27 +517,20 @@ describe("atlas user-owned routes", () => {
     expect(restored.reason).toMatch(/tutorial/i);
   });
 
-  it("rescans when source_role is patched", async () => {
+  it("rescans when pack source_role is patched", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    env.seedDeck({
-      id: "deck-1",
-      user_id: "user-a",
-      title: "Parasitology deck",
-      subject_hint: null,
-      subject_id: "sub-1",
-      created_at: "2026-01-01T00:00:00.000Z",
-    });
     const { id: atlasId } = await createAtlas(env);
-    env.seedMaterial({
+    env.seedAtlasMaterial({
       id: "mat-1",
-      deck_id: "deck-1",
+      atlas_id: atlasId,
       kind: "pdf",
-      r2_key: "materials/deck-1/mat-1.pdf",
+      r2_key: `atlas/${atlasId}/mat-1.pdf`,
       filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
       page_count: null,
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
+      content_hash: null,
       source_role: "lecture",
     });
 
@@ -563,13 +540,13 @@ describe("atlas user-owned routes", () => {
       env,
     );
     const beforeBody = (await before.json()) as { entries: AtlasEntryView[] };
-    // Lazy GET backfills an empty Focus cache from ready materials.
+    // Lazy GET backfills an empty Focus cache from ready pack materials.
     expect(
       beforeBody.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
     ).toBe("standard");
 
     const patch = await app.request(
-      "/api/materials/mat-1",
+      "/api/atlas/materials/mat-1",
       {
         method: "PATCH",
         headers: authHeaders(true),
