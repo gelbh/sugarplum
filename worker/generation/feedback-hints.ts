@@ -10,7 +10,7 @@ const MAX_PATTERNS = 8;
 export function topicHintsPromptSuffix(hints: string[]): string {
   if (hints.length === 0) return "";
   return [
-    "Prefer cards that assess each of these learning objectives when the source supports them. Skip objectives with no grounded support. Do not invent facts:",
+    "Steer toward covering these user learning objectives when the source supports them. If an objective has no grounded support, skip that objective and still produce cards for other grounded facts in the material. Do not invent facts. Do not return an empty array solely because some or all objectives were unmatched:",
     ...hints.map((hint) => `- ${hint}`),
   ].join("\n");
 }

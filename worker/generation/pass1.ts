@@ -15,6 +15,7 @@ import {
   type LlmAdapter,
 } from "./llm";
 import { buildExtraUserSuffix } from "./feedback-hints";
+import { emptyDraftError } from "./empty-draft-error";
 import {
   critiqueDraftsAgainstSource,
   MAX_PIPELINE_CHUNKS,
@@ -642,7 +643,12 @@ export async function runPass1Phase(
       drafts = bindOcclusionImageKey(drafts, material.r2_key);
       drafts = filterDraftsByQuality(drafts);
       if (drafts.length === 0) {
-        throw new Error("Generation produced no valid draft cards");
+        throw new Error(
+          emptyDraftError(
+            topicHints,
+            "Generation produced no valid draft cards",
+          ),
+        );
       }
       drafts = drafts.map((d) => ({
         ...d,
@@ -772,7 +778,10 @@ export async function runPass1Phase(
         }
         throw new Error(
           text.trim()
-            ? "No flashcard drafts could be produced from this material."
+            ? emptyDraftError(
+                topicHints,
+                "No flashcard drafts could be produced from this material.",
+              )
             : "Extracted material text is empty and no usable figures were found. Upload OCR text or figure crops.",
         );
       }
@@ -877,7 +886,10 @@ export async function runPass1Phase(
         throw new Error(
           textQuality.length > 0 && deckFronts.length > 0
             ? "New cards repeated cards already in this deck."
-            : "No flashcard drafts could be produced from this material.",
+            : emptyDraftError(
+                topicHints,
+                "No flashcard drafts could be produced from this material.",
+              ),
         );
       }
       await progress.emit("persist", 0, 1, "Saving drafts");

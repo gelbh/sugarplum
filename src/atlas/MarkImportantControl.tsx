@@ -21,7 +21,7 @@ export default function MarkImportantControl({
 }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const pinnedKey = entry.tier === "key" && entry.reason === "Manual pin";
+  const pinnedKey = entry.override === "key";
 
   async function run(override: "key" | null) {
     setBusy(true);

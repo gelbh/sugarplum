@@ -13,6 +13,7 @@ import AtlasImage, { heroImage } from "./AtlasImage";
 import { entryTitles } from "./entryTitles";
 import { TIER_LABELS, hostSummary, pppLabel, termLabel } from "./filter";
 import { atlasHeroName } from "./paths";
+import MarkImportantControl from "./MarkImportantControl";
 import TermList from "./TermList";
 import type { AtlasEntryView } from "./types";
 
@@ -24,6 +25,8 @@ type Props = {
   onToggle: () => void;
   onOpen: () => void;
   onEdit?: () => void;
+  atlasId?: string;
+  onFocusUpdated?: (entry: AtlasEntryView) => void;
 };
 
 const IMAGE_RATIO = "6 / 5";
@@ -37,7 +40,15 @@ function findItAs(entry: AtlasEntryView): string | null {
   return diagnosticStage ? termLabel(diagnosticStage) : test && termLabel(test);
 }
 
-function FocusBadge({ entry }: { entry: AtlasEntryView }) {
+function FocusBadge({
+  entry,
+  atlasId,
+  onFocusUpdated,
+}: {
+  entry: AtlasEntryView;
+  atlasId?: string;
+  onFocusUpdated?: (entry: AtlasEntryView) => void;
+}) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   if (entry.tier !== "key" && entry.tier !== "frequent") return null;
   return (
@@ -87,6 +98,20 @@ function FocusBadge({ entry }: { entry: AtlasEntryView }) {
             ))}
           </Stack>
         ) : null}
+        {atlasId && onFocusUpdated ? (
+          <Box
+            sx={{ mt: 1.25 }}
+            onClick={(ev) => {
+              ev.stopPropagation();
+            }}
+          >
+            <MarkImportantControl
+              atlasId={atlasId}
+              entry={entry}
+              onUpdated={onFocusUpdated}
+            />
+          </Box>
+        ) : null}
       </Popover>
     </>
   );
@@ -100,6 +125,8 @@ export default function SpecimenTile({
   onToggle,
   onOpen,
   onEdit,
+  atlasId,
+  onFocusUpdated,
 }: Props) {
   const toggleRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -119,7 +146,13 @@ export default function SpecimenTile({
   const { fields } = entry;
   const definitive = hostSummary(fields.definitiveHosts, 2);
   const titleId = `atlas-tile-${entry.id}`;
-  const focusBadge = <FocusBadge entry={entry} />;
+  const focusBadge = (
+    <FocusBadge
+      entry={entry}
+      atlasId={atlasId}
+      onFocusUpdated={onFocusUpdated}
+    />
+  );
 
   if (!expanded) {
     return (
