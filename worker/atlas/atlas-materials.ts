@@ -1,17 +1,8 @@
 import type { Env } from "../env";
-import {
-  isSourceRole,
-  type SourceRole,
-} from "../../src/lib/sourceRole";
-import {
-  type FocusMaterial,
-} from "../../src/atlas/focusScan";
-import { extractPptxSlides } from "../materials/extract-pptx";
-import {
-  OCR_PAGE_CHAR_CAP,
-  readAtlasOcrSidecar,
-  writeAtlasOcrSidecar,
-} from "../materials/ocr-sidecar";
+import { isSourceRole, type SourceRole } from "../../src/lib/sourceRole";
+import { type FocusMaterial } from "../../src/atlas/focusScan";
+import { readAtlasOcrSidecar } from "../materials/ocr-sidecar";
+import { persistAtlasPptxSidecarFromBytes } from "./pptx-sidecar";
 
 export type AtlasMaterialScanRow = {
   id: string;
@@ -59,23 +50,19 @@ async function loadPptxPages(
   try {
     const obj = await env.MATERIALS.get(row.r2_key);
     if (!obj) return pages;
-    const extracted = await extractPptxSlides(await obj.arrayBuffer());
-    const extractedPages = extracted.pages.map((p) => ({
-      page: p.page,
-      text: p.text.slice(0, OCR_PAGE_CHAR_CAP),
-    }));
-    if (extractedPages.some((p) => p.text.trim())) {
-      try {
-        await writeAtlasOcrSidecar(env, row.atlas_id, row.id, extractedPages);
-      } catch (err) {
-        console.warn("atlas PPTX Focus sidecar backfill failed", err);
-      }
-      for (const p of extractedPages) {
+    const persisted = await persistAtlasPptxSidecarFromBytes(
+      env,
+      row.atlas_id,
+      row.id,
+      await obj.arrayBuffer(),
+    );
+    if (persisted?.pages.length) {
+      for (const p of persisted.pages) {
         pages.push({ page: p.page, text: p.text });
       }
     }
-  } catch {
-    /* filename-only fallback */
+  } catch (err) {
+    console.warn("atlas PPTX Focus backfill failed", err);
   }
   return pages;
 }

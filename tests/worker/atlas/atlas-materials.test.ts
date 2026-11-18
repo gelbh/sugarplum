@@ -181,9 +181,7 @@ describe("atlas course pack materials API", () => {
         method: "POST",
         headers: authHeaders(true),
         body: JSON.stringify({
-          ocrPages: [
-            { page: 1, text: "Fasciola hepatica tutorial intro" },
-          ],
+          ocrPages: [{ page: 1, text: "Fasciola hepatica tutorial intro" }],
         }),
       },
       env,
@@ -239,10 +237,14 @@ describe("atlas course pack materials API", () => {
       beforeBody.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
     ).toBe("key");
 
-    const del = await app.request(`/api/atlas/materials/${material.id}`, {
-      method: "DELETE",
-      headers: authHeaders(),
-    }, env);
+    const del = await app.request(
+      `/api/atlas/materials/${material.id}`,
+      {
+        method: "DELETE",
+        headers: authHeaders(),
+      },
+      env,
+    );
     expect(del.status).toBe(204);
 
     const after = await app.request(
@@ -315,12 +317,10 @@ describe("atlas course pack materials API", () => {
     expect(deckMaterial.id).not.toBe(packMaterial.id);
     expect(deckMaterial.r2_key).not.toBe(packMaterial.r2_key);
     expect(env.getGenerationJobs()).toHaveLength(jobsBefore);
-    expect(env.getMaterials().some((m) => m.id === deckMaterial.id)).toBe(
+    expect(env.getMaterials().some((m) => m.id === deckMaterial.id)).toBe(true);
+    expect(env.getAtlasMaterials().some((m) => m.id === packMaterial.id)).toBe(
       true,
     );
-    expect(
-      env.getAtlasMaterials().some((m) => m.id === packMaterial.id),
-    ).toBe(true);
     expect(await env.MATERIALS.get(deckMaterial.r2_key)).not.toBeNull();
   });
 

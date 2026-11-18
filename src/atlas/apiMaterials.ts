@@ -76,10 +76,7 @@ export function deleteAtlasMaterial(materialId: string) {
   return api<void>(materialPath(materialId), { method: "DELETE" });
 }
 
-export function promoteAtlasMaterial(
-  materialId: string,
-  deckId: string,
-) {
+export function promoteAtlasMaterial(materialId: string, deckId: string) {
   return api<{
     id: string;
     deck_id: string;

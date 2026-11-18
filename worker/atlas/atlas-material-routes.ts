@@ -8,10 +8,8 @@ import {
   sandboxWriteUserId,
 } from "../admin/sandbox-r2";
 import { sha256Hex } from "../materials/content-hash";
-import { extractPptxSlides } from "../materials/extract-pptx";
 import {
   atlasOcrSidecarKey,
-  OCR_PAGE_CHAR_CAP,
   parseOcrPages,
   readAtlasOcrSidecar,
   writeAtlasOcrSidecar,
@@ -33,12 +31,9 @@ import {
 } from "../materials/upload-request";
 import { isSourceRole } from "../../src/lib/sourceRole";
 import { refreshFocusBestEffort } from "./focus";
+import { persistAtlasPptxSidecarFromBytes } from "./pptx-sidecar";
 import type { AppEnv } from "./types";
-import {
-  newId,
-  requireOwnedAtlas,
-  requireParam,
-} from "./ownership";
+import { newId, requireOwnedAtlas, requireParam } from "./ownership";
 
 const ATLAS_UPLOAD_KINDS = new Set(["pdf", "pptx"] as const);
 
@@ -135,10 +130,7 @@ atlasPackRoutes.post("/materials/paste", async (c) => {
   const id = newId();
   const createdAt = new Date().toISOString();
   const sandboxId = await sandboxWriteUserId(db, userId);
-  const r2Key = applySandboxKeyPrefix(
-    sandboxId,
-    `atlas/${atlasId}/${id}.txt`,
-  );
+  const r2Key = applySandboxKeyPrefix(sandboxId, `atlas/${atlasId}/${id}.txt`);
 
   await c.env.MATERIALS.put(r2Key, text, {
     httpMetadata: { contentType: "text/plain; charset=utf-8" },
@@ -260,7 +252,47 @@ atlasMaterialItemRoutes.post("/:id/complete", async (c) => {
   const material = await requireOwnedAtlasMaterial(db, materialId, userId);
 
   if (material.status === FILE_READY) {
-    return c.json({ ...materialJson(material), jobId: null });
+    let pageCount = material.page_count;
+    let repaired = false;
+    if (material.kind === "pptx" && material.r2_key) {
+      const existing = await readAtlasOcrSidecar(
+        c.env,
+        material.atlas_id,
+        materialId,
+      );
+      if (!existing?.pages.length) {
+        try {
+          const obj = await c.env.MATERIALS.get(material.r2_key);
+          if (obj) {
+            const persisted = await persistAtlasPptxSidecarFromBytes(
+              c.env,
+              material.atlas_id,
+              materialId,
+              await obj.arrayBuffer(),
+            );
+            if (persisted) {
+              pageCount = persisted.totalPages;
+              await db
+                .prepare(
+                  "UPDATE atlas_materials SET page_count = ? WHERE id = ?",
+                )
+                .bind(pageCount, materialId)
+                .run();
+              repaired = true;
+            }
+          }
+        } catch (err) {
+          console.warn("atlas PPTX extract repair failed", err);
+        }
+      }
+    }
+    if (repaired) {
+      await refreshFocusBestEffort(db, c.env, { atlasId: material.atlas_id });
+    }
+    return c.json({
+      ...materialJson({ ...material, page_count: pageCount }),
+      jobId: null,
+    });
   }
 
   let ocrPages: ReturnType<typeof parseOcrPages>;
@@ -322,30 +354,30 @@ atlasMaterialItemRoutes.post("/:id/complete", async (c) => {
   let pageCount = material.page_count;
   if (ocrPages && material.kind === "pdf") {
     try {
-      await writeAtlasOcrSidecar(c.env, material.atlas_id, materialId, ocrPages);
+      await writeAtlasOcrSidecar(
+        c.env,
+        material.atlas_id,
+        materialId,
+        ocrPages,
+      );
     } catch (err) {
       console.warn("atlas OCR sidecar write failed", err);
     }
   } else if (material.kind === "pptx" && fileBytes) {
     try {
-      const extracted = await extractPptxSlides(fileBytes);
-      const pages = extracted.pages.map((p) => ({
-        page: p.page,
-        text: p.text.slice(0, OCR_PAGE_CHAR_CAP),
-      }));
-      if (pages.some((p) => p.text.trim())) {
-        await writeAtlasOcrSidecar(
-          c.env,
-          material.atlas_id,
-          materialId,
-          pages,
-        );
+      const persisted = await persistAtlasPptxSidecarFromBytes(
+        c.env,
+        material.atlas_id,
+        materialId,
+        fileBytes,
+      );
+      if (persisted) {
+        pageCount = persisted.totalPages;
+        await db
+          .prepare("UPDATE atlas_materials SET page_count = ? WHERE id = ?")
+          .bind(pageCount, materialId)
+          .run();
       }
-      pageCount = extracted.totalPages;
-      await db
-        .prepare("UPDATE atlas_materials SET page_count = ? WHERE id = ?")
-        .bind(pageCount, materialId)
-        .run();
     } catch (err) {
       console.warn("atlas PPTX extract failed", err);
     }
@@ -424,8 +456,7 @@ atlasMaterialItemRoutes.post("/:id/promote", async (c) => {
     },
   });
 
-  const contentHash =
-    material.content_hash ?? (await sha256Hex(bytes));
+  const contentHash = material.content_hash ?? (await sha256Hex(bytes));
 
   await db
     .prepare(

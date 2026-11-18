@@ -11,11 +11,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {
-  ApiError,
-  PPTX_MIME,
-  resolveUploadContentType,
-} from "../api/client";
+import { ApiError, PPTX_MIME, resolveUploadContentType } from "../api/client";
 import { ocrEmptyPdfPages } from "../lib/pdfScanOcr";
 import {
   SOURCE_ROLE_LABELS,
@@ -108,10 +104,7 @@ export default function CoursePackPanel({ atlasId, onFocusChanged }: Props) {
     setError(null);
     try {
       const contentType = resolveUploadContentType(file);
-      if (
-        contentType !== "application/pdf" &&
-        contentType !== PPTX_MIME
-      ) {
+      if (contentType !== "application/pdf" && contentType !== PPTX_MIME) {
         setError("Only PDF or PPTX uploads are allowed");
         return;
       }
@@ -304,9 +297,7 @@ export default function CoursePackPanel({ atlasId, onFocusChanged }: Props) {
                   size="small"
                   label="Role"
                   value={pasteRole}
-                  onChange={(ev) =>
-                    setPasteRole(ev.target.value as SourceRole)
-                  }
+                  onChange={(ev) => setPasteRole(ev.target.value as SourceRole)}
                   disabled={busy}
                   sx={{ minWidth: 140 }}
                 >
