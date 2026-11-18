@@ -7,6 +7,7 @@ import {
   GENERATE_COMPACT_SYSTEM_PROMPT,
   GENERATE_SYSTEM_PROMPT,
   IMAGE_GENERATE_SYSTEM_PROMPT,
+  generateUserPrompt,
 } from "../../worker/generation/prompts";
 import type { CardDraft } from "../../worker/generation/schema";
 
@@ -76,6 +77,18 @@ describe("drop-biased quality prompts (5B)", () => {
       expect(prompt.toLowerCase()).toMatch(
         /cover distinct grounded facts|do not collapse multiple facts/,
       );
+    }
+  });
+
+  it("generate text prompts skip document LO lists, not user learning objectives", () => {
+    for (const prompt of [
+      GENERATE_SYSTEM_PROMPT,
+      GENERATE_COMPACT_SYSTEM_PROMPT,
+      generateUserPrompt("sample"),
+    ]) {
+      const p = prompt.toLowerCase();
+      expect(p).toMatch(/document (learning-?objective|objective)/);
+      expect(p).toMatch(/optional suffix|user learning objective/);
     }
   });
 

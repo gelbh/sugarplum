@@ -108,9 +108,16 @@ describe("topicHints prompt suffix", () => {
   it("includes each hint phrase when hints are present", () => {
     const suffix = topicHintsPromptSuffix(["cranial nerves"]);
     expect(suffix.toLowerCase()).toContain("cranial nerves");
-    expect(suffix.toLowerCase()).toMatch(/assess/);
+    expect(suffix.toLowerCase()).toMatch(/steer|cover|prefer/);
     expect(suffix.toLowerCase()).toMatch(/grounded/);
     expect(suffix.toLowerCase()).toMatch(/do not invent/);
+  });
+
+  it("tells the model to skip unmatched objectives without emptying the result", () => {
+    const suffix = topicHintsPromptSuffix(["cranial nerves"]).toLowerCase();
+    expect(suffix).toMatch(/skip (that |the )?objective|unmatched|no grounded support/);
+    expect(suffix).toMatch(/still produce|other grounded/);
+    expect(suffix).toMatch(/empty array|return an empty/);
   });
 
   it("puts each hint on its own bullet line", () => {
@@ -129,7 +136,7 @@ describe("topicHints prompt suffix", () => {
       buildExtraUserSuffix({ topicHints: ["cranial nerves"] }),
     );
     expect(prompt.toLowerCase()).toContain("cranial nerves");
-    expect(prompt.toLowerCase()).toMatch(/assess/);
+    expect(prompt.toLowerCase()).toMatch(/steer|cover|prefer/);
     expect(prompt).toContain("brainstem notes");
   });
 });
@@ -495,7 +502,7 @@ describe("topicHints consumer injection", () => {
     });
 
     expect(userContent.toLowerCase()).toContain("cranial nerves");
-    expect(userContent.toLowerCase()).toMatch(/assess/);
+    expect(userContent.toLowerCase()).toMatch(/steer|cover|prefer/);
   });
 });
 

@@ -128,7 +128,7 @@ describe("buildExtraUserSuffix", () => {
   it("returns topic suffix alone", () => {
     const suffix = buildExtraUserSuffix({ topicHints: ["cranial nerves"] });
     expect(suffix.toLowerCase()).toContain("cranial nerves");
-    expect(suffix.toLowerCase()).toMatch(/assess/);
+    expect(suffix.toLowerCase()).toMatch(/steer|cover|prefer/);
   });
 
   it("returns avoid suffix alone", () => {
