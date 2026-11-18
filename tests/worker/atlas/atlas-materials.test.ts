@@ -256,6 +256,74 @@ describe("atlas course pack materials API", () => {
     ).toBeNull();
   });
 
+  it("promote copies pack file into deck materials without enqueueing a job", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedDeck({
+      id: "deck-a",
+      user_id: "user-a",
+      title: "Cards",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const atlas = await createAtlas(env);
+
+    const paste = await app.request(
+      `/api/atlas/${atlas.id}/materials/paste`,
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          text: "Fasciola hepatica notes for later cards",
+          filename: "notes.txt",
+          source_role: "notes",
+        }),
+      },
+      env,
+    );
+    expect(paste.status).toBe(201);
+    const packMaterial = (await paste.json()) as {
+      id: string;
+      r2_key: string;
+    };
+
+    const jobsBefore = env.getGenerationJobs().length;
+    const promote = await app.request(
+      `/api/atlas/materials/${packMaterial.id}/promote`,
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({ deckId: "deck-a" }),
+      },
+      env,
+    );
+    expect(promote.status).toBe(201);
+    const deckMaterial = (await promote.json()) as {
+      id: string;
+      deck_id: string;
+      kind: string;
+      status: string;
+      r2_key: string;
+      jobId: string | null;
+    };
+    expect(deckMaterial).toMatchObject({
+      deck_id: "deck-a",
+      kind: "paste",
+      status: "ready",
+      jobId: null,
+    });
+    expect(deckMaterial.id).not.toBe(packMaterial.id);
+    expect(deckMaterial.r2_key).not.toBe(packMaterial.r2_key);
+    expect(env.getGenerationJobs()).toHaveLength(jobsBefore);
+    expect(env.getMaterials().some((m) => m.id === deckMaterial.id)).toBe(
+      true,
+    );
+    expect(
+      env.getAtlasMaterials().some((m) => m.id === packMaterial.id),
+    ).toBe(true);
+    expect(await env.MATERIALS.get(deckMaterial.r2_key)).not.toBeNull();
+  });
+
   it("lists and patches source_role", async () => {
     const env = createTestEnv();
     seedOwner(env);

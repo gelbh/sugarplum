@@ -13,8 +13,11 @@ import {
   atlasOcrSidecarKey,
   OCR_PAGE_CHAR_CAP,
   parseOcrPages,
+  readAtlasOcrSidecar,
   writeAtlasOcrSidecar,
+  writeOcrSidecar,
 } from "../materials/ocr-sidecar";
+import { requireOwnedDeck } from "../materials/ownership";
 import { parsePasteMaterialBody } from "../materials/paste-material";
 import { createR2PutUrl } from "../materials/r2-presign";
 import {
@@ -22,6 +25,7 @@ import {
   FILE_READY,
   FILE_UPLOADING,
   PASTE_READY,
+  contentTypeForMaterial,
 } from "../materials/upload";
 import {
   parseUploadUrlRequest,
@@ -37,6 +41,12 @@ import {
 } from "./ownership";
 
 const ATLAS_UPLOAD_KINDS = new Set(["pdf", "pptx"] as const);
+
+function extForAtlasKind(kind: string): string {
+  if (kind === "paste") return "txt";
+  if (kind === "pptx") return "pptx";
+  return "pdf";
+}
 
 export type AtlasMaterialRow = {
   id: string;
@@ -351,6 +361,129 @@ atlasMaterialItemRoutes.post("/:id/complete", async (c) => {
     }),
     jobId: null,
   });
+});
+
+atlasMaterialItemRoutes.post("/:id/promote", async (c) => {
+  const userId = await requireUser(c);
+  const materialId = requireParam(c, "id");
+  const db = getDb(c.env);
+  const material = await requireOwnedAtlasMaterial(db, materialId, userId);
+
+  if (material.status !== FILE_READY && material.status !== PASTE_READY) {
+    throw new HTTPException(409, {
+      message: "Material must be ready before promoting to a deck",
+    });
+  }
+  if (!material.r2_key) {
+    throw new HTTPException(409, {
+      message: "Material has no stored file to promote",
+    });
+  }
+
+  let body: { deckId?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  const deckId =
+    typeof body.deckId === "string" && body.deckId.trim()
+      ? body.deckId.trim()
+      : "";
+  if (!deckId) {
+    throw new HTTPException(400, { message: "deckId required" });
+  }
+  await requireOwnedDeck(db, deckId, userId);
+
+  const src = await c.env.MATERIALS.get(material.r2_key);
+  if (!src) {
+    throw new HTTPException(409, {
+      message: "Pack file not found in storage",
+    });
+  }
+
+  const destMaterialId = newId();
+  const createdAt = new Date().toISOString();
+  const sandboxId = await sandboxWriteUserId(db, userId);
+  const ext = extForAtlasKind(material.kind);
+  const destKey = applySandboxKeyPrefix(
+    sandboxId,
+    `materials/${deckId}/${destMaterialId}.${ext}`,
+  );
+  const bytes = await src.arrayBuffer();
+  await c.env.MATERIALS.put(destKey, bytes, {
+    httpMetadata: {
+      contentType: contentTypeForMaterial(
+        material.kind,
+        destKey,
+        material.filename,
+      ),
+    },
+  });
+
+  const contentHash =
+    material.content_hash ?? (await sha256Hex(bytes));
+
+  await db
+    .prepare(
+      `INSERT INTO materials (
+         id, deck_id, kind, r2_key, filename, page_count, status,
+         created_at, content_hash, source_role
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      destMaterialId,
+      deckId,
+      material.kind,
+      destKey,
+      material.filename,
+      material.page_count,
+      FILE_READY,
+      createdAt,
+      contentHash,
+      material.source_role,
+    )
+    .run();
+
+  if (material.kind === "pdf" || material.kind === "pptx") {
+    try {
+      const sidecar = await readAtlasOcrSidecar(
+        c.env,
+        material.atlas_id,
+        material.id,
+      );
+      if (sidecar?.pages.length) {
+        await writeOcrSidecar(
+          c.env,
+          deckId,
+          destMaterialId,
+          sidecar.pages,
+          sidecar.unstudiedPages ?? [],
+        );
+      }
+    } catch (err) {
+      console.warn("atlas promote OCR sidecar copy failed", err);
+    }
+  }
+
+  return c.json(
+    {
+      id: destMaterialId,
+      deck_id: deckId,
+      kind: material.kind,
+      r2_key: destKey,
+      filename: material.filename,
+      page_count: material.page_count,
+      status: FILE_READY,
+      created_at: createdAt,
+      source_role: material.source_role,
+      jobId: null,
+    },
+    201,
+  );
 });
 
 atlasMaterialItemRoutes.patch("/:id", async (c) => {

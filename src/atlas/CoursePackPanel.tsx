@@ -32,6 +32,7 @@ import {
   requestAtlasMaterialUploadUrl,
   type AtlasPackMaterial,
 } from "./apiMaterials";
+import PromotePackMaterialDialog from "./PromotePackMaterialDialog";
 
 type Props = {
   atlasId: string;
@@ -46,6 +47,8 @@ export default function CoursePackPanel({ atlasId, onFocusChanged }: Props) {
   const [pasteText, setPasteText] = useState("");
   const [pasteRole, setPasteRole] = useState<SourceRole>("tutorial");
   const [pasteFilename, setPasteFilename] = useState("");
+  const [promoteMaterial, setPromoteMaterial] =
+    useState<AtlasPackMaterial | null>(null);
 
   const reload = useCallback(async () => {
     const rows = await listAtlasMaterials(atlasId);
@@ -237,6 +240,13 @@ export default function CoursePackPanel({ atlasId, onFocusChanged }: Props) {
                   </TextField>
                   <Button
                     size="small"
+                    disabled={busy || m.status !== "ready"}
+                    onClick={() => setPromoteMaterial(m)}
+                  >
+                    Copy to deck
+                  </Button>
+                  <Button
+                    size="small"
                     color="inherit"
                     disabled={busy}
                     onClick={() => {
@@ -340,6 +350,18 @@ export default function CoursePackPanel({ atlasId, onFocusChanged }: Props) {
           </Stack>
         </Stack>
       </Collapse>
+      <PromotePackMaterialDialog
+        open={Boolean(promoteMaterial)}
+        atlasId={atlasId}
+        materialId={promoteMaterial?.id ?? null}
+        materialLabel={
+          promoteMaterial?.filename || promoteMaterial?.kind || "material"
+        }
+        onClose={() => setPromoteMaterial(null)}
+        onPromoted={() => {
+          setError(null);
+        }}
+      />
     </Paper>
   );
 }
