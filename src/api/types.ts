@@ -15,6 +15,8 @@ export type AuthUser = {
   email: string;
   google_linked?: boolean;
   is_admin?: boolean;
+  /** Worker `ANATOMY_VIEWER_EMAILS` allowlist; missing → treat as false. */
+  anatomy_viewer?: boolean;
   impersonation?: {
     sourceUserId: string;
     sourceEmail: string;

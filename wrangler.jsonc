@@ -4,7 +4,7 @@
  * Secrets (set via `wrangler secret put`): SECRETS_WRAP_KEY,
  * R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, DOCLING_API_KEY (when DOCLING_URL is set),
  * TURNSTILE_SECRET_KEY (email register/login Siteverify),
- * UNSPLASH_ACCESS_KEY
+ * UNSPLASH_ACCESS_KEY, ADMIN_EMAILS, ANATOMY_VIEWER_EMAILS
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
