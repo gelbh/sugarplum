@@ -28,7 +28,7 @@ import { coverPlaceholderColor } from "../library/board/coverPlaceholder";
 import CoverHeroThumb from "../ui/CoverHeroThumb";
 import { LibraryCreateSubjectPanel } from "../library/LibraryCreateSubjectPanel";
 import MagazineEmptyStage from "../library/MagazineEmptyStage";
-import StageBreadcrumbs from "../library/StageBreadcrumbs";
+import StageBreadcrumbs from "../ui/StageBreadcrumbs";
 import {
   type Deck,
   type DeckStats,

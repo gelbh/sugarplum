@@ -26,7 +26,7 @@ import {
   CreateFlowNoticeFade,
   NoticeUndoButton,
 } from "../library/CreateFlowNotice";
-import StageBreadcrumbs, { type StageCrumb } from "../library/StageBreadcrumbs";
+import StageBreadcrumbs, { type StageCrumb } from "../ui/StageBreadcrumbs";
 import { type EmptyJobDraftCtas } from "../journey/emptyJobDraftCtas";
 import JobProgressPanel from "../progress/JobProgressPanel";
 import { useJobProgress } from "../progress/useJobProgress";
