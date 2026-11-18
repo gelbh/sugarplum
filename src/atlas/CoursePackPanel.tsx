@@ -11,7 +11,11 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { ApiError } from "../api/client";
+import {
+  ApiError,
+  PPTX_MIME,
+  resolveUploadContentType,
+} from "../api/client";
 import { ocrEmptyPdfPages } from "../lib/pdfScanOcr";
 import {
   SOURCE_ROLE_LABELS,
@@ -100,27 +104,37 @@ export default function CoursePackPanel({ atlasId, onFocusChanged }: Props) {
     setBusy(true);
     setError(null);
     try {
+      const contentType = resolveUploadContentType(file);
+      if (
+        contentType !== "application/pdf" &&
+        contentType !== PPTX_MIME
+      ) {
+        setError("Only PDF or PPTX uploads are allowed");
+        return;
+      }
       const role = suggestSourceRole(file.name);
       const { materialId, uploadUrl } = await requestAtlasMaterialUploadUrl(
         atlasId,
         {
           filename: file.name,
-          contentType: file.type || "application/pdf",
+          contentType,
           size: file.size,
           source_role: role,
         },
       );
       const put = await fetch(uploadUrl, {
         method: "PUT",
-        headers: { "content-type": file.type || "application/pdf" },
+        headers: { "content-type": contentType },
         body: file,
       });
       if (!put.ok) throw new Error("Upload to storage failed");
       let ocrPages: Array<{ page: number; text: string }> | undefined;
-      try {
-        ocrPages = await ocrEmptyPdfPages(await file.arrayBuffer());
-      } catch (err) {
-        console.warn("Atlas pack PDF OCR skipped", err);
+      if (contentType === "application/pdf") {
+        try {
+          ocrPages = await ocrEmptyPdfPages(await file.arrayBuffer());
+        } catch (err) {
+          console.warn("Atlas pack PDF OCR skipped", err);
+        }
       }
       await completeAtlasMaterial(
         materialId,
@@ -304,18 +318,18 @@ export default function CoursePackPanel({ atlasId, onFocusChanged }: Props) {
           </Box>
 
           <Stack spacing={1}>
-            <Typography sx={{ fontWeight: 600 }}>Upload PDF</Typography>
+            <Typography sx={{ fontWeight: 600 }}>Upload PDF or PPTX</Typography>
             <Button
               variant="outlined"
               component="label"
               disabled={busy}
               sx={{ alignSelf: "flex-start" }}
             >
-              Choose PDF
+              Choose PDF or PPTX
               <input
                 hidden
                 type="file"
-                accept="application/pdf,.pdf"
+                accept={`application/pdf,.pdf,.pptx,${PPTX_MIME}`}
                 onChange={(ev) => {
                   const file = ev.target.files?.[0];
                   ev.target.value = "";
