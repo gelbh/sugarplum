@@ -41,6 +41,7 @@ import {
 } from "./anatomy/paths";
 import AtlasHub from "./routes/AtlasHub";
 import ParasitologyAtlasBounce from "./routes/ParasitologyAtlasBounce";
+import AnatomyViewerGate from "./anatomy/AnatomyViewerGate";
 import AnatomyHub from "./routes/AnatomyHub";
 import SessionBootstrap from "./session/SessionBootstrap";
 
@@ -137,11 +138,17 @@ function matchPage(path: string, search: string): ReactNode {
 
   const anatomyMatch = matchAnatomyPath(path);
   if (anatomyMatch?.kind === "hub") {
-    return shell(<AnatomyHub />);
+    return shell(
+      <AnatomyViewerGate>
+        <AnatomyHub />
+      </AnatomyViewerGate>,
+    );
   }
   if (anatomyMatch?.kind === "scene") {
     return shell(
-      <AnatomySceneRoute rawSceneId={anatomyMatch.sceneId} search={search} />,
+      <AnatomyViewerGate>
+        <AnatomySceneRoute rawSceneId={anatomyMatch.sceneId} search={search} />
+      </AnatomyViewerGate>,
     );
   }
 
