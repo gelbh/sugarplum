@@ -64,6 +64,10 @@ type Props = {
   figureFiles: File[];
   onFigureFilesChange: (files: File[]) => void;
   onUploadFile: (e?: FormEvent) => void;
+  offerLearningObjectives: boolean;
+  submitLabel: "Continue" | "Start generation";
+  submitDisabled?: boolean;
+  freePathImageHelper: string | null;
   pdfSplitOpen: boolean;
   pdfSplitProgress: string | null;
   onPdfSplitConfirm: () => void;
@@ -118,6 +122,10 @@ export default function AddMaterialWorkshop({
   figureFiles,
   onFigureFilesChange,
   onUploadFile,
+  offerLearningObjectives,
+  submitLabel,
+  submitDisabled = false,
+  freePathImageHelper,
   pdfSplitOpen,
   pdfSplitProgress,
   onPdfSplitConfirm,
@@ -267,6 +275,10 @@ export default function AddMaterialWorkshop({
               onFigureFilesChange={onFigureFilesChange}
               onUploadFile={onUploadFile}
               onBack={onMethodBack}
+              offerLearningObjectives={offerLearningObjectives}
+              submitLabel={submitLabel}
+              submitDisabled={submitDisabled}
+              freePathImageHelper={freePathImageHelper}
             />
           ) : null}
 

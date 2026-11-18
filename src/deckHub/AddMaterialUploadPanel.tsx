@@ -28,6 +28,10 @@ type Props = {
   onFigureFilesChange: (files: File[]) => void;
   onUploadFile: (e?: FormEvent) => void;
   onBack: () => void;
+  offerLearningObjectives: boolean;
+  submitLabel: "Continue" | "Start generation";
+  submitDisabled?: boolean;
+  freePathImageHelper: string | null;
 };
 
 export default function AddMaterialUploadPanel({
@@ -40,6 +44,10 @@ export default function AddMaterialUploadPanel({
   onFigureFilesChange,
   onUploadFile,
   onBack,
+  offerLearningObjectives,
+  submitLabel,
+  submitDisabled = false,
+  freePathImageHelper,
 }: Props) {
   const [dropActive, setDropActive] = useState(false);
   const [dropError, setDropError] = useState<string | null>(null);
@@ -233,7 +241,7 @@ export default function AddMaterialUploadPanel({
             </Stack>
           )}
         </Box>
-        {uploadFile ? (
+        {uploadFile && offerLearningObjectives ? (
           <TextField
             label="Learning objectives (optional)"
             name="alsoCover"
@@ -245,6 +253,11 @@ export default function AddMaterialUploadPanel({
             disabled={materialBusy}
             helperText="One objective or focus topic per line, up to 20"
           />
+        ) : null}
+        {uploadFile && !offerLearningObjectives && freePathImageHelper ? (
+          <Typography variant="body2" color="text.secondary">
+            {freePathImageHelper}
+          </Typography>
         ) : null}
         <Stack
           direction="row"
@@ -264,14 +277,14 @@ export default function AddMaterialUploadPanel({
             <Button
               type="submit"
               variant="contained"
-              disabled={materialBusy}
+              disabled={submitDisabled}
               sx={PRIMARY_PILL_SX}
             >
               {materialBusy
                 ? readingScan
                   ? "Reading scanned pages…"
                   : "Uploading…"
-                : "Start generation"}
+                : submitLabel}
             </Button>
           ) : null}
         </Stack>
