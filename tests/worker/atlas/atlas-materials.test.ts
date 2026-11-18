@@ -1,8 +1,19 @@
 import { describe, expect, it } from "vitest";
+import JSZip from "jszip";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
 import { createTestEnv } from "../test-env";
 import type { AtlasEntryView } from "../../../src/atlas/types";
+
+async function minimalPptx(slideXml: string): Promise<ArrayBuffer> {
+  const zip = new JSZip();
+  zip.file(
+    "[Content_Types].xml",
+    `<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"></Types>`,
+  );
+  zip.file("ppt/slides/slide1.xml", slideXml);
+  return zip.generateAsync({ type: "arraybuffer" });
+}
 
 function seedOwner(env: ReturnType<typeof createTestEnv>) {
   env.seedUser({
@@ -63,6 +74,65 @@ describe("atlas course pack materials API", () => {
       kind: "paste",
     });
     expect(material.jobId).toBeUndefined();
+    expect(env.getGenerationJobs()).toHaveLength(0);
+
+    const list = await app.request(
+      `/api/atlas/${atlas.id}/entries`,
+      { headers: authHeaders() },
+      env,
+    );
+    const body = (await list.json()) as { entries: AtlasEntryView[] };
+    expect(
+      body.entries.find((e) => e.id === "fasciola-hepatica"),
+    ).toMatchObject({
+      tier: "key",
+      reason: expect.stringMatching(/tutorial/i),
+    });
+  });
+
+  it("complete pptx extracts slide text into Focus (not filename-only)", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlas = await createAtlas(env);
+
+    const upload = await app.request(
+      `/api/atlas/${atlas.id}/materials/upload-url`,
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          filename: "Week2_tutorial.pptx",
+          contentType:
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          size: 64,
+          source_role: "tutorial",
+        }),
+      },
+      env,
+    );
+    expect(upload.status).toBe(200);
+    const { materialId, r2Key } = (await upload.json()) as {
+      materialId: string;
+      r2Key: string;
+    };
+    const pptxBytes = await minimalPptx(
+      `<p:sld><p:cSld><p:spTree><a:t>Fasciola hepatica</a:t><a:t>tutorial intro</a:t></p:spTree></p:cSld></p:sld>`,
+    );
+    await env.MATERIALS.put(r2Key, pptxBytes);
+
+    const complete = await app.request(
+      `/api/atlas/materials/${materialId}/complete`,
+      { method: "POST", headers: authHeaders() },
+      env,
+    );
+    expect(complete.status).toBe(200);
+    expect(await complete.json()).toMatchObject({
+      id: materialId,
+      status: "ready",
+      kind: "pptx",
+      page_count: 1,
+      jobId: null,
+    });
     expect(env.getGenerationJobs()).toHaveLength(0);
 
     const list = await app.request(

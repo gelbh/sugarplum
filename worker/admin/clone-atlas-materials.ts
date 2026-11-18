@@ -83,7 +83,7 @@ export async function cloneAtlasMaterials(
         });
       }
     }
-    if (row.kind === "pdf") {
+    if (row.kind === "pdf" || row.kind === "pptx") {
       const ocrKey = `atlas/${sourceAtlasId}/ocr/${row.id}.json`;
       const ocrObj = await env.MATERIALS.get(ocrKey);
       if (ocrObj) {
