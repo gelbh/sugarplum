@@ -1,4 +1,3 @@
-/** Honest notice after upload/paste when the worker may have reused a prior job. */
 export function storedUploadNotice(args: {
   status: string;
   jobId?: string | null;

@@ -118,7 +118,6 @@ export async function findReadyMaterialByContentHash(
 
 export type ContentHashHitAction = "reuse" | "enqueue_existing" | "miss";
 
-/** Same-deck hash hit: reuse prior job, or enqueue on existing material (LO / orphan). */
 export function resolveContentHashHitAction(
   hit: ReadyHashHit | null,
   opts: { topicHints?: string[] | null; attachOnly?: boolean },
