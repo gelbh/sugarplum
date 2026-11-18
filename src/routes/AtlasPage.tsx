@@ -219,6 +219,22 @@ export default function AtlasPage({
                 }
               : undefined
           }
+          atlasId={canMutate ? atlasId : undefined}
+          onFocusUpdated={
+            canMutate
+              ? (next) => {
+                  setLoaded((prev) => {
+                    if (!prev) return prev;
+                    return {
+                      ...prev,
+                      entries: prev.entries.map((e) =>
+                        e.id === next.id ? next : e,
+                      ),
+                    };
+                  });
+                }
+              : undefined
+          }
         />
       </>
     );
