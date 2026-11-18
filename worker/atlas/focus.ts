@@ -75,13 +75,20 @@ export function enrichEntriesWithFocus(
       ...e,
       tier: null,
       reason: null,
+      override: null,
       focusMaterialIds: [],
     }));
   }
   return entries.map((e) => {
     const row = focus.get(focusEntryKey(e));
     if (!row) {
-      return { ...e, tier: null, reason: null, focusMaterialIds: [] };
+      return {
+        ...e,
+        tier: null,
+        reason: null,
+        override: null,
+        focusMaterialIds: [],
+      };
     }
     if (row.override) {
       const pinned = overrideFocusView(row.override);
@@ -89,6 +96,7 @@ export function enrichEntriesWithFocus(
         ...e,
         tier: pinned.tier,
         reason: pinned.reason,
+        override: row.override,
         focusMaterialIds: [],
       };
     }
@@ -96,6 +104,7 @@ export function enrichEntriesWithFocus(
       ...e,
       tier: row.tier,
       reason: row.reason,
+      override: null,
       focusMaterialIds: row.materialIds,
     };
   });

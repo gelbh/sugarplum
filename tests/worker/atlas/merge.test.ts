@@ -295,11 +295,13 @@ describe("overlayAtlas", () => {
     expect(enriched.find((e) => e.id === "fasciola-hepatica")).toMatchObject({
       tier: "key",
       reason: 'Named in tutorial "Week2.pdf"',
+      override: null,
       focusMaterialIds: ["mat-week2"],
     });
     expect(enriched.find((e) => e.id === "toxocara-canis")).toMatchObject({
       tier: null,
       reason: null,
+      override: null,
       focusMaterialIds: [],
     });
   });
@@ -321,6 +323,7 @@ describe("overlayAtlas", () => {
     expect(enriched[0]).toMatchObject({
       tier: "standard",
       reason: "Manual demote",
+      override: "standard",
       focusMaterialIds: [],
     });
   });

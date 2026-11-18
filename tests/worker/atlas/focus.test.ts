@@ -316,6 +316,7 @@ describe("enrichEntriesWithFocus override", () => {
         editedAt: null,
         tier: null,
         reason: null,
+        override: null,
         focusMaterialIds: [],
       },
     ];
@@ -336,6 +337,7 @@ describe("enrichEntriesWithFocus override", () => {
     expect(enriched[0]).toMatchObject({
       tier: "frequent",
       reason: "Manual demote",
+      override: "frequent",
       focusMaterialIds: [],
     });
   });
@@ -383,6 +385,7 @@ describe("atlas focus empty materials and lazy GET", () => {
     ).toMatchObject({
       tier: "key",
       reason: "Manual pin",
+      override: "key",
     });
 
     const demote = await app.request(
@@ -398,6 +401,7 @@ describe("atlas focus empty materials and lazy GET", () => {
     expect(await demote.json()).toMatchObject({
       tier: "standard",
       reason: "Manual demote",
+      override: "standard",
     });
   });
 
@@ -500,12 +504,14 @@ describe("atlas focus empty materials and lazy GET", () => {
     ).toMatchObject({
       tier: null,
       reason: null,
+      override: null,
     });
     expect(
       body.entries.find((e) => e.id === "toxoplasma-gondii"),
     ).toMatchObject({
       tier: "key",
       reason: "Manual pin",
+      override: "key",
     });
   });
 

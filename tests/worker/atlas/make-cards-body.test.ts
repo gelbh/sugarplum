@@ -21,6 +21,7 @@ function entry(partial: Partial<AtlasEntryView> & Pick<AtlasEntryView, "id">): A
     editedAt: null,
     tier: null,
     reason: null,
+    override: null,
     focusMaterialIds: [],
     ...partial,
   };
