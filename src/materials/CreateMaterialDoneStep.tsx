@@ -6,12 +6,14 @@ import RateReviewIcon from "@mui/icons-material/RateReview";
 
 type Props = {
   jobId: string | null;
+  jobReused?: boolean;
   localOnly: boolean;
   setActiveStep: (n: number) => void;
 };
 
 export function CreateMaterialDoneStep({
   jobId,
+  jobReused = false,
   localOnly,
   setActiveStep,
 }: Props) {
@@ -19,7 +21,9 @@ export function CreateMaterialDoneStep({
     <Stack spacing={2}>
       <Typography variant="body1">
         {jobId
-          ? "Generation started. Review drafts next."
+          ? jobReused
+            ? "This file was already on the deck. Review prior drafts next."
+            : "Generation started. Review drafts next."
           : localOnly
             ? "Done. Cards are ready to study."
             : "Done. Add more material or continue when ready."}

@@ -25,6 +25,10 @@ import {
   uploadSubmitLabel,
 } from "../lib/learningObjectivesOffer";
 import {
+  batchAllReused,
+  storedUploadNotice,
+} from "../lib/storedUploadNotice";
+import {
   MAX_FILE_BYTES,
   MAX_IMAGE_BYTES,
   MAX_SPLIT_SOURCE_BYTES,
@@ -53,6 +57,7 @@ type Args = {
   setError: Dispatch<SetStateAction<string | null>>;
   setNotice: Dispatch<SetStateAction<string | null>>;
   setJobId: Dispatch<SetStateAction<string | null>>;
+  setJobReused: Dispatch<SetStateAction<boolean>>;
   setReadingScan: Dispatch<SetStateAction<boolean>>;
 };
 
@@ -68,6 +73,7 @@ export function useCreateMaterialUpload({
   setError,
   setNotice,
   setJobId,
+  setJobReused,
   setReadingScan,
 }: Args) {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -208,24 +214,35 @@ export function useCreateMaterialUpload({
         return;
       }
 
-      const { parts, lastJobId, lastStatus, skippedFigures } = result;
+      const { parts, lastJobId, lastStatus, skippedFigures, materials } =
+        result;
       clearUploadForm();
       setPdfSplitOpen(false);
       setPdfSplitProgress(null);
       const figureNote = skippedFigures ? ` ${FIGURES_SKIPPED_NOTICE}.` : "";
+      const reused = batchAllReused(materials);
       if (lastJobId) {
         setJobId(lastJobId);
+        setJobReused(reused);
         setNotice(
-          parts.length > 1
-            ? `Stored ${parts.length} materials (${lastStatus}). Generation started.${figureNote}`
-            : `Stored file (${lastStatus}). Generation started.`,
+          storedUploadNotice({
+            status: lastStatus,
+            jobId: lastJobId,
+            reused,
+            parts: parts.length,
+            figureNote,
+          }),
         );
         setActiveStep(2);
       } else {
+        setJobReused(false);
         setNotice(
-          parts.length > 1
-            ? `Stored ${parts.length} materials (${lastStatus}).${figureNote}`
-            : `Stored file (${lastStatus}). Open drafts from a prior generate, or upload a new file.`,
+          storedUploadNotice({
+            status: lastStatus,
+            jobId: null,
+            parts: parts.length,
+            figureNote,
+          }),
         );
       }
     } catch (err) {
@@ -264,23 +281,31 @@ export function useCreateMaterialUpload({
         return;
       }
 
-      const { parts, lastJobId, lastStatus } = result;
+      const { parts, lastJobId, lastStatus, materials } = result;
       clearUploadForm();
       setPptxSplitOpen(false);
       setPptxSplitProgress(null);
+      const reused = batchAllReused(materials);
       if (lastJobId) {
         setJobId(lastJobId);
+        setJobReused(reused);
         setNotice(
-          parts.length > 1
-            ? `Stored ${parts.length} materials (${lastStatus}). Generation started.`
-            : `Stored file (${lastStatus}). Generation started.`,
+          storedUploadNotice({
+            status: lastStatus,
+            jobId: lastJobId,
+            reused,
+            parts: parts.length,
+          }),
         );
         setActiveStep(2);
       } else {
+        setJobReused(false);
         setNotice(
-          parts.length > 1
-            ? `Stored ${parts.length} materials (${lastStatus}).`
-            : `Stored file (${lastStatus}). Open drafts from a prior generate, or upload a new file.`,
+          storedUploadNotice({
+            status: lastStatus,
+            jobId: null,
+            parts: parts.length,
+          }),
         );
       }
     } catch (err) {
@@ -325,11 +350,22 @@ export function useCreateMaterialUpload({
       setPdfCompressProgress(null);
       if (result.lastJobId) {
         setJobId(result.lastJobId);
-        setNotice(`Stored file (${result.lastStatus}). Generation started.`);
+        setJobReused(result.material.reused === true);
+        setNotice(
+          storedUploadNotice({
+            status: result.lastStatus,
+            jobId: result.lastJobId,
+            reused: result.material.reused,
+          }),
+        );
         setActiveStep(2);
       } else {
+        setJobReused(false);
         setNotice(
-          `Stored file (${result.lastStatus}). Open drafts from a prior generate, or upload a new file.`,
+          storedUploadNotice({
+            status: result.lastStatus,
+            jobId: null,
+          }),
         );
       }
     } catch (err) {
@@ -347,6 +383,7 @@ export function useCreateMaterialUpload({
     setError(null);
     setNotice(null);
     setJobId(null);
+    setJobReused(false);
     if (!selectedDeckId) {
       setError("Select a deck first");
       return;
@@ -437,9 +474,17 @@ export function useCreateMaterialUpload({
       setAlsoCover("");
       if (material.jobId) {
         setJobId(material.jobId);
-        setNotice(`Stored file (${material.status}). Generation started.`);
+        setJobReused(material.reused === true);
+        setNotice(
+          storedUploadNotice({
+            status: material.status,
+            jobId: material.jobId,
+            reused: material.reused,
+          }),
+        );
         setActiveStep(2);
       } else {
+        setJobReused(false);
         setNotice(
           freePathNoJobNotice({
             hadLearningObjectives,

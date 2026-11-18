@@ -13,7 +13,11 @@ import {
   userHasByoSecret,
 } from "../generation/image-free-path";
 import { normalizeTopicHints } from "../generation/topic-hints";
-import { findReadyMaterialByContentHash, sha256Hex } from "./content-hash";
+import {
+  findReadyMaterialByContentHash,
+  resolveContentHashHitAction,
+  sha256Hex,
+} from "./content-hash";
 import {
   assertSingleCloze,
   assertValidMcqOptions,
@@ -520,8 +524,9 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
 
   const contentHash = await sha256Hex(text);
   const hit = await findReadyMaterialByContentHash(db, deckId, contentHash);
+  const hashAction = resolveContentHashHitAction(hit, { topicHints });
 
-  if (hit?.jobId) {
+  if (hashAction === "reuse" && hit?.jobId) {
     return c.json(
       {
         id: hit.materialId,
@@ -540,7 +545,7 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
     );
   }
 
-  if (hit && !hit.jobId) {
+  if (hashAction === "enqueue_existing" && hit) {
     const jobId = await enqueueGeneration(c.env, {
       materialId: hit.materialId,
       deckId,

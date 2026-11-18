@@ -5,6 +5,7 @@ export type ConsentedPdfCompressResult = {
   status: string;
   manual_occlusion?: boolean;
   r2_key?: string | null;
+  reused?: boolean;
 };
 
 export type RunConsentedPdfCompressUploadArgs<
