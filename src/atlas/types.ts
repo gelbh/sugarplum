@@ -39,6 +39,8 @@ export type AtlasEntryView = {
   editedAt: string | null;
   tier: AtlasTier | null;
   reason: string | null;
+  /** DB focus override when set; pin UI keys off this, not reason copy. */
+  override: AtlasTier | null;
   focusMaterialIds: string[];
 };
 

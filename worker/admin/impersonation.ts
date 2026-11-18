@@ -196,6 +196,11 @@ export async function startImpersonation(
     await cloneUserGraph(db, c.env, sourceUserId, sandboxUserId);
   } catch (err) {
     try {
+      await deleteSandboxR2Prefix(c.env.MATERIALS, sandboxUserId);
+    } catch {
+      /* compensating R2 wipe best-effort */
+    }
+    try {
       await db
         .prepare("DELETE FROM users WHERE id = ? AND sandbox_of IS NOT NULL")
         .bind(sandboxUserId)
@@ -227,6 +232,11 @@ export async function startImpersonation(
   try {
     await writeSessionRecord(c, session.id, next);
   } catch (err) {
+    try {
+      await deleteSandboxR2Prefix(c.env.MATERIALS, sandboxUserId);
+    } catch {
+      /* compensating R2 wipe best-effort */
+    }
     try {
       await db
         .prepare("DELETE FROM users WHERE id = ? AND sandbox_of IS NOT NULL")
