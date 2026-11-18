@@ -290,6 +290,7 @@ export type TestEnv = Env & {
 export function createTestEnv(opts?: {
   secretsWrapKey?: string | null;
   adminEmails?: string;
+  anatomyViewerEmails?: string;
   /** When false, omit EXPORT_QUEUE binding (503 path). Default true. */
   exportQueue?: boolean;
 }): TestEnv {
@@ -4867,6 +4868,7 @@ export function createTestEnv(opts?: {
     TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
     TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
     ADMIN_EMAILS: opts?.adminEmails,
+    ANATOMY_VIEWER_EMAILS: opts?.anatomyViewerEmails,
     seedUser(row) {
       users.set(row.id, {
         ...row,

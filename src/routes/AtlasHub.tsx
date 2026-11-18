@@ -5,10 +5,12 @@ import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { sessionAnatomyViewerEnabled } from "../anatomy/anatomyViewerAccess";
 import { anatomyHubHref } from "../anatomy/paths";
 import HubNavCard from "../components/HubNavCard";
 import { isGuest } from "../guest/session";
 import { isPlainClick, navigate } from "../nav/navigate";
+import { useSession } from "../session/SessionContext";
 import ParasitologyAtlasBounce from "./ParasitologyAtlasBounce";
 
 type DisciplineCard = {
@@ -36,6 +38,8 @@ const CARDS: DisciplineCard[] = [
 export default function AtlasHub() {
   const [openParasitology, setOpenParasitology] = useState(false);
   const guest = isGuest();
+  const { user } = useSession();
+  const showAnatomy = sessionAnatomyViewerEnabled(user);
 
   if (openParasitology) {
     return (
@@ -59,6 +63,10 @@ export default function AtlasHub() {
     setOpenParasitology(true);
   };
 
+  const visibleCards = CARDS.filter(
+    (card) => card.id !== "anatomy" || showAnatomy,
+  );
+
   return (
     <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
       <Stack spacing={3}>
@@ -81,7 +89,7 @@ export default function AtlasHub() {
           useFlexGap
           sx={{ alignItems: "stretch" }}
         >
-          {CARDS.map((card) => {
+          {visibleCards.map((card) => {
             const isAnatomy = card.id === "anatomy";
             const href = isAnatomy ? anatomyHubHref() : guest ? "/login" : null;
             return (

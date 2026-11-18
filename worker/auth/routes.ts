@@ -3,6 +3,7 @@ import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { isAdminUser } from "../admin/allowlist";
+import { isAnatomyViewerEnabled } from "./anatomyViewer";
 import { getDb } from "../db/client";
 import {
   buildGoogleAuthorizeUrl,
@@ -133,7 +134,17 @@ authRoutes.post("/register", async (c) => {
   }
 
   await createSession(c, id);
-  return c.json({ id, email }, 201);
+  return c.json(
+    {
+      id,
+      email,
+      anatomy_viewer: isAnatomyViewerEnabled(
+        email,
+        c.env.ANATOMY_VIEWER_EMAILS,
+      ),
+    },
+    201,
+  );
 });
 
 authRoutes.post("/login", async (c) => {
@@ -177,7 +188,14 @@ authRoutes.post("/login", async (c) => {
   }
 
   await createSession(c, user.id);
-  return c.json({ id: user.id, email: user.email });
+  return c.json({
+    id: user.id,
+    email: user.email,
+    anatomy_viewer: isAnatomyViewerEnabled(
+      user.email,
+      c.env.ANATOMY_VIEWER_EMAILS,
+    ),
+  });
 });
 
 authRoutes.post("/logout", async (c) => {
@@ -216,6 +234,10 @@ authRoutes.get("/me", async (c) => {
         email: actor.email,
         google_linked: actor.oauth_subject != null,
         is_admin: isAdminUser(actor, c.env.ADMIN_EMAILS),
+        anatomy_viewer: isAnatomyViewerEnabled(
+          actor.email,
+          c.env.ANATOMY_VIEWER_EMAILS,
+        ),
       });
     }
     return c.json({
@@ -223,6 +245,10 @@ authRoutes.get("/me", async (c) => {
       email: imp.sourceEmail,
       google_linked: source.oauth_subject != null,
       is_admin: isAdminUser(actor, c.env.ADMIN_EMAILS),
+      anatomy_viewer: isAnatomyViewerEnabled(
+        imp.sourceEmail,
+        c.env.ANATOMY_VIEWER_EMAILS,
+      ),
       impersonation: {
         sourceUserId: imp.sourceUserId,
         sourceEmail: imp.sourceEmail,
@@ -243,6 +269,10 @@ authRoutes.get("/me", async (c) => {
     email: user.email,
     google_linked: user.oauth_subject != null,
     is_admin: isAdminUser(user, c.env.ADMIN_EMAILS),
+    anatomy_viewer: isAnatomyViewerEnabled(
+      user.email,
+      c.env.ANATOMY_VIEWER_EMAILS,
+    ),
   });
 });
 
