@@ -11,7 +11,6 @@ export type AtlasPptxPersistResult = {
   totalPages: number;
 };
 
-/** Extract PPTX slides, cap page text for sidecar round-trip, write atlas OCR sidecar. */
 export async function persistAtlasPptxSidecarFromBytes(
   env: Env,
   atlasId: string,
