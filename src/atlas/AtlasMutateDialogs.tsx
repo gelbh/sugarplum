@@ -19,6 +19,7 @@ import { useAddEntryDialog } from "./useAddEntryDialog";
 import { useEditEntryDialog } from "./useEditEntryDialog";
 import { useEditLifecycleDialog } from "./useEditLifecycleDialog";
 import { useRecentlyDeletedDialog } from "./useRecentlyDeletedDialog";
+import { shouldAutoFocusText } from "../lib/autoFocusText";
 
 type AddProps = {
   open: boolean;
@@ -48,7 +49,7 @@ export function AddEntryDialog({ open, atlasId, onClose, onDone }: AddProps) {
           <Stack spacing={1.5} sx={{ pt: 0.5 }}>
             {error ? <Alert severity="error">{error}</Alert> : null}
             <TextField
-              autoFocus
+              autoFocus={shouldAutoFocusText()}
               label="Common name"
               value={commonName}
               onChange={(ev) => setCommonName(ev.target.value)}
@@ -134,7 +135,7 @@ export function EditEntryDialog({
           <Stack spacing={1.5} sx={{ pt: 0.5 }}>
             {error ? <Alert severity="error">{error}</Alert> : null}
             <TextField
-              autoFocus
+              autoFocus={shouldAutoFocusText()}
               label="Common name"
               value={commonName}
               onChange={(ev) => setCommonName(ev.target.value)}

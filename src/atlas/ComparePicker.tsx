@@ -17,6 +17,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { entryTitles } from "./entryTitles";
 import { browseSections, matchesSearch } from "./filter";
 import type { AtlasEntryView } from "./types";
+import { shouldAutoFocusText } from "../lib/autoFocusText";
 
 type Props = {
   open: boolean;
@@ -56,7 +57,7 @@ export default function ComparePicker({
     if (a === null) {
       setPicked(id);
       setQuery("");
-      searchRef.current?.focus();
+      if (shouldAutoFocusText()) searchRef.current?.focus();
       return;
     }
     onPick(a, id);
@@ -87,7 +88,7 @@ export default function ComparePicker({
           type="search"
           size="small"
           fullWidth
-          autoFocus
+          autoFocus={shouldAutoFocusText()}
           inputRef={searchRef}
           placeholder="Search parasites"
           value={query}
@@ -158,7 +159,7 @@ export default function ComparePicker({
           <Button
             onClick={() => {
               reset();
-              searchRef.current?.focus();
+              if (shouldAutoFocusText()) searchRef.current?.focus();
             }}
             sx={{ mr: "auto" }}
           >
