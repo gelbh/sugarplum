@@ -13,6 +13,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import CoverPickerDialog from "../components/CoverPickerDialog";
+import DialogEyebrow from "../ui/DialogEyebrow";
 import type { StoredCoverRow, Subject } from "../api/client";
 import type {
   LibraryCoverTarget,
@@ -103,20 +104,7 @@ export function LibraryDialogs({
                 "linear-gradient(180deg, rgba(91, 44, 111, 0.12) 0%, transparent 100%)",
             }}
           >
-            <Typography
-              component="p"
-              sx={{
-                m: 0,
-                mb: 0.75,
-                fontSize: "0.6875rem",
-                fontWeight: 500,
-                letterSpacing: "0.22em",
-                textTransform: "uppercase",
-                color: "primary.main",
-              }}
-            >
-              Rename
-            </Typography>
+            <DialogEyebrow label="Rename" />
             <DialogTitle
               sx={{
                 p: 0,
@@ -201,20 +189,7 @@ export function LibraryDialogs({
               "linear-gradient(180deg, rgba(183, 28, 28, 0.1) 0%, transparent 100%)",
           }}
         >
-          <Typography
-            component="p"
-            sx={{
-              m: 0,
-              mb: 0.75,
-              fontSize: "0.6875rem",
-              fontWeight: 500,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: "error.main",
-            }}
-          >
-            Delete
-          </Typography>
+          <DialogEyebrow label="Delete" tone="error" />
           <DialogTitle
             sx={{
               p: 0,

@@ -17,6 +17,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
+import DialogEyebrow from "../ui/DialogEyebrow";
 import AddMaterialWorkshop from "../deckHub/AddMaterialWorkshop";
 import CompositionSpark from "../components/CompositionSpark";
 import CoverPickerDialog from "../components/CoverPickerDialog";
@@ -109,31 +110,6 @@ const GHOST_PILL_SX = {
     bgcolor: "rgba(91, 44, 111, 0.18)",
   },
 } as const;
-
-function DialogEyebrow({
-  label,
-  tone = "primary",
-}: {
-  label: string;
-  tone?: "primary" | "warning";
-}) {
-  return (
-    <Typography
-      component="p"
-      sx={{
-        m: 0,
-        mb: 0.75,
-        fontSize: "0.6875rem",
-        fontWeight: 500,
-        letterSpacing: "0.22em",
-        textTransform: "uppercase",
-        color: `${tone}.main`,
-      }}
-    >
-      {label}
-    </Typography>
-  );
-}
 
 export default function DeckHubPage({ deckId }: Props) {
   const guest = isGuest();
@@ -742,20 +718,7 @@ export default function DeckHubPage({ deckId }: Props) {
                 "linear-gradient(180deg, rgba(91, 44, 111, 0.12) 0%, transparent 100%)",
             }}
           >
-            <Typography
-              component="p"
-              sx={{
-                m: 0,
-                mb: 0.75,
-                fontSize: "0.6875rem",
-                fontWeight: 500,
-                letterSpacing: "0.22em",
-                textTransform: "uppercase",
-                color: "primary.main",
-              }}
-            >
-              Rename
-            </Typography>
+            <DialogEyebrow label="Rename" />
             <DialogTitle
               sx={{
                 p: 0,
@@ -840,20 +803,7 @@ export default function DeckHubPage({ deckId }: Props) {
               "linear-gradient(180deg, rgba(183, 28, 28, 0.1) 0%, transparent 100%)",
           }}
         >
-          <Typography
-            component="p"
-            sx={{
-              m: 0,
-              mb: 0.75,
-              fontSize: "0.6875rem",
-              fontWeight: 500,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: "error.main",
-            }}
-          >
-            Delete
-          </Typography>
+          <DialogEyebrow label="Delete" tone="error" />
           <DialogTitle
             sx={{
               p: 0,
