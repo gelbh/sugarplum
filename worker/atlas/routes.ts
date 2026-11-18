@@ -5,6 +5,10 @@ import { refreshFocusBestEffort } from "./focus";
 import type { AppEnv, AtlasRow } from "./types";
 import { TEMPLATE_KEY, atlasMeta, newId, nowIso } from "./ownership";
 import { atlasItemRoutes } from "./atlas-item-routes";
+import {
+  atlasMaterialItemRoutes,
+  atlasPackRoutes,
+} from "./atlas-material-routes";
 
 export const atlasRoutes = new Hono<AppEnv>();
 
@@ -56,4 +60,6 @@ atlasRoutes.post("/", async (c) => {
   );
 });
 
+atlasRoutes.route("/materials", atlasMaterialItemRoutes);
+atlasRoutes.route("/:atlasId", atlasPackRoutes);
 atlasRoutes.route("/:atlasId", atlasItemRoutes);

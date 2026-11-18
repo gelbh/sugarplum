@@ -40,6 +40,7 @@ import {
 } from "./filter";
 import { isShortcutTarget } from "./keys";
 import { atlasHeroName } from "./paths";
+import MarkImportantControl from "./MarkImportantControl";
 import type { AtlasEntryView, DatasetFields } from "./types";
 
 type FieldKey = keyof DatasetFields;
@@ -57,6 +58,8 @@ type Props = {
   onEditLifecycle?: () => void;
   onReset?: () => void;
   onMakeCards?: () => void;
+  atlasId?: string;
+  onFocusUpdated?: (entry: AtlasEntryView) => void;
 };
 
 const TABS: { key: TabKey; label: string }[] = [
@@ -75,6 +78,8 @@ export default function EntryView({
   onEditLifecycle,
   onReset,
   onMakeCards,
+  atlasId,
+  onFocusUpdated,
 }: Props) {
   const [tab, setTab] = useState<TabKey>("lifecycle");
   // An object per click, so citing the same field twice still scrolls.
@@ -264,6 +269,15 @@ export default function EntryView({
             >
               {meta}
             </Typography>
+          ) : null}
+          {atlasId && onFocusUpdated ? (
+            <Box sx={{ mt: 1.25 }}>
+              <MarkImportantControl
+                atlasId={atlasId}
+                entry={entry}
+                onUpdated={onFocusUpdated}
+              />
+            </Box>
           ) : null}
         </Box>
         <Button

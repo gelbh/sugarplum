@@ -46,6 +46,17 @@ export function ocrSidecarKey(
   );
 }
 
+export function atlasOcrSidecarKey(
+  atlasId: string,
+  materialId: string,
+  sandboxUserId?: string | null,
+): string {
+  return applySandboxKeyPrefix(
+    sandboxUserId,
+    `atlas/${atlasId}/ocr/${materialId}.json`,
+  );
+}
+
 async function sandboxIdForDeck(
   env: Env,
   deckId: string,
@@ -53,6 +64,17 @@ async function sandboxIdForDeck(
   const row = await getDb(env)
     .prepare("SELECT user_id FROM decks WHERE id = ?")
     .bind(deckId)
+    .first<{ user_id: string }>();
+  return row ? sandboxWriteUserId(getDb(env), row.user_id) : null;
+}
+
+async function sandboxIdForAtlas(
+  env: Env,
+  atlasId: string,
+): Promise<string | null> {
+  const row = await getDb(env)
+    .prepare("SELECT user_id FROM atlases WHERE id = ?")
+    .bind(atlasId)
     .first<{ user_id: string }>();
   return row ? sandboxWriteUserId(getDb(env), row.user_id) : null;
 }
@@ -269,6 +291,63 @@ export async function writeOcrSidecar(
   const sandboxId = await sandboxIdForDeck(env, deckId);
   await env.MATERIALS.put(
     ocrSidecarKey(deckId, materialId, sandboxId),
+    JSON.stringify(body),
+    { httpMetadata: { contentType: "application/json" } },
+  );
+}
+
+async function parseSidecarObject(
+  obj: R2ObjectBody,
+): Promise<OcrSidecar | null> {
+  try {
+    const parsed: unknown = JSON.parse(await obj.text());
+    const pages = parseStoredOcrPages(
+      parsed && typeof parsed === "object" && "pages" in parsed
+        ? (parsed as { pages?: unknown }).pages
+        : undefined,
+    );
+    if (!pages) return null;
+    const unstudiedPages = parseUnstudiedPages(
+      parsed && typeof parsed === "object" && "unstudiedPages" in parsed
+        ? (parsed as { unstudiedPages?: unknown }).unstudiedPages
+        : undefined,
+    );
+    return unstudiedPages ? { pages, unstudiedPages } : { pages };
+  } catch {
+    return null;
+  }
+}
+
+export async function readAtlasOcrSidecar(
+  env: Env,
+  atlasId: string,
+  materialId: string,
+): Promise<OcrSidecar | null> {
+  const sandboxId = await sandboxIdForAtlas(env, atlasId);
+  let obj = await env.MATERIALS.get(
+    atlasOcrSidecarKey(atlasId, materialId, sandboxId),
+  );
+  if (!obj && sandboxId) {
+    obj = await env.MATERIALS.get(atlasOcrSidecarKey(atlasId, materialId));
+  }
+  if (!obj) return null;
+  return parseSidecarObject(obj);
+}
+
+export async function writeAtlasOcrSidecar(
+  env: Env,
+  atlasId: string,
+  materialId: string,
+  pages: readonly OcrPageText[],
+  unstudiedPages: readonly number[] = [],
+): Promise<void> {
+  const body: OcrSidecar = { pages: [...pages] };
+  if (unstudiedPages.length > 0) {
+    body.unstudiedPages = [...unstudiedPages];
+  }
+  const sandboxId = await sandboxIdForAtlas(env, atlasId);
+  await env.MATERIALS.put(
+    atlasOcrSidecarKey(atlasId, materialId, sandboxId),
     JSON.stringify(body),
     { httpMetadata: { contentType: "application/json" } },
   );

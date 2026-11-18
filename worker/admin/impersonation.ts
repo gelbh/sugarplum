@@ -193,7 +193,7 @@ export async function startImpersonation(
     .run();
 
   try {
-    await cloneUserGraph(db, sourceUserId, sandboxUserId);
+    await cloneUserGraph(db, c.env, sourceUserId, sandboxUserId);
   } catch (err) {
     try {
       await db

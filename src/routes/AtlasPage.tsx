@@ -22,6 +22,7 @@ import { apiAtlasSource, resetEntry } from "../atlas/apiSource";
 import "../atlas/atlasMotion.css";
 import Cabinet from "../atlas/Cabinet";
 import CompareView from "../atlas/CompareView";
+import CoursePackPanel from "../atlas/CoursePackPanel";
 import EntryView from "../atlas/EntryView";
 import { entryTitles } from "../atlas/entryTitles";
 import MakeCardsDeckDialog from "../atlas/MakeCardsDeckDialog";
@@ -188,28 +189,38 @@ export default function AtlasPage({
     body = <Typography color="text.secondary">Loading Atlas…</Typography>;
   } else if (route.kind === "cabinet") {
     body = (
-      <Cabinet
-        entries={loaded.entries}
-        userKey={loaded.userKey}
-        entryHref={(id) => atlasEntryHref(atlasId, id)}
-        onOpenEntry={(id) => navigate(atlasEntryHref(atlasId, id))}
-        onCompare={(a, b) => navigate(atlasCompareHref(atlasId, a, b))}
-        stagger={!staggered.current}
-        onAddEntry={canMutate ? () => setAddOpen(true) : undefined}
-        onRecentlyDeleted={canMutate ? () => setDeletedOpen(true) : undefined}
-        onEditEntry={canMutate ? (entry) => setEditEntry(entry) : undefined}
-        onMakeCardsFromKey={
-          canMutate
-            ? (keys) => {
-                if (keys.length === 0) return;
-                setMakeCardsDialog({
-                  keys,
-                  title: "Make cards from Key",
-                });
-              }
-            : undefined
-        }
-      />
+      <>
+        {canMutate ? (
+          <CoursePackPanel
+            atlasId={atlasId}
+            onFocusChanged={() => {
+              void reloadEntries();
+            }}
+          />
+        ) : null}
+        <Cabinet
+          entries={loaded.entries}
+          userKey={loaded.userKey}
+          entryHref={(id) => atlasEntryHref(atlasId, id)}
+          onOpenEntry={(id) => navigate(atlasEntryHref(atlasId, id))}
+          onCompare={(a, b) => navigate(atlasCompareHref(atlasId, a, b))}
+          stagger={!staggered.current}
+          onAddEntry={canMutate ? () => setAddOpen(true) : undefined}
+          onRecentlyDeleted={canMutate ? () => setDeletedOpen(true) : undefined}
+          onEditEntry={canMutate ? (entry) => setEditEntry(entry) : undefined}
+          onMakeCardsFromKey={
+            canMutate
+              ? (keys) => {
+                  if (keys.length === 0) return;
+                  setMakeCardsDialog({
+                    keys,
+                    title: "Make cards from Key",
+                  });
+                }
+              : undefined
+          }
+        />
+      </>
     );
   } else if (route.kind === "entry") {
     const entry =
@@ -242,6 +253,22 @@ export default function AtlasPage({
               }
             : undefined
         }
+        onFocusUpdated={
+          canMutate
+            ? (next) => {
+                setLoaded((prev) => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    entries: prev.entries.map((e) =>
+                      e.id === next.id ? next : e,
+                    ),
+                  };
+                });
+              }
+            : undefined
+        }
+        atlasId={canMutate ? atlasId : undefined}
       />
     ) : (
       <Notice

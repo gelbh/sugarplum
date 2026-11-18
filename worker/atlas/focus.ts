@@ -1,16 +1,12 @@
 import type { Env } from "../env";
-import { readOcrSidecar } from "../materials/ocr-sidecar";
-import {
-  isSourceRole,
-  type SourceRole,
-} from "../../src/lib/sourceRole";
-import {
-  scanFocus,
-  type FocusMaterial,
-} from "../../src/atlas/focusScan";
 import type { AtlasEntryView, AtlasTier } from "../../src/atlas/types";
+import { scanFocus } from "../../src/atlas/focusScan";
 import { loadParasiteDataset } from "./datasets/parasites";
 import { overlayAtlas, type OverlayRow } from "./merge";
+import {
+  countReadyAtlasMaterials,
+  loadAtlasFocusMaterials,
+} from "./atlas-materials";
 
 export type FocusRow = {
   entry_key: string;
@@ -42,18 +38,6 @@ function parseMaterialIds(json: string): string[] {
   }
 }
 
-type MaterialScanRow = {
-  id: string;
-  deck_id: string;
-  kind: string;
-  r2_key: string | null;
-  filename: string | null;
-  source_role: string | null;
-  status: string;
-};
-
-const READY_STATUS = "ready";
-
 type EntryOverlayRow = {
   id: string;
   origin_key: string | null;
@@ -64,8 +48,6 @@ type EntryOverlayRow = {
   edited_at: string | null;
   deleted_at: string | null;
 };
-
-const SCAN_KINDS = new Set(["pdf", "paste", "pptx"]);
 
 export function focusEntryKey(entry: {
   id: string;
@@ -142,58 +124,6 @@ export async function loadFocusMap(
   return map;
 }
 
-async function loadUserMaterials(
-  db: D1Database,
-  userId: string,
-): Promise<MaterialScanRow[]> {
-  const { results } = await db
-    .prepare(
-      `SELECT m.id, m.deck_id, m.kind, m.r2_key, m.filename, m.source_role, m.status
-       FROM materials m
-       INNER JOIN decks d ON d.id = m.deck_id
-       WHERE d.user_id = ?`,
-    )
-    .bind(userId)
-    .all<MaterialScanRow>();
-  return (results ?? []).filter(
-    (m) => SCAN_KINDS.has(m.kind) && m.status === READY_STATUS,
-  );
-}
-
-async function toFocusMaterial(
-  env: Env,
-  row: MaterialScanRow,
-): Promise<FocusMaterial> {
-  const sourceRole: SourceRole = isSourceRole(row.source_role)
-    ? row.source_role
-    : "lecture";
-  const pages: FocusMaterial["pages"] = [];
-
-  if (row.kind === "paste" && row.r2_key) {
-    try {
-      const obj = await env.MATERIALS.get(row.r2_key);
-      const text = obj ? (await obj.text()).trim() : "";
-      if (text) pages.push({ page: 1, text });
-    } catch {
-      /* filename-only fallback */
-    }
-  } else if (row.kind === "pdf") {
-    const sidecar = await readOcrSidecar(env, row.deck_id, row.id);
-    if (sidecar?.pages.length) {
-      for (const p of sidecar.pages) {
-        pages.push({ page: p.page, text: p.text });
-      }
-    }
-  }
-
-  return {
-    id: row.id,
-    filename: row.filename,
-    sourceRole,
-    pages,
-  };
-}
-
 async function loadMergedEntries(
   db: D1Database,
   atlasId: string,
@@ -233,10 +163,10 @@ export async function refreshAtlasFocus(
   if (!atlas) return;
 
   const existing = await loadFocusMap(db, atlasId);
-  const materials = await loadUserMaterials(db, atlas.user_id);
+  const focusMaterials = await loadAtlasFocusMaterials(db, env, atlasId);
   const now = new Date().toISOString();
 
-  if (materials.length === 0) {
+  if (focusMaterials.length === 0) {
     // Keep manual pins when nothing is scannable so Focus PATCH sticks.
     for (const [entryKey, row] of existing) {
       if (row.override != null) {
@@ -268,9 +198,6 @@ export async function refreshAtlasFocus(
     return;
   }
 
-  const focusMaterials = await Promise.all(
-    materials.map((m) => toFocusMaterial(env, m)),
-  );
   const entries = await loadMergedEntries(db, atlasId);
   const keep = new Set<string>();
 
@@ -321,26 +248,6 @@ export async function refreshAtlasFocus(
   }
 }
 
-export async function refreshAtlasFocusForDeck(
-  db: D1Database,
-  env: Env,
-  deckId: string,
-): Promise<void> {
-  const deck = await db
-    .prepare("SELECT user_id FROM decks WHERE id = ?")
-    .bind(deckId)
-    .first<{ user_id: string }>();
-  if (!deck) return;
-  const atlas = await db
-    .prepare(
-      "SELECT id FROM atlases WHERE user_id = ? AND template_key = 'parasite'",
-    )
-    .bind(deck.user_id)
-    .first<{ id: string }>();
-  if (!atlas) return;
-  await refreshFocusBestEffort(db, env, { atlasId: atlas.id });
-}
-
 export async function refreshFocusBestEffort(
   db: D1Database,
   env: Env,
@@ -364,12 +271,13 @@ export async function listEntriesWithFocus(
 ): Promise<AtlasEntryView[]> {
   let focus = await loadFocusMap(db, opts.atlasId);
   const missing = opts.entries.some((e) => !focus.has(focusEntryKey(e)));
-  if (missing) {
-    const materials = await loadUserMaterials(db, opts.userId);
-    if (materials.length > 0) {
-      await refreshFocusBestEffort(db, env, { atlasId: opts.atlasId });
-      focus = await loadFocusMap(db, opts.atlasId);
-    }
+  const readyCount = await countReadyAtlasMaterials(db, opts.atlasId);
+  // Pack-only Focus: empty pack must clear stale deck-era automatic rows
+  // (complete maps would otherwise skip refresh forever). Incomplete maps
+  // still scan when the pack has ready materials.
+  if ((missing && readyCount > 0) || (focus.size > 0 && readyCount === 0)) {
+    await refreshFocusBestEffort(db, env, { atlasId: opts.atlasId });
+    focus = await loadFocusMap(db, opts.atlasId);
   }
   return enrichEntriesWithFocus(opts.entries, focus);
 }

@@ -58,12 +58,26 @@ export type AtlasFocusRow = {
   updated_at: string;
 };
 
+export type AtlasMaterialRow = {
+  id: string;
+  atlas_id: string;
+  kind: string;
+  r2_key: string | null;
+  filename: string | null;
+  page_count: number | null;
+  status: string;
+  created_at: string;
+  content_hash: string | null;
+  source_role: string;
+};
+
 export type AtlasTestState = {
   atlases: Map<string, AtlasRow>;
   entries: Map<string, AtlasEntryRow>;
   refs: Map<string, AtlasRefRow>;
   images: Map<string, AtlasImageRow>;
   focus: Map<string, AtlasFocusRow>;
+  materials: Map<string, AtlasMaterialRow>;
 };
 
 export function initAtlasState(): AtlasTestState {
@@ -73,6 +87,7 @@ export function initAtlasState(): AtlasTestState {
     refs: new Map(),
     images: new Map(),
     focus: new Map(),
+    materials: new Map(),
   };
 }
 
@@ -139,6 +154,20 @@ export function atlasFirst<T>(
     const [atlasId, entryKey] = bound as [string, string];
     const row = state.focus.get(focusKey(atlasId, entryKey));
     return (row as T) ?? null;
+  }
+
+  if (
+    normalized.includes("FROM atlas_materials m") &&
+    normalized.includes("INNER JOIN atlases a") &&
+    normalized.includes("WHERE m.id =") &&
+    normalized.includes("a.user_id =")
+  ) {
+    const [materialId, userId] = bound as [string, string];
+    const row = state.materials.get(materialId);
+    if (!row) return null;
+    const atlas = state.atlases.get(row.atlas_id);
+    if (!atlas || atlas.user_id !== userId) return null;
+    return row as T;
   }
 
   if (
@@ -228,6 +257,22 @@ export function atlasAll<T>(
   ) {
     const atlasId = bound[0] as string;
     const rows = [...state.focus.values()].filter((r) => r.atlas_id === atlasId);
+    return { results: rows as T[] };
+  }
+
+  if (
+    normalized.includes("FROM atlas_materials") &&
+    normalized.includes("WHERE atlas_id =")
+  ) {
+    const atlasId = bound[0] as string;
+    const rows = [...state.materials.values()].filter(
+      (r) => r.atlas_id === atlasId,
+    );
+    if (normalized.includes("ORDER BY created_at DESC")) {
+      rows.sort((a, b) => b.created_at.localeCompare(a.created_at));
+    } else if (normalized.includes("ORDER BY created_at ASC")) {
+      rows.sort((a, b) => a.created_at.localeCompare(b.created_at));
+    }
     return { results: rows as T[] };
   }
 
@@ -545,6 +590,119 @@ export function atlasRun(
       updated_at,
     });
     return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+
+  if (normalized.startsWith("INSERT INTO atlas_materials")) {
+    if (normalized.includes("content_hash")) {
+      const [
+        id,
+        atlas_id,
+        kind,
+        r2_key,
+        filename,
+        page_count,
+        status,
+        created_at,
+        content_hash,
+        source_role,
+      ] = bound as [
+        string,
+        string,
+        string,
+        string | null,
+        string | null,
+        number | null,
+        string,
+        string,
+        string | null,
+        string,
+      ];
+      state.materials.set(id, {
+        id,
+        atlas_id,
+        kind,
+        r2_key,
+        filename,
+        page_count,
+        status,
+        created_at,
+        content_hash,
+        source_role,
+      });
+    } else {
+      const [
+        id,
+        atlas_id,
+        kind,
+        r2_key,
+        filename,
+        page_count,
+        status,
+        created_at,
+        source_role,
+      ] = bound as [
+        string,
+        string,
+        string,
+        string | null,
+        string | null,
+        number | null,
+        string,
+        string,
+        string,
+      ];
+      state.materials.set(id, {
+        id,
+        atlas_id,
+        kind,
+        r2_key,
+        filename,
+        page_count,
+        status,
+        created_at,
+        content_hash: null,
+        source_role,
+      });
+    }
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+
+  if (
+    normalized.startsWith(
+      "UPDATE atlas_materials SET status = ?, content_hash = ?",
+    )
+  ) {
+    const [status, content_hash, id, expectedStatus] = bound as [
+      string,
+      string | null,
+      string,
+      string,
+    ];
+    const row = state.materials.get(id);
+    if (!row || row.status !== expectedStatus) {
+      return { success: true, meta: { changes: 0 } } as D1Result;
+    }
+    state.materials.set(id, { ...row, status, content_hash });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+
+  if (
+    normalized.startsWith("UPDATE atlas_materials SET source_role = ? WHERE id =")
+  ) {
+    const [source_role, id] = bound as [string, string];
+    const row = state.materials.get(id);
+    if (!row) return { success: true, meta: { changes: 0 } } as D1Result;
+    state.materials.set(id, { ...row, source_role });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+
+  if (normalized.startsWith("DELETE FROM atlas_materials WHERE id =")) {
+    const [id] = bound as [string];
+    const existed = state.materials.delete(id);
+    return {
+      success: true,
+      meta: { changes: existed ? 1 : 0 },
+    } as D1Result;
   }
 
   return null;

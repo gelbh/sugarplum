@@ -1,5 +1,8 @@
 /** Clone a learner's D1 graph into a sandbox user (new ids; keep source R2 keys). */
 
+import type { Env } from "../env";
+import { applySandboxKeyPrefix } from "./sandbox-r2";
+
 export type CloneLimits = { maxCards: number };
 
 export class CloneLimitExceededError extends Error {
@@ -707,12 +710,14 @@ async function cloneGamification(
 
 async function cloneAtlases(
   db: D1Database,
+  env: Env,
   sourceUserId: string,
   sandboxUserId: string,
   materialMap: IdMap,
 ): Promise<void> {
   const atlasMap: IdMap = new Map();
   const entryMap: IdMap = new Map();
+  const atlasMaterialMap: IdMap = new Map();
 
   const { results: atlases } = await db
     .prepare(
@@ -734,6 +739,87 @@ async function cloneAtlases(
       )
       .bind(atlasId, sandboxUserId, atlas.template_key, atlas.created_at)
       .run();
+
+    const { results: packRows } = await db
+      .prepare(
+        `SELECT id, atlas_id, kind, r2_key, filename, page_count, status,
+                created_at, content_hash, source_role
+         FROM atlas_materials WHERE atlas_id = ?
+         ORDER BY created_at ASC`.replace(/\s+/g, " "),
+      )
+      .bind(atlas.id)
+      .all<{
+        id: string;
+        atlas_id: string;
+        kind: string;
+        r2_key: string | null;
+        filename: string | null;
+        page_count: number | null;
+        status: string;
+        created_at: string;
+        content_hash: string | null;
+        source_role: string;
+      }>();
+    const packStmts: D1PreparedStatement[] = [];
+    for (const row of packRows ?? []) {
+      const materialId = mapId(atlasMaterialMap, row.id);
+      // Never keep the source user's R2 key on the sandbox row: a later
+      // delete would target production objects if get() missed a race.
+      let r2Key: string | null = null;
+      if (row.r2_key) {
+        const src = await env.MATERIALS.get(row.r2_key);
+        if (src) {
+          const ext =
+            row.kind === "paste"
+              ? "txt"
+              : row.kind === "pptx"
+                ? "pptx"
+                : "pdf";
+          r2Key = applySandboxKeyPrefix(
+            sandboxUserId,
+            `atlas/${atlasId}/${materialId}.${ext}`,
+          );
+          await env.MATERIALS.put(r2Key, await src.arrayBuffer(), {
+            httpMetadata: src.httpMetadata,
+          });
+        }
+      }
+      if (row.kind === "pdf") {
+        const ocrKey = `atlas/${atlas.id}/ocr/${row.id}.json`;
+        const ocrObj = await env.MATERIALS.get(ocrKey);
+        if (ocrObj) {
+          const destOcr = applySandboxKeyPrefix(
+            sandboxUserId,
+            `atlas/${atlasId}/ocr/${materialId}.json`,
+          );
+          await env.MATERIALS.put(destOcr, await ocrObj.arrayBuffer(), {
+            httpMetadata: ocrObj.httpMetadata,
+          });
+        }
+      }
+      packStmts.push(
+        db
+          .prepare(
+            `INSERT INTO atlas_materials (
+               id, atlas_id, kind, r2_key, filename, page_count, status,
+               created_at, content_hash, source_role
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`.replace(/\s+/g, " "),
+          )
+          .bind(
+            materialId,
+            atlasId,
+            row.kind,
+            r2Key,
+            row.filename,
+            row.page_count,
+            row.status,
+            row.created_at,
+            row.content_hash,
+            row.source_role,
+          ),
+      );
+    }
+    await runBatches(db, packStmts);
 
     const { results: entries } = await db
       .prepare(
@@ -906,9 +992,12 @@ async function cloneAtlases(
         const parsed = JSON.parse(focus.material_ids_json) as unknown;
         if (Array.isArray(parsed)) {
           materialIdsJson = JSON.stringify(
-            parsed.map((id) =>
-              typeof id === "string" ? (materialMap.get(id) ?? id) : id,
-            ),
+            parsed.map((id) => {
+              if (typeof id !== "string") return id;
+              return (
+                atlasMaterialMap.get(id) ?? materialMap.get(id) ?? id
+              );
+            }),
           );
         }
       } catch {
@@ -990,6 +1079,7 @@ async function cloneCalendarLinks(
  */
 export async function cloneUserGraph(
   db: D1Database,
+  env: Env,
   sourceUserId: string,
   sandboxUserId: string,
   limits?: CloneLimits,
@@ -1031,7 +1121,7 @@ export async function cloneUserGraph(
     deckMap,
   );
   await cloneGamification(db, sourceUserId, sandboxUserId);
-  await cloneAtlases(db, sourceUserId, sandboxUserId, materialMap);
+  await cloneAtlases(db, env, sourceUserId, sandboxUserId, materialMap);
   await cloneCalendarLinks(db, sourceUserId, sandboxUserId, subjectMap);
 
   return { cardCount };
