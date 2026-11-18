@@ -229,4 +229,102 @@ describe("same-deck content-hash generate gate", () => {
     expect(env.getR2Keys()).not.toContain("materials/deck-a/mat-upload.pdf");
     expect(env.getGenerationJobs()).toHaveLength(1);
   });
+
+  it("enqueues a new job when paste hash-hits but topicHints are set", async () => {
+    const env = createTestEnv();
+    const { deckId, cookie } = seedOwnerDeck(env);
+
+    const first = await app.request(
+      `/api/decks/${deckId}/materials/paste`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json", cookie },
+        body: JSON.stringify({ text: "same notes" }),
+      },
+      env,
+    );
+    const firstBody = (await first.json()) as { id: string; jobId: string };
+
+    const second = await app.request(
+      `/api/decks/${deckId}/materials/paste`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json", cookie },
+        body: JSON.stringify({
+          text: "same notes",
+          topicHints: ["Focus on virulence factors"],
+        }),
+      },
+      env,
+    );
+    expect(second.status).toBe(200);
+    const secondBody = (await second.json()) as {
+      id: string;
+      jobId: string;
+      reused?: boolean;
+    };
+    expect(secondBody.id).toBe(firstBody.id);
+    expect(secondBody.jobId).not.toBe(firstBody.jobId);
+    expect(secondBody.reused).not.toBe(true);
+    expect(env.getGenerationJobs()).toHaveLength(2);
+    const steered = env
+      .getGenerationJobs()
+      .find((j) => j.id === secondBody.jobId);
+    expect(steered?.topic_hints_json).toContain("virulence");
+  });
+
+  it("enqueues a new job when complete hash-hits but topicHints are set", async () => {
+    const env = createTestEnv();
+    const { deckId, cookie } = seedOwnerDeck(env);
+    const bytes = "pdf-bytes-with-lo";
+
+    const firstPaste = await app.request(
+      `/api/decks/${deckId}/materials/paste`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json", cookie },
+        body: JSON.stringify({ text: bytes }),
+      },
+      env,
+    );
+    const prior = (await firstPaste.json()) as { id: string; jobId: string };
+
+    env.seedMaterial({
+      id: "mat-upload-lo",
+      deck_id: deckId,
+      kind: "pdf",
+      r2_key: "materials/deck-a/mat-upload-lo.pdf",
+      filename: "lecture.pdf",
+      page_count: null,
+      status: "uploading",
+      created_at: "2026-01-02T00:00:00.000Z",
+    });
+    env.seedR2("materials/deck-a/mat-upload-lo.pdf", bytes);
+
+    const complete = await app.request(
+      "/api/materials/mat-upload-lo/complete",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json", cookie },
+        body: JSON.stringify({
+          topicHints: ["Cover Gram stain workflow"],
+        }),
+      },
+      env,
+    );
+    expect(complete.status).toBe(200);
+    const body = (await complete.json()) as {
+      id: string;
+      jobId: string;
+      reused?: boolean;
+    };
+    expect(body.id).toBe(prior.id);
+    expect(body.jobId).not.toBe(prior.jobId);
+    expect(body.reused).not.toBe(true);
+    expect(env.getMaterials().find((m) => m.id === "mat-upload-lo")).toBeUndefined();
+    expect(env.getGenerationJobs()).toHaveLength(2);
+    const steered = env.getGenerationJobs().find((j) => j.id === body.jobId);
+    expect(steered?.material_id).toBe(prior.id);
+    expect(steered?.topic_hints_json).toContain("Gram stain");
+  });
 });

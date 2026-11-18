@@ -115,3 +115,17 @@ export async function findReadyMaterialByContentHash(
 
   return best;
 }
+
+export type ContentHashHitAction = "reuse" | "enqueue_existing" | "miss";
+
+export function resolveContentHashHitAction(
+  hit: ReadyHashHit | null,
+  opts: { topicHints?: string[] | null; attachOnly?: boolean },
+): ContentHashHitAction {
+  if (!hit) return "miss";
+  const steerExisting =
+    Boolean(opts.topicHints?.length) && opts.attachOnly !== true;
+  if (hit.jobId && !steerExisting) return "reuse";
+  if (!hit.jobId || steerExisting) return "enqueue_existing";
+  return "miss";
+}

@@ -27,6 +27,10 @@ import {
   uploadSubmitLabel,
 } from "../lib/learningObjectivesOffer";
 import {
+  batchAllReused,
+  storedUploadNotice,
+} from "../lib/storedUploadNotice";
+import {
   MAX_FILE_BYTES,
   MAX_IMAGE_BYTES,
   MAX_SPLIT_SOURCE_BYTES,
@@ -232,6 +236,13 @@ export function useAddMaterialWorkshop({
       setPasteFilename("");
       setAlsoCover("");
       if (material.jobId) {
+        setMaterialNotice(
+          storedUploadNotice({
+            status: material.status,
+            jobId: material.jobId,
+            reused: material.reused,
+          }),
+        );
         window.location.assign(
           `/jobs/${encodeURIComponent(material.jobId)}/drafts`,
         );
@@ -326,11 +337,16 @@ export function useAddMaterialWorkshop({
       setPdfSplitOpen(false);
       setPdfSplitProgress(null);
       const figureNote = skippedFigures ? ` ${FIGURES_SKIPPED_NOTICE}.` : "";
+      const reused = batchAllReused(materials);
       if (lastJobId) {
         setMaterialNotice(
-          parts.length > 1
-            ? `Stored ${parts.length} materials (${lastStatus}). Generation started.${figureNote}`
-            : `Stored file (${lastStatus}). Generation started.`,
+          storedUploadNotice({
+            status: lastStatus,
+            jobId: lastJobId,
+            reused,
+            parts: parts.length,
+            figureNote,
+          }),
         );
         window.location.assign(`/jobs/${encodeURIComponent(lastJobId)}/drafts`);
         return;
@@ -341,9 +357,12 @@ export function useAddMaterialWorkshop({
         return;
       }
       setMaterialNotice(
-        parts.length > 1
-          ? `Stored ${parts.length} materials (${lastStatus}).${figureNote}`
-          : `Stored file (${lastStatus}).`,
+        storedUploadNotice({
+          status: lastStatus,
+          jobId: null,
+          parts: parts.length,
+          figureNote,
+        }),
       );
       await Promise.all([refreshDraftJobs(), refreshMaterials()]);
     } catch (err) {
@@ -402,11 +421,15 @@ export function useAddMaterialWorkshop({
       setAlsoCover("");
       setPptxSplitOpen(false);
       setPptxSplitProgress(null);
+      const reused = batchAllReused(materials);
       if (lastJobId) {
         setMaterialNotice(
-          parts.length > 1
-            ? `Stored ${parts.length} materials (${lastStatus}). Generation started.`
-            : `Stored file (${lastStatus}). Generation started.`,
+          storedUploadNotice({
+            status: lastStatus,
+            jobId: lastJobId,
+            reused,
+            parts: parts.length,
+          }),
         );
         window.location.assign(`/jobs/${encodeURIComponent(lastJobId)}/drafts`);
         return;
@@ -417,9 +440,11 @@ export function useAddMaterialWorkshop({
         return;
       }
       setMaterialNotice(
-        parts.length > 1
-          ? `Stored ${parts.length} materials (${lastStatus}).`
-          : `Stored file (${lastStatus}).`,
+        storedUploadNotice({
+          status: lastStatus,
+          jobId: null,
+          parts: parts.length,
+        }),
       );
       await Promise.all([refreshDraftJobs(), refreshMaterials()]);
     } catch (err) {
@@ -498,14 +523,23 @@ export function useAddMaterialWorkshop({
       }
       if (result.lastJobId) {
         setMaterialNotice(
-          `Stored file (${result.lastStatus}). Generation started.`,
+          storedUploadNotice({
+            status: result.lastStatus,
+            jobId: result.lastJobId,
+            reused: result.material.reused,
+          }),
         );
         window.location.assign(
           `/jobs/${encodeURIComponent(result.lastJobId)}/drafts`,
         );
         return;
       }
-      setMaterialNotice(`Stored file (${result.lastStatus}).`);
+      setMaterialNotice(
+        storedUploadNotice({
+          status: result.lastStatus,
+          jobId: null,
+        }),
+      );
       await Promise.all([refreshDraftJobs(), refreshMaterials()]);
     } catch (err) {
       setMaterialError(
@@ -603,7 +637,11 @@ export function useAddMaterialWorkshop({
       setAlsoCover("");
       if (material.jobId) {
         setMaterialNotice(
-          `Stored file (${material.status}). Generation started.`,
+          storedUploadNotice({
+            status: material.status,
+            jobId: material.jobId,
+            reused: material.reused,
+          }),
         );
         window.location.assign(
           `/jobs/${encodeURIComponent(material.jobId)}/drafts`,
@@ -619,7 +657,12 @@ export function useAddMaterialWorkshop({
         await Promise.all([refreshDraftJobs(), refreshMaterials()]);
         return;
       }
-      setMaterialNotice(`Stored file (${material.status}).`);
+      setMaterialNotice(
+        storedUploadNotice({
+          status: material.status,
+          jobId: null,
+        }),
+      );
       await Promise.all([refreshDraftJobs(), refreshMaterials()]);
     } catch (err) {
       setMaterialError(

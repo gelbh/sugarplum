@@ -12,6 +12,7 @@ import {
 } from "../generation/image-free-path";
 import {
   findReadyMaterialByContentHash,
+  resolveContentHashHitAction,
   sha256Hex,
 } from "./content-hash";
 import { parseCompleteMaterialBody } from "./complete-body";
@@ -479,7 +480,11 @@ materialRoutes.post("/:id/complete", async (c) => {
       contentHash,
       materialId,
     );
-    if (hit?.jobId) {
+    const hashAction = resolveContentHashHitAction(hit, {
+      topicHints,
+      attachOnly,
+    });
+    if (hashAction === "reuse" && hit?.jobId) {
       await discardProvisionalMaterialUpload(c.env, material, userId);
       return c.json({
         id: hit.materialId,
@@ -495,7 +500,7 @@ materialRoutes.post("/:id/complete", async (c) => {
         reused: true,
       });
     }
-    if (hit && !hit.jobId) {
+    if (hashAction === "enqueue_existing" && hit) {
       await discardProvisionalMaterialUpload(c.env, material, userId);
       const { jobId, manual_occlusion } = await enqueueOrManualOcclusion(
         c.env,

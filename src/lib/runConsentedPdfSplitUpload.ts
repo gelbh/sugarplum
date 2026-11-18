@@ -5,6 +5,7 @@ export type ConsentedPdfSplitPartResult = {
   status: string;
   manual_occlusion?: boolean;
   r2_key?: string | null;
+  reused?: boolean;
 };
 
 export type RunConsentedPdfSplitUploadArgs<T extends ConsentedPdfSplitPartResult> =

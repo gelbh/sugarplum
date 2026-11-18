@@ -73,6 +73,7 @@ export default function CreateMaterialStepper({
   const [busy, setBusy] = useState(false);
   const [readingScan, setReadingScan] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [jobReused, setJobReused] = useState(false);
   const [sourceRole, setSourceRole] = useState<SourceRole>("lecture");
   const [alsoCover, setAlsoCover] = useState("");
   const [tab, setTab] = useState<"paste" | "file">("paste");
@@ -118,6 +119,7 @@ export default function CreateMaterialStepper({
     setError,
     setNotice,
     setJobId,
+    setJobReused,
     setReadingScan,
   });
 
@@ -430,6 +432,7 @@ export default function CreateMaterialStepper({
         {activeStep === 2 ? (
           <CreateMaterialDoneStep
             jobId={jobId}
+            jobReused={jobReused}
             localOnly={localOnly}
             setActiveStep={setActiveStep}
           />

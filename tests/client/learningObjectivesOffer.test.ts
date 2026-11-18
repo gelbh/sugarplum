@@ -11,6 +11,10 @@ import {
   uploadSubmitDisabled,
   uploadSubmitLabel,
 } from "../../src/lib/learningObjectivesOffer";
+import {
+  batchAllReused,
+  storedUploadNotice,
+} from "../../src/lib/storedUploadNotice";
 
 describe("learningObjectivesOffer", () => {
   it("recognizes jpeg png webp only", () => {
@@ -105,5 +109,27 @@ describe("learningObjectivesOffer", () => {
       createFreePathImageNotice({ hadLearningObjectives: true }).toLowerCase(),
     ).toContain("learning objectives");
     expect(CREATE_FREE_PATH_IMAGE_NOTICE.toLowerCase()).toContain("deck hub");
+  });
+
+  it("does not claim generation started when content-hash reused a prior job", () => {
+    const notice = storedUploadNotice({
+      status: "ready",
+      jobId: "job-old",
+      reused: true,
+    });
+    expect(notice.toLowerCase()).toContain("already");
+    expect(notice.toLowerCase()).not.toContain("generation started");
+  });
+
+  it("keeps generation-started copy for a fresh job", () => {
+    expect(
+      storedUploadNotice({ status: "ready", jobId: "job-new", reused: false }),
+    ).toBe("Stored file (ready). Generation started.");
+  });
+
+  it("treats mixed batches as not pure reuse", () => {
+    expect(batchAllReused([{ reused: true }, { reused: false }])).toBe(false);
+    expect(batchAllReused([{ reused: true }, { reused: true }])).toBe(true);
+    expect(batchAllReused([])).toBe(false);
   });
 });
