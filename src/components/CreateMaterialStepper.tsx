@@ -360,7 +360,13 @@ export default function CreateMaterialStepper({
                     PDF/PPTX max 50MB; images max 8MB. Upload starts generation
                     when complete.
                   </Typography>
-                  {alsoCoverField}
+                  {upload.offerLearningObjectives ? alsoCoverField : null}
+                  {!upload.offerLearningObjectives &&
+                  upload.freePathImageHelper ? (
+                    <Typography variant="body2" color="text.secondary">
+                      {upload.freePathImageHelper}
+                    </Typography>
+                  ) : null}
                   <Button
                     type="submit"
                     variant="contained"
@@ -372,7 +378,7 @@ export default function CreateMaterialStepper({
                       ? readingScan
                         ? "Reading scanned pages"
                         : "Uploading…"
-                      : "Upload file"}
+                      : upload.submitLabel}
                   </Button>
                 </Stack>
               </Box>

@@ -6,11 +6,12 @@ export function openDiyOcclusionFromImageKey(args: {
   prepare: (key: string) => void;
   goDiy: () => void;
   setNotice: (message: string) => void;
+  notice?: string;
 }): boolean {
   const key = args.imageKey.trim();
   if (!key) return false;
   args.prepare(key);
   args.goDiy();
-  args.setNotice(DIY_OCCLUSION_FREE_PATH_NOTICE);
+  args.setNotice(args.notice ?? DIY_OCCLUSION_FREE_PATH_NOTICE);
   return true;
 }

@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useState,
   type Dispatch,
   type FormEvent,
@@ -6,6 +7,7 @@ import {
 } from "react";
 import {
   ApiError,
+  getLlmSettings,
   pasteMaterial,
   PPTX_MIME,
   resolveUploadContentType,
@@ -16,6 +18,13 @@ import {
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
+import {
+  FREE_PATH_IMAGE_HELPER,
+  diyOcclusionNotice,
+  isImageUploadContentType,
+  shouldOfferLearningObjectives,
+  uploadSubmitLabel,
+} from "../lib/learningObjectivesOffer";
 import {
   MAX_FILE_BYTES,
   MAX_IMAGE_BYTES,
@@ -80,6 +89,33 @@ export function useAddMaterialWorkshop({
   const [pdfCompressProgress, setPdfCompressProgress] = useState<string | null>(
     null,
   );
+  const [llmConfigured, setLlmConfigured] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getLlmSettings()
+      .then((s) => {
+        if (!cancelled) setLlmConfigured(s.configured);
+      })
+      .catch(() => {
+        if (!cancelled) setLlmConfigured(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const contentType = uploadFile
+    ? resolveUploadContentType(uploadFile)
+    : "";
+  const isImage = Boolean(uploadFile) && isImageUploadContentType(contentType);
+  const offerLearningObjectives = shouldOfferLearningObjectives({
+    isImage,
+    llmConfigured,
+  });
+  const submitLabel = uploadSubmitLabel({ isImage, llmConfigured });
+  const freePathImageHelper =
+    offerLearningObjectives || !isImage ? null : FREE_PATH_IMAGE_HELPER;
 
   function resetMaterialMessages() {
     setMaterialError(null);
@@ -89,6 +125,10 @@ export function useAddMaterialWorkshop({
   function topicHintOpts(): { topicHints?: string[] } {
     const topicHints = topicHintsFromLines(alsoCover);
     return topicHints ? { topicHints } : {};
+  }
+
+  function snapshotHadLearningObjectives(): boolean {
+    return Boolean(topicHintsFromLines(alsoCover));
   }
 
   function onTabChange(tab: MaterialTab | null) {
@@ -104,13 +144,17 @@ export function useAddMaterialWorkshop({
     });
   }
 
-  function openDiyOcclusion(imageKey: string) {
+  function openDiyOcclusion(
+    imageKey: string,
+    hadLearningObjectives: boolean,
+  ) {
     if (!prepareOcclusionFromImageKey) return;
     openDiyOcclusionFromImageKey({
       imageKey,
       prepare: prepareOcclusionFromImageKey,
       goDiy: () => onTabChange("diy"),
       setNotice: setMaterialNotice,
+      notice: diyOcclusionNotice({ hadLearningObjectives }),
     });
   }
 
@@ -260,6 +304,7 @@ export function useAddMaterialWorkshop({
         }
       }
 
+      const hadLearningObjectives = snapshotHadLearningObjectives();
       setUploadFile(null);
       setFigureFiles([]);
       setAlsoCover("");
@@ -276,7 +321,7 @@ export function useAddMaterialWorkshop({
         return;
       }
       if (lastManualKey && prepareOcclusionFromImageKey) {
-        openDiyOcclusion(lastManualKey);
+        openDiyOcclusion(lastManualKey, hadLearningObjectives);
         await Promise.all([refreshDraftJobs(), refreshMaterials()]);
         return;
       }
@@ -336,6 +381,7 @@ export function useAddMaterialWorkshop({
         }
       }
 
+      const hadLearningObjectives = snapshotHadLearningObjectives();
       setUploadFile(null);
       setFigureFiles([]);
       setAlsoCover("");
@@ -351,7 +397,7 @@ export function useAddMaterialWorkshop({
         return;
       }
       if (lastManualKey && prepareOcclusionFromImageKey) {
-        openDiyOcclusion(lastManualKey);
+        openDiyOcclusion(lastManualKey, hadLearningObjectives);
         await Promise.all([refreshDraftJobs(), refreshMaterials()]);
         return;
       }
@@ -418,6 +464,7 @@ export function useAddMaterialWorkshop({
         return;
       }
 
+      const hadLearningObjectives = snapshotHadLearningObjectives();
       setUploadFile(null);
       setFigureFiles([]);
       setAlsoCover("");
@@ -430,7 +477,7 @@ export function useAddMaterialWorkshop({
         material.r2_key &&
         prepareOcclusionFromImageKey
       ) {
-        openDiyOcclusion(material.r2_key);
+        openDiyOcclusion(material.r2_key, hadLearningObjectives);
         await Promise.all([refreshDraftJobs(), refreshMaterials()]);
         return;
       }
@@ -535,6 +582,7 @@ export function useAddMaterialWorkshop({
               pdfOpts,
             )
           : await uploadMaterialFile(deckId, uploadFile, undefined, pdfOpts);
+      const hadLearningObjectives = snapshotHadLearningObjectives();
       setUploadFile(null);
       setFigureFiles([]);
       setAlsoCover("");
@@ -552,7 +600,7 @@ export function useAddMaterialWorkshop({
         material.r2_key &&
         prepareOcclusionFromImageKey
       ) {
-        openDiyOcclusion(material.r2_key);
+        openDiyOcclusion(material.r2_key, hadLearningObjectives);
         await Promise.all([refreshDraftJobs(), refreshMaterials()]);
         return;
       }
@@ -591,6 +639,10 @@ export function useAddMaterialWorkshop({
     pptxSplitProgress,
     pdfCompressOpen,
     pdfCompressProgress,
+    llmConfigured,
+    offerLearningObjectives,
+    submitLabel,
+    freePathImageHelper,
     resetMaterialMessages,
     onTabChange,
     openDiyOcclusion,

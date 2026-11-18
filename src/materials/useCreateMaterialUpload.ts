@@ -1,6 +1,13 @@
-import { useState, type Dispatch, type FormEvent, type SetStateAction } from "react";
+import {
+  useEffect,
+  useState,
+  type Dispatch,
+  type FormEvent,
+  type SetStateAction,
+} from "react";
 import {
   ApiError,
+  getLlmSettings,
   PPTX_MIME,
   resolveUploadContentType,
   topicHintsFromLines,
@@ -9,6 +16,13 @@ import {
   type FigureExtractMode,
 } from "../api/client";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
+import {
+  FREE_PATH_IMAGE_HELPER,
+  diyOcclusionNotice,
+  isImageUploadContentType,
+  shouldOfferLearningObjectives,
+  uploadSubmitLabel,
+} from "../lib/learningObjectivesOffer";
 import {
   MAX_FILE_BYTES,
   MAX_IMAGE_BYTES,
@@ -69,6 +83,50 @@ export function useCreateMaterialUpload({
   const [pdfCompressProgress, setPdfCompressProgress] = useState<string | null>(
     null,
   );
+  const [llmConfigured, setLlmConfigured] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getLlmSettings()
+      .then((s) => {
+        if (!cancelled) setLlmConfigured(s.configured);
+      })
+      .catch(() => {
+        if (!cancelled) setLlmConfigured(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const contentTypeForOffer = uploadFile
+    ? resolveUploadContentType(uploadFile)
+    : "";
+  const isImage =
+    Boolean(uploadFile) && isImageUploadContentType(contentTypeForOffer);
+  const offerLearningObjectives = shouldOfferLearningObjectives({
+    isImage,
+    llmConfigured,
+  });
+  const submitLabel = uploadSubmitLabel({ isImage, llmConfigured });
+  const freePathImageHelper =
+    offerLearningObjectives || !isImage ? null : FREE_PATH_IMAGE_HELPER;
+
+  function freePathNoJobNotice(args: {
+    hadLearningObjectives: boolean;
+    wasFreePathImage: boolean;
+    manualOcclusion?: boolean;
+    status: string;
+  }): string {
+    if (args.manualOcclusion || args.wasFreePathImage) {
+      return (
+        diyOcclusionNotice({
+          hadLearningObjectives: args.hadLearningObjectives,
+        }).trim() || FREE_PATH_IMAGE_HELPER
+      );
+    }
+    return `Stored file (${args.status}). Open drafts from a prior generate, or upload a new file.`;
+  }
 
   function onPdfSplitCancel() {
     if (busy) return;
@@ -361,6 +419,9 @@ export function useCreateMaterialUpload({
               ...pdfOpts,
               onScan: () => setReadingScan(true),
             });
+      const wasFreePathImage =
+        isImageUploadContentType(contentType) && llmConfigured !== true;
+      const hadLearningObjectives = Boolean(topicHintsFromLines(alsoCover));
       setUploadFile(null);
       setFigureFiles([]);
       setSourceRole("lecture");
@@ -371,7 +432,12 @@ export function useCreateMaterialUpload({
         setActiveStep(2);
       } else {
         setNotice(
-          `Stored file (${material.status}). Open drafts from a prior generate, or upload a new file.`,
+          freePathNoJobNotice({
+            hadLearningObjectives,
+            wasFreePathImage,
+            manualOcclusion: material.manual_occlusion,
+            status: material.status,
+          }),
         );
       }
     } catch (err) {
@@ -395,6 +461,10 @@ export function useCreateMaterialUpload({
     pptxSplitProgress,
     pdfCompressOpen,
     pdfCompressProgress,
+    llmConfigured,
+    offerLearningObjectives,
+    submitLabel,
+    freePathImageHelper,
     onPdfSplitCancel,
     onPptxSplitCancel,
     onPdfCompressCancel,

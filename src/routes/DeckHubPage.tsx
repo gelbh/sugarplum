@@ -389,6 +389,9 @@ export default function DeckHubPage({ deckId }: Props) {
       figureFiles={material.figureFiles}
       onFigureFilesChange={material.setFigureFiles}
       onUploadFile={material.onUploadFile}
+      offerLearningObjectives={material.offerLearningObjectives}
+      submitLabel={material.submitLabel}
+      freePathImageHelper={material.freePathImageHelper}
       pdfSplitOpen={material.pdfSplitOpen}
       pdfSplitProgress={material.pdfSplitProgress}
       onPdfSplitConfirm={() => {
