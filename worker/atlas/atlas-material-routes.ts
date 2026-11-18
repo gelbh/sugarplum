@@ -8,7 +8,6 @@ import {
   sandboxWriteUserId,
 } from "../admin/sandbox-r2";
 import { sha256Hex } from "../materials/content-hash";
-import { MAX_FILE_BYTES, MAX_PASTE_BYTES } from "../materials/limits";
 import { extractPptxSlides } from "../materials/extract-pptx";
 import {
   atlasOcrSidecarKey,
@@ -16,17 +15,18 @@ import {
   parseOcrPages,
   writeAtlasOcrSidecar,
 } from "../materials/ocr-sidecar";
+import { parsePasteMaterialBody } from "../materials/paste-material";
 import { createR2PutUrl } from "../materials/r2-presign";
 import {
-  assertConfiguredR2AccountId,
   DEFAULT_R2_BUCKET,
   FILE_READY,
   FILE_UPLOADING,
   PASTE_READY,
-  PPTX_CONTENT_TYPE,
-  resolveSourceRole,
-  resolveUpload,
 } from "../materials/upload";
+import {
+  parseUploadUrlRequest,
+  requireR2UploadCredentials,
+} from "../materials/upload-request";
 import { isSourceRole } from "../../src/lib/sourceRole";
 import { refreshFocusBestEffort } from "./focus";
 import type { AppEnv } from "./types";
@@ -35,6 +35,8 @@ import {
   requireOwnedAtlas,
   requireParam,
 } from "./ownership";
+
+const ATLAS_UPLOAD_KINDS = new Set(["pdf", "pptx"] as const);
 
 export type AtlasMaterialRow = {
   id: string;
@@ -118,20 +120,7 @@ atlasPackRoutes.post("/materials/paste", async (c) => {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const text = typeof body.text === "string" ? body.text : "";
-  if (!text.trim()) throw new HTTPException(400, { message: "Text required" });
-  const textBytes = new TextEncoder().encode(text).byteLength;
-  if (textBytes > MAX_PASTE_BYTES) {
-    throw new HTTPException(400, {
-      message: "Paste must be 100KB or smaller",
-    });
-  }
-
-  const filename =
-    typeof body.filename === "string" && body.filename.trim()
-      ? body.filename.trim()
-      : null;
-  const sourceRole = resolveSourceRole(body.source_role, filename);
+  const { text, filename, sourceRole } = parsePasteMaterialBody(body);
   const contentHash = await sha256Hex(text);
   const id = newId();
   const createdAt = new Date().toISOString();
@@ -201,34 +190,11 @@ atlasPackRoutes.post("/materials/upload-url", async (c) => {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const contentType =
-    typeof body.contentType === "string" ? body.contentType.trim() : "";
-  const filenameHint =
-    typeof body.filename === "string" && body.filename.trim()
-      ? body.filename.trim()
-      : "";
-  const resolved = resolveUpload(contentType, filenameHint);
-  if (!resolved || (resolved.kind !== "pdf" && resolved.kind !== "pptx")) {
-    throw new HTTPException(400, {
-      message: "Only PDF or PPTX uploads are allowed",
+  const { filename, size, sourceRole, resolved, putContentType } =
+    parseUploadUrlRequest(body, {
+      allowKinds: ATLAS_UPLOAD_KINDS,
+      rejectMessage: "Only PDF or PPTX uploads are allowed",
     });
-  }
-
-  const size = typeof body.size === "number" ? body.size : Number(body.size);
-  if (!Number.isFinite(size) || size <= 0) {
-    throw new HTTPException(400, { message: "Valid size required" });
-  }
-  if (size > MAX_FILE_BYTES) {
-    throw new HTTPException(400, {
-      message: `File must be ${MAX_FILE_BYTES / (1024 * 1024)}MB or smaller`,
-    });
-  }
-
-  const defaultName = `upload.${resolved.ext}`;
-  const filename = filenameHint || defaultName;
-  const sourceRole = resolveSourceRole(body.source_role, filename);
-  const putContentType =
-    resolved.kind === "pptx" ? PPTX_CONTENT_TYPE : contentType;
 
   const materialId = newId();
   const createdAt = new Date().toISOString();
@@ -238,15 +204,8 @@ atlasPackRoutes.post("/materials/upload-url", async (c) => {
     `atlas/${atlasId}/${materialId}.${resolved.ext}`,
   );
 
-  const accountId = c.env.R2_ACCOUNT_ID;
-  const accessKeyId = c.env.R2_ACCESS_KEY_ID;
-  const secretAccessKey = c.env.R2_SECRET_ACCESS_KEY;
-  if (!accountId || !accessKeyId || !secretAccessKey) {
-    throw new HTTPException(500, {
-      message: "R2 upload signing is not configured",
-    });
-  }
-  assertConfiguredR2AccountId(accountId);
+  const { accountId, accessKeyId, secretAccessKey } =
+    requireR2UploadCredentials(c.env);
 
   const uploadUrl = await createR2PutUrl({
     accountId,
