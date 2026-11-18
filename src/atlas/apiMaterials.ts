@@ -75,3 +75,16 @@ export function patchAtlasMaterialSourceRole(
 export function deleteAtlasMaterial(materialId: string) {
   return api<void>(materialPath(materialId), { method: "DELETE" });
 }
+
+export function promoteAtlasMaterial(materialId: string, deckId: string) {
+  return api<{
+    id: string;
+    deck_id: string;
+    kind: string;
+    status: string;
+    jobId: null;
+  }>(materialPath(materialId, "/promote"), {
+    method: "POST",
+    json: { deckId },
+  });
+}

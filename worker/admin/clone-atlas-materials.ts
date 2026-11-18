@@ -1,4 +1,8 @@
 import type { Env } from "../env";
+import {
+  readAtlasOcrSidecar,
+  writeAtlasOcrSidecar,
+} from "../materials/ocr-sidecar";
 import { applySandboxKeyPrefix } from "./sandbox-r2";
 
 type IdMap = Map<string, string>;
@@ -69,11 +73,7 @@ export async function cloneAtlasMaterials(
       const src = await env.MATERIALS.get(row.r2_key);
       if (src) {
         const ext =
-          row.kind === "paste"
-            ? "txt"
-            : row.kind === "pptx"
-              ? "pptx"
-              : "pdf";
+          row.kind === "paste" ? "txt" : row.kind === "pptx" ? "pptx" : "pdf";
         r2Key = applySandboxKeyPrefix(
           sandboxUserId,
           `atlas/${destAtlasId}/${materialId}.${ext}`,
@@ -83,17 +83,20 @@ export async function cloneAtlasMaterials(
         });
       }
     }
-    if (row.kind === "pdf") {
-      const ocrKey = `atlas/${sourceAtlasId}/ocr/${row.id}.json`;
-      const ocrObj = await env.MATERIALS.get(ocrKey);
-      if (ocrObj) {
-        const destOcr = applySandboxKeyPrefix(
-          sandboxUserId,
-          `atlas/${destAtlasId}/ocr/${materialId}.json`,
-        );
-        await env.MATERIALS.put(destOcr, await ocrObj.arrayBuffer(), {
-          httpMetadata: ocrObj.httpMetadata,
-        });
+    if (row.kind === "pdf" || row.kind === "pptx") {
+      try {
+        const sidecar = await readAtlasOcrSidecar(env, sourceAtlasId, row.id);
+        if (sidecar?.pages.length) {
+          await writeAtlasOcrSidecar(
+            env,
+            destAtlasId,
+            materialId,
+            sidecar.pages,
+            sidecar.unstudiedPages ?? [],
+          );
+        }
+      } catch {
+        /* best-effort OCR clone */
       }
     }
     packStmts.push(

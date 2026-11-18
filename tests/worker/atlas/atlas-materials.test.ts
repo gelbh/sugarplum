@@ -1,8 +1,19 @@
 import { describe, expect, it } from "vitest";
+import JSZip from "jszip";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
 import { createTestEnv } from "../test-env";
 import type { AtlasEntryView } from "../../../src/atlas/types";
+
+async function minimalPptx(slideXml: string): Promise<ArrayBuffer> {
+  const zip = new JSZip();
+  zip.file(
+    "[Content_Types].xml",
+    `<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"></Types>`,
+  );
+  zip.file("ppt/slides/slide1.xml", slideXml);
+  return zip.generateAsync({ type: "arraybuffer" });
+}
 
 function seedOwner(env: ReturnType<typeof createTestEnv>) {
   env.seedUser({
@@ -79,6 +90,65 @@ describe("atlas course pack materials API", () => {
     });
   });
 
+  it("complete pptx extracts slide text into Focus (not filename-only)", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlas = await createAtlas(env);
+
+    const upload = await app.request(
+      `/api/atlas/${atlas.id}/materials/upload-url`,
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          filename: "Week2_tutorial.pptx",
+          contentType:
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          size: 64,
+          source_role: "tutorial",
+        }),
+      },
+      env,
+    );
+    expect(upload.status).toBe(200);
+    const { materialId, r2Key } = (await upload.json()) as {
+      materialId: string;
+      r2Key: string;
+    };
+    const pptxBytes = await minimalPptx(
+      `<p:sld><p:cSld><p:spTree><a:t>Fasciola hepatica</a:t><a:t>tutorial intro</a:t></p:spTree></p:cSld></p:sld>`,
+    );
+    await env.MATERIALS.put(r2Key, pptxBytes);
+
+    const complete = await app.request(
+      `/api/atlas/materials/${materialId}/complete`,
+      { method: "POST", headers: authHeaders() },
+      env,
+    );
+    expect(complete.status).toBe(200);
+    expect(await complete.json()).toMatchObject({
+      id: materialId,
+      status: "ready",
+      kind: "pptx",
+      page_count: 1,
+      jobId: null,
+    });
+    expect(env.getGenerationJobs()).toHaveLength(0);
+
+    const list = await app.request(
+      `/api/atlas/${atlas.id}/entries`,
+      { headers: authHeaders() },
+      env,
+    );
+    const body = (await list.json()) as { entries: AtlasEntryView[] };
+    expect(
+      body.entries.find((e) => e.id === "fasciola-hepatica"),
+    ).toMatchObject({
+      tier: "key",
+      reason: expect.stringMatching(/tutorial/i),
+    });
+  });
+
   it("complete pdf returns jobId null and leaves generation_jobs empty", async () => {
     const env = createTestEnv();
     seedOwner(env);
@@ -111,9 +181,7 @@ describe("atlas course pack materials API", () => {
         method: "POST",
         headers: authHeaders(true),
         body: JSON.stringify({
-          ocrPages: [
-            { page: 1, text: "Fasciola hepatica tutorial intro" },
-          ],
+          ocrPages: [{ page: 1, text: "Fasciola hepatica tutorial intro" }],
         }),
       },
       env,
@@ -169,10 +237,14 @@ describe("atlas course pack materials API", () => {
       beforeBody.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
     ).toBe("key");
 
-    const del = await app.request(`/api/atlas/materials/${material.id}`, {
-      method: "DELETE",
-      headers: authHeaders(),
-    }, env);
+    const del = await app.request(
+      `/api/atlas/materials/${material.id}`,
+      {
+        method: "DELETE",
+        headers: authHeaders(),
+      },
+      env,
+    );
     expect(del.status).toBe(204);
 
     const after = await app.request(
@@ -184,6 +256,72 @@ describe("atlas course pack materials API", () => {
     expect(
       afterBody.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
     ).toBeNull();
+  });
+
+  it("promote copies pack file into deck materials without enqueueing a job", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedDeck({
+      id: "deck-a",
+      user_id: "user-a",
+      title: "Cards",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const atlas = await createAtlas(env);
+
+    const paste = await app.request(
+      `/api/atlas/${atlas.id}/materials/paste`,
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          text: "Fasciola hepatica notes for later cards",
+          filename: "notes.txt",
+          source_role: "notes",
+        }),
+      },
+      env,
+    );
+    expect(paste.status).toBe(201);
+    const packMaterial = (await paste.json()) as {
+      id: string;
+      r2_key: string;
+    };
+
+    const jobsBefore = env.getGenerationJobs().length;
+    const promote = await app.request(
+      `/api/atlas/materials/${packMaterial.id}/promote`,
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({ deckId: "deck-a" }),
+      },
+      env,
+    );
+    expect(promote.status).toBe(201);
+    const deckMaterial = (await promote.json()) as {
+      id: string;
+      deck_id: string;
+      kind: string;
+      status: string;
+      r2_key: string;
+      jobId: string | null;
+    };
+    expect(deckMaterial).toMatchObject({
+      deck_id: "deck-a",
+      kind: "paste",
+      status: "ready",
+      jobId: null,
+    });
+    expect(deckMaterial.id).not.toBe(packMaterial.id);
+    expect(deckMaterial.r2_key).not.toBe(packMaterial.r2_key);
+    expect(env.getGenerationJobs()).toHaveLength(jobsBefore);
+    expect(env.getMaterials().some((m) => m.id === deckMaterial.id)).toBe(true);
+    expect(env.getAtlasMaterials().some((m) => m.id === packMaterial.id)).toBe(
+      true,
+    );
+    expect(await env.MATERIALS.get(deckMaterial.r2_key)).not.toBeNull();
   });
 
   it("lists and patches source_role", async () => {

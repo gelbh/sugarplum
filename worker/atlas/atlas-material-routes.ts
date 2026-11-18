@@ -8,31 +8,40 @@ import {
   sandboxWriteUserId,
 } from "../admin/sandbox-r2";
 import { sha256Hex } from "../materials/content-hash";
-import { MAX_FILE_BYTES, MAX_PASTE_BYTES } from "../materials/limits";
 import {
   atlasOcrSidecarKey,
   parseOcrPages,
+  readAtlasOcrSidecar,
   writeAtlasOcrSidecar,
+  writeOcrSidecar,
 } from "../materials/ocr-sidecar";
+import { requireOwnedDeck } from "../materials/ownership";
+import { parsePasteMaterialBody } from "../materials/paste-material";
 import { createR2PutUrl } from "../materials/r2-presign";
 import {
-  assertConfiguredR2AccountId,
   DEFAULT_R2_BUCKET,
   FILE_READY,
   FILE_UPLOADING,
   PASTE_READY,
-  PPTX_CONTENT_TYPE,
-  resolveSourceRole,
-  resolveUpload,
+  contentTypeForMaterial,
 } from "../materials/upload";
+import {
+  parseUploadUrlRequest,
+  requireR2UploadCredentials,
+} from "../materials/upload-request";
 import { isSourceRole } from "../../src/lib/sourceRole";
 import { refreshFocusBestEffort } from "./focus";
+import { persistAtlasPptxSidecarFromBytes } from "./pptx-sidecar";
 import type { AppEnv } from "./types";
-import {
-  newId,
-  requireOwnedAtlas,
-  requireParam,
-} from "./ownership";
+import { newId, requireOwnedAtlas, requireParam } from "./ownership";
+
+const ATLAS_UPLOAD_KINDS = new Set(["pdf", "pptx"] as const);
+
+function extForAtlasKind(kind: string): string {
+  if (kind === "paste") return "txt";
+  if (kind === "pptx") return "pptx";
+  return "pdf";
+}
 
 export type AtlasMaterialRow = {
   id: string;
@@ -116,28 +125,12 @@ atlasPackRoutes.post("/materials/paste", async (c) => {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const text = typeof body.text === "string" ? body.text : "";
-  if (!text.trim()) throw new HTTPException(400, { message: "Text required" });
-  const textBytes = new TextEncoder().encode(text).byteLength;
-  if (textBytes > MAX_PASTE_BYTES) {
-    throw new HTTPException(400, {
-      message: "Paste must be 100KB or smaller",
-    });
-  }
-
-  const filename =
-    typeof body.filename === "string" && body.filename.trim()
-      ? body.filename.trim()
-      : null;
-  const sourceRole = resolveSourceRole(body.source_role, filename);
+  const { text, filename, sourceRole } = parsePasteMaterialBody(body);
   const contentHash = await sha256Hex(text);
   const id = newId();
   const createdAt = new Date().toISOString();
   const sandboxId = await sandboxWriteUserId(db, userId);
-  const r2Key = applySandboxKeyPrefix(
-    sandboxId,
-    `atlas/${atlasId}/${id}.txt`,
-  );
+  const r2Key = applySandboxKeyPrefix(sandboxId, `atlas/${atlasId}/${id}.txt`);
 
   await c.env.MATERIALS.put(r2Key, text, {
     httpMetadata: { contentType: "text/plain; charset=utf-8" },
@@ -199,34 +192,11 @@ atlasPackRoutes.post("/materials/upload-url", async (c) => {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const contentType =
-    typeof body.contentType === "string" ? body.contentType.trim() : "";
-  const filenameHint =
-    typeof body.filename === "string" && body.filename.trim()
-      ? body.filename.trim()
-      : "";
-  const resolved = resolveUpload(contentType, filenameHint);
-  if (!resolved || (resolved.kind !== "pdf" && resolved.kind !== "pptx")) {
-    throw new HTTPException(400, {
-      message: "Only PDF or PPTX uploads are allowed",
+  const { filename, size, sourceRole, resolved, putContentType } =
+    parseUploadUrlRequest(body, {
+      allowKinds: ATLAS_UPLOAD_KINDS,
+      rejectMessage: "Only PDF or PPTX uploads are allowed",
     });
-  }
-
-  const size = typeof body.size === "number" ? body.size : Number(body.size);
-  if (!Number.isFinite(size) || size <= 0) {
-    throw new HTTPException(400, { message: "Valid size required" });
-  }
-  if (size > MAX_FILE_BYTES) {
-    throw new HTTPException(400, {
-      message: `File must be ${MAX_FILE_BYTES / (1024 * 1024)}MB or smaller`,
-    });
-  }
-
-  const defaultName = `upload.${resolved.ext}`;
-  const filename = filenameHint || defaultName;
-  const sourceRole = resolveSourceRole(body.source_role, filename);
-  const putContentType =
-    resolved.kind === "pptx" ? PPTX_CONTENT_TYPE : contentType;
 
   const materialId = newId();
   const createdAt = new Date().toISOString();
@@ -236,15 +206,8 @@ atlasPackRoutes.post("/materials/upload-url", async (c) => {
     `atlas/${atlasId}/${materialId}.${resolved.ext}`,
   );
 
-  const accountId = c.env.R2_ACCOUNT_ID;
-  const accessKeyId = c.env.R2_ACCESS_KEY_ID;
-  const secretAccessKey = c.env.R2_SECRET_ACCESS_KEY;
-  if (!accountId || !accessKeyId || !secretAccessKey) {
-    throw new HTTPException(500, {
-      message: "R2 upload signing is not configured",
-    });
-  }
-  assertConfiguredR2AccountId(accountId);
+  const { accountId, accessKeyId, secretAccessKey } =
+    requireR2UploadCredentials(c.env);
 
   const uploadUrl = await createR2PutUrl({
     accountId,
@@ -289,7 +252,47 @@ atlasMaterialItemRoutes.post("/:id/complete", async (c) => {
   const material = await requireOwnedAtlasMaterial(db, materialId, userId);
 
   if (material.status === FILE_READY) {
-    return c.json({ ...materialJson(material), jobId: null });
+    let pageCount = material.page_count;
+    let repaired = false;
+    if (material.kind === "pptx" && material.r2_key) {
+      const existing = await readAtlasOcrSidecar(
+        c.env,
+        material.atlas_id,
+        materialId,
+      );
+      if (!existing?.pages.length) {
+        try {
+          const obj = await c.env.MATERIALS.get(material.r2_key);
+          if (obj) {
+            const persisted = await persistAtlasPptxSidecarFromBytes(
+              c.env,
+              material.atlas_id,
+              materialId,
+              await obj.arrayBuffer(),
+            );
+            if (persisted) {
+              pageCount = persisted.totalPages;
+              await db
+                .prepare(
+                  "UPDATE atlas_materials SET page_count = ? WHERE id = ?",
+                )
+                .bind(pageCount, materialId)
+                .run();
+              repaired = true;
+            }
+          }
+        } catch (err) {
+          console.warn("atlas PPTX extract repair failed", err);
+        }
+      }
+    }
+    if (repaired) {
+      await refreshFocusBestEffort(db, c.env, { atlasId: material.atlas_id });
+    }
+    return c.json({
+      ...materialJson({ ...material, page_count: pageCount }),
+      jobId: null,
+    });
   }
 
   let ocrPages: ReturnType<typeof parseOcrPages>;
@@ -322,6 +325,7 @@ atlasMaterialItemRoutes.post("/:id/complete", async (c) => {
   }
 
   let contentHash: string | null = null;
+  let fileBytes: ArrayBuffer | null = null;
   if (material.r2_key) {
     const obj = await c.env.MATERIALS.get(material.r2_key);
     if (!obj) {
@@ -330,7 +334,8 @@ atlasMaterialItemRoutes.post("/:id/complete", async (c) => {
           "Uploaded file not found in storage. Retry the upload, or enable remote R2 for local dev.",
       });
     }
-    contentHash = await sha256Hex(await obj.arrayBuffer());
+    fileBytes = await obj.arrayBuffer();
+    contentHash = await sha256Hex(fileBytes);
   }
 
   const cas = await db
@@ -346,20 +351,170 @@ atlasMaterialItemRoutes.post("/:id/complete", async (c) => {
     });
   }
 
+  let pageCount = material.page_count;
   if (ocrPages && material.kind === "pdf") {
     try {
-      await writeAtlasOcrSidecar(c.env, material.atlas_id, materialId, ocrPages);
+      await writeAtlasOcrSidecar(
+        c.env,
+        material.atlas_id,
+        materialId,
+        ocrPages,
+      );
     } catch (err) {
       console.warn("atlas OCR sidecar write failed", err);
+    }
+  } else if (material.kind === "pptx" && fileBytes) {
+    try {
+      const persisted = await persistAtlasPptxSidecarFromBytes(
+        c.env,
+        material.atlas_id,
+        materialId,
+        fileBytes,
+      );
+      if (persisted) {
+        pageCount = persisted.totalPages;
+        await db
+          .prepare("UPDATE atlas_materials SET page_count = ? WHERE id = ?")
+          .bind(pageCount, materialId)
+          .run();
+      }
+    } catch (err) {
+      console.warn("atlas PPTX extract failed", err);
     }
   }
 
   await refreshFocusBestEffort(db, c.env, { atlasId: material.atlas_id });
 
   return c.json({
-    ...materialJson({ ...material, status: FILE_READY }),
+    ...materialJson({
+      ...material,
+      status: FILE_READY,
+      page_count: pageCount,
+    }),
     jobId: null,
   });
+});
+
+atlasMaterialItemRoutes.post("/:id/promote", async (c) => {
+  const userId = await requireUser(c);
+  const materialId = requireParam(c, "id");
+  const db = getDb(c.env);
+  const material = await requireOwnedAtlasMaterial(db, materialId, userId);
+
+  if (material.status !== FILE_READY && material.status !== PASTE_READY) {
+    throw new HTTPException(409, {
+      message: "Material must be ready before promoting to a deck",
+    });
+  }
+  if (!material.r2_key) {
+    throw new HTTPException(409, {
+      message: "Material has no stored file to promote",
+    });
+  }
+
+  let body: { deckId?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  const deckId =
+    typeof body.deckId === "string" && body.deckId.trim()
+      ? body.deckId.trim()
+      : "";
+  if (!deckId) {
+    throw new HTTPException(400, { message: "deckId required" });
+  }
+  await requireOwnedDeck(db, deckId, userId);
+
+  const src = await c.env.MATERIALS.get(material.r2_key);
+  if (!src) {
+    throw new HTTPException(409, {
+      message: "Pack file not found in storage",
+    });
+  }
+
+  const destMaterialId = newId();
+  const createdAt = new Date().toISOString();
+  const sandboxId = await sandboxWriteUserId(db, userId);
+  const ext = extForAtlasKind(material.kind);
+  const destKey = applySandboxKeyPrefix(
+    sandboxId,
+    `materials/${deckId}/${destMaterialId}.${ext}`,
+  );
+  const bytes = await src.arrayBuffer();
+  await c.env.MATERIALS.put(destKey, bytes, {
+    httpMetadata: {
+      contentType: contentTypeForMaterial(
+        material.kind,
+        destKey,
+        material.filename,
+      ),
+    },
+  });
+
+  const contentHash = material.content_hash ?? (await sha256Hex(bytes));
+
+  await db
+    .prepare(
+      `INSERT INTO materials (
+         id, deck_id, kind, r2_key, filename, page_count, status,
+         created_at, content_hash, source_role
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      destMaterialId,
+      deckId,
+      material.kind,
+      destKey,
+      material.filename,
+      material.page_count,
+      FILE_READY,
+      createdAt,
+      contentHash,
+      material.source_role,
+    )
+    .run();
+
+  if (material.kind === "pdf" || material.kind === "pptx") {
+    try {
+      const sidecar = await readAtlasOcrSidecar(
+        c.env,
+        material.atlas_id,
+        material.id,
+      );
+      if (sidecar?.pages.length) {
+        await writeOcrSidecar(
+          c.env,
+          deckId,
+          destMaterialId,
+          sidecar.pages,
+          sidecar.unstudiedPages ?? [],
+        );
+      }
+    } catch (err) {
+      console.warn("atlas promote OCR sidecar copy failed", err);
+    }
+  }
+
+  return c.json(
+    {
+      id: destMaterialId,
+      deck_id: deckId,
+      kind: material.kind,
+      r2_key: destKey,
+      filename: material.filename,
+      page_count: material.page_count,
+      status: FILE_READY,
+      created_at: createdAt,
+      source_role: material.source_role,
+      jobId: null,
+    },
+    201,
+  );
 });
 
 atlasMaterialItemRoutes.patch("/:id", async (c) => {
