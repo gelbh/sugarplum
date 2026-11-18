@@ -404,4 +404,56 @@ describe("admin impersonation D1 clone", () => {
       env.getDecks().filter((d) => d.user_id === "sandbox-tmp"),
     ).toHaveLength(0);
   });
+
+  it("startImpersonation wipes sandbox R2 when clone fails after pack copy", async () => {
+    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
+    seedAdminAndLearnerWithLibrary(env);
+    const packR2 = "atlas/atlas-alice/pack-fail.txt";
+    env.seedAtlas({
+      id: "atlas-alice",
+      user_id: "u-alice",
+      template_key: "parasite",
+      created_at: NOW,
+    });
+    env.seedAtlasMaterial({
+      id: "pack-fail",
+      atlas_id: "atlas-alice",
+      kind: "paste",
+      r2_key: packR2,
+      filename: "notes.txt",
+      page_count: null,
+      status: "ready",
+      created_at: NOW,
+      content_hash: "pack-fail-hash",
+      source_role: "tutorial",
+    });
+    env.seedR2(packR2, "pack body");
+
+    const realPut = env.MATERIALS.put.bind(env.MATERIALS);
+    env.MATERIALS.put = (async (key, value, options) => {
+      const out = await realPut(key, value, options);
+      if (
+        typeof key === "string" &&
+        key.startsWith("sandbox/") &&
+        key.includes("/atlas/")
+      ) {
+        throw new Error("forced failure after atlas R2 copy");
+      }
+      return out;
+    }) as typeof env.MATERIALS.put;
+
+    const start = await app.request(
+      "/api/admin/users/u-alice/impersonate",
+      { method: "POST", headers: adminHeaders },
+      env,
+    );
+    expect(start.status).toBeGreaterThanOrEqual(500);
+
+    expect(
+      env.getUsers().filter((u) => u.sandbox_of === "u-alice"),
+    ).toHaveLength(0);
+
+    expect(env.getR2Keys().filter((k) => k.startsWith("sandbox/"))).toEqual([]);
+    expect(env.getR2(packR2)).toBe("pack body");
+  });
 });
