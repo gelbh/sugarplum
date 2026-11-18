@@ -55,6 +55,8 @@ type Props = {
   onEditEntry?: (entry: AtlasEntryView) => void;
   /** Keys for the currently visible Key row (already filtered). */
   onMakeCardsFromKey?: (entryKeys: string[]) => void;
+  atlasId?: string;
+  onFocusUpdated?: (entry: AtlasEntryView) => void;
 };
 
 const plural = (n: number) => `${n} ${n === 1 ? "parasite" : "parasites"}`;
@@ -70,6 +72,8 @@ export default function Cabinet({
   onRecentlyDeleted,
   onEditEntry,
   onMakeCardsFromKey,
+  atlasId,
+  onFocusUpdated,
 }: Props) {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
@@ -403,6 +407,8 @@ export default function Cabinet({
                       }
                       onOpen={() => onOpenEntry(e.id)}
                       onEdit={onEditEntry ? () => onEditEntry(e) : undefined}
+                      atlasId={atlasId}
+                      onFocusUpdated={onFocusUpdated}
                     />
                   </ViewTransition>
                 ))}
