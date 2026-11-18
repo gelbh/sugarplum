@@ -33,6 +33,7 @@ import {
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { useSession } from "../session/SessionContext";
+import { shouldAutoFocusText } from "../lib/autoFocusText";
 
 const RETENTION_NOTE =
   "No automatic deletion; wipe inactive accounts manually.";
@@ -142,9 +143,7 @@ export default function AdminUserPage({ userId }: Props) {
         setForbidden(true);
         return;
       }
-      setActionError(
-        err instanceof ApiError ? err.message : "Action failed",
-      );
+      setActionError(err instanceof ApiError ? err.message : "Action failed");
     } finally {
       setActionBusy(false);
     }
@@ -163,9 +162,7 @@ export default function AdminUserPage({ userId }: Props) {
         setForbidden(true);
         return;
       }
-      setActionError(
-        err instanceof ApiError ? err.message : "Export failed",
-      );
+      setActionError(err instanceof ApiError ? err.message : "Export failed");
     } finally {
       setActionBusy(false);
     }
@@ -430,9 +427,7 @@ export default function AdminUserPage({ userId }: Props) {
                             <TableCell>{m.kind}</TableCell>
                             <TableCell>{m.filename ?? "-"}</TableCell>
                             <TableCell>{m.status}</TableCell>
-                            <TableCell>
-                              {formatCreated(m.created_at)}
-                            </TableCell>
+                            <TableCell>{formatCreated(m.created_at)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -575,7 +570,7 @@ export default function AdminUserPage({ userId }: Props) {
                     size="small"
                     autoComplete="off"
                     disabled={wipeBusy}
-                    autoFocus
+                    autoFocus={shouldAutoFocusText()}
                   />
                   {wipeError ? (
                     <Alert severity="error" sx={{ mt: 2 }}>
