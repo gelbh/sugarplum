@@ -42,7 +42,12 @@ export function AddEntryDialog({ open, atlasId, onClose, onDone }: AddProps) {
   } = useAddEntryDialog({ open, atlasId, onClose, onDone });
 
   return (
-    <Dialog open={open} onClose={() => !busy && onClose()} fullWidth maxWidth="xs">
+    <Dialog
+      open={open}
+      onClose={() => !busy && onClose()}
+      fullWidth
+      maxWidth="xs"
+    >
       <form onSubmit={onSubmit}>
         <DialogTitle>Add entry</DialogTitle>
         <DialogContent>
@@ -69,9 +74,7 @@ export function AddEntryDialog({ open, atlasId, onClose, onDone }: AddProps) {
               select
               label="Group"
               value={group}
-              onChange={(ev) =>
-                setGroup(ev.target.value as ParasiteGroup | "")
-              }
+              onChange={(ev) => setGroup(ev.target.value as ParasiteGroup | "")}
               disabled={busy}
               fullWidth
               required
@@ -126,7 +129,12 @@ export function EditEntryDialog({
   } = useEditEntryDialog({ open, atlasId, entry, onClose, onDone });
 
   return (
-    <Dialog open={open} onClose={() => !busy && onClose()} fullWidth maxWidth="xs">
+    <Dialog
+      open={open}
+      onClose={() => !busy && onClose()}
+      fullWidth
+      maxWidth="xs"
+    >
       <form onSubmit={onSubmit}>
         <DialogTitle>
           Edit {entry ? entryTitles(entry).primary : "entry"}
@@ -153,9 +161,15 @@ export function EditEntryDialog({
             />
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+        <DialogActions
+          sx={{ justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}
+        >
           <Stack direction="row" gap={1}>
-            <Button color="error" onClick={() => void onSoftDelete()} disabled={busy}>
+            <Button
+              color="error"
+              onClick={() => void onSoftDelete()}
+              disabled={busy}
+            >
               Delete
             </Button>
             {canReset ? (

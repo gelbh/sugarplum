@@ -216,7 +216,11 @@ export default function MaterialsList({
   return (
     <>
       {roleError ? (
-        <Alert severity="error" sx={{ mb: 1 }} onClose={() => setRoleError(null)}>
+        <Alert
+          severity="error"
+          sx={{ mb: 1 }}
+          onClose={() => setRoleError(null)}
+        >
           {roleError}
         </Alert>
       ) : null}
@@ -250,8 +254,7 @@ export default function MaterialsList({
                 const deckId = first?.deck_id ?? "deck";
                 const anchorId = first?.id ?? entry.stem;
                 const stemLabelId = `split-stem-${kind}-${deckId}-${anchorId}`;
-                const deckTitle =
-                  first?.deck_title?.trim() || "Untitled deck";
+                const deckTitle = first?.deck_title?.trim() || "Untitled deck";
                 const stemCaption = showDeckTitle
                   ? `${deckTitle} · ${entry.stem}`
                   : entry.stem;
