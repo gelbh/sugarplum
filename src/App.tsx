@@ -137,17 +137,17 @@ function matchPage(path: string, search: string): ReactNode {
   if (path === "/library") return shell(<LibraryPage />);
 
   const anatomyMatch = matchAnatomyPath(path);
-  if (anatomyMatch?.kind === "hub") {
+  if (anatomyMatch) {
     return shell(
       <AnatomyViewerGate>
-        <AnatomyHub />
-      </AnatomyViewerGate>,
-    );
-  }
-  if (anatomyMatch?.kind === "scene") {
-    return shell(
-      <AnatomyViewerGate>
-        <AnatomySceneRoute rawSceneId={anatomyMatch.sceneId} search={search} />
+        {anatomyMatch.kind === "hub" ? (
+          <AnatomyHub />
+        ) : (
+          <AnatomySceneRoute
+            rawSceneId={anatomyMatch.sceneId}
+            search={search}
+          />
+        )}
       </AnatomyViewerGate>,
     );
   }

@@ -44,6 +44,38 @@ describe("GET /api/auth/me anatomy_viewer", () => {
     expect(await res.json()).toMatchObject({ anatomy_viewer: true });
   });
 
+  it("login includes anatomy_viewer for allowlisted email", async () => {
+    const env = createTestEnv({
+      anatomyViewerEmails: "gelbharttomer@gmail.com",
+    });
+    const { hashPassword } = await import("../../worker/auth/password");
+    env.seedUser({
+      id: "u1",
+      email: "gelbharttomer@gmail.com",
+      password_hash: await hashPassword("password-long-enough"),
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const res = await app.request(
+      "/api/auth/login",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: "gelbharttomer@gmail.com",
+          password: "password-long-enough",
+          turnstileToken: "test",
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      email: "gelbharttomer@gmail.com",
+      anatomy_viewer: true,
+    });
+  });
+
   it("false for admin who is not on anatomy list", async () => {
     const env = createTestEnv({
       adminEmails: "ops@example.com",

@@ -134,7 +134,17 @@ authRoutes.post("/register", async (c) => {
   }
 
   await createSession(c, id);
-  return c.json({ id, email }, 201);
+  return c.json(
+    {
+      id,
+      email,
+      anatomy_viewer: isAnatomyViewerEnabled(
+        email,
+        c.env.ANATOMY_VIEWER_EMAILS,
+      ),
+    },
+    201,
+  );
 });
 
 authRoutes.post("/login", async (c) => {
@@ -178,7 +188,14 @@ authRoutes.post("/login", async (c) => {
   }
 
   await createSession(c, user.id);
-  return c.json({ id: user.id, email: user.email });
+  return c.json({
+    id: user.id,
+    email: user.email,
+    anatomy_viewer: isAnatomyViewerEnabled(
+      user.email,
+      c.env.ANATOMY_VIEWER_EMAILS,
+    ),
+  });
 });
 
 authRoutes.post("/logout", async (c) => {
