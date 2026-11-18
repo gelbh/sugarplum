@@ -391,6 +391,7 @@ export default function DeckHubPage({ deckId }: Props) {
       onUploadFile={material.onUploadFile}
       offerLearningObjectives={material.offerLearningObjectives}
       submitLabel={material.submitLabel}
+      submitDisabled={material.submitDisabled}
       freePathImageHelper={material.freePathImageHelper}
       pdfSplitOpen={material.pdfSplitOpen}
       pdfSplitProgress={material.pdfSplitProgress}

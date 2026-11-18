@@ -17,10 +17,11 @@ import {
 } from "../api/client";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
 import {
-  FREE_PATH_IMAGE_HELPER,
-  diyOcclusionNotice,
+  createFreePathImageNotice,
+  freePathImageHelperText,
   isImageUploadContentType,
   shouldOfferLearningObjectives,
+  uploadSubmitDisabled,
   uploadSubmitLabel,
 } from "../lib/learningObjectivesOffer";
 import {
@@ -92,7 +93,7 @@ export function useCreateMaterialUpload({
         if (!cancelled) setLlmConfigured(s.configured);
       })
       .catch(() => {
-        if (!cancelled) setLlmConfigured(false);
+        if (!cancelled) setLlmConfigured(null);
       });
     return () => {
       cancelled = true;
@@ -109,21 +110,31 @@ export function useCreateMaterialUpload({
     llmConfigured,
   });
   const submitLabel = uploadSubmitLabel({ isImage, llmConfigured });
-  const freePathImageHelper =
-    offerLearningObjectives || !isImage ? null : FREE_PATH_IMAGE_HELPER;
+  const freePathImageHelper = freePathImageHelperText({
+    isImage,
+    llmConfigured,
+  });
+  const submitDisabled = uploadSubmitDisabled({
+    isImage,
+    llmConfigured,
+    busy,
+  });
+
+  useEffect(() => {
+    if (isImage && !offerLearningObjectives && alsoCover) {
+      setAlsoCover("");
+    }
+  }, [isImage, offerLearningObjectives, alsoCover, setAlsoCover]);
 
   function freePathNoJobNotice(args: {
     hadLearningObjectives: boolean;
-    wasFreePathImage: boolean;
     manualOcclusion?: boolean;
     status: string;
   }): string {
-    if (args.manualOcclusion || args.wasFreePathImage) {
-      return (
-        diyOcclusionNotice({
-          hadLearningObjectives: args.hadLearningObjectives,
-        }).trim() || FREE_PATH_IMAGE_HELPER
-      );
+    if (args.manualOcclusion) {
+      return createFreePathImageNotice({
+        hadLearningObjectives: args.hadLearningObjectives,
+      });
     }
     return `Stored file (${args.status}). Open drafts from a prior generate, or upload a new file.`;
   }
@@ -419,8 +430,6 @@ export function useCreateMaterialUpload({
               ...pdfOpts,
               onScan: () => setReadingScan(true),
             });
-      const wasFreePathImage =
-        isImageUploadContentType(contentType) && llmConfigured !== true;
       const hadLearningObjectives = Boolean(topicHintsFromLines(alsoCover));
       setUploadFile(null);
       setFigureFiles([]);
@@ -434,7 +443,6 @@ export function useCreateMaterialUpload({
         setNotice(
           freePathNoJobNotice({
             hadLearningObjectives,
-            wasFreePathImage,
             manualOcclusion: material.manual_occlusion,
             status: material.status,
           }),
@@ -464,6 +472,7 @@ export function useCreateMaterialUpload({
     llmConfigured,
     offerLearningObjectives,
     submitLabel,
+    submitDisabled,
     freePathImageHelper,
     onPdfSplitCancel,
     onPptxSplitCancel,

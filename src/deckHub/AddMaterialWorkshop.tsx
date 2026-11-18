@@ -66,6 +66,7 @@ type Props = {
   onUploadFile: (e?: FormEvent) => void;
   offerLearningObjectives: boolean;
   submitLabel: "Continue" | "Start generation";
+  submitDisabled?: boolean;
   freePathImageHelper: string | null;
   pdfSplitOpen: boolean;
   pdfSplitProgress: string | null;
@@ -123,6 +124,7 @@ export default function AddMaterialWorkshop({
   onUploadFile,
   offerLearningObjectives,
   submitLabel,
+  submitDisabled = false,
   freePathImageHelper,
   pdfSplitOpen,
   pdfSplitProgress,
@@ -275,6 +277,7 @@ export default function AddMaterialWorkshop({
               onBack={onMethodBack}
               offerLearningObjectives={offerLearningObjectives}
               submitLabel={submitLabel}
+              submitDisabled={submitDisabled}
               freePathImageHelper={freePathImageHelper}
             />
           ) : null}

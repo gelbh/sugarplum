@@ -30,6 +30,7 @@ type Props = {
   onBack: () => void;
   offerLearningObjectives: boolean;
   submitLabel: "Continue" | "Start generation";
+  submitDisabled?: boolean;
   freePathImageHelper: string | null;
 };
 
@@ -45,6 +46,7 @@ export default function AddMaterialUploadPanel({
   onBack,
   offerLearningObjectives,
   submitLabel,
+  submitDisabled = false,
   freePathImageHelper,
 }: Props) {
   const [dropActive, setDropActive] = useState(false);
@@ -275,7 +277,7 @@ export default function AddMaterialUploadPanel({
             <Button
               type="submit"
               variant="contained"
-              disabled={materialBusy}
+              disabled={submitDisabled}
               sx={PRIMARY_PILL_SX}
             >
               {materialBusy

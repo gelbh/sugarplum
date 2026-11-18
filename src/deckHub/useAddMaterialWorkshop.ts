@@ -19,10 +19,11 @@ import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
 import {
-  FREE_PATH_IMAGE_HELPER,
   diyOcclusionNotice,
+  freePathImageHelperText,
   isImageUploadContentType,
   shouldOfferLearningObjectives,
+  uploadSubmitDisabled,
   uploadSubmitLabel,
 } from "../lib/learningObjectivesOffer";
 import {
@@ -98,7 +99,8 @@ export function useAddMaterialWorkshop({
         if (!cancelled) setLlmConfigured(s.configured);
       })
       .catch(() => {
-        if (!cancelled) setLlmConfigured(false);
+        // Leave null: do not claim BYO is missing on fetch failure.
+        if (!cancelled) setLlmConfigured(null);
       });
     return () => {
       cancelled = true;
@@ -114,8 +116,21 @@ export function useAddMaterialWorkshop({
     llmConfigured,
   });
   const submitLabel = uploadSubmitLabel({ isImage, llmConfigured });
-  const freePathImageHelper =
-    offerLearningObjectives || !isImage ? null : FREE_PATH_IMAGE_HELPER;
+  const freePathImageHelper = freePathImageHelperText({
+    isImage,
+    llmConfigured,
+  });
+  const submitDisabled = uploadSubmitDisabled({
+    isImage,
+    llmConfigured,
+    busy: materialBusy,
+  });
+
+  useEffect(() => {
+    if (isImage && !offerLearningObjectives && alsoCover) {
+      setAlsoCover("");
+    }
+  }, [isImage, offerLearningObjectives, alsoCover]);
 
   function resetMaterialMessages() {
     setMaterialError(null);
@@ -642,6 +657,7 @@ export function useAddMaterialWorkshop({
     llmConfigured,
     offerLearningObjectives,
     submitLabel,
+    submitDisabled,
     freePathImageHelper,
     resetMaterialMessages,
     onTabChange,

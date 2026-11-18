@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { DIY_OCCLUSION_FREE_PATH_NOTICE } from "../../src/deckHub/openDiyOcclusion";
 import {
+  CREATE_FREE_PATH_IMAGE_NOTICE,
+  createFreePathImageNotice,
   diyOcclusionNotice,
   FREE_PATH_IMAGE_HELPER,
+  freePathImageHelperText,
   isImageUploadContentType,
   shouldOfferLearningObjectives,
+  uploadSubmitDisabled,
   uploadSubmitLabel,
 } from "../../src/lib/learningObjectivesOffer";
 
@@ -34,9 +38,12 @@ describe("learningObjectivesOffer", () => {
     ).toBe(true);
   });
 
-  it("uses Continue only for free-path images", () => {
+  it("uses Continue only when BYO is confirmed missing", () => {
     expect(uploadSubmitLabel({ isImage: true, llmConfigured: false })).toBe(
       "Continue",
+    );
+    expect(uploadSubmitLabel({ isImage: true, llmConfigured: null })).toBe(
+      "Start generation",
     );
     expect(uploadSubmitLabel({ isImage: true, llmConfigured: true })).toBe(
       "Start generation",
@@ -44,6 +51,35 @@ describe("learningObjectivesOffer", () => {
     expect(uploadSubmitLabel({ isImage: false, llmConfigured: false })).toBe(
       "Start generation",
     );
+  });
+
+  it("disables image submit while settings are loading", () => {
+    expect(
+      uploadSubmitDisabled({
+        isImage: true,
+        llmConfigured: null,
+        busy: false,
+      }),
+    ).toBe(true);
+    expect(
+      uploadSubmitDisabled({
+        isImage: true,
+        llmConfigured: false,
+        busy: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("shows free-path helper only when BYO confirmed missing", () => {
+    expect(
+      freePathImageHelperText({ isImage: true, llmConfigured: false }),
+    ).toBe(FREE_PATH_IMAGE_HELPER);
+    expect(
+      freePathImageHelperText({ isImage: true, llmConfigured: null }),
+    ).toBeNull();
+    expect(
+      freePathImageHelperText({ isImage: true, llmConfigured: true }),
+    ).toBeNull();
   });
 
   it("exposes free-path helper mentioning DIY and Settings", () => {
@@ -59,5 +95,15 @@ describe("learningObjectivesOffer", () => {
     expect(diyOcclusionNotice({ hadLearningObjectives: false })).toBe(
       DIY_OCCLUSION_FREE_PATH_NOTICE,
     );
+  });
+
+  it("uses create-specific free-path notice without claiming DIY opened", () => {
+    expect(createFreePathImageNotice({ hadLearningObjectives: false })).toBe(
+      CREATE_FREE_PATH_IMAGE_NOTICE,
+    );
+    expect(
+      createFreePathImageNotice({ hadLearningObjectives: true }).toLowerCase(),
+    ).toContain("learning objectives");
+    expect(CREATE_FREE_PATH_IMAGE_NOTICE.toLowerCase()).toContain("deck hub");
   });
 });

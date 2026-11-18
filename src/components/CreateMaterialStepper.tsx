@@ -357,8 +357,10 @@ export default function CreateMaterialStepper({
                     </Stack>
                   ) : null}
                   <Typography variant="caption" color="text.secondary">
-                    PDF/PPTX max 50MB; images max 8MB. Upload starts generation
-                    when complete.
+                    PDF/PPTX max 50MB; images max 8MB.
+                    {upload.submitLabel === "Continue"
+                      ? " Free-path images open occlusion from the deck hub (or add a BYO key for auto vision)."
+                      : " Upload starts generation when complete."}
                   </Typography>
                   {upload.offerLearningObjectives ? alsoCoverField : null}
                   {!upload.offerLearningObjectives &&
@@ -371,7 +373,9 @@ export default function CreateMaterialStepper({
                     type="submit"
                     variant="contained"
                     disabled={
-                      busy || !deck.selectedDeckId || !upload.uploadFile
+                      upload.submitDisabled ||
+                      !deck.selectedDeckId ||
+                      !upload.uploadFile
                     }
                   >
                     {busy
