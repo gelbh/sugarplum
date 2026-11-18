@@ -18,6 +18,7 @@ import type {
   LibraryCoverTarget,
   LibraryTitleDialog,
 } from "./useLibrarySubjectDialogs";
+import { shouldAutoFocusText } from "../lib/autoFocusText";
 
 type Props = {
   guest: boolean;
@@ -143,7 +144,7 @@ export function LibraryDialogs({
               </Alert>
             ) : null}
             <TextField
-              autoFocus
+              autoFocus={shouldAutoFocusText()}
               margin="none"
               label="Subject name"
               placeholder="e.g. Anatomy"

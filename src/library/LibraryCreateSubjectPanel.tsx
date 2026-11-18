@@ -4,6 +4,7 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { shouldAutoFocusText } from "../lib/autoFocusText";
 
 type Props = {
   guest: boolean;
@@ -106,7 +107,7 @@ export function LibraryCreateSubjectPanel({
           </Box>
 
           <TextField
-            autoFocus
+            autoFocus={shouldAutoFocusText()}
             margin="none"
             label={fieldLabel}
             placeholder={placeholder}

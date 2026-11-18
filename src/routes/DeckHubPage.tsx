@@ -56,6 +56,7 @@ import { isGuest } from "../guest/session";
 import { collectDeckImageKeys, hubDiyTypes } from "../lib/hubDiyCreate";
 import { ANKI_EXPORT_BUSY_LABEL } from "../export/runAnkiExport";
 import { useTrackedOp } from "../progress/useTrackedOp";
+import { shouldAutoFocusText } from "../lib/autoFocusText";
 
 type Props = {
   deckId: string;
@@ -782,7 +783,7 @@ export default function DeckHubPage({ deckId }: Props) {
               </Alert>
             ) : null}
             <TextField
-              autoFocus
+              autoFocus={shouldAutoFocusText()}
               margin="none"
               label="Deck name"
               placeholder="e.g. Upper limb"

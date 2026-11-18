@@ -48,6 +48,7 @@ import { createSubjectExport } from "../subjects/subjectExport";
 import { createSubjectTitleDialogs } from "../subjects/subjectTitleDialogs";
 import type { CoverTarget, TitleDialog } from "../subjects/subjectTypes";
 import { useSubjectLoad } from "../subjects/useSubjectLoad";
+import { shouldAutoFocusText } from "../lib/autoFocusText";
 
 type Props = {
   subjectId: string;
@@ -648,7 +649,7 @@ export default function SubjectPage({ subjectId }: Props) {
               </Alert>
             ) : null}
             <TextField
-              autoFocus
+              autoFocus={shouldAutoFocusText()}
               margin="none"
               label={titleDialogChrome?.label ?? "Name"}
               placeholder={titleDialogChrome?.placeholder}
