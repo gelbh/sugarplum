@@ -1,5 +1,3 @@
-/** Copy atlas_materials rows + R2 body/OCR into a sandbox atlas. */
-
 import type { Env } from "../env";
 import { applySandboxKeyPrefix } from "./sandbox-r2";
 
