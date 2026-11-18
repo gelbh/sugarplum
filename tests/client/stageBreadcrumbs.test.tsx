@@ -9,7 +9,8 @@ import StageBreadcrumbs from "../../src/ui/StageBreadcrumbs";
 import { theme } from "../../src/theme";
 
 vi.mock("../../src/nav/navigate", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../src/nav/navigate")>();
+  const actual =
+    await importOriginal<typeof import("../../src/nav/navigate")>();
   return {
     ...actual,
     navigate: vi.fn(),
