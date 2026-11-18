@@ -4,7 +4,8 @@ import { useProgressRegistry } from "./ProgressProvider";
 import { useSpinDelay } from "./spinDelay";
 import type { ProgressSnapshot } from "./types";
 
-const SHOW_TIMING = { delay: 100, minDuration: 280 };
+/** Overlay only after mid-tier bar window; bar uses GlobalProgressBar 200ms delay. */
+export const ROUTE_OVERLAY_SHOW_TIMING = { delay: 800, minDuration: 300 };
 const BRIDGE_MS = 90;
 
 function isRouteLoadOp(snap: ProgressSnapshot): boolean {
@@ -13,7 +14,8 @@ function isRouteLoadOp(snap: ProgressSnapshot): boolean {
 
 /**
  * Bridges the tick between navigate and trackOnMount begin(), then follows
- * client "Loading…" ops with spin delay so fast routes do not flash.
+ * client "Loading…" ops with spin delay. Mid waits use GlobalProgressBar;
+ * this hook only drives the heavy overlay after 800ms.
  */
 export function useRouteLoadOverlay(): ProgressSnapshot | null {
   const { active } = useProgressRegistry();
@@ -65,5 +67,5 @@ export function useRouteLoadOverlay(): ProgressSnapshot | null {
         }
       : null);
 
-  return useSpinDelay(pending, SHOW_TIMING);
+  return useSpinDelay(pending, ROUTE_OVERLAY_SHOW_TIMING);
 }
