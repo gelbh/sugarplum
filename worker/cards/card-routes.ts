@@ -466,9 +466,16 @@ cardRoutes.post("/:id/regen", async (c) => {
   const nextProvenanceJson = JSON.stringify(draft.provenance);
   const updatedAt = new Date().toISOString();
 
-  const regenMedia = row.media_r2_keys_json
-    ? parseJsonField<string[]>(row.media_r2_keys_json, [])
+  const keepMedia =
+    draft.type === "image_label" ||
+    draft.type === "diagram" ||
+    draft.type === "occlusion";
+  const regenMedia = keepMedia
+    ? row.media_r2_keys_json
+      ? parseJsonField<string[]>(row.media_r2_keys_json, [])
+      : null
     : null;
+  const nextMediaJson = keepMedia ? row.media_r2_keys_json : null;
   const regenFp = await cardContentFingerprint({
     type: draft.type,
     front: draft.front,
@@ -503,7 +510,7 @@ cardRoutes.post("/:id/regen", async (c) => {
       .prepare(
         `UPDATE cards
          SET type = ?, front_json = ?, back_json = ?, provenance_json = ?,
-             content_fp = ?, updated_at = ?
+             media_r2_keys_json = ?, content_fp = ?, updated_at = ?
          WHERE id = ?`,
       )
       .bind(
@@ -511,6 +518,7 @@ cardRoutes.post("/:id/regen", async (c) => {
         nextFrontJson,
         nextBackJson,
         nextProvenanceJson,
+        nextMediaJson,
         regenFp,
         updatedAt,
         cardId,
@@ -546,6 +554,7 @@ cardRoutes.post("/:id/regen", async (c) => {
       front_json: nextFrontJson,
       back_json: nextBackJson,
       provenance_json: nextProvenanceJson,
+      media_r2_keys_json: nextMediaJson,
       updated_at: updatedAt,
     }),
   );
