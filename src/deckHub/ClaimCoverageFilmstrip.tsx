@@ -15,7 +15,6 @@ export type ClaimJumpTarget = {
   jobId?: string | null;
 };
 
-/** Match CompositionSpark plum; orphan reads as sugar-dust ivory-dim. */
 export const CLAIM_COVERAGE_SEGMENT_COLORS = {
   linked: "#5B2C6F",
   orphan: "#D4C4B0",
@@ -49,7 +48,6 @@ function claimSecondary(row: ClaimCoverageRow): string {
   return row.card_status ?? "Linked";
 }
 
-/** Header twin spark: Lectern coverage as a CompositionSpark peer; detail in popover. */
 export default function ClaimCoverageFilmstrip({
   coverage,
   onJumpToCard,
