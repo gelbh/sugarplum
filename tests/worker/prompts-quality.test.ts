@@ -19,6 +19,7 @@ import {
   IMAGE_GENERATE_SYSTEM_PROMPT,
   generateUserPrompt,
 } from "../../worker/generation/prompts";
+import { REGEN_ONE_SYSTEM_PROMPT } from "../../worker/generation/card-regen";
 import type { StudyClaim } from "../../worker/generation/claims";
 import type { CardDraft } from "../../worker/generation/schema";
 
@@ -263,5 +264,15 @@ describe("card-from-claim prompt phrases", () => {
     expect(user).toMatch(/lysozyme/);
     expect(user).toMatch(/claim/);
     expect(user).toMatch(/card|flashcard/);
+  });
+});
+
+describe("card regen prompt phrases", () => {
+  it("regen system: atomic ≤25 words, no compound stems", () => {
+    const p = REGEN_ONE_SYSTEM_PROMPT.toLowerCase();
+    expect(p).toMatch(/atomic/);
+    expect(p).toMatch(/25\s+words|under\s+~?25/);
+    expect(p).toMatch(/compound\s+stem|and\s+what|versus|no\s+compound/);
+    assertNoAlwaysRewrite(REGEN_ONE_SYSTEM_PROMPT);
   });
 });
