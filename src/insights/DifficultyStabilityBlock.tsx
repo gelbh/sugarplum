@@ -1,49 +1,51 @@
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useChartColors } from "./chartColors";
-import { insightsSectionTitleSx } from "./operatePaper";
+import MetricTip from "./MetricTip";
+import {
+  TIP_DIFFICULTY_EASY,
+  TIP_DIFFICULTY_HARD,
+  TIP_DIFFICULTY_MEDIUM,
+  TIP_DIFFICULTY_STABILITY,
+  TIP_STABILITY,
+  TIP_STABILITY_BINS,
+} from "./metricTips";
+import { DIFFICULTY_SEGMENTS, difficultySegmentColors } from "./difficultyColors";
+import { insightsBrandSerif, insightsSectionTitleSx } from "./operatePaper";
 import type {
   InsightsDifficultyMix,
   InsightsStabilitySnapshot,
 } from "./types";
+
+const DIFFICULTY_TIPS = {
+  easy: TIP_DIFFICULTY_EASY,
+  medium: TIP_DIFFICULTY_MEDIUM,
+  hard: TIP_DIFFICULTY_HARD,
+} as const;
 
 type Props = {
   difficulty: InsightsDifficultyMix;
   stability: InsightsStabilitySnapshot;
 };
 
-/** Calm difficulty ladder (not Anki traffic lights). */
-const DIFFICULTY_COLORS = {
-  easy: "rgba(91, 44, 111, 0.35)",
-  medium: "rgba(91, 44, 111, 0.6)",
-  hard: "#5B2C6F",
-} as const;
-
-const DIFFICULTY_SEGMENTS = [
-  { key: "easy" as const, label: "Easy" },
-  { key: "medium" as const, label: "Medium" },
-  { key: "hard" as const, label: "Hard" },
-];
-
 export default function DifficultyStabilityBlock({
   difficulty,
   stability,
 }: Props) {
   const colors = useChartColors();
+  const difficultyColors = difficultySegmentColors(colors.scheme);
   const hasDifficulty = difficulty.total > 0;
   const hasStability =
-    stability.medianDays != null ||
-    stability.bins.some((b) => b.count > 0);
+    stability.medianDays != null || stability.bins.some((b) => b.count > 0);
   if (!hasDifficulty && !hasStability) {
     return (
-      <Stack spacing={1} sx={{ mt: 2.5 }}>
-        <Typography
-          variant="subtitle1"
-          component="h3"
-          sx={{ ...insightsSectionTitleSx, mb: 0.75 }}
-        >
-          Difficulty and stability
+      <Stack spacing={1}>
+        <Typography component="h3" sx={{ ...insightsSectionTitleSx, mb: 0 }}>
+          <MetricTip title={TIP_DIFFICULTY_STABILITY}>
+            Difficulty and stability
+          </MetricTip>
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Grade accepted cards to see FSRS difficulty and stability here.
@@ -64,66 +66,83 @@ export default function DifficultyStabilityBlock({
   }
 
   return (
-    <Stack spacing={1.5} sx={{ mt: 2.5 }} role="img" aria-label={ariaParts.join(". ")}>
-      <Typography
-        variant="subtitle1"
-        component="h3"
-        sx={{ ...insightsSectionTitleSx, mb: 0.75 }}
-      >
-        Difficulty and stability
+    <Stack spacing={2}>
+      <Typography component="h3" sx={{ ...insightsSectionTitleSx, mb: 0 }}>
+        <MetricTip title={TIP_DIFFICULTY_STABILITY}>
+          Difficulty and stability
+        </MetricTip>
       </Typography>
 
       {hasDifficulty ? (
-        <Stack spacing={0.75}>
+        <Stack spacing={1}>
           <Box
+            role="img"
+            aria-label={ariaParts[0] ?? "Difficulty mix"}
             sx={{
               display: "flex",
-              height: 12,
-              borderRadius: 1,
+              height: 14,
+              borderRadius: 1.5,
               overflow: "hidden",
-              bgcolor: "action.hover",
+              bgcolor: colors.hover,
               width: "100%",
             }}
           >
-            {DIFFICULTY_SEGMENTS.map(({ key }) => {
+            {DIFFICULTY_SEGMENTS.map(({ key, label }) => {
               const count = difficulty[key];
               if (count <= 0) return null;
+              const share = Math.round((100 * count) / difficulty.total);
               return (
-                <Box
+                <Tooltip
                   key={key}
-                  sx={{
-                    width: `${(100 * count) / difficulty.total}%`,
-                    bgcolor: DIFFICULTY_COLORS[key],
-                    minWidth: count > 0 ? 4 : 0,
-                  }}
-                />
+                  title={`${label}: ${count} (${share}%)`}
+                  enterDelay={200}
+                >
+                  <Box
+                    sx={{
+                      width: `${(100 * count) / difficulty.total}%`,
+                      bgcolor: difficultyColors[key],
+                      minWidth: count > 0 ? 4 : 0,
+                      height: "100%",
+                      cursor: "default",
+                    }}
+                  />
+                </Tooltip>
               );
             })}
           </Box>
-          <Stack direction="row" spacing={2} useFlexGap flexWrap="wrap">
+          <Stack direction="row" spacing={2.25} useFlexGap flexWrap="wrap">
             {DIFFICULTY_SEGMENTS.map(({ key, label }) => (
               <Stack
                 key={key}
                 direction="row"
                 spacing={0.75}
-                alignItems="center"
+                alignItems="baseline"
               >
                 <Box
                   aria-hidden
                   sx={{
-                    width: 10,
-                    height: 10,
+                    width: 8,
+                    height: 8,
                     borderRadius: 0.5,
-                    bgcolor: DIFFICULTY_COLORS[key],
+                    bgcolor: difficultyColors[key],
                     flexShrink: 0,
+                    alignSelf: "center",
                   }}
                 />
                 <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ fontVariantNumeric: "tabular-nums" }}
+                  component="span"
+                  sx={{
+                    fontFamily: insightsBrandSerif,
+                    fontSize: "1.05rem",
+                    color: "text.primary",
+                    fontVariantNumeric: "tabular-nums",
+                    lineHeight: 1,
+                  }}
                 >
-                  {label} {difficulty[key]}
+                  {difficulty[key]}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  <MetricTip title={DIFFICULTY_TIPS[key]}>{label}</MetricTip>
                 </Typography>
               </Stack>
             ))}
@@ -131,51 +150,89 @@ export default function DifficultyStabilityBlock({
         </Stack>
       ) : null}
 
-      <Typography variant="caption" color="text.secondary">
-        {stability.medianDays == null
-          ? "Median stability —"
-          : `Median stability ${stability.medianDays}d`}
-      </Typography>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={{ xs: 1.75, sm: 3 }}
+        alignItems={{ sm: "flex-end" }}
+        justifyContent="space-between"
+      >
+        <Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.35 }}>
+            <MetricTip title={TIP_STABILITY}>Median stability</MetricTip>
+          </Typography>
+          <Typography
+            component="p"
+            sx={{
+              fontFamily: insightsBrandSerif,
+              fontSize: "1.75rem",
+              lineHeight: 1,
+              letterSpacing: "0.01em",
+              color: "primary.main",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {stability.medianDays == null ? "—" : `${stability.medianDays}d`}
+          </Typography>
+        </Box>
 
-      {stability.bins.some((b) => b.count > 0) ? (
-        <Stack
-          direction="row"
-          spacing={1}
-          useFlexGap
-          flexWrap="wrap"
-          alignItems="flex-end"
-          sx={{ minHeight: 40 }}
-        >
-          {stability.bins.map((bin) => (
-            <Stack key={bin.label} spacing={0.25} alignItems="center" sx={{ minWidth: 40 }}>
-              <Box
-                aria-hidden
-                sx={{
-                  width: 28,
-                  height: Math.max(4, Math.round((32 * bin.count) / maxBin)),
-                  borderRadius: "3px 3px 0 0",
-                  bgcolor: colors.primary,
-                  opacity: bin.count === 0 ? 0.2 : 0.85,
-                }}
-              />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontSize: 10, fontVariantNumeric: "tabular-nums" }}
+        {stability.bins.some((b) => b.count > 0) ? (
+          <Stack
+            role="img"
+            aria-label={
+              ariaParts.find((p) => p.startsWith("Median")) ??
+              TIP_STABILITY_BINS
+            }
+            direction="row"
+            spacing={1.25}
+            useFlexGap
+            flexWrap="nowrap"
+            alignItems="flex-end"
+            sx={{ minHeight: 56, pb: 0.25 }}
+          >
+            {stability.bins.map((bin) => (
+              <Tooltip
+                key={bin.label}
+                title={`${bin.label}: ${bin.count} cards. ${TIP_STABILITY_BINS}`}
+                enterDelay={200}
               >
-                {bin.label}
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontSize: 10, fontVariantNumeric: "tabular-nums" }}
-              >
-                {bin.count}
-              </Typography>
-            </Stack>
-          ))}
-        </Stack>
-      ) : null}
+                <Stack
+                  spacing={0.4}
+                  alignItems="center"
+                  sx={{ minWidth: 44, cursor: "default" }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontVariantNumeric: "tabular-nums", lineHeight: 1 }}
+                  >
+                    {bin.count}
+                  </Typography>
+                  <Box
+                    aria-hidden
+                    sx={{
+                      width: 32,
+                      height: Math.max(6, Math.round((44 * bin.count) / maxBin)),
+                      borderRadius: "4px 4px 1px 1px",
+                      bgcolor: colors.primary,
+                      opacity: bin.count === 0 ? 0.22 : 0.9,
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{
+                      fontSize: "0.68rem",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {bin.label}
+                  </Typography>
+                </Stack>
+              </Tooltip>
+            ))}
+          </Stack>
+        ) : null}
+      </Stack>
     </Stack>
   );
 }
