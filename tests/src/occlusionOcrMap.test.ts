@@ -8,7 +8,7 @@ import {
   VERTICAL_MERGE_FACTOR,
   mapOcrWordsToRegions,
   type OcrWord,
-} from "../../src/lib/occlusionOcrMap";
+} from "../../src/deckHub/occlusionOcrMap";
 
 function word(
   partial: Partial<OcrWord> & Pick<OcrWord, "text" | "bbox">,

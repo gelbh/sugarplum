@@ -3,7 +3,7 @@ import {
   flattenBlocksToWords,
   resetOcrWorkerForTests,
   suggestOcclusionRegions,
-} from "../../src/lib/occlusionOcr";
+} from "../../src/deckHub/occlusionOcr";
 
 const recognize = vi.fn();
 

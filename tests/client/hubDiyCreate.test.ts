@@ -3,7 +3,7 @@ import {
   collectDeckImageKeys,
   hubDiyTypes,
   validateHubCreateCard,
-} from "../../src/lib/hubDiyCreate";
+} from "../../src/deckHub/hubDiyCreate";
 
 describe("hubDiyTypes", () => {
   it("keeps guest DIY to text types only", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CardType } from "../../src/api/client";
-import { resolveEditorType } from "../../src/components/DraftCardEditor";
+import { resolveEditorType } from "../../src/deckHub/DraftCardEditor";
 
 describe("resolveEditorType (hub allowedTypes)", () => {
   const diy: CardType[] = ["qa", "cloze", "mcq"];

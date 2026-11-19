@@ -72,7 +72,7 @@ import {
   mapLetterboxBoxToCss,
   parseLayoutDetections,
   resetLayoutSessionForTests,
-} from "../../src/lib/layoutOnnx";
+} from "../../src/deckHub/layoutOnnx";
 
 function mockCanvas(opts: {
   width: number;

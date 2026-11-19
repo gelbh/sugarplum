@@ -17,7 +17,7 @@ import {
 } from "../api/client";
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
-import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
+import { MAX_CLIENT_FIGURES } from "../materials/figureGeometry";
 import {
   diyOcclusionNotice,
   freePathImageHelperText,
@@ -25,21 +25,21 @@ import {
   shouldOfferLearningObjectives,
   uploadSubmitDisabled,
   uploadSubmitLabel,
-} from "../lib/learningObjectivesOffer";
+} from "../materials/learningObjectivesOffer";
 import {
   batchAllReused,
   storedUploadNotice,
-} from "../lib/storedUploadNotice";
+} from "../materials/storedUploadNotice";
 import {
   MAX_FILE_BYTES,
   MAX_IMAGE_BYTES,
   MAX_SPLIT_SOURCE_BYTES,
   fileTooLargeMessage,
   splitSourceTooLargeMessage,
-} from "../lib/materialUploadLimits";
-import { runConsentedPdfCompressUpload } from "../lib/runConsentedPdfCompressUpload";
-import { runConsentedPdfSplitUpload } from "../lib/runConsentedPdfSplitUpload";
-import { runConsentedPptxSplitUpload } from "../lib/runConsentedPptxSplitUpload";
+} from "../materials/materialUploadLimits";
+import { runConsentedPdfCompressUpload } from "../materials/runConsentedPdfCompressUpload";
+import { runConsentedPdfSplitUpload } from "../materials/runConsentedPdfSplitUpload";
+import { runConsentedPptxSplitUpload } from "../materials/runConsentedPptxSplitUpload";
 import type { WorkshopFrame } from "./workshopStack";
 import { openDiyOcclusionFromImageKey } from "./openDiyOcclusion";
 

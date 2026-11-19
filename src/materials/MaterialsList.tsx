@@ -19,10 +19,10 @@ import {
   topicGenerate,
   type MaterialListItem,
 } from "../api/client";
-import { materialDisplayName } from "../materials/materialActions";
-import { partitionSplitSiblings } from "../materials/splitSiblingGroups";
+import { materialDisplayName } from "./materialActions";
+import { partitionSplitSiblings } from "./splitSiblingGroups";
 import type { SourceRole } from "../lib/sourceRole";
-import EmptyNext from "./EmptyNext";
+import EmptyNext from "../deckHub/EmptyNext";
 import MaterialRow from "./MaterialRow";
 import { shouldAutoFocusText } from "../shared/lib/autoFocusText";
 

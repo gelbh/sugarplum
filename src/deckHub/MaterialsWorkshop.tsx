@@ -24,7 +24,7 @@ import ViewListOutlinedIcon from "@mui/icons-material/ViewListOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import type { MaterialListItem } from "../api/client";
 import { downloadMaterialUrl, mediaUrl } from "../api/client";
-import EmptyNext from "../components/EmptyNext";
+import EmptyNext from "./EmptyNext";
 import {
   PILL_BTN,
   ROW_ACTION,

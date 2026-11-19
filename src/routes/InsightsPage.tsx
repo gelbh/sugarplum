@@ -14,8 +14,8 @@ import {
 } from "../api/client";
 import CompositionSpark, {
   COMPOSITION_SEGMENT_COLORS,
-} from "../components/CompositionSpark";
-import EmptyNext from "../components/EmptyNext";
+} from "../materials/CompositionSpark";
+import EmptyNext from "../deckHub/EmptyNext";
 import { navigate } from "../shared/nav/navigate";
 import ActivityHeatmap from "../insights/ActivityHeatmap";
 import {

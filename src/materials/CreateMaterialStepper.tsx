@@ -23,8 +23,8 @@ import {
   type FigureExtractMode,
   type Subject,
 } from "../api/client";
-import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
-import { fileSizeCapMb } from "../lib/materialUploadLimits";
+import { MAX_CLIENT_FIGURES } from "./figureGeometry";
+import { fileSizeCapMb } from "./materialUploadLimits";
 import {
   SOURCE_ROLES,
   SOURCE_ROLE_LABELS,
@@ -32,16 +32,16 @@ import {
   type SourceRole,
 } from "../lib/sourceRole";
 import { SOURCE_ROLE_ICONS } from "../lib/sourceRoleIcons";
-import { CreateMaterialDeckStep } from "../materials/CreateMaterialDeckStep";
-import { CreateMaterialDoneStep } from "../materials/CreateMaterialDoneStep";
-import { useCreateMaterialDeckStep } from "../materials/useCreateMaterialDeckStep";
-import { useCreateMaterialPaste } from "../materials/useCreateMaterialPaste";
-import { useCreateMaterialUpload } from "../materials/useCreateMaterialUpload";
-import { FigureSuggestPanel } from "./FigureSuggestPanel";
+import { CreateMaterialDeckStep } from "./CreateMaterialDeckStep";
+import { CreateMaterialDoneStep } from "./CreateMaterialDoneStep";
+import { useCreateMaterialDeckStep } from "./useCreateMaterialDeckStep";
+import { useCreateMaterialPaste } from "./useCreateMaterialPaste";
+import { useCreateMaterialUpload } from "./useCreateMaterialUpload";
+import { FigureSuggestPanel } from "../deckHub/FigureSuggestPanel";
 import PdfCompressConsent from "./PdfCompressConsent";
 import PdfSplitConsent from "./PdfSplitConsent";
 import PptxSplitConsent from "./PptxSplitConsent";
-import { SelectEnumItem, renderSelectEnumValue } from "./SelectEnumItem";
+import { SelectEnumItem, renderSelectEnumValue } from "../components/SelectEnumItem";
 import { stepperSx } from "./stepperSx";
 
 type Props = {

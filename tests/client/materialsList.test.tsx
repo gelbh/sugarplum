@@ -17,7 +17,7 @@ vi.mock("../../src/api/client", () => ({
   topicGenerate: vi.fn(),
 }));
 
-import MaterialsList from "../../src/components/MaterialsList";
+import MaterialsList from "../../src/materials/MaterialsList";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;

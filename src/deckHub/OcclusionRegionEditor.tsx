@@ -196,7 +196,7 @@ export default function OcclusionRegionEditor({
       }
       const blob = await res.blob();
       const { width, height } = await decodeImageNaturalSize(blob);
-      const { suggestOcclusionRegions } = await import("../lib/occlusionOcr");
+      const { suggestOcclusionRegions } = await import("./occlusionOcr");
       const regions = await suggestOcclusionRegions(blob, width, height);
       if (gen !== suggestGenRef.current) return;
       if (frontRef.current.image_key !== startedKey) return;
