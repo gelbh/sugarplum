@@ -245,8 +245,9 @@ jobRoutes.get("/:id/claim-coverage", async (c) => {
 
   const { results } = await db
     .prepare(
-      `SELECT sc.id, sc.subject, sc.predicate, sc.object, sc.source_span, sc.pages_json,
-              c.id AS card_id, c.status AS card_status, c.created_at AS card_created_at
+      `SELECT sc.id, sc.job_id, sc.subject, sc.predicate, sc.object, sc.source_span,
+              sc.pages_json, c.id AS card_id, c.status AS card_status,
+              c.created_at AS card_created_at
        FROM study_claims sc
        LEFT JOIN cards c ON c.claim_id = sc.id
        WHERE sc.job_id = ?
@@ -255,6 +256,7 @@ jobRoutes.get("/:id/claim-coverage", async (c) => {
     .bind(jobId)
     .all<{
       id: string;
+      job_id: string;
       subject: string;
       predicate: string;
       object: string | null;

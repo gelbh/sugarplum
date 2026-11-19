@@ -2766,11 +2766,15 @@ export function createTestEnv(opts?: {
         if (
           normalized.includes("FROM study_claims sc") &&
           normalized.includes("LEFT JOIN cards c ON c.claim_id = sc.id") &&
-          normalized.includes("WHERE sc.job_id =")
+          (normalized.includes("WHERE sc.job_id =") ||
+            normalized.includes("WHERE sc.deck_id ="))
         ) {
-          const jobId = bound[0] as string;
+          const filterId = bound[0] as string;
+          const byDeck = normalized.includes("WHERE sc.deck_id =");
           const claims = [...studyClaims.values()]
-            .filter((sc) => sc.job_id === jobId)
+            .filter((sc) =>
+              byDeck ? sc.deck_id === filterId : sc.job_id === filterId,
+            )
             .sort((a, b) => a.created_at.localeCompare(b.created_at));
           const rows = claims.flatMap((sc) => {
             const linked = [...cards.values()].filter(
@@ -2780,6 +2784,7 @@ export function createTestEnv(opts?: {
               return [
                 {
                   id: sc.id,
+                  job_id: sc.job_id,
                   subject: sc.subject,
                   predicate: sc.predicate,
                   object: sc.object,
@@ -2793,6 +2798,7 @@ export function createTestEnv(opts?: {
             }
             return linked.map((card) => ({
               id: sc.id,
+              job_id: sc.job_id,
               subject: sc.subject,
               predicate: sc.predicate,
               object: sc.object,

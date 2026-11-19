@@ -50,7 +50,8 @@ export default function CompositionSpark({
         bgcolor: "action.hover",
         mt: height >= 8 ? 0 : 0.5,
         maxWidth,
-        width: maxWidth === "100%" ? "100%" : undefined,
+        // Without width, flexGrow segments collapse to minWidth (2px).
+        width: maxWidth,
       }}
     >
       {SEGMENTS.map(({ key, color }) => {

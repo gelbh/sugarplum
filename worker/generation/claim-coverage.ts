@@ -7,6 +7,8 @@ export type ClaimCoverageRow = {
   pages?: number[] | null;
   card_id: string | null;
   card_status?: string | null;
+  /** Present when the projection selects study_claims.job_id (deck aggregate). */
+  job_id?: string | null;
 };
 
 export type ClaimCoverage = {
@@ -24,6 +26,7 @@ type RawRow = {
   card_id: string | null;
   card_status: string | null;
   card_created_at?: string | null;
+  job_id?: string | null;
 };
 
 function parsePages(raw: string | null): number[] | null {
@@ -59,6 +62,7 @@ export function buildClaimCoverage(rows: RawRow[]): ClaimCoverage {
         pages,
         card_id: row.card_id,
         card_status: row.card_status ?? undefined,
+        job_id: row.job_id ?? undefined,
         _created: row.card_created_at ?? null,
       });
       continue;

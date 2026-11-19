@@ -22,6 +22,7 @@ import {
 import { api, ApiError, guestUnsupported } from "./core";
 import type {
   CardDraftView,
+  ClaimCoverage,
   CoverFields,
   CoverOwnerKind,
   CoverUploadUrlResponse,
@@ -258,6 +259,14 @@ export function deckStats(id: string) {
     }
   }
   return api<DeckStats>(`/api/decks/${id}/stats`);
+}
+
+export function getDeckClaimCoverage(
+  deckId: string,
+  init?: RequestInit,
+): Promise<ClaimCoverage | null> {
+  if (isGuest()) return Promise.resolve(null);
+  return api<ClaimCoverage>(`/api/decks/${deckId}/claim-coverage`, init);
 }
 
 export function subjectComposition(id: string) {
