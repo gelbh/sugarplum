@@ -1,4 +1,8 @@
-import { unwrapLlmJsonText } from "./llm-json";
+import {
+  looksLikeTruncatedJson,
+  salvageCompleteJsonObjects,
+  unwrapLlmJsonText,
+} from "./llm-json";
 
 export type StudyClaim = {
   subject: string;
@@ -51,9 +55,29 @@ function parseClaimRow(raw: unknown): StudyClaim | null {
   return claim;
 }
 
+function isClaimShape(obj: unknown): boolean {
+  return (
+    !!obj &&
+    typeof obj === "object" &&
+    "subject" in obj &&
+    "predicate" in obj &&
+    "source_span" in obj
+  );
+}
+
+function claimsFromRows(rows: unknown[]): StudyClaim[] {
+  const claims: StudyClaim[] = [];
+  for (const row of rows) {
+    const claim = parseClaimRow(row);
+    if (claim) claims.push(claim);
+  }
+  return claims;
+}
+
 /**
  * Parse LLM claim JSON: array or `{"claims":[...]}`.
- * Malformed rows are skipped; empty/invalid payloads yield [].
+ * Salvages complete claim objects on truncated JSON; throws mid-JSON truncation
+ * when nothing can be salvaged. Other invalid payloads yield [].
  */
 export function parseClaimsPayload(text: string): StudyClaim[] {
   const unwrapped = unwrapLlmJsonText(text);
@@ -61,6 +85,29 @@ export function parseClaimsPayload(text: string): StudyClaim[] {
   try {
     parsed = JSON.parse(unwrapped);
   } catch {
+    // Prefer raw text: unwrap's last-`}` slice can clip a truncated payload
+    // and hide complete claim objects.
+    const salvaged = [
+      ...salvageCompleteJsonObjects(text),
+      ...salvageCompleteJsonObjects(unwrapped),
+    ].filter(isClaimShape);
+    const unique = [
+      ...new Map(salvaged.map((c) => [JSON.stringify(c), c])).values(),
+    ];
+    const claims = claimsFromRows(unique);
+    if (claims.length > 0) return claims;
+
+    const preview = text.trim().replace(/\s+/g, " ").slice(0, 80);
+    if (
+      looksLikeTruncatedJson(unwrapped) ||
+      looksLikeTruncatedJson(text.trim())
+    ) {
+      throw new Error(
+        preview
+          ? `LLM response truncated mid-JSON (preview: ${preview})`
+          : "LLM response truncated mid-JSON",
+      );
+    }
     return [];
   }
 
@@ -75,13 +122,7 @@ export function parseClaimsPayload(text: string): StudyClaim[] {
         : null;
 
   if (!rows) return [];
-
-  const claims: StudyClaim[] = [];
-  for (const row of rows) {
-    const claim = parseClaimRow(row);
-    if (claim) claims.push(claim);
-  }
-  return claims;
+  return claimsFromRows(rows);
 }
 
 /**

@@ -66,13 +66,17 @@ function isCompoundFront(front: string): boolean {
 
 describe("claim pipeline (extract → write → critique)", () => {
   it("runs extract then write then critique via complete; never generateDrafts", async () => {
-    const completeCalls: Array<{ system: string; user: string }> = [];
+    const completeCalls: Array<{
+      system: string;
+      user: string;
+      jsonShape?: string;
+    }> = [];
     const llm: PipelineLlm = {
       generateDrafts: vi.fn(async () => {
         throw new Error("generateDrafts must not be called for text claim path");
       }),
-      complete: vi.fn(async ({ system, user }) => {
-        completeCalls.push({ system, user });
+      complete: vi.fn(async ({ system, user, jsonShape }) => {
+        completeCalls.push({ system, user, jsonShape });
         const s = system.toLowerCase();
         if (s.includes("extract") && s.includes("claim")) {
           return { text: JSON.stringify(twoClaims), usage: null };
@@ -98,13 +102,57 @@ describe("claim pipeline (extract → write → critique)", () => {
     expect(llm.complete).toHaveBeenCalled();
     expect(completeCalls.length).toBeGreaterThanOrEqual(3);
     expect(completeCalls[0]!.system.toLowerCase()).toMatch(/extract/);
+    expect(completeCalls[0]!.jsonShape).toBe("claims");
     expect(completeCalls[1]!.system.toLowerCase()).toMatch(/flashcard|claim/);
+    expect(completeCalls[1]!.jsonShape ?? "cards").toBe("cards");
     expect(completeCalls[2]!.system.toLowerCase()).toMatch(/critique/);
+    expect(completeCalls[2]!.jsonShape ?? "cards").toBe("cards");
 
     expect(drafts).toHaveLength(2);
     for (const d of drafts) {
       expect(isCompoundFront(d.front)).toBe(false);
       expect(wordCount(d.back)).toBeLessThanOrEqual(25);
     }
+  });
+
+  it("write stage compact-retries once on mid-JSON truncation", async () => {
+    const writeSystems: string[] = [];
+    const oneCard = twoCards[0]!;
+    const llm: PipelineLlm = {
+      generateDrafts: vi.fn(async () => {
+        throw new Error("generateDrafts must not be called");
+      }),
+      complete: vi.fn(async ({ system }) => {
+        const s = system.toLowerCase();
+        if (s.includes("extract") && s.includes("claim")) {
+          return { text: JSON.stringify(twoClaims), usage: null };
+        }
+        if (s.includes("critique")) {
+          return { text: JSON.stringify({ cards: [oneCard] }), usage: null };
+        }
+        if (s.includes("write") && s.includes("study claim")) {
+          writeSystems.push(system);
+          if (writeSystems.length === 1) {
+            return {
+              text: '{"cards":[{"type":"qa","front":"What does lysozyme digest?","back":"Peptidoglycan',
+              usage: null,
+            };
+          }
+          return { text: JSON.stringify([oneCard]), usage: null };
+        }
+        throw new Error(`unexpected system: ${system.slice(0, 80)}`);
+      }),
+    };
+
+    const drafts = await runGenerationPipeline({
+      text: CHUNK,
+      llm,
+      apiKey: "k",
+      provider: "mock",
+    });
+
+    expect(writeSystems).toHaveLength(2);
+    expect(writeSystems[1]!.toLowerCase()).toMatch(/3|15|fewer|short/);
+    expect(drafts.length).toBeGreaterThanOrEqual(1);
   });
 });

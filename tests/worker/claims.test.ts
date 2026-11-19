@@ -42,4 +42,16 @@ describe("claims parse and filter", () => {
     );
     expect(claims).toEqual([]);
   });
+
+  it("salvages complete claim objects from truncated mid-array JSON", () => {
+    const truncated = `{"claims":[{"subject":"Lysozyme","predicate":"digests peptidoglycan","source_span":"Lysozyme digests peptidoglycan"},{"subject":"ATP","predicate":"is energ`;
+    const claims = parseClaimsPayload(truncated);
+    expect(claims).toHaveLength(1);
+    expect(claims[0]!.subject).toBe("Lysozyme");
+  });
+
+  it("throws truncated mid-JSON when nothing can be salvaged", () => {
+    const truncated = `{"claims":[{"subject":"Lysozyme","predicate":"digests`;
+    expect(() => parseClaimsPayload(truncated)).toThrow(/truncated mid-JSON/i);
+  });
 });

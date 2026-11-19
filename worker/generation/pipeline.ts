@@ -1,5 +1,7 @@
 import {
+  CARD_FROM_CLAIM_COMPACT_SYSTEM_PROMPT,
   CARD_FROM_CLAIM_SYSTEM_PROMPT,
+  cardFromClaimCompactUserPrompt,
   cardFromClaimUserPrompt,
 } from "./card-from-claim-prompts";
 import {
@@ -316,47 +318,6 @@ async function safeOnChunkDrafts(
   }
 }
 
-/** Unbalanced JSON braces/brackets (or open string) → mid-JSON truncation. */
-function looksLikeTruncatedJson(text: string): boolean {
-  const t = text.trim();
-  if (!(t.startsWith("{") || t.startsWith("["))) return false;
-  let depth = 0;
-  let inString = false;
-  let escape = false;
-  for (const ch of t) {
-    if (inString) {
-      if (escape) escape = false;
-      else if (ch === "\\") escape = true;
-      else if (ch === '"') inString = false;
-      continue;
-    }
-    if (ch === '"') inString = true;
-    else if (ch === "{" || ch === "[") depth += 1;
-    else if (ch === "}" || ch === "]") depth -= 1;
-  }
-  return inString || depth !== 0;
-}
-
-/**
- * Parse/filter claims; throw truncation mid-JSON so compact retry can fire.
- * Genuinely empty or malformed (non-truncated) payloads yield [].
- */
-function parseFilteredClaimsOrThrowTruncation(
-  raw: string,
-  chunk: string,
-): StudyClaim[] {
-  const claims = filterClaimsAgainstChunk(parseClaimsPayload(raw), chunk);
-  if (claims.length > 0) return claims;
-  const unwrapped = unwrapLlmJsonText(raw);
-  if (
-    looksLikeTruncatedJson(unwrapped) ||
-    looksLikeTruncatedJson(raw.trim())
-  ) {
-    throw new Error("LLM response truncated mid-JSON");
-  }
-  return claims;
-}
-
 type ClaimStageLlm = {
   llm: PipelineLlm;
   apiKey: string;
@@ -374,24 +335,33 @@ async function extractClaimsForChunk(
       user: appendExtraUserSuffix(user, extraUserSuffix ?? ""),
       apiKey,
       provider,
+      jsonShape: "claims",
     });
 
   try {
     return await withCompactTruncationRetry(
       async () =>
-        parseFilteredClaimsOrThrowTruncation(
-          (await completeOnce(
-            CLAIM_EXTRACT_SYSTEM_PROMPT,
-            claimExtractUserPrompt(chunk),
-          )).text,
+        filterClaimsAgainstChunk(
+          parseClaimsPayload(
+            (
+              await completeOnce(
+                CLAIM_EXTRACT_SYSTEM_PROMPT,
+                claimExtractUserPrompt(chunk),
+              )
+            ).text,
+          ),
           chunk,
         ),
       async () =>
-        parseFilteredClaimsOrThrowTruncation(
-          (await completeOnce(
-            CLAIM_EXTRACT_COMPACT_SYSTEM_PROMPT,
-            claimExtractCompactUserPrompt(chunk),
-          )).text,
+        filterClaimsAgainstChunk(
+          parseClaimsPayload(
+            (
+              await completeOnce(
+                CLAIM_EXTRACT_COMPACT_SYSTEM_PROMPT,
+                claimExtractCompactUserPrompt(chunk),
+              )
+            ).text,
+          ),
           chunk,
         ),
     );
@@ -402,26 +372,54 @@ async function extractClaimsForChunk(
   }
 }
 
+function isCardsParseFailure(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    (/non-JSON/i.test(err.message) ||
+      /must be an array or \{\"cards\"/i.test(err.message))
+  );
+}
+
 async function writeCardsFromClaims(
   claims: StudyClaim[],
   args: ClaimStageLlm & { extraUserSuffix?: string },
 ): Promise<CardDraft[]> {
   if (claims.length === 0) return [];
   const { llm, apiKey, provider, extraUserSuffix } = args;
-  const raw = await llm.complete({
-    system: CARD_FROM_CLAIM_SYSTEM_PROMPT,
-    user: appendExtraUserSuffix(
-      cardFromClaimUserPrompt(claims),
-      extraUserSuffix ?? "",
-    ),
-    apiKey,
-    provider,
-  });
+  const completeOnce = (system: string, user: string) =>
+    llm.complete({
+      system,
+      user: appendExtraUserSuffix(user, extraUserSuffix ?? ""),
+      apiKey,
+      provider,
+      jsonShape: "cards",
+    });
+
   try {
-    return parseCardsPayload(raw.text);
-  } catch {
-    // Unparseable / truncated write → same as empty generate for this chunk.
-    return [];
+    return await withCompactTruncationRetry(
+      async () =>
+        parseCardsPayload(
+          (
+            await completeOnce(
+              CARD_FROM_CLAIM_SYSTEM_PROMPT,
+              cardFromClaimUserPrompt(claims),
+            )
+          ).text,
+        ),
+      async () =>
+        parseCardsPayload(
+          (
+            await completeOnce(
+              CARD_FROM_CLAIM_COMPACT_SYSTEM_PROMPT,
+              cardFromClaimCompactUserPrompt(claims),
+            )
+          ).text,
+        ),
+    );
+  } catch (err) {
+    // Double truncation or unparseable → same as empty generate for this chunk.
+    if (isTruncationParseError(err) || isCardsParseFailure(err)) return [];
+    throw err;
   }
 }
 

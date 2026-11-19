@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   JSON_OBJECT_RESPONSE_FORMAT,
+  openAiClaimsJsonSchemaResponseFormat,
   openAiJsonSchemaResponseFormat,
 } from "../../worker/generation/cards-json-schema";
 import {
@@ -328,6 +329,32 @@ describe("LLM provider allowlist", () => {
     });
 
     expect(body.response_format).toEqual(openAiJsonSchemaResponseFormat());
+  });
+
+  it("openai complete with jsonShape claims sends claims schema", async () => {
+    let body: { response_format?: unknown } = {};
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        body = JSON.parse(String(init?.body)) as typeof body;
+        return new Response(
+          JSON.stringify({
+            choices: [{ message: { content: '{"claims":[]}' } }],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }),
+    );
+
+    await createLlmAdapter("openai").complete({
+      system: "s",
+      user: "u",
+      apiKey: "sk-test",
+      provider: "openai",
+      jsonShape: "claims",
+    });
+
+    expect(body.response_format).toEqual(openAiClaimsJsonSchemaResponseFormat());
   });
 
   it("retries json_object once when OpenAI rejects the schema format", async () => {

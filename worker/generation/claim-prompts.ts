@@ -7,7 +7,7 @@ Rules:
 - Resolve pronouns (it, they, this, these, those) to the named entity using the chunk; never leave a pronoun as subject.
 - Split compounds: if a sentence asserts two predicates or joins two facts with "and" / "versus", emit two claims.
 - Skip document learning-objective lists, tables of contents, references, slide chrome, and prefaces.
-- source_span must be a short verbatim (or lightly trimmed) span from the material that entails the claim.
+- source_span must be a short verbatim span from the material that entails the claim (whitespace normalization OK; do not drop or rephrase words).
 - pages is optional 1-based page numbers when known; omit when unknown.
 - Respond with JSON only: {"claims":[ { "subject": string, "predicate": string, "object"?: string, "qualifiers"?: string[], "source_span": string, "pages"?: number[] } ]}
 - Do not wrap the array in markdown fences. Finish every string and close all braces.`;
@@ -24,7 +24,7 @@ Rules:
 - Resolve pronouns (it, they, this, these, those) to the named entity using the chunk; never leave a pronoun as subject.
 - Split compounds: if a sentence asserts two predicates or joins two facts with "and" / "versus", emit two claims.
 - Skip document learning-objective lists, tables of contents, references, slide chrome, and prefaces.
-- source_span must be a short verbatim (or lightly trimmed) span from the material that entails the claim.
+- source_span must be a short verbatim span from the material that entails the claim (whitespace normalization OK; do not drop or rephrase words).
 - pages is optional 1-based page numbers when known; omit when unknown.
 - Respond with JSON only: {"claims":[ { "subject": string, "predicate": string, "object"?: string, "qualifiers"?: string[], "source_span": string, "pages"?: number[] } ]}
 - Do not wrap the array in markdown fences. Finish every string and close all braces.`;

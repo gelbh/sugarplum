@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  CARD_FROM_CLAIM_COMPACT_SYSTEM_PROMPT,
   CARD_FROM_CLAIM_SYSTEM_PROMPT,
+  cardFromClaimCompactUserPrompt,
   cardFromClaimUserPrompt,
 } from "../../worker/generation/card-from-claim-prompts";
 import {
@@ -226,6 +228,8 @@ describe("claim extract prompt phrases", () => {
       );
       expect(p).toMatch(/ground|source|span/);
       expect(p).toMatch(/claims/);
+      expect(p).toMatch(/verbatim/);
+      expect(p).not.toMatch(/lightly\s+trimmed/);
       assertNoAlwaysRewrite(prompt);
     }
   });
@@ -259,11 +263,26 @@ describe("card-from-claim prompt phrases", () => {
     assertNoAlwaysRewrite(CARD_FROM_CLAIM_SYSTEM_PROMPT);
   });
 
+  it("write compact caps card count and short backs", () => {
+    const p = CARD_FROM_CLAIM_COMPACT_SYSTEM_PROMPT.toLowerCase();
+    expect(p).toMatch(/3|fewer|short/);
+    expect(p).toMatch(/15\s+words|under\s+~?15|25\s+words/);
+    expect(p).toMatch(/one\s+card\s+per\s+claim|at\s+most\s+one\s+card/);
+    assertNoAlwaysRewrite(CARD_FROM_CLAIM_COMPACT_SYSTEM_PROMPT);
+  });
+
   it("write user includes claims JSON and card instructions", () => {
     const user = cardFromClaimUserPrompt([sampleClaim]).toLowerCase();
     expect(user).toMatch(/lysozyme/);
     expect(user).toMatch(/claim/);
     expect(user).toMatch(/card|flashcard/);
+  });
+
+  it("write compact user includes claims JSON", () => {
+    const user = cardFromClaimCompactUserPrompt([sampleClaim]).toLowerCase();
+    expect(user).toMatch(/lysozyme/);
+    expect(user).toMatch(/claim/);
+    expect(user).toMatch(/3|short|fewer/);
   });
 });
 
