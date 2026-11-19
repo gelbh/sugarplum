@@ -6,7 +6,8 @@ export const STAGE_WEIGHTS = {
   extract: 0.08,
   figures: 0.1,
   rules: 0.05,
-  generate: 0.35,
+  claims: 0.15,
+  generate: 0.2,
   critique: 0.3,
   persist: 0.1,
 } as const;
@@ -18,6 +19,7 @@ const STAGE_ORDER: ProgressStage[] = [
   "extract",
   "figures",
   "rules",
+  "claims",
   "generate",
   "critique",
   "persist",
@@ -311,6 +313,7 @@ export const TEXT_LLM_STAGES = [
   "queued",
   "extract",
   "rules",
+  "claims",
   "generate",
   "critique",
   "persist",
@@ -321,6 +324,7 @@ export const PDF_STAGES = [
   "extract",
   "figures",
   "rules",
+  "claims",
   "generate",
   "critique",
   "persist",
@@ -418,12 +422,16 @@ export function computePipelineBandPercent(
   presentStages: readonly ProgressStage[],
 ): number {
   const weights = effectiveWeights(presentStages);
+  const bandStart = presentStages.includes("claims") ? "claims" : "generate";
   let base = 0;
   for (const s of STAGE_ORDER) {
-    if (s === "generate") break;
+    if (s === bandStart) break;
     if (presentStages.includes(s)) base += weights[s];
   }
-  const band = weights.generate + weights.critique;
+  const band =
+    (presentStages.includes("claims") ? weights.claims : 0) +
+    weights.generate +
+    weights.critique;
   const denom = Math.max(1, chunkTotal * 2);
   const within = Math.min(1, Math.max(0, halfStepsDone) / denom);
   const raw = 100 * (base + band * within);

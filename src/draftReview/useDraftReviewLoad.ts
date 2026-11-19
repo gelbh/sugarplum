@@ -7,9 +7,11 @@ import {
 import {
   ApiError,
   getJob,
+  getJobClaimCoverage,
   getJourney,
   listJobDrafts,
   type CardDraftView,
+  type ClaimCoverage,
 } from "../api/client";
 import {
   emptyJobDraftCtas,
@@ -31,6 +33,7 @@ type Args = {
   setCrumbs: Dispatch<SetStateAction<StageCrumb[]>>;
   setReady: Dispatch<SetStateAction<boolean>>;
   setDirty: Dispatch<SetStateAction<boolean>>;
+  setClaimCoverage: Dispatch<SetStateAction<ClaimCoverage | null>>;
 };
 
 export function useDraftReviewLoad({
@@ -46,12 +49,18 @@ export function useDraftReviewLoad({
   setCrumbs,
   setReady,
   setDirty,
+  setClaimCoverage,
 }: Args) {
   const load = useCallback(
     async (id: string) => {
-      const [list, job] = await Promise.all([listJobDrafts(id), getJob(id)]);
+      const [list, job, coverage] = await Promise.all([
+        listJobDrafts(id),
+        getJob(id),
+        getJobClaimCoverage(id).catch(() => null),
+      ]);
       setDrafts(list);
       setJobStatus(job.status);
+      setClaimCoverage(coverage);
       if (job.error) setError(friendlyJobError(job.error));
       setDirty(false);
       const next: StageCrumb[] = [{ label: "Library", href: "/library" }];
@@ -70,7 +79,7 @@ export function useDraftReviewLoad({
       setCrumbs(next);
       return list;
     },
-    [setCrumbs, setDirty, setDrafts, setError, setJobStatus],
+    [setClaimCoverage, setCrumbs, setDirty, setDrafts, setError, setJobStatus],
   );
 
   const refreshJourney = useCallback(

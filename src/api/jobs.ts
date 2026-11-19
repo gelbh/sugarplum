@@ -5,6 +5,7 @@ import { notifyGamificationChanged } from "./events";
 import { sanitizeTopicHints } from "./materials";
 import type {
   CardDraftView,
+  ClaimCoverage,
   GenerationJob,
   JobListItem,
   RegenCardType,
@@ -13,6 +14,11 @@ import type {
 export function getJob(jobId: string, init?: RequestInit) {
   if (isGuest()) guestUnsupported("view generation jobs");
   return api<GenerationJob>(`/api/jobs/${jobId}`, init);
+}
+
+export function getJobClaimCoverage(jobId: string, init?: RequestInit) {
+  if (isGuest()) guestUnsupported("view claim coverage");
+  return api<ClaimCoverage>(`/api/jobs/${jobId}/claim-coverage`, init);
 }
 
 /** Wipe all job cards (including accepted), reset to queued, and requeue generation. */
