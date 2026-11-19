@@ -20,6 +20,12 @@ import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 import { onCardAccepted } from "../gamification/onStudyEvent";
 import { parseOptionalJsonBody } from "../optional-json";
 import {
+  recomputeSubjectKnowledgeSummary,
+  refreshKnowledgeSummaryForOwnedCard,
+  refreshKnowledgeSummaryForSubject,
+  subjectIdForOwnedCard,
+} from "../subjects/knowledgeSummary";
+import {
   acceptDraftCard,
   requireOwnedCard,
   undoReviewDecision,
@@ -144,6 +150,7 @@ cardRoutes.post("/:id/accept", async (c) => {
     cardId: row.id,
     cardType: row.type,
   });
+  await refreshKnowledgeSummaryForOwnedCard(db, userId, cardId);
   return c.json({
     ...serializeCard({ ...row, status: "accepted", updated_at: updatedAt }),
     unlocks,
@@ -215,6 +222,10 @@ cardRoutes.post("/:id/undo-review", async (c) => {
       .run();
   }
 
+  if (row.status === "accepted") {
+    await refreshKnowledgeSummaryForOwnedCard(db, userId, cardId);
+  }
+
   return c.json(
     serializeCard({
       ...row,
@@ -250,11 +261,24 @@ cardRoutes.post("/:id/move", async (c) => {
 
   await requireOwnedDeck(db, targetDeckId, userId);
 
+  const fromSubjectId =
+    row.status === "accepted"
+      ? await subjectIdForOwnedCard(db, userId, cardId)
+      : null;
+
   const updatedAt = new Date().toISOString();
   await db
     .prepare(`UPDATE cards SET deck_id = ?, updated_at = ? WHERE id = ?`)
     .bind(targetDeckId, updatedAt, cardId)
     .run();
+
+  if (row.status === "accepted") {
+    const toSubjectId = await subjectIdForOwnedCard(db, userId, cardId);
+    await refreshKnowledgeSummaryForSubject(db, userId, fromSubjectId);
+    if (toSubjectId !== fromSubjectId) {
+      await refreshKnowledgeSummaryForSubject(db, userId, toSubjectId);
+    }
+  }
 
   return c.json(
     serializeCard({
@@ -429,6 +453,8 @@ cardRoutes.post("/:id/archive", async (c) => {
     });
   }
 
+  await refreshKnowledgeSummaryForOwnedCard(db, userId, cardId);
+
   return c.json(
     serializeCard({ ...row, status: "archived", updated_at: updatedAt }),
   );
@@ -444,6 +470,7 @@ cardRoutes.delete("/:id", async (c) => {
       message: "Only accepted cards can be deleted",
     });
   }
+  const subjectId = await subjectIdForOwnedCard(db, userId, cardId);
   const result = await db
     .prepare("DELETE FROM cards WHERE id = ? AND status = ?")
     .bind(cardId, "accepted")
@@ -461,6 +488,9 @@ cardRoutes.delete("/:id", async (c) => {
     .prepare("DELETE FROM card_schedules WHERE card_id = ?")
     .bind(cardId)
     .run();
+  if (subjectId != null) {
+    await recomputeSubjectKnowledgeSummary(db, userId, subjectId);
+  }
   return c.body(null, 204);
 });
 
@@ -488,6 +518,8 @@ cardRoutes.post("/:id/restore", async (c) => {
       message: "Only archived cards can be restored",
     });
   }
+
+  await refreshKnowledgeSummaryForOwnedCard(db, userId, cardId);
 
   return c.json(
     serializeCard({ ...row, status: "accepted", updated_at: updatedAt }),
@@ -537,6 +569,8 @@ cardRoutes.post("/:id/reset-schedule", async (c) => {
       schedule.last_review,
     )
     .run();
+
+  await refreshKnowledgeSummaryForOwnedCard(db, userId, cardId);
 
   return c.json(serializeCard(row));
 });

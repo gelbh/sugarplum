@@ -22,6 +22,10 @@ import { assertSingleCloze, assertValidMcqOptions } from "../generation/schema";
 import { encodeStoredBack, serializeCard, type CardRow } from "../cards/routes";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 import { composeSubjectKnowledge } from "../../src/study/subjectKnowledge";
+import {
+  refreshKnowledgeSummaryForOwnedCard,
+  refreshKnowledgeSummaryForSubject,
+} from "../subjects/knowledgeSummary";
 import { assertDeckMaterialKeys, HubCreateCardSchema } from "./hub-create-card";
 import { parsePasteMaterialBody } from "./paste-material";
 import { createR2PutUrl } from "./r2-presign";
@@ -272,7 +276,7 @@ deckRoutes.post("/:id/cards", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
   const db = getDb(c.env);
-  await requireOwnedDeck(db, deckId, userId);
+  const deck = await requireOwnedDeck(db, deckId, userId);
 
   let body: unknown;
   try {
@@ -386,6 +390,10 @@ deckRoutes.post("/:id/cards", async (c) => {
       ),
   ]);
 
+  if (deck.subject_id != null) {
+    await refreshKnowledgeSummaryForOwnedCard(db, userId, id);
+  }
+
   return c.json(
     serializeCard({
       id,
@@ -440,7 +448,7 @@ deckRoutes.delete("/:id", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
   const db = getDb(c.env);
-  await requireOwnedDeck(db, deckId, userId);
+  const deck = await requireOwnedDeck(db, deckId, userId);
 
   const keys = new Set<string>();
   const { results: materialRows } = await db
@@ -492,6 +500,8 @@ deckRoutes.delete("/:id", async (c) => {
     .prepare("DELETE FROM decks WHERE id = ? AND user_id = ?")
     .bind(deckId, userId)
     .run();
+
+  await refreshKnowledgeSummaryForSubject(db, userId, deck.subject_id);
 
   return c.body(null, 204);
 });
