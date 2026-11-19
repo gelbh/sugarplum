@@ -59,6 +59,13 @@ export type AtlasFocusRow = {
   updated_at: string;
 };
 
+export type AtlasNoteRow = {
+  atlas_id: string;
+  entry_key: string;
+  body: string;
+  updated_at: string;
+};
+
 export type AtlasMaterialRow = {
   id: string;
   atlas_id: string;
@@ -78,6 +85,7 @@ export type AtlasTestState = {
   refs: Map<string, AtlasRefRow>;
   images: Map<string, AtlasImageRow>;
   focus: Map<string, AtlasFocusRow>;
+  notes: Map<string, AtlasNoteRow>;
   materials: Map<string, AtlasMaterialRow>;
 };
 
@@ -88,6 +96,7 @@ export function initAtlasState(): AtlasTestState {
     refs: new Map(),
     images: new Map(),
     focus: new Map(),
+    notes: new Map(),
     materials: new Map(),
   };
 }
@@ -325,6 +334,15 @@ export function atlasAll<T>(
   ) {
     const atlasId = bound[0] as string;
     const rows = [...state.focus.values()].filter((r) => r.atlas_id === atlasId);
+    return { results: rows as T[] };
+  }
+
+  if (
+    normalized.includes("FROM atlas_entry_notes WHERE atlas_id =") &&
+    !normalized.includes("AND entry_key =")
+  ) {
+    const atlasId = bound[0] as string;
+    const rows = [...state.notes.values()].filter((r) => r.atlas_id === atlasId);
     return { results: rows as T[] };
   }
 
@@ -700,6 +718,39 @@ export function atlasRun(
       reason,
       material_ids_json,
       override,
+      updated_at,
+    });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+
+  if (
+    normalized.startsWith("DELETE FROM atlas_entry_notes WHERE atlas_id =") &&
+    normalized.includes("AND entry_key =")
+  ) {
+    const [atlasId, entryKey] = bound as [string, string];
+    const key = focusKey(atlasId, entryKey);
+    const existed = state.notes.has(key);
+    state.notes.delete(key);
+    return {
+      success: true,
+      meta: { changes: existed ? 1 : 0 },
+    } as D1Result;
+  }
+
+  if (
+    normalized.startsWith("INSERT INTO atlas_entry_notes") ||
+    normalized.startsWith("INSERT OR REPLACE INTO atlas_entry_notes")
+  ) {
+    const [atlas_id, entry_key, body, updated_at] = bound as [
+      string,
+      string,
+      string,
+      string,
+    ];
+    state.notes.set(focusKey(atlas_id, entry_key), {
+      atlas_id,
+      entry_key,
+      body,
       updated_at,
     });
     return { success: true, meta: { changes: 1 } } as D1Result;
