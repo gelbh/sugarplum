@@ -1,4 +1,5 @@
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -8,6 +9,9 @@ type Props = {
   coverage: ClaimCoverage;
   drafts: CardDraftView[];
   onJumpToDraft?: (cardId: string) => void;
+  onGenerateOrphan?: (claimId: string) => void;
+  generatingClaimId?: string | null;
+  generateDisabled?: boolean;
 };
 
 function claimLabel(row: ClaimCoverage["claims"][number]): string {
@@ -20,6 +24,9 @@ export default function ClaimCoveragePanel({
   coverage,
   drafts,
   onJumpToDraft,
+  onGenerateOrphan,
+  generatingClaimId = null,
+  generateDisabled = false,
 }: Props) {
   if (coverage.summary.total === 0) return null;
 
@@ -70,6 +77,7 @@ export default function ClaimCoveragePanel({
             draftIds.has(row.card_id) &&
             onJumpToDraft != null;
           const label = claimLabel(row);
+          const rowBusy = generatingClaimId === row.id;
           if (canJump && row.card_id) {
             const cardId = row.card_id;
             return (
@@ -97,6 +105,9 @@ export default function ClaimCoveragePanel({
             <Box
               key={row.id}
               sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
                 borderRadius: 1,
                 border: "1px dashed rgba(232, 216, 199, 0.16)",
                 px: 1,
@@ -106,12 +117,33 @@ export default function ClaimCoveragePanel({
               <Typography
                 variant="body2"
                 sx={{
+                  flex: 1,
+                  minWidth: 0,
                   lineHeight: 1.35,
                   color: "text.secondary",
                 }}
               >
                 {label}
               </Typography>
+              {isOrphan && onGenerateOrphan ? (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  disabled={generateDisabled || generatingClaimId != null}
+                  onClick={() => onGenerateOrphan(row.id)}
+                  sx={{
+                    flexShrink: 0,
+                    textTransform: "none",
+                    borderColor: "rgba(232, 216, 199, 0.35)",
+                    color: "var(--sp-ivory)",
+                    py: 0.25,
+                    px: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  {rowBusy ? "…" : "Generate"}
+                </Button>
+              ) : null}
             </Box>
           );
         })}
