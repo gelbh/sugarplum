@@ -12,8 +12,8 @@ import {
   resolveCardGesture,
   studyPointerAllowed,
   studySwipeVisual,
-} from "../study/cardGestures";
-import { gradeColorVars } from "../study/gradeColors";
+} from "./cardGestures";
+import { gradeColorVars } from "./gradeColors";
 
 const NO_SWIPE_SELECTOR =
   'input, textarea, button, select, [role="combobox"], [data-no-swipe]';

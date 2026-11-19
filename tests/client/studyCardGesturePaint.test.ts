@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it } from "vitest";
-import { applyStudySwipeFrame } from "../../src/components/useStudyCardGesture";
+import { applyStudySwipeFrame } from "../../src/study/useStudyCardGesture";
 import { studySwipeVisual } from "../../src/study/cardGestures";
 
 describe("applyStudySwipeFrame", () => {
@@ -14,8 +14,9 @@ describe("applyStudySwipeFrame", () => {
       reduceMotion: false,
     });
     applyStudySwipeFrame(plate, stamp, visual);
-    expect(plate.style.transform).toBe(visual.transform);
-    expect(plate.style.transform).toBe("translate3d(48px, 0px, 0)");
+    // jsdom 31+ serializes unitless 0 as 0px on CSSStyleDeclaration.transform
+    expect(visual.transform).toBe("translate3d(48px, 0px, 0)");
+    expect(plate.style.transform).toBe("translate3d(48px, 0px, 0px)");
     expect(stamp.hidden).toBe(false);
     expect(stamp.style.visibility).toBe("visible");
     expect(stamp.textContent).toBe(visual.stampLabel);

@@ -2,9 +2,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { FlipCardPlate, StudyCardPlate } from "../components/CardFace";
-import { CardFaceMcqBody } from "../components/cardFaceMcq";
-import ClozePrompt from "../components/ClozePrompt";
+import { FlipCardPlate, StudyCardPlate } from "../study/CardFace";
+import { CardFaceMcqBody } from "../study/cardFaceMcq";
+import ClozePrompt from "../study/ClozePrompt";
 import type { DraftPreviewFace } from "../components/DraftCardEditor";
 import {
   FACE_ANSWER_TEXT_SX,
@@ -14,8 +14,8 @@ import {
   FACE_MEDIA_SX,
   FACE_PROMPT_TEXT_SX,
   PROMPT_SX,
-} from "../components/studyFaceSx";
-import { clozeExtraSubtitle, extractClozeAnswers } from "../lib/clozeFormat";
+} from "../study/studyFaceSx";
+import { clozeExtraSubtitle, extractClozeAnswers } from "../study/clozeFormat";
 import { backAnswer, isOcclusionFront } from "../lib/draftCardModel";
 import { mediaUrl, type CardDraftView } from "../api/client";
 import {

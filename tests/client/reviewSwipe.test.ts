@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it } from "vitest";
-import { applyReviewSwipeFrame } from "../../src/components/useReviewSwipe";
+import { applyReviewSwipeFrame } from "../../src/study/useReviewSwipe";
 import {
   SWIPE_THRESHOLD_PX,
   resolveReviewSwipe,

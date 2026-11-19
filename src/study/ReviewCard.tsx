@@ -21,14 +21,14 @@ import {
   typeSelectModel,
   type DraftEditorChange,
 } from "../lib/draftCardModel";
-import { SelectEnumItem, renderSelectEnumValue } from "./SelectEnumItem";
+import { SelectEnumItem, renderSelectEnumValue } from "../components/SelectEnumItem";
 import {
   REJECT_REASONS,
   REJECT_REASON_LABELS,
   type RejectReason,
 } from "../lib/rejectReasons";
-import { type ReviewSwipeDecision } from "../study/cardGestures";
-import { gradeColorVars } from "../study/gradeColors";
+import { type ReviewSwipeDecision } from "./cardGestures";
+import { gradeColorVars } from "./gradeColors";
 import { StudyCardPlate } from "./CardFace";
 import { OcclusionReviewFace, TextReviewFace } from "./reviewCardFaces";
 import { ReviewMcqFace } from "./reviewCardMcq";

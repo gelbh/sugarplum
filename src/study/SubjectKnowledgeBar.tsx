@@ -4,7 +4,7 @@ import Typography from "@mui/material/Typography";
 import type { SubjectKnowledge } from "../api/client";
 import CompositionSpark, {
   COMPOSITION_SEGMENT_COLORS,
-} from "./CompositionSpark";
+} from "../components/CompositionSpark";
 
 type Props = {
   knowledge: SubjectKnowledge;

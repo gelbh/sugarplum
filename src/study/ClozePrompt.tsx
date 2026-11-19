@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { clozeParts } from "../lib/clozeFormat";
+import { clozeParts } from "./clozeFormat";
 
 const BLANK_STYLE = {
   display: "inline-block",

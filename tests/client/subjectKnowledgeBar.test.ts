@@ -4,7 +4,7 @@
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, it } from "vitest";
-import SubjectKnowledgeBar from "../../src/components/SubjectKnowledgeBar";
+import SubjectKnowledgeBar from "../../src/study/SubjectKnowledgeBar";
 import type { SubjectKnowledge } from "../../src/study/subjectKnowledge";
 
 (

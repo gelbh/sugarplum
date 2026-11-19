@@ -27,24 +27,24 @@ import {
   pagesForExcerpt,
   resolveNotesDisplayPage,
   type PageText,
-} from "../study/excerptPages";
-import type { NotesEmbedRescue } from "../study/notesEmbedPdf";
+} from "./excerptPages";
+import type { NotesEmbedRescue } from "./notesEmbedPdf";
 import {
   clampNotesPage,
   pagesToPersistAfterNavigate,
   pagesToPersistAfterRescue,
   pagesToPersistAfterSearchHits,
-} from "../study/notesProvenanceWrite";
-import { extractPptxSlides } from "../study/pptxSlideText";
+} from "./notesProvenanceWrite";
+import { extractPptxSlides } from "./pptxSlideText";
 
 const NotesEmbedPdfStage = lazy(() =>
-  import("../study/notesEmbedPdf").then((mod) => ({
+  import("./notesEmbedPdf").then((mod) => ({
     default: mod.NotesEmbedPdfStage,
   })),
 );
 
 const NotesPptxStage = lazy(() =>
-  import("../study/notesPptx").then((mod) => ({
+  import("./notesPptx").then((mod) => ({
     default: mod.NotesPptxStage,
   })),
 );

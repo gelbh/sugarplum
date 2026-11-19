@@ -37,7 +37,7 @@ import {
   type Subject,
   type SubjectKnowledge,
 } from "../api/client";
-import SubjectKnowledgeBar from "../components/SubjectKnowledgeBar";
+import SubjectKnowledgeBar from "../study/SubjectKnowledgeBar";
 import { ANKI_EXPORT_BUSY_LABEL } from "../export/runAnkiExport";
 import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";

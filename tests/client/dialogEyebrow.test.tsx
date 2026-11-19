@@ -33,13 +33,23 @@ async function render(node: React.ReactNode) {
   });
 }
 
+/** jsdom 31+ resolves CSS variables in getComputedStyle; probe the palette hex. */
+function resolvedColor(cssColor: string): string {
+  const probe = document.createElement("span");
+  probe.style.color = cssColor;
+  document.body.append(probe);
+  const color = getComputedStyle(probe).color;
+  probe.remove();
+  return color;
+}
+
 describe("DialogEyebrow", () => {
   it("renders the label with primary tone by default", async () => {
     await render(createElement(DialogEyebrow, { label: "Approve" }));
     const el = document.querySelector("p");
     expect(el?.textContent).toBe("Approve");
     expect(getComputedStyle(el!).color).toBe(
-      "var(--mui-palette-primary-main)",
+      resolvedColor(theme.palette.primary.main),
     );
   });
 
@@ -49,6 +59,8 @@ describe("DialogEyebrow", () => {
     );
     const el = document.querySelector("p");
     expect(el?.textContent).toBe("Regenerate");
-    expect(getComputedStyle(el!).color).toBe("var(--mui-palette-error-main)");
+    expect(getComputedStyle(el!).color).toBe(
+      resolvedColor(theme.palette.error.main),
+    );
   });
 });
