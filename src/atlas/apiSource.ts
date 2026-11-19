@@ -145,3 +145,16 @@ export function patchEntryFocus(
     json: { override },
   });
 }
+
+export function putEntryNote(atlasId: string, entryId: string, body: string) {
+  return api<AtlasEntryView>(entryPath(atlasId, entryId, "/note"), {
+    method: "PUT",
+    json: { body },
+  });
+}
+
+export function deleteEntryNote(atlasId: string, entryId: string) {
+  return api<AtlasEntryView>(entryPath(atlasId, entryId, "/note"), {
+    method: "DELETE",
+  });
+}

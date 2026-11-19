@@ -321,6 +321,8 @@ export default function EntryView({
           onEdit={onEdit}
           onReset={onReset}
           onMakeCards={onMakeCards}
+          atlasId={atlasId}
+          onNoteUpdated={onFocusUpdated}
         />
       </Box>
 

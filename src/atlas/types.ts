@@ -37,6 +37,8 @@ export type AtlasEntryView = {
   }[];
   images: AtlasImageView[];
   editedAt: string | null;
+  /** Learner personal notepad; null when unset. Not curated significance. */
+  personalNote: string | null;
   tier: AtlasTier | null;
   reason: string | null;
   /** DB focus override when set; pin UI keys off this, not reason copy. */

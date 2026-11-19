@@ -40,6 +40,7 @@ export function toEntryView(entry: DatasetEntry): AtlasEntryView {
       };
     }),
     editedAt: null,
+    personalNote: null,
     tier: null,
     reason: null,
     override: null,
@@ -89,6 +90,7 @@ export function viewFromOverlay(
     refs: media.refs,
     images: media.images,
     editedAt: row.edited_at,
+    personalNote: null,
     tier: null,
     reason: null,
     override: null,
