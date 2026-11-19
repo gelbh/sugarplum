@@ -15,6 +15,19 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+async function awaitWithTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string,
+): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timeout`)), ms),
+    ),
+  ]);
+}
+
 describe("sessionSync", () => {
   it("postSessionHint sends type session without user fields", async () => {
     if (typeof BroadcastChannel === "undefined") {
@@ -28,12 +41,11 @@ describe("sessionSync", () => {
       });
     });
     postSessionHint();
-    const hint = (await Promise.race([
+    const hint = (await awaitWithTimeout(
       got,
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("session hint timeout")), 1000),
-      ),
-    ])) as { type: string; ts: number; user?: unknown };
+      1000,
+      "session hint",
+    )) as { type: string; ts: number; user?: unknown };
     expect(hint.type).toBe("session");
     expect(typeof hint.ts).toBe("number");
     expect(hint.user).toBeUndefined();
@@ -49,12 +61,7 @@ describe("sessionSync", () => {
       onHint.mockImplementation(() => resolve());
     });
     peer.postMessage({ type: "session", ts: 1 });
-    await Promise.race([
-      got,
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("session subscribe timeout")), 1000),
-      ),
-    ]);
+    await awaitWithTimeout(got, 1000, "session subscribe");
     expect(onHint).toHaveBeenCalledTimes(1);
     peer.close();
     unsub();

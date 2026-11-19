@@ -46,6 +46,7 @@
     "world-atlas": "^2.0.2",
     "zod": "^4.6.6"
   },
+  "//": "overrides.minimatch: Dependabot alert #11 (DoS via globparts) from workbox/glob; remove when vite-plugin-pwa tree ships >=11",
   "overrides": {
     "minimatch": "^11.0.1"
   },
