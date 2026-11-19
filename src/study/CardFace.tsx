@@ -16,7 +16,7 @@ import {
   clozeSpoken,
   extractClozeAnswer,
   extractClozeAnswers,
-} from "../lib/clozeFormat";
+} from "./clozeFormat";
 import {
   occlusionMaskScrollTop,
   type OcclusionMaskBox,

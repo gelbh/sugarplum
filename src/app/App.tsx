@@ -11,7 +11,7 @@ import {
 import Box from "@mui/material/Box";
 import AppShell from "./AppShell";
 import BareScroll from "./BareScroll";
-import GradeButtons from "../components/GradeButtons";
+import GradeButtons from "../study/GradeButtons";
 import DraftReviewPage from "../routes/DraftReviewPage";
 import HomePage from "../routes/HomePage";
 import LibraryPage from "../routes/LibraryPage";

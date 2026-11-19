@@ -14,9 +14,9 @@ import {
   resolveReviewSwipe,
   reviewSwipeVisual,
   type ReviewSwipeDecision,
-} from "../study/cardGestures";
-import { gradeColorVars } from "../study/gradeColors";
-import { reviewArrowDecision } from "../study/studyKeys";
+} from "./cardGestures";
+import { gradeColorVars } from "./gradeColors";
+import { reviewArrowDecision } from "./studyKeys";
 
 export function applyReviewSwipeFrame(
   plate: HTMLElement,
