@@ -173,14 +173,20 @@ export async function countReadyAtlasMaterials(
   return rows.length;
 }
 
-/** Bump when Focus scan rules change so complete maps rescan without a migration. */
-export const FOCUS_PACK_FINGERPRINT_VERSION = "v1";
+/** Bump when Focus scan rules or fingerprint inputs change so complete maps rescan. */
+export const FOCUS_PACK_FINGERPRINT_VERSION = "v2";
 
 export function focusPackFingerprint(
-  rows: ReadonlyArray<{ id: string; content_hash: string | null }>,
+  rows: ReadonlyArray<{
+    id: string;
+    content_hash: string | null;
+    source_role: string;
+  }>,
 ): string {
   const markers = rows
-    .map((r) => r.content_hash ?? `id:${r.id}`)
+    .map(
+      (r) => `${r.id}:${r.content_hash ?? "nochash"}:${r.source_role}`,
+    )
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   return `${FOCUS_PACK_FINGERPRINT_VERSION}:${markers.join("|")}`;
 }
