@@ -286,17 +286,35 @@ describe("admin impersonation D1 clone", () => {
     expect(copiedText).toBe("Fasciola hepatica tutorial notes");
     expect(env.getR2(packR2)).toBe("Fasciola hepatica tutorial notes");
 
-    const sandboxFocus = await env.DB.prepare(
-      `SELECT tier, reason FROM atlas_entry_focus
+    const sandboxAtlasId = sandboxAtlases[0]!.id;
+    const staleFocus = await env.DB.prepare(
+      `SELECT tier FROM atlas_entry_focus
        WHERE atlas_id = ? AND entry_key = ?`,
     )
-      .bind(sandboxAtlases[0]!.id, "fasciola-hepatica")
-      .first<{ tier: string; reason: string }>();
-    expect(sandboxFocus).toMatchObject({
+      .bind(sandboxAtlasId, "fasciola-hepatica")
+      .first<{ tier: string }>();
+    expect(staleFocus?.tier).toBe("standard");
+    expect(sandboxAtlases[0]!.focus_pack_fingerprint ?? null).toBeNull();
+
+    const list = await app.request(
+      `/api/atlas/${sandboxAtlasId}/entries`,
+      { headers: adminHeaders },
+      env,
+    );
+    expect(list.status).toBe(200);
+    const listed = (await list.json()) as {
+      entries: Array<{ id: string; tier: string | null; reason: string | null }>;
+    };
+    expect(
+      listed.entries.find((e) => e.id === "fasciola-hepatica"),
+    ).toMatchObject({
       tier: "key",
       reason: expect.stringMatching(/tutorial/i),
     });
-    expect(sandboxAtlases[0]!.focus_pack_fingerprint).toMatch(/^v1:/);
+    expect(
+      env.getAtlases().find((a) => a.id === sandboxAtlasId)
+        ?.focus_pack_fingerprint,
+    ).toMatch(/^v1:/);
   });
 
   it("study edit mutates sandbox only; source unchanged after Exit", async () => {
