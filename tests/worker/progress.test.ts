@@ -4,6 +4,7 @@ import {
   GENERATE_QUEUE_RETRY_DELAY_SEC,
   IMAGE_STAGES,
   PDF_STAGES,
+  PIPELINE_BAND,
   RULES_ONLY_STAGES,
   RUNNING_JOB_STALE_MS,
   STAGE_WEIGHTS,
@@ -132,6 +133,9 @@ describe("computePercent", () => {
 
 describe("computePipelineBandPercent", () => {
   it("is monotonic across interleaved generate/critique half-steps", () => {
+    expect(PIPELINE_BAND).toContain("claims");
+    expect(PIPELINE_BAND).toContain("generate");
+    expect(PIPELINE_BAND).toContain("critique");
     const stages = [...FULL_STAGES];
     const n = 2;
     // Per chunk i: gen start 2i, gen done 2i+1, critique start 2i+1, critique done 2i+2
@@ -146,6 +150,17 @@ describe("computePipelineBandPercent", () => {
     expect(computePipelineBandPercent(4, n, stages)).toBeCloseTo(90, 5);
     // Mid: after first generate done (1/4 of band): 0.15 + 0.75*0.25 = 0.3375 → 33.75%
     expect(computePipelineBandPercent(1, n, stages)).toBeCloseTo(33.75, 5);
+  });
+
+  it("drops claims from the band when the catalog omits claims", () => {
+    const withClaims = [...FULL_STAGES];
+    const withoutClaims = FULL_STAGES.filter((s) => s !== "claims");
+    // Same pre-band base (queued+extract+rules); without claims, that weight
+    // rolls into generate so end-of-band percent stays 90.
+    expect(computePipelineBandPercent(0, 2, withClaims)).toBeCloseTo(15, 5);
+    expect(computePipelineBandPercent(0, 2, withoutClaims)).toBeCloseTo(15, 5);
+    expect(computePipelineBandPercent(4, 2, withClaims)).toBeCloseTo(90, 5);
+    expect(computePipelineBandPercent(4, 2, withoutClaims)).toBeCloseTo(90, 5);
   });
 
   it("does not rewind when re-entering generate after critique (vs computePercent)", () => {

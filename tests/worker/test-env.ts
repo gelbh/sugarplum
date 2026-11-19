@@ -1240,6 +1240,34 @@ export function createTestEnv(opts?: {
           return row as T;
         }
         if (
+          normalized.includes("FROM cards") &&
+          normalized.includes("WHERE claim_id =") &&
+          !normalized.includes("LEFT JOIN")
+        ) {
+          const claimId = bound[0] as string;
+          for (const card of cards.values()) {
+            if (card.claim_id === claimId) {
+              return (
+                normalized.includes("SELECT id") &&
+                !normalized.includes("deck_id")
+                  ? { id: card.id }
+                  : card
+              ) as T;
+            }
+          }
+          return null;
+        }
+        if (
+          normalized.startsWith("SELECT") &&
+          normalized.includes("FROM cards") &&
+          normalized.includes("WHERE id =") &&
+          !normalized.includes("INNER JOIN") &&
+          !normalized.includes("LEFT JOIN")
+        ) {
+          const card = cards.get(bound[0] as string);
+          return card ? (card as T) : null;
+        }
+        if (
           normalized.includes("FROM cards c") &&
           normalized.includes("INNER JOIN decks d") &&
           normalized.includes("c.id =") &&
@@ -1263,6 +1291,16 @@ export function createTestEnv(opts?: {
           if (!material) return null;
           const deck = decks.get(material.deck_id);
           if (!deck || deck.user_id !== bound[1]) return null;
+          if (
+            normalized.includes("j.status") &&
+            normalized.includes("m.deck_id")
+          ) {
+            return {
+              id: job.id,
+              status: job.status,
+              deck_id: material.deck_id,
+            } as T;
+          }
           return { id: job.id } as T;
         }
         if (
@@ -1794,6 +1832,23 @@ export function createTestEnv(opts?: {
           return { results: rows as T[] };
         }
         if (
+          normalized.includes("FROM study_claims sc") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("d.user_id =") &&
+          normalized.includes("ORDER BY sc.created_at ASC")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...studyClaims.values()]
+            .map((claim) => {
+              const deck = decks.get(claim.deck_id);
+              if (!deck || deck.user_id !== userId) return null;
+              return { ...claim };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at));
+          return { results: rows as T[] };
+        }
+        if (
           normalized.includes("SELECT c.id, c.deck_id, c.job_id, c.type") &&
           normalized.includes("c.front_json") &&
           normalized.includes("FROM cards c") &&
@@ -1818,6 +1873,7 @@ export function createTestEnv(opts?: {
                 status: card.status,
                 created_at: card.created_at,
                 updated_at: card.updated_at,
+                claim_id: card.claim_id ?? null,
               };
             })
             .filter((row): row is NonNullable<typeof row> => row != null)
@@ -2187,6 +2243,29 @@ export function createTestEnv(opts?: {
                 last_review: schedule?.last_review ?? null,
               };
             });
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("SELECT id, type, front_json, back_json") &&
+          normalized.includes("FROM cards") &&
+          normalized.includes("WHERE deck_id =") &&
+          normalized.includes("status = 'accepted'") &&
+          normalized.includes("ORDER BY created_at ASC")
+        ) {
+          const deckId = bound[0] as string;
+          const rows = [...cards.values()]
+            .filter(
+              (card) => card.deck_id === deckId && card.status === "accepted",
+            )
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .map((card) => ({
+              id: card.id,
+              type: card.type,
+              front_json: card.front_json,
+              back_json: card.back_json,
+              provenance_json: card.provenance_json,
+              media_r2_keys_json: card.media_r2_keys_json,
+            }));
           return { results: rows as T[] };
         }
         if (
@@ -2727,43 +2806,35 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.includes("FROM study_claims sc") &&
-          normalized.includes("LEFT JOIN cards c ON c.claim_id = sc.id") &&
-          normalized.includes("WHERE sc.job_id =")
+          normalized.includes("SELECT c.id FROM cards c") &&
+          (normalized.includes("WHERE sc.job_id =") ||
+            normalized.includes("WHERE sc.deck_id ="))
         ) {
-          const jobId = bound[0] as string;
+          const filterId = bound[0] as string;
+          const byDeck = normalized.includes("WHERE sc.deck_id =");
           const claims = [...studyClaims.values()]
-            .filter((sc) => sc.job_id === jobId)
+            .filter((sc) =>
+              byDeck ? sc.deck_id === filterId : sc.job_id === filterId,
+            )
             .sort((a, b) => a.created_at.localeCompare(b.created_at));
-          const rows = claims.flatMap((sc) => {
-            const linked = [...cards.values()].filter(
-              (card) => card.claim_id === sc.id,
-            );
-            if (linked.length === 0) {
-              return [
-                {
-                  id: sc.id,
-                  subject: sc.subject,
-                  predicate: sc.predicate,
-                  object: sc.object,
-                  source_span: sc.source_span,
-                  pages_json: sc.pages_json,
-                  card_id: null,
-                  card_status: null,
-                  card_created_at: null,
-                },
-              ];
-            }
-            return linked.map((card) => ({
+          const rows = claims.map((sc) => {
+            const linked = [...cards.values()]
+              .filter((card) => card.claim_id === sc.id)
+              .sort(
+                (a, b) =>
+                  a.created_at.localeCompare(b.created_at) ||
+                  a.id.localeCompare(b.id),
+              );
+            const earliest = linked[0] ?? null;
+            return {
               id: sc.id,
+              job_id: sc.job_id,
               subject: sc.subject,
               predicate: sc.predicate,
               object: sc.object,
-              source_span: sc.source_span,
-              pages_json: sc.pages_json,
-              card_id: card.id,
-              card_status: card.status,
-              card_created_at: card.created_at,
-            }));
+              card_id: earliest?.id ?? null,
+              card_status: earliest?.status ?? null,
+            };
           });
           return { results: rows as T[] };
         }

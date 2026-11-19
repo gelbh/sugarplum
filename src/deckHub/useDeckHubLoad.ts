@@ -6,6 +6,7 @@ import {
 } from "react";
 import {
   ApiError,
+  getDeckClaimCoverage,
   getDeckComposition,
   listDeckCards,
   listDeckMaterials,
@@ -13,6 +14,7 @@ import {
   listJobsWithDrafts,
   listSubjects,
   type CardDraftView,
+  type ClaimCoverage,
   type Deck,
   type JobListItem,
   type MaterialListItem,
@@ -33,6 +35,7 @@ type Args = {
   setCards: Dispatch<SetStateAction<CardDraftView[]>>;
   setAcceptedCount: Dispatch<SetStateAction<number>>;
   setComposition: Dispatch<SetStateAction<SubjectKnowledge | null>>;
+  setClaimCoverage: Dispatch<SetStateAction<ClaimCoverage | null>>;
   setDraftJobs: Dispatch<SetStateAction<JobListItem[]>>;
   setMaterials: Dispatch<SetStateAction<MaterialListItem[]>>;
   setError: Dispatch<SetStateAction<string | null>>;
@@ -52,6 +55,7 @@ export function useDeckHubLoad({
   setCards,
   setAcceptedCount,
   setComposition,
+  setClaimCoverage,
   setDraftJobs,
   setMaterials,
   setError,
@@ -65,6 +69,18 @@ export function useDeckHubLoad({
     }
   }, [deckId, setComposition]);
 
+  const refreshClaimCoverage = useCallback(async () => {
+    if (guest) {
+      setClaimCoverage(null);
+      return;
+    }
+    try {
+      setClaimCoverage(await getDeckClaimCoverage(deckId));
+    } catch {
+      setClaimCoverage(null);
+    }
+  }, [deckId, guest, setClaimCoverage]);
+
   const refreshCards = useCallback(async () => {
     const next = await listDeckCards(
       deckId,
@@ -77,9 +93,10 @@ export function useDeckHubLoad({
       const accepted = await listDeckCards(deckId);
       setAcceptedCount(accepted.length);
     }
-    await refreshComposition();
+    await Promise.all([refreshComposition(), refreshClaimCoverage()]);
   }, [
     deckId,
+    refreshClaimCoverage,
     refreshComposition,
     setAcceptedCount,
     setCards,
@@ -127,17 +144,21 @@ export function useDeckHubLoad({
         refreshMaterials(),
         refreshDeckCover(),
         refreshComposition(),
+        refreshClaimCoverage(),
       ]);
     } else {
       setComposition(null);
+      setClaimCoverage(null);
     }
     return found;
   }, [
     deckId,
+    refreshClaimCoverage,
     refreshComposition,
     refreshDeckCover,
     refreshDraftJobs,
     refreshMaterials,
+    setClaimCoverage,
     setComposition,
     setDeck,
     setSubject,
@@ -215,6 +236,7 @@ export function useDeckHubLoad({
   return {
     load,
     refreshComposition,
+    refreshClaimCoverage,
     refreshCards,
     refreshDraftJobs,
     refreshMaterials,

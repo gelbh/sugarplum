@@ -71,6 +71,9 @@ export default function DraftReviewPage() {
   const [confirmRejectDrafts, setConfirmRejectDrafts] = useState(false);
   const [regenConfirmOpen, setRegenConfirmOpen] = useState(false);
   const [cardRegenBusy, setCardRegenBusy] = useState(false);
+  const [generatingClaimId, setGeneratingClaimId] = useState<string | null>(
+    null,
+  );
   /** When false, drop jobId from useJobProgress so the same id can remount and poll again after regen. */
   const [progressGate, setProgressGate] = useState(true);
   const { user } = useSession();
@@ -153,22 +156,28 @@ export default function DraftReviewPage() {
     setNotice,
   });
 
-  const { onRegenThisCard, onRegen, onDismissFailed } = createDraftReviewRegen({
-    jobId,
-    current,
-    begin,
-    end,
-    setDrafts,
-    setDirty,
-    setError,
-    setNotice,
-    setJobStatus,
-    setReady,
-    setRegenNonce,
-    setRegenConfirmOpen,
-    setCardRegenBusy,
-    setProgressGate,
-  });
+  const { onRegenThisCard, onRegen, onDismissFailed, onGenerateOrphan } =
+    createDraftReviewRegen({
+      jobId,
+      current,
+      begin,
+      end,
+      setDrafts,
+      setDirty,
+      setError,
+      setNotice,
+      setJobStatus,
+      setReady,
+      setRegenNonce,
+      setRegenConfirmOpen,
+      setCardRegenBusy,
+      setProgressGate,
+      setClaimCoverage,
+      setGeneratingClaimId,
+      generatingClaimId,
+      cardRegenBusy,
+      busy,
+    });
 
   const jobActionDisabled = busy || jobProgress.pending;
   const failedEmpty = !current && jobStatus === "failed";
@@ -195,7 +204,7 @@ export default function DraftReviewPage() {
     minHeight: 0,
     display: "flex",
     flexDirection: "column",
-    py: { xs: 1.25, md: 2 },
+    py: { xs: 1, md: 1.5 },
     overflow: "hidden",
   } as const;
 
@@ -220,12 +229,12 @@ export default function DraftReviewPage() {
     <Box className="sp-stage" sx={stageShellSx}>
       <Container maxWidth="sm" sx={pageSx}>
         <Stack
-          spacing={1.25}
+          spacing={1}
           sx={{
             width: "100%",
             flex: 1,
             minHeight: 0,
-            overflow: "auto",
+            overflow: "hidden",
           }}
         >
           <Stack spacing={0.75} sx={{ flexShrink: 0 }}>
@@ -289,6 +298,26 @@ export default function DraftReviewPage() {
               {notice?.message ?? ""}
             </CreateFlowNoticeFade>
           </Box>
+
+          {!current &&
+          jobStatus === "needs_review" &&
+          claimCoverage &&
+          claimCoverage.summary.total > 0 ? (
+            <Box sx={{ width: "100%", mb: 2 }}>
+              <ClaimCoveragePanel
+                coverage={claimCoverage}
+                drafts={drafts}
+                onJumpToDraft={jumpToDraft}
+                onGenerateOrphan={(claimId) => {
+                  void onGenerateOrphan(claimId);
+                }}
+                generatingClaimId={generatingClaimId}
+                generateDisabled={
+                  busy || cardRegenBusy || dirty || generatingClaimId != null
+                }
+              />
+            </Box>
+          ) : null}
 
           {!current ? (
             <Box
@@ -465,34 +494,45 @@ export default function DraftReviewPage() {
                   minHeight: 0,
                   display: "flex",
                   flexDirection: "column",
-                  overflow: "auto",
-                  py: 0.5,
+                  overflow: "hidden",
+                  gap: 1,
                 }}
               >
-                <Stack
-                  spacing={1.5}
+                {jobStatus === "needs_review" &&
+                claimCoverage &&
+                claimCoverage.summary.total > 0 ? (
+                  <ClaimCoveragePanel
+                    coverage={claimCoverage}
+                    drafts={drafts}
+                    onJumpToDraft={jumpToDraft}
+                    onGenerateOrphan={(claimId) => {
+                      void onGenerateOrphan(claimId);
+                    }}
+                    generatingClaimId={generatingClaimId}
+                    generateDisabled={
+                      busy ||
+                      cardRegenBusy ||
+                      dirty ||
+                      generatingClaimId != null
+                    }
+                  />
+                ) : null}
+                <Box
+                  data-card-id={current.id}
                   sx={{
                     flex: 1,
                     minHeight: 0,
-                    alignItems: "center",
-                    justifyContent: "center",
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: "column",
                   }}
                 >
-                  {jobStatus === "needs_review" &&
-                  claimCoverage &&
-                  claimCoverage.summary.total > 0 ? (
-                    <ClaimCoveragePanel
-                      coverage={claimCoverage}
-                      drafts={drafts}
-                      onJumpToDraft={jumpToDraft}
-                    />
-                  ) : null}
-                  <Box data-card-id={current.id} sx={{ width: "100%" }}>
                   <ReviewCard
                     key={`${current.id}:${regenNonce}`}
                     card={current}
                     remaining={drafts.length}
                     stackBehind={drafts.length > 1}
+                    fillHeight
                     disabled={busy || cardRegenBusy}
                     onChange={onEditorChange}
                     onDecide={onDecide}
@@ -506,26 +546,31 @@ export default function DraftReviewPage() {
                       },
                     }}
                   />
-                  </Box>
-
-                  {current.provenance &&
-                  typeof current.provenance === "object" &&
-                  "excerpt" in current.provenance ? (
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        opacity: 0.65,
-                        textAlign: "center",
-                        maxWidth: "48ch",
-                      }}
-                    >
-                      Source:{" "}
-                      {String(
-                        (current.provenance as { excerpt: string }).excerpt,
-                      )}
-                    </Typography>
-                  ) : null}
-                </Stack>
+                </Box>
+                {current.provenance &&
+                typeof current.provenance === "object" &&
+                "excerpt" in current.provenance ? (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      flexShrink: 0,
+                      opacity: 0.65,
+                      textAlign: "center",
+                      maxWidth: "48ch",
+                      alignSelf: "center",
+                      lineHeight: 1.3,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 1,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    Source:{" "}
+                    {String(
+                      (current.provenance as { excerpt: string }).excerpt,
+                    )}
+                  </Typography>
+                ) : null}
               </Box>
 
               <Stack

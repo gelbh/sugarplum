@@ -12,6 +12,15 @@ import { failRunningJobIfStale } from "./staleFail";
 import { normalizeTopicHints } from "./topic-hints";
 import { parseOptionalJsonBody } from "../optional-json";
 import { buildClaimCoverage } from "./claim-coverage";
+import {
+  ClaimFillBadRequestError,
+  ClaimFillConflictError,
+  ClaimFillNotFoundError,
+  fillDraftFromClaim,
+  parseClaimFillType,
+} from "./claim-fill";
+import { ClaimAwareRegenError } from "./card-regen";
+import { WorkersAiCapacityError } from "./workers-ai";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -236,27 +245,83 @@ jobRoutes.get("/:id/claim-coverage", async (c) => {
 
   const { results } = await db
     .prepare(
-      `SELECT sc.id, sc.subject, sc.predicate, sc.object, sc.source_span, sc.pages_json,
-              c.id AS card_id, c.status AS card_status, c.created_at AS card_created_at
+      `SELECT sc.id, sc.job_id, sc.subject, sc.predicate, sc.object,
+              (
+                SELECT c.id FROM cards c
+                WHERE c.claim_id = sc.id
+                ORDER BY c.created_at ASC, c.id ASC
+                LIMIT 1
+              ) AS card_id,
+              (
+                SELECT c.status FROM cards c
+                WHERE c.claim_id = sc.id
+                ORDER BY c.created_at ASC, c.id ASC
+                LIMIT 1
+              ) AS card_status
        FROM study_claims sc
-       LEFT JOIN cards c ON c.claim_id = sc.id
        WHERE sc.job_id = ?
        ORDER BY sc.created_at ASC`,
     )
     .bind(jobId)
     .all<{
       id: string;
+      job_id: string;
       subject: string;
       predicate: string;
       object: string | null;
-      source_span: string;
-      pages_json: string | null;
       card_id: string | null;
       card_status: string | null;
-      card_created_at: string | null;
     }>();
 
   return c.json(buildClaimCoverage(results ?? []));
+});
+
+/** Generate one draft from an orphan study_claims row (write + Layer-1; no extract). */
+jobRoutes.post("/:id/claims/:claimId/generate", async (c) => {
+  const userId = await requireUser(c);
+  const jobId = c.req.param("id");
+  const claimId = c.req.param("claimId");
+  const raw = await c.req.text();
+  const body = parseOptionalJsonBody(raw) ?? {};
+
+  let type: ReturnType<typeof parseClaimFillType>;
+  try {
+    type = parseClaimFillType(body);
+  } catch (err) {
+    if (err instanceof ClaimFillBadRequestError) {
+      throw new HTTPException(400, { message: err.message });
+    }
+    throw err;
+  }
+
+  try {
+    const card = await fillDraftFromClaim({
+      env: c.env,
+      userId,
+      jobId,
+      claimId,
+      type,
+    });
+    return c.json(card);
+  } catch (err) {
+    if (err instanceof ClaimFillNotFoundError) {
+      throw new HTTPException(404, { message: err.message });
+    }
+    if (err instanceof ClaimFillConflictError) {
+      throw new HTTPException(409, { message: err.message });
+    }
+    if (err instanceof ClaimAwareRegenError) {
+      throw new HTTPException(422, { message: err.message });
+    }
+    if (err instanceof WorkersAiCapacityError) {
+      throw new HTTPException(502, { message: err.message });
+    }
+    const message = err instanceof Error ? err.message : "Claim fill failed";
+    if (message.includes("Daily free generation limit")) {
+      throw new HTTPException(429, { message });
+    }
+    throw new HTTPException(502, { message });
+  }
 });
 
 /**

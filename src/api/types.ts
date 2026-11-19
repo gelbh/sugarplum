@@ -267,10 +267,10 @@ export type ClaimCoverageRow = {
   subject: string;
   predicate: string;
   object?: string | null;
-  source_span: string;
-  pages?: number[] | null;
   card_id: string | null;
   card_status?: string | null;
+  /** Present on deck-scoped coverage for draft jump. */
+  job_id?: string | null;
 };
 
 export type ClaimCoverage = {
@@ -374,6 +374,7 @@ export type CardDraftView = {
   created_at: string;
   updated_at: string;
   due?: string;
+  claim_id?: string | null;
 };
 
 export type JourneyStatus = {
