@@ -304,6 +304,29 @@ export type ListEntriesWithFocusResult = {
 };
 
 const FOCUS_REFRESH_LEASE = "refreshing:";
+/** Dead waitUntil left `refreshing:` forever; expire so GET can retry. */
+const FOCUS_REFRESH_LEASE_TTL_MS = 120_000;
+
+/** Exported for tests: `refreshing:<epochMs>:<fingerprint>` (legacy untimed = expired). */
+export function focusRefreshLeaseActive(
+  stored: string | null | undefined,
+  nowMs: number = Date.now(),
+): boolean {
+  if (!stored?.startsWith(FOCUS_REFRESH_LEASE)) return false;
+  const rest = stored.slice(FOCUS_REFRESH_LEASE.length);
+  const match = /^(\d+):(.*)$/.exec(rest);
+  if (!match) return false;
+  const started = Number(match[1]);
+  if (!Number.isFinite(started)) return false;
+  return nowMs - started < FOCUS_REFRESH_LEASE_TTL_MS;
+}
+
+function encodeFocusRefreshLease(
+  fingerprint: string,
+  nowMs: number = Date.now(),
+): string {
+  return `${FOCUS_REFRESH_LEASE}${nowMs}:${fingerprint}`;
+}
 
 export async function listEntriesWithFocus(
   db: D1Database,
@@ -329,8 +352,7 @@ export async function listEntriesWithFocus(
     db,
     opts.atlasId,
   );
-  const refreshInFlight =
-    storedFingerprint?.startsWith(FOCUS_REFRESH_LEASE) === true;
+  const refreshInFlight = focusRefreshLeaseActive(storedFingerprint);
   const fingerprintStale =
     !refreshInFlight && storedFingerprint !== currentFingerprint;
   const emptyPackStale = focus.size > 0 && readyCount === 0;
@@ -360,7 +382,7 @@ export async function listEntriesWithFocus(
       await saveFocusPackFingerprint(
         db,
         opts.atlasId,
-        `${FOCUS_REFRESH_LEASE}${currentFingerprint}`,
+        encodeFocusRefreshLease(currentFingerprint),
       );
       opts.schedule(
         (async () => {
