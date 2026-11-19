@@ -16,6 +16,8 @@ type TurnstileApi = {
     opts: {
       sitekey: string;
       action?: string;
+      theme?: "light" | "dark" | "auto";
+      size?: "normal" | "flexible" | "compact";
       callback?: (token: string) => void;
       "expired-callback"?: () => void;
       "error-callback"?: () => void;
@@ -103,9 +105,18 @@ export default function TurnstileWidget({ action, onToken, widgetRef }: Props) {
         }
         hostRef.current.innerHTML = "";
 
+        // Wait a frame so the host has a laid-out width (flexible size needs it).
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => resolve());
+        });
+        if (cancelled || !hostRef.current) return;
+
         const id = api.render(hostRef.current, {
           sitekey: siteKey,
           action,
+          // Night foyer: dark chrome only; iframe palette is Cloudflare-owned.
+          theme: "dark",
+          size: "flexible",
           callback: (token) => {
             if (!cancelled) onTokenRef.current(token);
           },
@@ -151,8 +162,27 @@ export default function TurnstileWidget({ action, onToken, widgetRef }: Props) {
   }, [action]);
 
   return (
-    <Box>
-      <div ref={hostRef} />
+    <Box
+      sx={{
+        width: "100%",
+        border: 1,
+        borderColor: "divider",
+        borderRadius: 1,
+        bgcolor: "action.hover",
+        px: 1.5,
+        py: 1.25,
+        overflow: "hidden",
+      }}
+    >
+      {/* Plain block host: Turnstile flexible measures this width. */}
+      <Box
+        ref={hostRef}
+        sx={{
+          width: "100%",
+          minHeight: 65,
+          lineHeight: 0,
+        }}
+      />
       {error ? (
         <Typography variant="body2" color="error" sx={{ mt: 1 }}>
           {error}

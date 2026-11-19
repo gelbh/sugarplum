@@ -2,7 +2,6 @@ import { useRef, useState, type FormEvent } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Container from "@mui/material/Container";
 import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
@@ -10,6 +9,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { ApiError } from "../api/client";
 import GoogleSignInButton from "../components/GoogleSignInButton";
+import PublicNightShell from "../components/PublicNightShell";
 import TurnstileWidget, {
   type TurnstileWidgetHandle,
 } from "../components/TurnstileWidget";
@@ -55,11 +55,25 @@ export default function RegisterPage() {
   }
 
   return (
-    <Container maxWidth="xs" sx={{ py: 6 }}>
-      <Typography variant="h4" component="h1" gutterBottom color="primary">
+    <PublicNightShell maxWidth="xs">
+      <Typography
+        variant="h6"
+        component="h1"
+        sx={{
+          m: 0,
+          mb: 0.75,
+          fontWeight: 400,
+          textAlign: "center",
+          color: "text.secondary",
+        }}
+      >
         Create account
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ mb: 3, textAlign: "center" }}
+      >
         Start building spaced-repetition decks.
       </Typography>
       <Box component="form" onSubmit={onSubmit} noValidate>
@@ -118,6 +132,6 @@ export default function RegisterPage() {
           </Typography>
         </Stack>
       </Box>
-    </Container>
+    </PublicNightShell>
   );
 }
