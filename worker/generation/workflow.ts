@@ -6,6 +6,7 @@ import {
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { runAfterPersistPhase } from "./afterPersist";
+import { runClaimOrphanFillPhase } from "./claim-orphan-fill";
 import { runPass1Phase } from "./pass1";
 import {
   acquireGenerationSlot,
@@ -117,6 +118,14 @@ export class GenerationWorkflow extends WorkflowEntrypoint<
         }
         await runAfterPersistPhase(this.env, params);
         return { ok: true as const };
+      });
+
+      await step.do("claimOrphanFill", async () => {
+        const hold = await acquireGenerationSlot(this.env, params.jobId);
+        if (!hold.ok) {
+          throw new Error("GENERATION_SLOT_LOST");
+        }
+        return runClaimOrphanFillPhase(this.env, params);
       });
     } finally {
       // step.do retries stay inside await; finally runs after permanent fail or success.
