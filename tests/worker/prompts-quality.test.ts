@@ -133,6 +133,18 @@ describe("drop-biased quality prompts (5B)", () => {
     expect(user).toMatch(/not\s+among|among\s+the\s+options/);
   });
 
+  it("critique prompts drop over-long/compound cards and do not essay-split", () => {
+    for (const text of [
+      CRITIQUE_SYSTEM_PROMPT,
+      critiqueUserPrompt("source", sample),
+    ]) {
+      const p = text.toLowerCase();
+      expect(p).toMatch(/over-?long|25\s+words/);
+      expect(p).toMatch(/compound/);
+      expect(p).toMatch(/do\s+not\s+split|drop\s+them\s+instead|not\s+split\s+essay/);
+    }
+  });
+
   it("generate and critique prompts treat cloze Extra/back as optional", () => {
     for (const prompt of [
       GENERATE_SYSTEM_PROMPT,
