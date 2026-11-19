@@ -1,10 +1,10 @@
+import { type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import ButtonBase from "@mui/material/ButtonBase";
 import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
-import { alpha } from "@mui/material/styles";
 import AtlasImage from "./AtlasImage";
+import { atlasStageTitleSx } from "./atlasOperateSx";
 import { termLabel } from "./filter";
 import { durationLabel, stageIsDiagnostic } from "./lifecycle";
 import { lifecyclePanelImage } from "./lifecyclePanelImage";
@@ -14,37 +14,25 @@ import type { AtlasImageView, DatasetFields } from "./types";
 type Props = {
   fields: DatasetFields;
   images?: AtlasImageView[];
-  onCiteLifecycle?: () => void;
   onEditLifecycle?: () => void;
 };
 
 export default function LifecycleBoard({
   fields,
   images = [],
-  onCiteLifecycle,
   onEditLifecycle,
 }: Props) {
   return (
     <LifecycleSwimlane
       fields={fields}
-      afterTimeline={({ current, index, stages }) => (
+      afterBoard={({ current, index, stages, transport }) => (
         <SelectedStagePanel
           stage={current}
           index={index}
           total={stages.length}
           image={lifecyclePanelImage(images, current.imageId)}
-          onCite={onCiteLifecycle}
+          transport={transport}
           onEdit={onEditLifecycle}
-        />
-      )}
-      afterControls={({ stages, index, setIndex, setPlaying }) => (
-        <StepList
-          stages={stages}
-          index={index}
-          onPick={(i) => {
-            setPlaying(false);
-            setIndex(i);
-          }}
         />
       )}
     />
@@ -56,14 +44,14 @@ function SelectedStagePanel({
   index,
   total,
   image,
-  onCite,
+  transport,
   onEdit,
 }: {
   stage: DatasetFields["lifecycleStages"][number];
   index: number;
   total: number;
   image: AtlasImageView | null;
-  onCite?: () => void;
+  transport: ReactNode;
   onEdit?: () => void;
 }) {
   const diagnostic = stageIsDiagnostic(stage);
@@ -71,175 +59,160 @@ function SelectedStagePanel({
   return (
     <Box
       sx={{
-        mt: 2,
-        pt: 1.75,
+        mt: 1.25,
+        pt: 1.5,
         borderTop: 1,
         borderColor: "divider",
-        display: "grid",
-        gridTemplateColumns: image
-          ? { xs: "1fr", sm: diagram ? "1fr 200px" : "1fr 112px" }
-          : "1fr",
-        gap: 1.5,
-        alignItems: "start",
       }}
     >
-      <Box>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 1.5,
+          flexWrap: "wrap",
+        }}
+      >
         <Typography
           aria-live="polite"
-          sx={{ fontSize: "0.92rem", fontWeight: 600 }}
+          sx={{ ...atlasStageTitleSx, position: "relative" }}
         >
-          Now, step {index + 1} of {total}: {termLabel(stage.name)}
-        </Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.5, fontSize: "0.86rem" }}>
-          {[
-            stage.location,
-            stage.durationDays ? durationLabel(stage.durationDays) : null,
-            stage.host ? termLabel(stage.host) : null,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </Typography>
-        {stage.note ? (
-          <Typography sx={{ mt: 1, fontSize: "0.9rem" }}>{stage.note}</Typography>
-        ) : null}
-        {stage.transmission ? (
-          <Typography
-            color="text.secondary"
-            sx={{ mt: 0.75, fontSize: "0.84rem" }}
+          {termLabel(stage.name)}
+          <Box
+            component="span"
+            sx={{
+              position: "absolute",
+              width: 1,
+              height: 1,
+              padding: 0,
+              margin: -1,
+              overflow: "hidden",
+              clip: "rect(0, 0, 0, 0)",
+              whiteSpace: "nowrap",
+              border: 0,
+            }}
           >
-            Arrives via: {stage.transmission}
+            {` ${index + 1} of ${total}`}
+          </Box>
+        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            flexWrap: "wrap",
+            ml: "auto",
+          }}
+        >
+          <Typography
+            aria-hidden
+            color="text.secondary"
+            sx={{
+              fontSize: "0.78rem",
+              fontVariantNumeric: "tabular-nums",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {index + 1} / {total}
           </Typography>
-        ) : null}
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1 }}>
-          {stage.infective ? (
-            <Chip size="small" label="Infective" variant="outlined" color="primary" />
-          ) : null}
-          {diagnostic ? (
-            <Chip
-              size="small"
-              label="Diagnostic"
-              variant="outlined"
-              color="primary"
-            />
-          ) : null}
-          {onCite ? (
-            <Button size="small" onClick={onCite}>
-              Cite
-            </Button>
-          ) : null}
+          {transport}
           {onEdit ? (
-            <Button size="small" variant="outlined" onClick={onEdit}>
+            <Button
+              size="small"
+              onClick={onEdit}
+              sx={{ textTransform: "none", color: "text.secondary" }}
+            >
               Edit lifecycle
             </Button>
           ) : null}
         </Box>
       </Box>
-      {image ? (
-        <AtlasImage
-          image={image}
-          ratio={diagram ? "16 / 10" : "1"}
-          compact
-          sx={{ borderRadius: 1 }}
-        />
-      ) : null}
-    </Box>
-  );
-}
 
-function StepList({
-  stages,
-  index,
-  onPick,
-}: {
-  stages: DatasetFields["lifecycleStages"];
-  index: number;
-  onPick: (i: number) => void;
-}) {
-  return (
-    <Box
-      component="ol"
-      aria-label="Lifecycle stages"
-      sx={{
-        listStyle: "none",
-        p: 0,
-        m: 0,
-        mt: 2,
-        display: "grid",
-        // Balanced rows: 8 stages read as 4 + 4, not 5 + 3.
-        gridTemplateColumns: {
-          xs: "repeat(2, minmax(0, 1fr))",
-          sm: `repeat(${Math.ceil(
-            stages.length / Math.ceil(stages.length / 5),
-          )}, minmax(0, 1fr))`,
-        },
-        gap: 1,
-      }}
-    >
-      {stages.map((s, i) => (
-        <li key={`${s.name}-${i}`}>
-          <ButtonBase
-            onClick={() => onPick(i)}
-            aria-current={i === index ? "step" : undefined}
-            sx={{
-              width: "100%",
-              height: "100%",
-              display: "block",
-              position: "relative",
-              textAlign: "left",
-              px: 1.25,
-              py: 1,
-              borderRadius: 1,
-              color: "text.secondary",
-              fontSize: "0.84rem",
-              lineHeight: 1.35,
-            }}
-          >
-            <Box
-              aria-hidden
-              sx={{
-                position: "absolute",
-                inset: 0,
-                borderRadius: 1,
-                borderBottom: 1,
-                borderColor: "primary.main",
-                bgcolor: (t) => alpha(t.palette.primary.main, 0.05),
-                opacity: i === index ? 1 : 0,
-                transition: "opacity 180ms ease",
-                pointerEvents: "none",
-                "@media (prefers-reduced-motion: reduce)": {
-                  transition: "none",
-                },
-              }}
-            />
-            <Box
-              component="b"
-              sx={{
-                display: "block",
-                position: "relative",
-                fontSize: "0.74rem",
-                color: i === index ? "primary.main" : "text.secondary",
-              }}
-            >
-              {i + 1}
+      <Box
+        key={index}
+        sx={{
+          mt: 1.25,
+          display: "grid",
+          gridTemplateColumns: image
+            ? { xs: "1fr", sm: diagram ? "1fr 200px" : "1fr 112px" }
+            : "1fr",
+          gap: 1.5,
+          alignItems: "start",
+          "@keyframes lifecycleStageIn": {
+            from: { opacity: 0.35 },
+            to: { opacity: 1 },
+          },
+          animation: "lifecycleStageIn 220ms ease-out",
+          "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+        }}
+      >
+        <Box>
+          {(stage.infective || diagnostic) && (
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mb: 1 }}>
+              {stage.infective ? (
+                <Chip
+                  size="small"
+                  label="Infective"
+                  color="primary"
+                  sx={{ height: 22, fontSize: "0.72rem" }}
+                />
+              ) : null}
+              {diagnostic ? (
+                <Chip
+                  size="small"
+                  label="Diagnostic"
+                  variant="outlined"
+                  color="secondary"
+                  sx={{ height: 22, fontSize: "0.72rem" }}
+                />
+              ) : null}
             </Box>
-            <Box
-              component="span"
-              sx={{
-                position: "relative",
-                fontWeight: 600,
-                color: "text.primary",
-              }}
+          )}
+          {stage.location ? (
+            <Typography sx={{ fontSize: "0.95rem", lineHeight: 1.55 }}>
+              {stage.location}
+            </Typography>
+          ) : null}
+          {(stage.durationDays || stage.host) && (
+            <Typography
+              color="text.secondary"
+              sx={{ mt: 0.55, fontSize: "0.82rem", lineHeight: 1.4 }}
             >
-              {termLabel(s.name)}
-            </Box>
-            {s.location ? (
-              <Box component="span" sx={{ position: "relative" }}>
-                , {s.location}
-              </Box>
-            ) : null}
-          </ButtonBase>
-        </li>
-      ))}
+              {[
+                stage.durationDays ? durationLabel(stage.durationDays) : null,
+                stage.host ? termLabel(stage.host) : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </Typography>
+          )}
+          {stage.note ? (
+            <Typography
+              color="text.secondary"
+              sx={{ mt: 0.85, fontSize: "0.88rem", lineHeight: 1.45 }}
+            >
+              {stage.note}
+            </Typography>
+          ) : null}
+          {stage.transmission ? (
+            <Typography
+              color="text.secondary"
+              sx={{ mt: 0.65, fontSize: "0.84rem", lineHeight: 1.45 }}
+            >
+              Arrives via {stage.transmission}
+            </Typography>
+          ) : null}
+        </Box>
+        {image ? (
+          <AtlasImage
+            image={image}
+            ratio={diagram ? "16 / 10" : "1"}
+            compact
+            sx={{ borderRadius: 2 }}
+          />
+        ) : null}
+      </Box>
     </Box>
   );
 }
