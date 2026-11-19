@@ -3,7 +3,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { afterEach, describe, expect, it } from "vitest";
-import ShellNavRail from "../../src/components/shell/ShellNavRail";
+import ShellNavRail from "../../src/app/shell/ShellNavRail";
 
 async function renderRail() {
   const host = document.createElement("div");

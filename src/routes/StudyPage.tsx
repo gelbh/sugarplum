@@ -26,7 +26,7 @@ import { FACE_SANS } from "../components/studyFaceSx";
 import { useStudyCardGesture } from "../components/useStudyCardGesture";
 import { ApiError } from "../api/client";
 import { isGuest } from "../guest/session";
-import { navigate } from "../nav/navigate";
+import { navigate } from "../shared/nav/navigate";
 import { useSession } from "../session/SessionContext";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { useGradeMailboxFlight } from "../study/useGradeMailboxFlight";

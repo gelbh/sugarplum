@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { shouldAutoFocusText } from "../../src/lib/autoFocusText";
+import { shouldAutoFocusText } from "../../src/shared/lib/autoFocusText";
 
 function stubMatchMedia(matches: boolean) {
   Object.defineProperty(window, "matchMedia", {

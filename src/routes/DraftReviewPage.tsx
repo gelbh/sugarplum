@@ -27,7 +27,7 @@ import {
   CreateFlowNoticeFade,
   NoticeUndoButton,
 } from "../library/CreateFlowNotice";
-import StageBreadcrumbs, { type StageCrumb } from "../ui/StageBreadcrumbs";
+import StageBreadcrumbs, { type StageCrumb } from "../shared/ui/StageBreadcrumbs";
 import { type EmptyJobDraftCtas } from "../journey/emptyJobDraftCtas";
 import JobProgressPanel from "../progress/JobProgressPanel";
 import { useJobProgress } from "../progress/useJobProgress";
@@ -40,7 +40,7 @@ import {
   DIALOG_TITLE_SX,
   PRIMARY_PILL_SX,
 } from "../draftReview/draftReviewChrome";
-import DialogEyebrow from "../ui/DialogEyebrow";
+import DialogEyebrow from "../shared/ui/DialogEyebrow";
 import { jobIdFromPath } from "../draftReview/draftReviewPath";
 import { createDraftReviewBatch } from "../draftReview/draftReviewBatch";
 import { createDraftReviewDecide } from "../draftReview/draftReviewDecide";

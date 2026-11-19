@@ -9,7 +9,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { ApiError } from "../api/client";
 import GoogleSignInButton from "../components/GoogleSignInButton";
-import PublicNightShell from "../components/PublicNightShell";
+import PublicNightShell from "../app/PublicNightShell";
 import TurnstileWidget, {
   type TurnstileWidgetHandle,
 } from "../components/TurnstileWidget";

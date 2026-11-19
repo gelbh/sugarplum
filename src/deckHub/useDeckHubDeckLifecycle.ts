@@ -17,7 +17,7 @@ import {
   type StoredCoverRow,
   type Subject,
 } from "../api/client";
-import { navigate } from "../nav/navigate";
+import { navigate } from "../shared/nav/navigate";
 
 type Args = {
   deckId: string;

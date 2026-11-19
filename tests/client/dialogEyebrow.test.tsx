@@ -5,7 +5,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { afterEach, describe, expect, it } from "vitest";
-import DialogEyebrow from "../../src/ui/DialogEyebrow";
+import DialogEyebrow from "../../src/shared/ui/DialogEyebrow";
 import { theme } from "../../src/theme";
 
 (

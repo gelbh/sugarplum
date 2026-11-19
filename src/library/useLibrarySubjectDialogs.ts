@@ -15,7 +15,7 @@ import {
   type StoredCoverRow,
   type Subject,
 } from "../api/client";
-import { navigate } from "../nav/navigate";
+import { navigate } from "../shared/nav/navigate";
 import { subjectDeleteBlocked } from "../subjects/subjectDeleteGuard";
 
 export type LibraryTitleDialog =

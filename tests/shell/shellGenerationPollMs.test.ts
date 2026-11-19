@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { shellGenerationPollMs } from "../../src/shell/shellGenerationPollMs";
+import { shellGenerationPollMs } from "../../src/app/shell/shellGenerationPollMs";
 
 describe("shellGenerationPollMs", () => {
   it("polls every 5s when pending generation and no open review", () => {

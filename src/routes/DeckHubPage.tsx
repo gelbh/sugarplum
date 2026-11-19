@@ -17,11 +17,11 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
-import DialogEyebrow from "../ui/DialogEyebrow";
+import DialogEyebrow from "../shared/ui/DialogEyebrow";
 import AddMaterialWorkshop from "../deckHub/AddMaterialWorkshop";
 import CompositionSpark from "../components/CompositionSpark";
 import CoverPickerDialog from "../components/CoverPickerDialog";
-import { useShellBackOverride } from "../components/shell/ShellBackOverride";
+import { useShellBackOverride } from "../app/shell/ShellBackOverride";
 import CardsWorkshop from "../deckHub/CardsWorkshop";
 import ClaimCoverageFilmstrip, {
   type ClaimJumpTarget,
@@ -34,7 +34,7 @@ import MissionBoard from "../deckHub/MissionBoard";
 import StudyReadySheet from "../deckHub/StudyReadySheet";
 import WorkshopShell from "../deckHub/WorkshopShell";
 import { type WorkshopFrame } from "../deckHub/workshopStack";
-import { navigate } from "../nav/navigate";
+import { navigate } from "../shared/nav/navigate";
 import { useCreateCardController } from "../deckHub/useCreateCardController";
 import { useAddMaterialWorkshop } from "../deckHub/useAddMaterialWorkshop";
 import { useCardsWorkshop } from "../deckHub/useCardsWorkshop";
@@ -64,7 +64,7 @@ import { isGuest } from "../guest/session";
 import { collectDeckImageKeys, hubDiyTypes } from "../lib/hubDiyCreate";
 import { ANKI_EXPORT_BUSY_LABEL } from "../export/runAnkiExport";
 import { useTrackedOp } from "../progress/useTrackedOp";
-import { shouldAutoFocusText } from "../lib/autoFocusText";
+import { shouldAutoFocusText } from "../shared/lib/autoFocusText";
 
 type Props = {
   deckId: string;

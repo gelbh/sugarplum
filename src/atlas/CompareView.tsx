@@ -13,7 +13,7 @@ import { compareRows, type CompareValue } from "./compare";
 import { entryTitles } from "./entryTitles";
 import { byName, matchesSearch, pppLabel, termLabel } from "./filter";
 import TermList from "./TermList";
-import { isPlainClick } from "../nav/navigate";
+import { isPlainClick } from "../shared/nav/navigate";
 import type { AtlasEntryView } from "./types";
 
 type Props = {

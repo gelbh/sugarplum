@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   loadGroupFiles,
   loadParasiteDataset,
-} from "../../../worker/atlas/datasets/parasites";
+} from "../../../worker/atlas/datasets/parasites/index";
 import type { DatasetEntry } from "../../../worker/atlas/datasets/schema";
 import {
   HOST_TERMS,

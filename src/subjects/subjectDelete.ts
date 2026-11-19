@@ -8,7 +8,7 @@ import {
   type DeckStats,
   type Subject,
 } from "../api/client";
-import { navigate } from "../nav/navigate";
+import { navigate } from "../shared/nav/navigate";
 import { subjectDeleteBlocked } from "./subjectDeleteGuard";
 
 export type SubjectDeleteCtx = {

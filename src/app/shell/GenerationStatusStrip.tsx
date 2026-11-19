@@ -2,8 +2,8 @@ import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import LinearProgress from "@mui/material/LinearProgress";
 import Typography from "@mui/material/Typography";
-import type { ShellGenerationStatus } from "../../shell/resolveShellGenerationStatus";
-import { navigate } from "../../nav/navigate";
+import type { ShellGenerationStatus } from "./resolveShellGenerationStatus";
+import { navigate } from "../../shared/nav/navigate";
 import {
   SHELL_FG,
   SHELL_HAIRLINE,

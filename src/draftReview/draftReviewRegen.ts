@@ -14,7 +14,7 @@ import {
   type ClaimCoverage,
   type FillAllRunStatus,
 } from "../api/client";
-import { navigate } from "../nav/navigate";
+import { navigate } from "../shared/nav/navigate";
 import type { DraftReviewNotice, DraftReviewTracked } from "./draftReviewTypes";
 
 const FILL_ALL_POLL_MS = 1000;

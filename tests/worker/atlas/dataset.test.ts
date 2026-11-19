@@ -11,7 +11,7 @@ import {
 import {
   loadGroupFiles,
   loadParasiteDataset,
-} from "../../../worker/atlas/datasets/parasites";
+} from "../../../worker/atlas/datasets/parasites/index";
 import {
   HOST_TERMS,
   ORGAN_TERMS,

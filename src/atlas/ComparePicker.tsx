@@ -17,7 +17,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { entryTitles } from "./entryTitles";
 import { browseSections, matchesSearch } from "./filter";
 import type { AtlasEntryView } from "./types";
-import { shouldAutoFocusText } from "../lib/autoFocusText";
+import { shouldAutoFocusText } from "../shared/lib/autoFocusText";
 
 type Props = {
   open: boolean;

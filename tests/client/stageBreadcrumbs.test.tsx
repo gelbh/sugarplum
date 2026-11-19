@@ -5,19 +5,19 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import StageBreadcrumbs from "../../src/ui/StageBreadcrumbs";
+import StageBreadcrumbs from "../../src/shared/ui/StageBreadcrumbs";
 import { theme } from "../../src/theme";
 
-vi.mock("../../src/nav/navigate", async (importOriginal) => {
+vi.mock("../../src/shared/nav/navigate", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("../../src/nav/navigate")>();
+    await importOriginal<typeof import("../../src/shared/nav/navigate")>();
   return {
     ...actual,
     navigate: vi.fn(),
   };
 });
 
-import { navigate } from "../../src/nav/navigate";
+import { navigate } from "../../src/shared/nav/navigate";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }

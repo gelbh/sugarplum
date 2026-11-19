@@ -11,7 +11,7 @@ import { ANATOMY_CATALOG } from "../anatomy/catalog";
 import { anatomySceneHref } from "../anatomy/paths";
 import { atlasHubHref } from "../atlas/paths";
 import HubNavCard from "../components/HubNavCard";
-import { isPlainClick, navigate } from "../nav/navigate";
+import { isPlainClick, navigate } from "../shared/nav/navigate";
 
 const SPECIES_ICON: Record<string, ReactNode> = {
   canine: <PetsOutlinedIcon aria-hidden />,

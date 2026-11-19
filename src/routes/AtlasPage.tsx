@@ -38,7 +38,7 @@ import {
 } from "../atlas/paths";
 import type { AtlasEntryView, AtlasSource } from "../atlas/types";
 import { isGuest } from "../guest/session";
-import { isPlainClick, navigate, navigateReplace } from "../nav/navigate";
+import { isPlainClick, navigate, navigateReplace } from "../shared/nav/navigate";
 import { useSession } from "../session/SessionContext";
 
 function entryMakeCardsKey(entry: AtlasEntryView): string {
