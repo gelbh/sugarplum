@@ -7,7 +7,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { sessionAnatomyViewerEnabled } from "../anatomy/anatomyViewerAccess";
 import { anatomyHubHref } from "../anatomy/paths";
-import HubNavCard from "../components/HubNavCard";
+import HubNavCard from "../deckHub/HubNavCard";
 import { isGuest } from "../guest/session";
 import { isPlainClick, navigate } from "../shared/nav/navigate";
 import { useSession } from "../session/SessionContext";

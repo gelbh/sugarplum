@@ -10,7 +10,7 @@ import type { MouseEvent, ReactNode } from "react";
 import { ANATOMY_CATALOG } from "../anatomy/catalog";
 import { anatomySceneHref } from "../anatomy/paths";
 import { atlasHubHref } from "../atlas/paths";
-import HubNavCard from "../components/HubNavCard";
+import HubNavCard from "../deckHub/HubNavCard";
 import { isPlainClick, navigate } from "../shared/nav/navigate";
 
 const SPECIES_ICON: Record<string, ReactNode> = {

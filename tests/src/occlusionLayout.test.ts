@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   occlusionMaskScrollTop,
   occlusionTileFocusTransform,
-} from "../../src/lib/occlusionLayout";
+} from "../../src/deckHub/occlusionLayout";
 
 describe("occlusionMaskScrollTop", () => {
   it("centers the mask in the shell and clamps to [0, max]", () => {

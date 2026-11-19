@@ -44,10 +44,10 @@ import {
   withMcqOptionAdded,
   withMcqOptionRemoved,
   withMcqOptionText,
-} from "../lib/mcqDraftEdit";
+} from "./mcqDraftEdit";
 import ClozePrompt from "../study/ClozePrompt";
 import OcclusionRegionEditor from "./OcclusionRegionEditor";
-import { SelectEnumItem, renderSelectEnumValue } from "./SelectEnumItem";
+import { SelectEnumItem, renderSelectEnumValue } from "../components/SelectEnumItem";
 
 export { resolveEditorType, type DraftEditorChange };
 

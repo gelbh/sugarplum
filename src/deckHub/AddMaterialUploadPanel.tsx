@@ -8,7 +8,7 @@ import { alpha } from "@mui/material/styles";
 import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import { CreateFlowNotice } from "../library/CreateFlowNotice";
-import { MAX_IMAGE_BYTES, fileSizeCapMb } from "../lib/materialUploadLimits";
+import { MAX_IMAGE_BYTES, fileSizeCapMb } from "../materials/materialUploadLimits";
 import { resolveUploadContentType } from "../api/client";
 import { FOOTER_BTN_SX, PRIMARY_PILL_SX } from "./AddMaterialMethodChooser";
 import {

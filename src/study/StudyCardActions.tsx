@@ -24,9 +24,9 @@ import {
 import { cardPatchBody } from "../cards/cardPatchBody";
 import DraftCardEditor, {
   type DraftEditorChange,
-} from "../components/DraftCardEditor";
+} from "../deckHub/DraftCardEditor";
 import { isGuest } from "../guest/session";
-import { hubDiyTypes } from "../lib/hubDiyCreate";
+import { hubDiyTypes } from "../deckHub/hubDiyCreate";
 import { dropPendingGrade } from "./pendingGrades";
 
 const DIALOG_PAPER_SX = {
