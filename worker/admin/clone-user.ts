@@ -1,7 +1,6 @@
 /** Clone a learner's D1 graph into a sandbox user (new ids; keep source R2 keys). */
 
 import type { Env } from "../env";
-import { refreshFocusBestEffort } from "../atlas/focus";
 import { cloneAtlasMaterials } from "./clone-atlas-materials";
 
 export type CloneLimits = { maxCards: number };
@@ -950,8 +949,8 @@ async function cloneAtlases(
       );
     }
     await runBatches(db, focusStmts);
-    // Rescan with current Key rules + pack text; copied rows alone stay stale.
-    await refreshFocusBestEffort(db, env, { atlasId });
+    // Leave focus_pack_fingerprint null so the first Atlas GET heals stale
+    // copied tiers without PDF extract on the impersonate request path.
   }
 }
 
