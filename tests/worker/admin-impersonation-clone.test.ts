@@ -215,7 +215,7 @@ describe("admin impersonation D1 clone", () => {
     );
   });
 
-  it("clones atlas course pack materials and R2 objects", async () => {
+  it("clones atlas course pack materials with read-through R2 keys", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearnerWithLibrary(env);
     const packR2 = "atlas/atlas-alice/pack-1.txt";
@@ -277,13 +277,8 @@ describe("admin impersonation D1 clone", () => {
     expect(sandboxPack).toHaveLength(1);
     expect(sandboxPack[0]!.id).not.toBe("pack-1");
     expect(sandboxPack[0]!.source_role).toBe("tutorial");
-    expect(sandboxPack[0]!.r2_key).not.toBe(packR2);
-    const copied = env.getR2(sandboxPack[0]!.r2_key!);
-    const copiedText =
-      typeof copied === "string"
-        ? copied
-        : new TextDecoder().decode(copied as ArrayBuffer);
-    expect(copiedText).toBe("Fasciola hepatica tutorial notes");
+    // Read-through: same R2 key as source (no byte-copy on impersonate).
+    expect(sandboxPack[0]!.r2_key).toBe(packR2);
     expect(env.getR2(packR2)).toBe("Fasciola hepatica tutorial notes");
 
     const sandboxAtlasId = sandboxAtlases[0]!.id;
@@ -450,7 +445,7 @@ describe("admin impersonation D1 clone", () => {
     ).toHaveLength(0);
   });
 
-  it("startImpersonation wipes sandbox R2 when clone fails after pack copy", async () => {
+  it("startImpersonation deletes sandbox user when atlas clone fails", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearnerWithLibrary(env);
     const packR2 = "atlas/atlas-alice/pack-fail.txt";
@@ -474,18 +469,27 @@ describe("admin impersonation D1 clone", () => {
     });
     env.seedR2(packR2, "pack body");
 
-    const realPut = env.MATERIALS.put.bind(env.MATERIALS);
-    env.MATERIALS.put = (async (key, value, options) => {
-      const out = await realPut(key, value, options);
-      if (
-        typeof key === "string" &&
-        key.startsWith("sandbox/") &&
-        key.includes("/atlas/")
-      ) {
-        throw new Error("forced failure after atlas R2 copy");
+    const realPrepare = env.DB.prepare.bind(env.DB);
+    env.DB.prepare = ((sql: string) => {
+      const normalized = sql.replace(/\s+/g, " ").trim();
+      if (normalized.includes("INSERT INTO atlas_materials")) {
+        return {
+          bind() {
+            return this;
+          },
+          async run() {
+            throw new Error("forced failure during atlas materials insert");
+          },
+          async first() {
+            throw new Error("forced failure during atlas materials insert");
+          },
+          async all() {
+            throw new Error("forced failure during atlas materials insert");
+          },
+        };
       }
-      return out;
-    }) as typeof env.MATERIALS.put;
+      return realPrepare(sql);
+    }) as typeof env.DB.prepare;
 
     const start = await app.request(
       "/api/admin/users/u-alice/impersonate",
