@@ -13,17 +13,21 @@ import {
 } from "recharts";
 import { useChartColors } from "./chartColors";
 import { chartTooltipStyles } from "./chartTooltip";
+import InsightsAliceStat from "./InsightsAliceStat";
+import MetricTip from "./MetricTip";
+import {
+  TIP_FUTURE_DUE,
+  TIP_FUTURE_DUE_PEAK,
+  TIP_FUTURE_DUE_TOTAL,
+} from "./metricTips";
 import { insightsSectionTitleSx } from "./operatePaper";
+import { shortInsightDay } from "./shortInsightDay";
 
 type Point = { day: string; count: number };
 
 type Props = {
   series: readonly Point[];
 };
-
-function shortDay(day: string): string {
-  return day.length >= 10 ? day.slice(5) : day;
-}
 
 export default function FutureDueChart({ series }: Props) {
   const theme = useTheme();
@@ -38,18 +42,15 @@ export default function FutureDueChart({ series }: Props) {
       : `${total} cards due over the next ${series.length} days, peak ${peak} in one day`;
   const data = series.map((p) => ({
     ...p,
-    label: shortDay(p.day),
+    label: shortInsightDay(p.day),
   }));
 
   return (
-    <Stack spacing={1}>
-      <Typography
-        variant="subtitle1"
-        component="h2"
-        sx={{ ...insightsSectionTitleSx, mb: 0.75 }}
-      >
-        Upcoming due (14d)
+    <Stack spacing={1.75}>
+      <Typography component="h2" sx={{ ...insightsSectionTitleSx, mb: 0 }}>
+        <MetricTip title={TIP_FUTURE_DUE}>Upcoming due (14d)</MetricTip>
       </Typography>
+
       {total === 0 ? (
         <Box role="img" aria-label={aria}>
           <Typography variant="body2" color="text.secondary">
@@ -57,17 +58,32 @@ export default function FutureDueChart({ series }: Props) {
           </Typography>
         </Box>
       ) : (
-        <>
-          <Box role="img" aria-label={aria} sx={{ width: "100%", height: 160 }}>
+        <Stack spacing={1.75}>
+          <Stack direction="row" spacing={2.5} useFlexGap flexWrap="wrap">
+            <InsightsAliceStat
+              value={total}
+              label="due ahead"
+              tip={TIP_FUTURE_DUE_TOTAL}
+            />
+            <InsightsAliceStat
+              value={peak}
+              label="peak day"
+              tip={TIP_FUTURE_DUE_PEAK}
+              accent="warning"
+            />
+          </Stack>
+
+          <Box role="img" aria-label={aria} sx={{ width: "100%", height: 140 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
-                margin={{ top: 8, right: 4, left: -8, bottom: 0 }}
+                margin={{ top: 4, right: 4, left: -12, bottom: 0 }}
               >
                 <CartesianGrid
                   vertical={false}
                   stroke={colors.divider}
-                  strokeDasharray="3 6"
+                  strokeOpacity={0.55}
+                  strokeDasharray="2 5"
                 />
                 <XAxis
                   dataKey="label"
@@ -76,14 +92,14 @@ export default function FutureDueChart({ series }: Props) {
                     fill: tickFill,
                     fontFamily: theme.typography.fontFamily,
                   }}
-                  axisLine={{ stroke: colors.divider }}
+                  axisLine={false}
                   tickLine={false}
                   interval="preserveStartEnd"
                   minTickGap={24}
                 />
                 <YAxis
                   allowDecimals={false}
-                  width={32}
+                  width={28}
                   tick={{
                     fontSize: 11,
                     fill: tickFill,
@@ -106,17 +122,14 @@ export default function FutureDueChart({ series }: Props) {
                 <Bar
                   dataKey="count"
                   fill={colors.primary}
-                  radius={[3, 3, 0, 0]}
+                  radius={[4, 4, 1, 1]}
                   isAnimationActive={false}
-                  maxBarSize={24}
+                  maxBarSize={20}
                 />
               </BarChart>
             </ResponsiveContainer>
           </Box>
-          <Typography variant="caption" color="text.secondary">
-            {total} due · peak {peak}/day
-          </Typography>
-        </>
+        </Stack>
       )}
     </Stack>
   );

@@ -3,15 +3,27 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
 import { heatmapFills, useChartColors } from "./chartColors";
-import { insightsSectionTitleSx } from "./operatePaper";
+import InsightsAliceStat from "./InsightsAliceStat";
+import MetricTip from "./MetricTip";
+import {
+  TIP_CONSISTENCY,
+  TIP_DAILY_LOAD,
+  TIP_DAYS_STUDIED,
+  TIP_REVIEW_ACTIVITY,
+} from "./metricTips";
+import { insightsBrandSerif, insightsSectionTitleSx } from "./operatePaper";
 
 type Point = { day: string; count: number };
 
 type Props = {
   series: readonly Point[];
+  consistencyActiveDays?: number;
+  consistencyWindowDays?: number;
+  consistencyPct?: number | null;
+  dailyLoad?: number | null;
 };
 
-const CELL = 12;
+const CELL = 13;
 const GAP = 3;
 const WEEKDAYS = 7;
 const LABEL_W = 18;
@@ -37,7 +49,13 @@ function intensityLevel(count: number, max: number): 0 | 1 | 2 | 3 | 4 {
   return 4;
 }
 
-export default function ActivityHeatmap({ series }: Props) {
+export default function ActivityHeatmap({
+  series,
+  consistencyActiveDays,
+  consistencyWindowDays,
+  consistencyPct,
+  dailyLoad,
+}: Props) {
   const theme = useTheme();
   const colors = useChartColors();
   const fills = heatmapFills(colors.scheme);
@@ -62,16 +80,15 @@ export default function ActivityHeatmap({ series }: Props) {
   const gridH = WEEKDAYS * (CELL + GAP) - GAP;
   const width = LABEL_W + gridW;
   const height = gridH;
+  const studiedDays = consistencyActiveDays ?? activeDays;
+  const windowDays = consistencyWindowDays;
 
   return (
-    <Stack spacing={1}>
-      <Typography
-        variant="subtitle1"
-        component="h2"
-        sx={{ ...insightsSectionTitleSx, mb: 1 }}
-      >
-        Review activity
+    <Stack spacing={1.75}>
+      <Typography component="h2" sx={{ ...insightsSectionTitleSx, mb: 0 }}>
+        <MetricTip title={TIP_REVIEW_ACTIVITY}>Review activity</MetricTip>
       </Typography>
+
       {total === 0 ? (
         <Box role="img" aria-label={aria}>
           <Typography variant="body2" color="text.secondary">
@@ -79,7 +96,34 @@ export default function ActivityHeatmap({ series }: Props) {
           </Typography>
         </Box>
       ) : (
-        <>
+        <Stack spacing={1.75}>
+          <Stack direction="row" spacing={2.5} useFlexGap flexWrap="wrap">
+            <InsightsAliceStat
+              value={
+                windowDays != null
+                  ? `${studiedDays}/${windowDays}`
+                  : studiedDays
+              }
+              label="days studied"
+              tip={TIP_DAYS_STUDIED}
+            />
+            {consistencyPct != null ? (
+              <InsightsAliceStat
+                value={`${consistencyPct}%`}
+                label="consistency"
+                tip={TIP_CONSISTENCY}
+                accent="warning"
+              />
+            ) : null}
+            {dailyLoad != null ? (
+              <InsightsAliceStat
+                value={`~${dailyLoad}`}
+                label="cards / day"
+                tip={TIP_DAILY_LOAD}
+              />
+            ) : null}
+          </Stack>
+
           <Box
             role="img"
             aria-label={aria}
@@ -119,8 +163,8 @@ export default function ActivityHeatmap({ series }: Props) {
                     y={y}
                     width={CELL}
                     height={CELL}
-                    rx={2}
-                    ry={2}
+                    rx={2.5}
+                    ry={2.5}
                     fill={fills[level]}
                   >
                     {title ? <title>{title}</title> : null}
@@ -129,6 +173,7 @@ export default function ActivityHeatmap({ series }: Props) {
               })}
             </svg>
           </Box>
+
           <Stack
             direction="row"
             spacing={1}
@@ -157,13 +202,37 @@ export default function ActivityHeatmap({ series }: Props) {
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ ml: { xs: 0, sm: 1 } }}
+              sx={{ ml: { xs: 0, sm: 0.5 } }}
             >
-              {activeDays} active days · {total} reviews
-              {peak > 0 ? ` · peak ${peak}` : ""}
+              <Box
+                component="span"
+                sx={{
+                  fontFamily: insightsBrandSerif,
+                  color: "text.primary",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {total}
+              </Box>{" "}
+              reviews
+              {peak > 0 ? (
+                <>
+                  {" · peak "}
+                  <Box
+                    component="span"
+                    sx={{
+                      fontFamily: insightsBrandSerif,
+                      color: "text.primary",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {peak}
+                  </Box>
+                </>
+              ) : null}
             </Typography>
           </Stack>
-        </>
+        </Stack>
       )}
     </Stack>
   );

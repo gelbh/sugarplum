@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
-import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import ToggleButton from "@mui/material/ToggleButton";
@@ -12,7 +11,6 @@ import {
   ApiError,
   getInsightsSummary,
   getStudyPrefs,
-  type InsightsSummary,
 } from "../api/client";
 import CompositionSpark, {
   COMPOSITION_SEGMENT_COLORS,
@@ -29,19 +27,50 @@ import FutureDueChart from "../insights/FutureDueChart";
 import HourlySuccessChart from "../insights/HourlySuccessChart";
 import GradeMixByMaturityChart from "../insights/GradeMixByMaturityChart";
 import GradeMixChart from "../insights/GradeMixChart";
+import InsightsAliceStat from "../insights/InsightsAliceStat";
+import MetricTip from "../insights/MetricTip";
+import {
+  TIP_GRADUATED,
+  TIP_STAGE_LEARNING,
+  TIP_STAGE_MATURE,
+  TIP_STAGE_NEW,
+  TIP_STAGE_YOUNG,
+} from "../insights/metricTips";
 import SubjectDifficultyStabilityList from "../insights/SubjectDifficultyStabilityList";
 import {
+  insightsBandTitleSx,
+  insightsPageTitleSx,
   insightsPaperSx,
-  insightsSectionTitleSx,
 } from "../insights/operatePaper";
 import ReviewsPerDayChart from "../insights/ReviewsPerDayChart";
+import VerdictHero from "../insights/VerdictHero";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
 const COMPOSITION_LEGEND = [
-  { key: "mature", label: "Mature", color: COMPOSITION_SEGMENT_COLORS.mature },
-  { key: "young", label: "Young", color: COMPOSITION_SEGMENT_COLORS.young },
-  { key: "learning", label: "Learning", color: COMPOSITION_SEGMENT_COLORS.learning },
-  { key: "new", label: "New", color: COMPOSITION_SEGMENT_COLORS.new },
+  {
+    key: "mature",
+    label: "Mature",
+    color: COMPOSITION_SEGMENT_COLORS.mature,
+    tip: TIP_STAGE_MATURE,
+  },
+  {
+    key: "young",
+    label: "Young",
+    color: COMPOSITION_SEGMENT_COLORS.young,
+    tip: TIP_STAGE_YOUNG,
+  },
+  {
+    key: "learning",
+    label: "Learning",
+    color: COMPOSITION_SEGMENT_COLORS.learning,
+    tip: TIP_STAGE_LEARNING,
+  },
+  {
+    key: "new",
+    label: "New",
+    color: COMPOSITION_SEGMENT_COLORS.new,
+    tip: TIP_STAGE_NEW,
+  },
 ] as const;
 
 const RANGE_LABELS: Record<InsightsRangePreset, string> = {
@@ -50,9 +79,11 @@ const RANGE_LABELS: Record<InsightsRangePreset, string> = {
   365: "365d",
 };
 
-/** Charts-forward study-health + habit dashboard (no struggling list). */
+/** Verdict-led study-health dashboard (mix composition; no struggling list). */
 export default function InsightsPage() {
-  const [summary, setSummary] = useState<InsightsSummary | null>(null);
+  const [summary, setSummary] = useState<
+    Awaited<ReturnType<typeof getInsightsSummary>> | null
+  >(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [desiredRetention, setDesiredRetention] = useState<number | null>(null);
   const [rangeDays, setRangeDays] = useState<InsightsRangePreset>(30);
@@ -114,9 +145,7 @@ export default function InsightsPage() {
       ? null
       : Math.round(100 * summary.kpis.trueRetention.overall.rate);
   const targetRetentionPct =
-    desiredRetention == null
-      ? null
-      : Math.round(100 * desiredRetention);
+    desiredRetention == null ? null : Math.round(100 * desiredRetention);
   const youngPct =
     summary?.kpis.trueRetention.young.rate == null
       ? null
@@ -135,23 +164,32 @@ export default function InsightsPage() {
       : Math.round(100 * summary.kpis.consistency.score);
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4.5 } }}>
       {!ready ? (
         <Typography color="text.secondary">Loading insights…</Typography>
       ) : (
-        <Stack spacing={2.5}>
-          <Box>
-            <Typography
-              variant="h4"
-              component="h1"
-              gutterBottom
-              sx={{ color: "text.primary", fontWeight: 600 }}
-            >
-              Insights
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Study health, habit, and recent activity.
-            </Typography>
+        <Stack spacing={3}>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            alignItems={{ sm: "flex-end" }}
+            justifyContent="space-between"
+          >
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="h3" component="h1" sx={insightsPageTitleSx}>
+                Insights
+              </Typography>
+              <Box
+                aria-hidden
+                sx={{
+                  mt: 1.75,
+                  width: 48,
+                  height: 3,
+                  borderRadius: 1,
+                  bgcolor: "secondary.main",
+                }}
+              />
+            </Box>
             <ToggleButtonGroup
               exclusive
               size="small"
@@ -160,7 +198,21 @@ export default function InsightsPage() {
                 if (next != null) setRangeDays(next);
               }}
               aria-label="Insights history range"
-              sx={{ mt: 1.5 }}
+              sx={{
+                flexShrink: 0,
+                "& .MuiToggleButton-root": {
+                  px: 1.5,
+                  fontWeight: 600,
+                  borderColor: "divider",
+                },
+                "& .Mui-selected": {
+                  bgcolor: "primary.main",
+                  color: "primary.contrastText",
+                  "&:hover": {
+                    bgcolor: "primary.main",
+                  },
+                },
+              }}
             >
               {INSIGHTS_RANGE_PRESETS.map((days) => (
                 <ToggleButton key={days} value={days}>
@@ -168,364 +220,201 @@ export default function InsightsPage() {
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>
-          </Box>
+          </Stack>
 
           {summaryError ? <Alert severity="error">{summaryError}</Alert> : null}
 
           {summary ? (
-            <Stack spacing={3}>
-              <Paper variant="outlined" sx={insightsPaperSx}>
-                <Typography
-                  variant="subtitle1"
-                  component="h2"
-                  sx={insightsSectionTitleSx}
-                >
-                  Study health
+            <Stack spacing={3.5}>
+              <VerdictHero
+                recallPct={recallPct}
+                retentionPct={retentionPct}
+                targetRetentionPct={targetRetentionPct}
+                youngPct={youngPct}
+                maturePct={maturePct}
+                dueToday={summary.kpis.dueToday}
+                overdue={summary.kpis.overdue}
+                etkDisplay={etkDisplay}
+                consistencyPct={consistencyPct}
+                streakCurrent={summary.gamification?.streakCurrent}
+                streakBest={summary.gamification?.streakBest}
+                level={summary.gamification?.level}
+                xpTotal={summary.gamification?.xpTotal}
+                showGamification={Boolean(summary.gamification)}
+              />
+
+              <Box>
+                <Typography component="h2" sx={insightsBandTitleSx}>
+                  Recent activity
                 </Typography>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={{ xs: 2.5, sm: 0 }}
-                  alignItems={{ sm: "stretch" }}
-                >
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography
-                      variant="h3"
-                      component="p"
-                      sx={{
-                        fontWeight: 700,
-                        lineHeight: 0.95,
-                        letterSpacing: "-0.02em",
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
-                      {recallPct == null ? "—" : `${recallPct}%`}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ fontWeight: 600, mt: 1 }}
-                    >
-                      Est. recall
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block", mt: 0.5, maxWidth: 36 * 8 }}
-                    >
-                      Average chance you remember accepted cards right now.
-                    </Typography>
-                  </Box>
-                  <Divider
-                    orientation="vertical"
-                    flexItem
-                    sx={{
-                      display: { xs: "none", sm: "block" },
-                      mx: 3,
-                      borderColor: "divider",
-                    }}
-                  />
-                  <Divider
-                    sx={{
-                      display: { xs: "block", sm: "none" },
-                      borderColor: "divider",
-                    }}
-                  />
-                  <Stack
-                    direction="row"
-                    spacing={3}
-                    useFlexGap
-                    flexWrap="wrap"
-                    sx={{
-                      alignItems: { xs: "flex-start", sm: "center" },
-                      pt: { xs: 0, sm: 0.5 },
-                      flex: 2,
-                      minWidth: 0,
-                    }}
-                  >
-                    <Box>
-                      <Typography
-                        variant="h5"
-                        sx={{
-                          fontWeight: 600,
-                          fontVariantNumeric: "tabular-nums",
-                          lineHeight: 1.1,
+                <Paper variant="outlined" sx={insightsPaperSx}>
+                  <Stack spacing={2.75}>
+                    <ReviewsPerDayChart
+                      series={summary.reviewsPerDay}
+                      reviewsDays={summary.window.reviewsDays}
+                      reviewsInWindow={summary.kpis.reviewsInWindow}
+                      reviewedToday={summary.kpis.reviewedToday}
+                    />
+                    <DividerHairline />
+                    <FutureDueChart series={summary.futureDue} />
+                    <DividerHairline />
+                    <HourlySuccessChart series={summary.hourlySuccess} />
+                    <DividerHairline />
+                    <ActivityHeatmap
+                      series={summary.activityByDay}
+                      consistencyActiveDays={
+                        summary.kpis.consistency.activeDays
+                      }
+                      consistencyWindowDays={
+                        summary.kpis.consistency.windowDays
+                      }
+                      consistencyPct={consistencyPct}
+                      dailyLoad={summary.kpis.dailyLoad}
+                    />
+                  </Stack>
+                </Paper>
+              </Box>
+
+              <Box>
+                <Typography component="h2" sx={insightsBandTitleSx}>
+                  Grades
+                </Typography>
+                <Paper variant="outlined" sx={insightsPaperSx}>
+                  <Stack spacing={2.75}>
+                    <GradeMixChart
+                      counts={summary.gradeCounts}
+                      gradeDays={summary.window.gradeDays}
+                    />
+                    <DividerHairline />
+                    <GradeMixByMaturityChart
+                      byMaturity={summary.gradeCountsByMaturity}
+                      gradeDays={summary.window.gradeDays}
+                    />
+                  </Stack>
+                </Paper>
+              </Box>
+
+              <Box>
+                <Typography component="h2" sx={insightsBandTitleSx}>
+                  Knowledge mix
+                </Typography>
+                <Paper variant="outlined" sx={insightsPaperSx}>
+                  <Stack spacing={2.75}>
+                    {summary.kpis.composition.total === 0 ? (
+                      <EmptyNext
+                        title="No accepted cards yet"
+                        body="Accept drafts from Library to see stage mix here."
+                        primary={{
+                          label: "Open Library",
+                          onClick: () => navigate("/library"),
                         }}
-                      >
-                        {etkDisplay == null ? "—" : `~${etkDisplay}`}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ display: "block", mt: 0.5 }}
-                      >
-                        Cards remembered
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography
-                        variant="h5"
-                        sx={{
-                          fontWeight: 600,
-                          fontVariantNumeric: "tabular-nums",
-                          lineHeight: 1.1,
-                        }}
-                      >
-                        {retentionPct == null ? "—" : `${retentionPct}%`}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ display: "block", mt: 0.5 }}
-                      >
-                        True retention
-                      </Typography>
-                      {targetRetentionPct != null ? (
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ display: "block" }}
+                      />
+                    ) : (
+                      <Stack spacing={1.5}>
+                        <CompositionSpark
+                          new={summary.kpis.composition.new}
+                          learning={summary.kpis.composition.learning}
+                          young={summary.kpis.composition.young}
+                          mature={summary.kpis.composition.mature}
+                          total={summary.kpis.composition.total}
+                          height={16}
+                          maxWidth="100%"
+                        />
+                        <Stack
+                          direction="row"
+                          spacing={2.25}
+                          useFlexGap
+                          flexWrap="wrap"
+                          alignItems="baseline"
                         >
-                          Target {targetRetentionPct}%
-                          {retentionPct == null
-                            ? ""
-                            : ` · ${
-                                retentionPct - targetRetentionPct >= 0
-                                  ? "+"
-                                  : ""
-                              }${retentionPct - targetRetentionPct} pts`}
-                        </Typography>
-                      ) : null}
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ display: "block" }}
-                      >
-                        Young {youngPct == null ? "—" : `${youngPct}%`} · Mature{" "}
-                        {maturePct == null ? "—" : `${maturePct}%`}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ display: "block" }}
-                      >
-                        Maturity uses interval before that review.
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography
-                        variant="h5"
-                        sx={{
-                          fontWeight: 600,
-                          fontVariantNumeric: "tabular-nums",
-                          lineHeight: 1.1,
-                        }}
-                      >
-                        {summary.kpis.dueToday}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ display: "block", mt: 0.5 }}
-                      >
-                        Due today
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography
-                        variant="h5"
-                        sx={{
-                          fontWeight: 600,
-                          fontVariantNumeric: "tabular-nums",
-                          lineHeight: 1.1,
-                        }}
-                      >
-                        {summary.kpis.overdue}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ display: "block", mt: 0.5 }}
-                      >
-                        Overdue
-                      </Typography>
-                    </Box>
-                    {summary.gamification ? (
+                          {COMPOSITION_LEGEND.map((item) => {
+                            const count = summary.kpis.composition[item.key];
+                            return (
+                              <Stack
+                                key={item.key}
+                                direction="row"
+                                spacing={0.75}
+                                alignItems="baseline"
+                              >
+                                <Box
+                                  aria-hidden
+                                  sx={{
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: 0.5,
+                                    bgcolor: item.color,
+                                    flexShrink: 0,
+                                    alignSelf: "center",
+                                  }}
+                                />
+                                <InsightsAliceStat
+                                  size="sm"
+                                  value={count}
+                                  label={item.label}
+                                  tip={item.tip}
+                                />
+                              </Stack>
+                            );
+                          })}
+                        </Stack>
+                        {summary.kpis.composition.graduatedPct != null ? (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ pt: 0.25 }}
+                          >
+                            <Box
+                              component="span"
+                              sx={{
+                                fontFamily:
+                                  '"Alice", "Georgia", "Times New Roman", serif',
+                                color: "secondary.main",
+                                fontSize: "1.15rem",
+                                mr: 0.75,
+                              }}
+                            >
+                              {summary.kpis.composition.graduatedPct}%
+                            </Box>
+                            <MetricTip title={TIP_GRADUATED}>
+                              graduated past learning
+                            </MetricTip>
+                          </Typography>
+                        ) : null}
+                      </Stack>
+                    )}
+                    <DividerHairline />
+                    <DifficultyStabilityBlock
+                      difficulty={summary.kpis.difficulty}
+                      stability={summary.kpis.stability}
+                    />
+                    {summary.kpis.subjectDifficultyStability.length > 0 ? (
                       <>
-                        <Box>
-                          <Typography
-                            variant="h5"
-                            sx={{
-                              fontWeight: 600,
-                              fontVariantNumeric: "tabular-nums",
-                              lineHeight: 1.1,
-                            }}
-                          >
-                            {summary.gamification.streakCurrent}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ display: "block", mt: 0.5 }}
-                          >
-                            Day streak
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ display: "block" }}
-                          >
-                            Best {summary.gamification.streakBest}
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography
-                            variant="h5"
-                            sx={{
-                              fontWeight: 600,
-                              fontVariantNumeric: "tabular-nums",
-                              lineHeight: 1.1,
-                            }}
-                          >
-                            L{summary.gamification.level}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ display: "block", mt: 0.5 }}
-                          >
-                            {summary.gamification.xpTotal} XP
-                          </Typography>
-                        </Box>
+                        <DividerHairline />
+                        <SubjectDifficultyStabilityList
+                          rows={summary.kpis.subjectDifficultyStability}
+                        />
                       </>
                     ) : null}
                   </Stack>
-                </Stack>
-              </Paper>
-
-              <Paper variant="outlined" sx={insightsPaperSx}>
-                <ReviewsPerDayChart
-                  series={summary.reviewsPerDay}
-                  reviewsDays={summary.window.reviewsDays}
-                  reviewsInWindow={summary.kpis.reviewsInWindow}
-                  reviewedToday={summary.kpis.reviewedToday}
-                />
-                <Box sx={{ mt: 3 }}>
-                  <FutureDueChart series={summary.futureDue} />
-                </Box>
-                <Box sx={{ mt: 3 }}>
-                  <HourlySuccessChart series={summary.hourlySuccess} />
-                </Box>
-                <Box sx={{ mt: 3 }}>
-                  <ActivityHeatmap series={summary.activityByDay} />
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: "block", mt: 1 }}
-                  >
-                    Studied {summary.kpis.consistency.activeDays}/
-                    {summary.kpis.consistency.windowDays} days · consistency{" "}
-                    {consistencyPct == null ? "—" : `${consistencyPct}%`}
-                    {summary.kpis.dailyLoad == null
-                      ? null
-                      : ` · Steady-state load ~${summary.kpis.dailyLoad} cards/day`}
-                  </Typography>
-                </Box>
-              </Paper>
-
-              <Paper variant="outlined" sx={insightsPaperSx}>
-                <GradeMixChart
-                  counts={summary.gradeCounts}
-                  gradeDays={summary.window.gradeDays}
-                />
-                <GradeMixByMaturityChart
-                  byMaturity={summary.gradeCountsByMaturity}
-                  gradeDays={summary.window.gradeDays}
-                />
-              </Paper>
-
-              <Paper variant="outlined" sx={insightsPaperSx}>
-                <Typography
-                  variant="subtitle1"
-                  component="h2"
-                  sx={insightsSectionTitleSx}
-                >
-                  Knowledge mix
-                </Typography>
-                {summary.kpis.composition.total === 0 ? (
-                  <EmptyNext
-                    title="No accepted cards yet"
-                    body="Accept drafts from Library to see stage mix here."
-                    primary={{
-                      label: "Open Library",
-                      onClick: () => navigate("/library"),
-                    }}
-                  />
-                ) : (
-                  <Stack spacing={1.5}>
-                    <CompositionSpark
-                      new={summary.kpis.composition.new}
-                      learning={summary.kpis.composition.learning}
-                      young={summary.kpis.composition.young}
-                      mature={summary.kpis.composition.mature}
-                      total={summary.kpis.composition.total}
-                      height={12}
-                      maxWidth="100%"
-                    />
-                    <Stack
-                      direction="row"
-                      spacing={2}
-                      useFlexGap
-                      flexWrap="wrap"
-                    >
-                      {COMPOSITION_LEGEND.map((item) => {
-                        const count = summary.kpis.composition[item.key];
-                        return (
-                          <Stack
-                            key={item.key}
-                            direction="row"
-                            spacing={0.75}
-                            alignItems="center"
-                          >
-                            <Box
-                              aria-hidden
-                              sx={{
-                                width: 10,
-                                height: 10,
-                                borderRadius: 0.5,
-                                bgcolor: item.color,
-                                flexShrink: 0,
-                              }}
-                            />
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ fontVariantNumeric: "tabular-nums" }}
-                            >
-                              {item.label} {count}
-                            </Typography>
-                          </Stack>
-                        );
-                      })}
-                    </Stack>
-                    {summary.kpis.composition.graduatedPct != null ? (
-                      <Typography variant="caption" color="text.secondary">
-                        {summary.kpis.composition.graduatedPct}% graduated past
-                        learning
-                      </Typography>
-                    ) : null}
-                  </Stack>
-                )}
-                <DifficultyStabilityBlock
-                  difficulty={summary.kpis.difficulty}
-                  stability={summary.kpis.stability}
-                />
-                <SubjectDifficultyStabilityList
-                  rows={summary.kpis.subjectDifficultyStability}
-                />
-              </Paper>
+                </Paper>
+              </Box>
             </Stack>
           ) : null}
         </Stack>
       )}
     </Container>
+  );
+}
+
+function DividerHairline() {
+  return (
+    <Box
+      aria-hidden
+      sx={{
+        height: 1,
+        bgcolor: "divider",
+        opacity: 0.9,
+      }}
+    />
   );
 }

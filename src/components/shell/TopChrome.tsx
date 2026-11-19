@@ -2,7 +2,6 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
-import type { ReactNode } from "react";
 import { goShellBack } from "../../nav/navigate";
 import { useResolvedShellBack } from "./ShellBackOverride";
 import {
@@ -14,12 +13,8 @@ import {
 
 const BACK_SLOT = 40;
 
-type TopChromeProps = {
-  trailing?: ReactNode;
-};
-
-/** Mobile top bar content: Back for nested routes, centered logo + Alice wordmark. */
-export default function TopChrome({ trailing }: TopChromeProps) {
+/** Mobile top bar: Back for nested routes, centered logo + Alice wordmark. */
+export default function TopChrome() {
   const backHref = useResolvedShellBack(window.location.pathname);
 
   return (
@@ -35,8 +30,6 @@ export default function TopChrome({ trailing }: TopChromeProps) {
       <Box
         sx={{
           display: "grid",
-          // Equal side tracks centre the brand; a wide chip grows its track and
-          // nudges the brand left instead of overlapping it.
           gridTemplateColumns:
             "minmax(max-content, 1fr) auto minmax(max-content, 1fr)",
           columnGap: 1,
@@ -89,26 +82,19 @@ export default function TopChrome({ trailing }: TopChromeProps) {
             sx={{
               color: SHELL_FG,
               letterSpacing: 0.2,
-              // Below 340px the brand and a long Streak chip cannot share the row.
-              "@media (max-width: 339.95px)": { display: "none" },
             }}
           >
             Sugarplum
           </Typography>
         </Box>
         <Box
+          aria-hidden
           sx={{
             justifySelf: "end",
-            minWidth: BACK_SLOT,
-            minHeight: BACK_SLOT,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            px: 0.5,
+            width: BACK_SLOT,
+            height: BACK_SLOT,
           }}
-        >
-          {trailing}
-        </Box>
+        />
       </Box>
     </Box>
   );

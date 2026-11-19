@@ -66,7 +66,7 @@ describe("ActivityHeatmap", () => {
     expect(img).toBeTruthy();
     expect(img!.getAttribute("aria-label")).toMatch(/2 active days/i);
     expect(img!.getAttribute("aria-label")).toMatch(/4 reviews/i);
-    expect(host!.textContent).toMatch(/2 active days/i);
+    expect(host!.textContent).toMatch(/2days studied|2.*days studied/i);
     expect(host!.textContent).toMatch(/4 reviews/i);
     expect(host!.querySelectorAll("rect").length).toBeGreaterThan(0);
   });

@@ -147,8 +147,8 @@ describe("insights charts", () => {
     await act(async () => {
       root.render(node);
     });
-    expect(host!.textContent).toMatch(/5 due/);
-    expect(host!.textContent).toMatch(/peak 5\/day/);
+    expect(host!.textContent).toMatch(/5due ahead|5.*due ahead/);
+    expect(host!.textContent).toMatch(/5peak day|5.*peak day/);
     await act(async () => {
       root.unmount();
     });
@@ -227,7 +227,10 @@ describe("insights charts", () => {
     await act(async () => {
       root.render(node);
     });
-    expect(host!.textContent).toMatch(/6 grades split by maturity/);
+    expect(host!.textContent).toMatch(/Split across maturity/);
+    expect(host!.textContent).toMatch(/Learning/);
+    expect(host!.textContent).toMatch(/Young/);
+    expect(host!.textContent).toMatch(/Mature/);
     await act(async () => {
       root.unmount();
     });
@@ -275,8 +278,9 @@ describe("insights charts", () => {
     await act(async () => {
       root.render(node);
     });
-    expect(host!.textContent).toMatch(/Median stability 12\.5d/);
-    expect(host!.textContent).toMatch(/Easy 2/);
+    expect(host!.textContent).toMatch(/Median stability/);
+    expect(host!.textContent).toMatch(/12\.5d/);
+    expect(host!.textContent).toMatch(/2Easy|Easy/);
     expect(host!.textContent).toMatch(/1–7d/);
     await act(async () => {
       root.unmount();

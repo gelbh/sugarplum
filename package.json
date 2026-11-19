@@ -14,7 +14,8 @@
     "check:asset-size": "node scripts/checkWorkersAssetSize.mjs public",
     "eval:live": "vitest run --config vitest.live.config.ts",
     "db:migrate:local": "wrangler d1 migrations apply sugarplum --local",
-    "db:seed:local": "node scripts/seed-local-dev.mjs"
+    "db:seed:local": "node scripts/seed-local-dev.mjs",
+    "db:seed:local:insights": "node scripts/seed-local-insights.mjs"
   },
   "dependencies": {
     "@embedpdf/engine": "^3.2.0",

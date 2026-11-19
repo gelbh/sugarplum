@@ -1,22 +1,13 @@
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useTheme } from "@mui/material/styles";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { gradeChartFill } from "../study/gradeColors";
 import { GRADE_LABELS } from "../study/gradeLabels";
 import { useChartColors } from "./chartColors";
-import { chartTooltipStyles } from "./chartTooltip";
-import { insightsSectionTitleSx } from "./operatePaper";
+import MetricTip from "./MetricTip";
+import { TIP_GRADE_MIX, TIP_GRADE_PASS } from "./metricTips";
+import { insightsBrandSerif, insightsSectionTitleSx } from "./operatePaper";
 import type { InsightsGradeCounts } from "./types";
 
 type Props = {
@@ -32,30 +23,26 @@ const ROWS: Array<{ key: keyof InsightsGradeCounts; rating: 1 | 2 | 3 | 4 }> = [
 ];
 
 export default function GradeMixChart({ counts, gradeDays = 14 }: Props) {
-  const theme = useTheme();
   const colors = useChartColors();
-  const tip = chartTooltipStyles(colors);
   const total = counts.again + counts.hard + counts.good + counts.easy;
+  const passedPct =
+    total === 0
+      ? null
+      : Math.round((100 * (counts.good + counts.easy)) / total);
   const aria =
     total === 0
       ? "No grades in this window"
       : `Grade mix: ${GRADE_LABELS[1]} ${counts.again}, ${GRADE_LABELS[2]} ${counts.hard}, ${GRADE_LABELS[3]} ${counts.good}, ${GRADE_LABELS[4]} ${counts.easy}`;
-
-  const data = ROWS.map(({ key, rating }) => ({
-    key,
-    name: GRADE_LABELS[rating],
-    count: counts[key],
-    fill: gradeChartFill(rating),
-  }));
+  const maxCount = Math.max(1, ...ROWS.map(({ key }) => counts[key]));
 
   return (
-    <Stack spacing={1}>
+    <Stack spacing={1.75}>
       <Typography
         variant="subtitle1"
         component="h2"
-        sx={insightsSectionTitleSx}
+        sx={{ ...insightsSectionTitleSx, mb: 0 }}
       >
-        Grade mix ({gradeDays}d)
+        <MetricTip title={TIP_GRADE_MIX}>Grade mix ({gradeDays}d)</MetricTip>
       </Typography>
       {total === 0 ? (
         <Box role="img" aria-label={aria}>
@@ -64,62 +51,110 @@ export default function GradeMixChart({ counts, gradeDays = 14 }: Props) {
           </Typography>
         </Box>
       ) : (
-        <>
-          <Box role="img" aria-label={aria} sx={{ width: "100%", height: 200 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                layout="vertical"
-                data={data}
-                margin={{ top: 4, right: 16, left: 4, bottom: 0 }}
-                barCategoryGap="28%"
-              >
-                <CartesianGrid
-                  horizontal={false}
-                  stroke={colors.divider}
-                  strokeDasharray="3 6"
-                />
-                <XAxis
-                  type="number"
-                  allowDecimals={false}
-                  tick={{
-                    fontSize: 11,
-                    fill: colors.textSecondary,
-                    fontFamily: theme.typography.fontFamily,
-                  }}
-                  axisLine={{ stroke: colors.divider }}
-                  tickLine={false}
-                />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={112}
-                  tick={{
-                    fontSize: 12,
-                    fill: colors.textPrimary,
-                    fontFamily: theme.typography.fontFamily,
-                  }}
-                  axisLine={false}
-                  tickLine={false}
-                />
+        <Stack spacing={1.75}>
+          <Stack spacing={1.15} role="img" aria-label={aria}>
+            {ROWS.map(({ key, rating }) => {
+              const count = counts[key];
+              const fill = gradeChartFill(rating);
+              const share =
+                total === 0 ? 0 : Math.round((100 * count) / total);
+              return (
                 <Tooltip
-                  cursor={tip.cursor}
-                  contentStyle={tip.contentStyle}
-                  labelStyle={tip.labelStyle}
-                  itemStyle={tip.itemStyle}
-                  formatter={(value) => [value ?? 0, "Count"]}
-                />
-                <Bar dataKey="count" radius={[0, 3, 3, 0]} isAnimationActive={false}>
-                  {data.map((row) => (
-                    <Cell key={row.key} fill={row.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </Box>
-          <Typography variant="caption" color="text.secondary">
-            {total} grades in the last {gradeDays} days
+                  key={key}
+                  title={`${GRADE_LABELS[rating]}: ${count} (${share}% of grades)`}
+                  enterDelay={200}
+                >
+                  <Stack
+                    direction="row"
+                    spacing={1.5}
+                    alignItems="center"
+                    sx={{ cursor: "default" }}
+                  >
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{
+                        width: { xs: 108, sm: 120 },
+                        flexShrink: 0,
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {GRADE_LABELS[rating]}
+                    </Typography>
+                    <Box
+                      sx={{
+                        flex: 1,
+                        height: 12,
+                        borderRadius: 1.5,
+                        bgcolor: colors.hover,
+                        overflow: "hidden",
+                        minWidth: 0,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: `${(100 * count) / maxCount}%`,
+                          height: "100%",
+                          bgcolor: fill,
+                          borderRadius: 1.5,
+                          minWidth: count > 0 ? 4 : 0,
+                          opacity: count === 0 ? 0.28 : 1,
+                        }}
+                      />
+                    </Box>
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontFamily: insightsBrandSerif,
+                        fontSize: "1.05rem",
+                        lineHeight: 1,
+                        fontVariantNumeric: "tabular-nums",
+                        color: "text.primary",
+                        width: 28,
+                        textAlign: "right",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {count}
+                    </Typography>
+                  </Stack>
+                </Tooltip>
+              );
+            })}
+          </Stack>
+
+          <Typography variant="body2" color="text.secondary">
+            <Box
+              component="span"
+              sx={{
+                fontFamily: insightsBrandSerif,
+                color: "primary.main",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {total}
+            </Box>{" "}
+            grades in the last {gradeDays} days
+            {passedPct == null ? null : (
+              <>
+                {" · "}
+                <Box
+                  component="span"
+                  sx={{
+                    fontFamily: insightsBrandSerif,
+                    color: "warning.main",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {passedPct}%
+                </Box>{" "}
+                <MetricTip title={TIP_GRADE_PASS}>
+                  Good Enough or easier
+                </MetricTip>
+              </>
+            )}
           </Typography>
-        </>
+        </Stack>
       )}
     </Stack>
   );

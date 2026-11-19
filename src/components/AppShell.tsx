@@ -18,12 +18,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import {
-  adminExitImpersonation,
-  GAMIFICATION_CHANGED_EVENT,
-  getGamification,
-} from "../api/client";
-import StreakXpChip from "../achievements/StreakXpChip";
+import { adminExitImpersonation } from "../api/client";
 import { isGuest } from "../guest/session";
 import { navigate, navigateReplace, subscribeLocation } from "../nav/navigate";
 import PageLoadingOverlay from "../progress/PageLoadingOverlay";
@@ -143,8 +138,6 @@ function AppShellChrome({ children }: AppShellProps) {
   const isAdmin = !isGuest() && user?.is_admin === true;
   const impersonation = user?.impersonation ?? null;
   const [stopBusy, setStopBusy] = useState(false);
-  const [streak, setStreak] = useState<number | null>(null);
-  const [level, setLevel] = useState<number | null>(null);
   const drawerNav = isAdmin ? [...LEARNER_NAV, ADMIN_NAV] : LEARNER_NAV;
   const active = activeNavId(path, drawerNav);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean | null>(() =>
@@ -242,35 +235,6 @@ function AppShellChrome({ children }: AppShellProps) {
     return () => window.clearTimeout(t);
   }, [impersonation?.expiresAt, refreshSession]);
 
-  // Zen hides the chip, so refetch on leaving zen instead of after every grade.
-  useEffect(() => {
-    if (hideChrome || isGuest()) return;
-    let latest = 0;
-    const load = () => {
-      const req = ++latest;
-      void getGamification()
-        .then((g) => {
-          if (req !== latest) return;
-          setStreak(g.streakCurrent);
-          setLevel(g.level);
-        })
-        .catch(() => {
-          if (req === latest) setStreak(null);
-        });
-    };
-    load();
-    window.addEventListener(GAMIFICATION_CHANGED_EVENT, load);
-    return () => {
-      latest = -1;
-      window.removeEventListener(GAMIFICATION_CHANGED_EVENT, load);
-    };
-  }, [hideChrome]);
-
-  const streakChip =
-    !isGuest() && streak != null && level != null ? (
-      <StreakXpChip streak={streak} level={level} />
-    ) : null;
-
   useLayoutEffect(() => {
     if (!showMobileChrome) return;
     const el = headerRef.current;
@@ -346,7 +310,7 @@ function AppShellChrome({ children }: AppShellProps) {
             bgcolor: SHELL_BG,
           }}
         >
-          <TopChrome trailing={streakChip} />
+          <TopChrome />
           {genStatus ? (
             <GenerationStatusStrip status={genStatus} dense />
           ) : null}
