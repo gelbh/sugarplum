@@ -47,7 +47,6 @@ export type CalendarSuggestions = {
 export type AdminOverview = {
   userCount: number;
   createdLast7d: number;
-  tokensAllTime: number;
   tokens30d: number;
   freeJobs30d: number;
   byoJobs30d: number;
@@ -59,10 +58,6 @@ export type AdminUserListItem = {
   created_at: string;
   google_linked: boolean;
   disabled_at: string | null;
-  deckCount: number;
-  cardCount: number;
-  jobCount: number;
-  tokens30d: number;
 };
 
 export type AdminUserDetail = {

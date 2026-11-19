@@ -1,16 +1,17 @@
 export const LIST_USERS_SQL = `
-SELECT u.id, u.email, u.created_at, u.oauth_subject, u.disabled_at,
-  (SELECT COUNT(*) FROM decks d WHERE d.user_id = u.id) AS deck_count,
-  (SELECT COUNT(*) FROM cards c
-     INNER JOIN decks d ON d.id = c.deck_id WHERE d.user_id = u.id) AS card_count,
-  (SELECT COUNT(*) FROM generation_jobs j
-     INNER JOIN materials m ON m.id = j.material_id
-     INNER JOIN decks d ON d.id = m.deck_id WHERE d.user_id = u.id) AS job_count,
-  (SELECT COALESCE(SUM(COALESCE(ue.tokens_total, 0)), 0) FROM usage_events ue
-     WHERE ue.user_id = u.id AND ue.created_at >= ?) AS tokens_30d
+SELECT u.id, u.email, u.created_at, u.oauth_subject, u.disabled_at
 FROM users u
 WHERE u.sandbox_of IS NULL
-  AND (? = '' OR lower(u.email) LIKE '%' || lower(?) || '%')
+ORDER BY u.created_at DESC
+LIMIT ?
+`.replace(/\s+/g, " ");
+
+/** Email substring search (leading wildcard; admin-only, expects full scan). */
+export const LIST_USERS_SEARCH_SQL = `
+SELECT u.id, u.email, u.created_at, u.oauth_subject, u.disabled_at
+FROM users u
+WHERE u.sandbox_of IS NULL
+  AND lower(u.email) LIKE '%' || lower(?) || '%'
 ORDER BY u.created_at DESC
 LIMIT ?
 `.replace(/\s+/g, " ");

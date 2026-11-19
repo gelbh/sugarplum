@@ -270,7 +270,6 @@ describe("GET /api/admin/overview", () => {
     await expect(res.json()).resolves.toEqual({
       userCount: 3,
       createdLast7d: 2,
-      tokensAllTime: 0,
       tokens30d: 0,
       freeJobs30d: 0,
       byoJobs30d: 0,
@@ -311,7 +310,6 @@ describe("GET /api/admin/overview", () => {
     );
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({
-      tokensAllTime: 45,
       tokens30d: 45,
       freeJobs30d: 1,
       byoJobs30d: 0,
@@ -328,7 +326,7 @@ describe("GET /api/admin/users (allowlisted)", () => {
     vi.useRealTimers();
   });
 
-  it("200 with aggregated user rows", async () => {
+  it("200 with lean user rows", async () => {
     const env = createTestEnv({ adminEmails: "ops@example.com" });
     seedAdminMonitorFixture(env);
     const res = await app.request(
@@ -342,9 +340,7 @@ describe("GET /api/admin/users (allowlisted)", () => {
         id: string;
         email: string;
         google_linked: boolean;
-        deckCount: number;
-        cardCount: number;
-        jobCount: number;
+        deckCount?: number;
       }[];
     };
     expect(body.users).toHaveLength(3);
@@ -352,16 +348,11 @@ describe("GET /api/admin/users (allowlisted)", () => {
     expect(alice).toMatchObject({
       id: "u-alice",
       google_linked: true,
-      deckCount: 1,
-      cardCount: 2,
-      jobCount: 1,
     });
+    expect(alice).not.toHaveProperty("deckCount");
     const bob = body.users.find((u) => u.email === "bob@example.com");
     expect(bob).toMatchObject({
       google_linked: false,
-      deckCount: 0,
-      cardCount: 0,
-      jobCount: 0,
     });
   });
 

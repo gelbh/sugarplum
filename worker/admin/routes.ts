@@ -20,6 +20,7 @@ import { exitImpersonation, startImpersonation } from "./impersonation";
 import { EXPORT_MAX_CHARS, buildUserExportPayload } from "./export";
 import {
   LIST_USERS_SQL,
+  LIST_USERS_SEARCH_SQL,
   USER_DETAIL_SQL,
   RECENT_JOBS_SQL,
   RECENT_STUDY_DAYS_SQL,
@@ -47,12 +48,12 @@ adminRoutes.get("/overview", async (c) => {
   await requireAdmin(c);
   const cutoff7 = createdLast7dCutoffIso();
   const cutoff30 = usage30dCutoffIso();
+  // No unbounded SUM(usage_events): all-time token totals live on user detail.
   const row = await getDb(c.env)
     .prepare(
       `SELECT
         (SELECT COUNT(*) FROM users WHERE sandbox_of IS NULL) AS user_count,
         (SELECT COUNT(*) FROM users WHERE sandbox_of IS NULL AND created_at >= ?) AS created_last_7d,
-        (SELECT COALESCE(SUM(COALESCE(tokens_total, 0)), 0) FROM usage_events) AS tokens_all_time,
         (SELECT COALESCE(SUM(COALESCE(tokens_total, 0)), 0) FROM usage_events
            WHERE created_at >= ?) AS tokens_30d,
         (SELECT COUNT(*) FROM usage_events
@@ -66,7 +67,6 @@ adminRoutes.get("/overview", async (c) => {
     .first<{
       user_count: number;
       created_last_7d: number;
-      tokens_all_time: number;
       tokens_30d: number;
       free_jobs_30d: number;
       byo_jobs_30d: number;
@@ -74,7 +74,6 @@ adminRoutes.get("/overview", async (c) => {
   return c.json({
     userCount: row?.user_count ?? 0,
     createdLast7d: row?.created_last_7d ?? 0,
-    tokensAllTime: row?.tokens_all_time ?? 0,
     tokens30d: row?.tokens_30d ?? 0,
     freeJobs30d: row?.free_jobs_30d ?? 0,
     byoJobs30d: row?.byo_jobs_30d ?? 0,
@@ -83,23 +82,20 @@ adminRoutes.get("/overview", async (c) => {
 
 adminRoutes.get("/users", async (c) => {
   await requireAdmin(c);
-  const q = c.req.query("q") ?? "";
+  const q = (c.req.query("q") ?? "").trim();
   const limit = parseUserListLimit(c.req.query("limit"));
-  const cutoff30 = usage30dCutoffIso();
-  const { results } = await getDb(c.env)
-    .prepare(LIST_USERS_SQL)
-    .bind(cutoff30, q, q, limit)
-    .all<{
-      id: string;
-      email: string;
-      created_at: string;
-      oauth_subject: string | null;
-      disabled_at: string | null;
-      deck_count: number;
-      card_count: number;
-      job_count: number;
-      tokens_30d: number;
-    }>();
+  const db = getDb(c.env);
+  const stmt =
+    q === ""
+      ? db.prepare(LIST_USERS_SQL).bind(limit)
+      : db.prepare(LIST_USERS_SEARCH_SQL).bind(q, limit);
+  const { results } = await stmt.all<{
+    id: string;
+    email: string;
+    created_at: string;
+    oauth_subject: string | null;
+    disabled_at: string | null;
+  }>();
 
   const users: AdminUserListItem[] = (results ?? []).map((row) => ({
     id: row.id,
@@ -107,10 +103,6 @@ adminRoutes.get("/users", async (c) => {
     created_at: row.created_at,
     google_linked: row.oauth_subject != null,
     disabled_at: row.disabled_at ?? null,
-    deckCount: row.deck_count,
-    cardCount: row.card_count,
-    jobCount: row.job_count,
-    tokens30d: row.tokens_30d ?? 0,
   }));
   return c.json({ users });
 });

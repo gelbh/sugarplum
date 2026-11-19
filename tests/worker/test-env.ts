@@ -1826,54 +1826,30 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.includes("FROM users u") &&
-          normalized.includes("AS deck_count") &&
-          normalized.includes("AS job_count")
+          normalized.includes("sandbox_of IS NULL") &&
+          normalized.includes("ORDER BY u.created_at DESC") &&
+          normalized.includes("LIMIT ?") &&
+          !normalized.includes("AS deck_count")
         ) {
-          const [cutoff30, q, , limitRaw] = bound as [
-            string,
-            string,
-            string,
-            number,
-          ];
+          const hasSearch = normalized.includes("lower(u.email) LIKE");
+          const q = hasSearch ? String(bound[0] ?? "") : "";
+          const limitRaw = hasSearch ? bound[1] : bound[0];
           let rows = [...users.values()].filter(
             (u) => (u.sandbox_of ?? null) == null,
           );
-          if (q !== "") {
+          if (hasSearch && q !== "") {
             rows = rows.filter((u) => emailMatchesAdminListQuery(u.email, q));
           }
           rows.sort((a, b) => b.created_at.localeCompare(a.created_at));
           const limit = Number(limitRaw);
           rows = rows.slice(0, Number.isFinite(limit) ? limit : 50);
-          const results = rows.map((u) => {
-            const userDeckIds = new Set(
-              [...decks.values()]
-                .filter((d) => d.user_id === u.id)
-                .map((d) => d.id),
-            );
-            const deck_count = userDeckIds.size;
-            const card_count = [...cards.values()].filter((c) =>
-              userDeckIds.has(c.deck_id),
-            ).length;
-            const job_count = [...generationJobs.values()].filter((j) => {
-              const material = materials.get(j.material_id);
-              if (!material) return false;
-              return userDeckIds.has(material.deck_id);
-            }).length;
-            const tokens_30d = [...usageEvents.values()]
-              .filter((e) => e.user_id === u.id && e.created_at >= cutoff30)
-              .reduce((sum, e) => sum + (e.tokens_total ?? 0), 0);
-            return {
-              id: u.id,
-              email: u.email,
-              created_at: u.created_at,
-              oauth_subject: u.oauth_subject,
-              disabled_at: u.disabled_at ?? null,
-              deck_count,
-              card_count,
-              job_count,
-              tokens_30d,
-            };
-          });
+          const results = rows.map((u) => ({
+            id: u.id,
+            email: u.email,
+            created_at: u.created_at,
+            oauth_subject: u.oauth_subject,
+            disabled_at: u.disabled_at ?? null,
+          }));
           return { results: results as T[] };
         }
         if (
