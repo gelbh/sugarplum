@@ -97,9 +97,7 @@ function parseMcq(backJson) {
     if (v && typeof v === "object" && typeof v.answer === "string") {
       return { back: v.answer, options: v.options ?? [] };
     }
-  } catch {
-    /* ignore */
-  }
+  } catch {}
   return { back: undefined, options: null };
 }
 
