@@ -4,10 +4,8 @@ export const HOME_BRAND = "Sugarplum";
 export const HOME_TAGLINE =
   "Spaced-repetition study with AI-assisted flashcard drafts.";
 
-export const HOME_PURPOSE = [
-  "Turn your notes into flashcards, then review on a schedule.",
-  "Optional Google Sign-In uses your verified email only to identify your account. We do not use Google data for advertising.",
-].join("\n\n");
+export const HOME_PURPOSE =
+  "Turn your notes into flashcards, then review on a schedule.";
 
 /** Demo Q/A on the public foyer preview card (not live study data). */
 export const HOME_DEMO_FRONT = "What is spaced repetition?";

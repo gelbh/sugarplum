@@ -24,7 +24,7 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-async function renderShell() {
+async function renderShell(props: { brandMode?: "link" | "heading" } = {}) {
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
@@ -36,7 +36,7 @@ async function renderShell() {
         { theme },
         createElement(
           PublicNightShell,
-          { maxWidth: "xs" },
+          { maxWidth: "xs", ...props },
           createElement("p", null, "body"),
         ),
       ),
@@ -58,6 +58,21 @@ describe("PublicNightShell", () => {
     const brand = host.querySelector('a[href="/"]');
     expect(brand).not.toBeNull();
     expect(brand?.textContent).toContain(HOME_BRAND);
+
+    expect(host.textContent).toContain("body");
+  });
+
+  it("renders Alice as h1 without a self-link when brandMode is heading", async () => {
+    const host = await renderShell({ brandMode: "heading" });
+
+    const heading = host.querySelector("h1");
+    expect(heading).not.toBeNull();
+    expect(heading?.textContent).toContain(HOME_BRAND);
+
+    const brandLink = [...host.querySelectorAll('a[href="/"]')].find((a) =>
+      a.textContent?.includes(HOME_BRAND),
+    );
+    expect(brandLink).toBeUndefined();
 
     expect(host.textContent).toContain("body");
   });

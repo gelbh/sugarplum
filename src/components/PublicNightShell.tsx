@@ -9,13 +9,18 @@ import { HOME_BRAND } from "../home/homeCopy";
 type PublicNightShellProps = {
   children: ReactNode;
   maxWidth?: "xs" | "sm";
+  /** `link` (default): Alice → `/`. `heading`: Alice as page h1, no self-link. */
+  brandMode?: "link" | "heading";
 };
 
-/** Shared night foyer chrome for logged-out auth and legal pages. */
+/** Shared night foyer chrome for logged-out public pages. */
 export default function PublicNightShell({
   children,
   maxWidth = "sm",
+  brandMode = "link",
 }: PublicNightShellProps) {
+  const brandIsHeading = brandMode === "heading";
+
   return (
     <Box
       data-dark=""
@@ -50,7 +55,7 @@ export default function PublicNightShell({
             />
             <Typography
               variant="h3"
-              component="p"
+              component={brandIsHeading ? "h1" : "p"}
               sx={(t) => ({
                 m: 0,
                 fontFamily: t.typography.h6.fontFamily,
@@ -59,9 +64,13 @@ export default function PublicNightShell({
                 color: "primary.main",
               })}
             >
-              <Link href="/" underline="hover" color="inherit">
-                {HOME_BRAND}
-              </Link>
+              {brandIsHeading ? (
+                HOME_BRAND
+              ) : (
+                <Link href="/" underline="hover" color="inherit">
+                  {HOME_BRAND}
+                </Link>
+              )}
             </Typography>
           </Stack>
           <Box sx={{ width: "100%" }}>{children}</Box>

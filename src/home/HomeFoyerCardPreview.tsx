@@ -16,6 +16,9 @@ export default function HomeFoyerCardPreview() {
         width: "100%",
         maxWidth: 260,
         mx: "auto",
+        // StudyCardPlate sizes with height:100%; indefinite parent collapses the plate to 0.
+        aspectRatio: "var(--sp-card-aspect)",
+        maxHeight: 340,
       }}
     >
       <FlipCardPlate
@@ -23,7 +26,8 @@ export default function HomeFoyerCardPreview() {
         onPlateClick={() => setRevealed((v) => !v)}
         plateSx={{
           width: "100%",
-          maxHeight: 340,
+          height: "100%",
+          maxHeight: "100%",
           cursor: "pointer",
         }}
         front={
