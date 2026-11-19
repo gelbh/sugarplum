@@ -1,50 +1,47 @@
 import { describe, expect, it } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { buildClaimCoverage } from "../../worker/generation/claim-coverage";
+import {
+  buildClaimCoverage,
+  type ClaimCoverage,
+} from "../../worker/generation/claim-coverage";
 import { createTestEnv } from "./test-env";
 
 describe("buildClaimCoverage", () => {
-  it("counts linked vs orphan and prefers earliest card when join duplicates", () => {
+  it("maps one row per claim and summarizes linked vs orphan", () => {
     const cov = buildClaimCoverage([
       {
         id: "cl-1",
         subject: "Lysozyme",
         predicate: "digests peptidoglycan",
         object: null,
-        source_span: "Lysozyme digests peptidoglycan",
-        pages_json: "[1]",
-        card_id: "card-b",
-        card_status: "draft",
-        card_created_at: "2026-11-19T12:00:01.000Z",
-      },
-      {
-        id: "cl-1",
-        subject: "Lysozyme",
-        predicate: "digests peptidoglycan",
-        object: null,
-        source_span: "Lysozyme digests peptidoglycan",
-        pages_json: "[1]",
         card_id: "card-a",
-        card_status: "draft",
-        card_created_at: "2026-11-19T12:00:00.000Z",
       },
       {
         id: "cl-2",
         subject: "IgA",
         predicate: "protects mucosa",
         object: null,
-        source_span: "IgA protects mucosa",
-        pages_json: null,
         card_id: null,
-        card_status: null,
-        card_created_at: null,
       },
     ]);
     expect(cov.summary).toEqual({ total: 2, linked: 1, orphan: 1 });
-    expect(cov.claims.find((c) => c.id === "cl-1")?.card_id).toBe("card-a");
-    expect(cov.claims.find((c) => c.id === "cl-2")?.card_id).toBeNull();
-    expect(cov.claims.find((c) => c.id === "cl-1")?.pages).toEqual([1]);
+    expect(cov.claims).toEqual([
+      {
+        id: "cl-1",
+        subject: "Lysozyme",
+        predicate: "digests peptidoglycan",
+        object: null,
+        card_id: "card-a",
+      },
+      {
+        id: "cl-2",
+        subject: "IgA",
+        predicate: "protects mucosa",
+        object: null,
+        card_id: null,
+      },
+    ]);
   });
 
   it("returns empty summary when there are no claims", () => {
@@ -141,15 +138,75 @@ describe("GET /api/jobs/:id/claim-coverage", () => {
       env,
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      summary: { total: number; linked: number; orphan: number };
-      claims: Array<{ id: string; card_id: string | null }>;
-    };
+    const body = (await res.json()) as ClaimCoverage;
     expect(body.summary).toEqual({ total: 2, linked: 1, orphan: 1 });
     expect(body.claims.find((c) => c.id === "cl-linked")?.card_id).toBe(
       "card-linked",
     );
     expect(body.claims.find((c) => c.id === "cl-orphan")?.card_id).toBeNull();
+    for (const claim of body.claims) {
+      expect(claim).not.toHaveProperty("source_span");
+      expect(claim).not.toHaveProperty("pages");
+    }
+  });
+
+  it("returns one row per claim preferring the earliest linked card", async () => {
+    const env = createTestEnv();
+    seedOwnerJob(env);
+    env.seedStudyClaim({
+      id: "cl-1",
+      job_id: "job-a",
+      deck_id: "deck-a",
+      subject: "Lysozyme",
+      predicate: "digests peptidoglycan",
+      object: null,
+      source_span: "Lysozyme digests peptidoglycan",
+      qualifiers_json: null,
+      pages_json: "[1]",
+      created_at: "2026-01-01T01:01:00.000Z",
+    });
+    env.seedCard({
+      id: "card-b",
+      deck_id: "deck-a",
+      job_id: "job-a",
+      type: "qa",
+      front_json: JSON.stringify("Later card"),
+      back_json: JSON.stringify("B"),
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "draft",
+      created_at: "2026-01-01T01:04:00.000Z",
+      updated_at: "2026-01-01T01:04:00.000Z",
+      claim_id: "cl-1",
+    });
+    env.seedCard({
+      id: "card-a",
+      deck_id: "deck-a",
+      job_id: "job-a",
+      type: "qa",
+      front_json: JSON.stringify("Earlier card"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "draft",
+      created_at: "2026-01-01T01:03:00.000Z",
+      updated_at: "2026-01-01T01:03:00.000Z",
+      claim_id: "cl-1",
+    });
+
+    const res = await app.request(
+      "/api/jobs/job-a/claim-coverage",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      summary: { total: number; linked: number; orphan: number };
+      claims: Array<{ id: string; card_id: string | null }>;
+    };
+    expect(body.summary).toEqual({ total: 1, linked: 1, orphan: 0 });
+    expect(body.claims).toHaveLength(1);
+    expect(body.claims[0]?.card_id).toBe("card-a");
   });
 
   it("returns 404 for non-owner or missing job", async () => {

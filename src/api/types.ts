@@ -267,8 +267,6 @@ export type ClaimCoverageRow = {
   subject: string;
   predicate: string;
   object?: string | null;
-  source_span: string;
-  pages?: number[] | null;
   card_id: string | null;
   card_status?: string | null;
   /** Present on deck-scoped coverage for draft jump. */
