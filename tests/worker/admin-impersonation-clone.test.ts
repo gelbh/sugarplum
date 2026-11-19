@@ -215,6 +215,73 @@ describe("admin impersonation D1 clone", () => {
     );
   });
 
+  it("clones study_claims and remaps card claim_id", async () => {
+    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
+    seedAdminAndLearnerWithLibrary(env);
+    env.seedStudyClaim({
+      id: "cl-atlas",
+      job_id: "job-running",
+      deck_id: "deck-a",
+      subject: "C1",
+      predicate: "is called",
+      source_span: "C1 is called the atlas",
+      object: "atlas",
+      qualifiers_json: null,
+      pages_json: "[1]",
+      created_at: NOW,
+    });
+    env.seedCard({
+      id: "card-claimed",
+      deck_id: "deck-a",
+      job_id: "job-running",
+      type: "qa",
+      front_json: JSON.stringify("What is C1 called?"),
+      back_json: JSON.stringify("Atlas"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({
+        pages: [1],
+        excerpt: "C1 is called the atlas",
+      }),
+      status: "draft",
+      created_at: NOW,
+      updated_at: NOW,
+      claim_id: "cl-atlas",
+    });
+
+    const start = await app.request(
+      "/api/admin/users/u-alice/impersonate",
+      { method: "POST", headers: adminHeaders },
+      env,
+    );
+    expect(start.status).toBe(200);
+    const body = (await start.json()) as {
+      impersonation: { sandboxUserId: string };
+    };
+    const sandboxId = body.impersonation.sandboxUserId;
+    const sandboxDeck = env.getDecks().find((d) => d.user_id === sandboxId)!;
+    const sandboxClaims = env
+      .getStudyClaims()
+      .filter((c) => c.deck_id === sandboxDeck.id);
+    expect(sandboxClaims).toHaveLength(1);
+    expect(sandboxClaims[0]!.id).not.toBe("cl-atlas");
+    expect(sandboxClaims[0]!.subject).toBe("C1");
+    expect(sandboxClaims[0]!.job_id).not.toBe("job-running");
+
+    const sandboxClaimed = env
+      .getCards()
+      .find(
+        (c) =>
+          c.deck_id === sandboxDeck.id &&
+          c.front_json === JSON.stringify("What is C1 called?"),
+      );
+    expect(sandboxClaimed).toBeTruthy();
+    expect(sandboxClaimed!.claim_id).toBe(sandboxClaims[0]!.id);
+    expect(env.getStudyClaims().find((c) => c.id === "cl-atlas")).toBeTruthy();
+    expect(env.getCards().find((c) => c.id === "card-claimed")!.claim_id).toBe(
+      "cl-atlas",
+    );
+  });
+
   it("clones atlas course pack materials with read-through R2 keys", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearnerWithLibrary(env);

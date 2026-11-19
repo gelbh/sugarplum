@@ -245,6 +245,45 @@ export default function DiyCardPreview({
       }
     : FACE_BODY_SX;
 
+  const tileFaceSx = {
+    // Extra top/left clears the absolute select checkbox on the tile chrome.
+    pt: 2.35,
+    px: 1.25,
+    pb: 1.25,
+    boxShadow: "none",
+    overflow: "hidden",
+    borderRadius: 2,
+    // Keep absolute faces clipped while reduced-motion still applies.
+    "@media (prefers-reduced-motion: reduce)": {
+      position: "absolute",
+      inset: 0,
+      height: "100%",
+      minHeight: 0,
+    },
+  } as const;
+
+  const tilePromptSx = {
+    ...FACE_PROMPT_TEXT_SX,
+    fontSize: "0.8125rem",
+    lineHeight: 1.35,
+    whiteSpace: "normal",
+    display: "-webkit-box",
+    WebkitLineClamp: 8,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+  } as const;
+
+  const tileAnswerSx = {
+    ...FACE_ANSWER_TEXT_SX,
+    fontSize: "0.75rem",
+    lineHeight: 1.35,
+    whiteSpace: "normal",
+    display: "-webkit-box",
+    WebkitLineClamp: 7,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+  } as const;
+
   return (
     <Box
       sx={{
@@ -309,10 +348,9 @@ export default function DiyCardPreview({
               : card.type === "occlusion"
                 ? 280
                 : 240,
-          mx: "auto",
-          // Width-driven aspect so the plate fits the sticky 280px lane
-          // (height-driven 5/7 from .sp-playing-card overflows and clips).
-          aspectRatio: "var(--sp-card-aspect)",
+          mx: isTile ? 0 : "auto",
+          // Tile slot already owns aspect-ratio; nested ratio letterboxes the face.
+          aspectRatio: isTile ? undefined : "var(--sp-card-aspect)",
           maxHeight: isTile
             ? "none"
             : card.type === "mcq"
@@ -323,6 +361,8 @@ export default function DiyCardPreview({
           height: isTile ? "100%" : undefined,
           minHeight: 0,
           minWidth: 0,
+          overflow: isTile ? "hidden" : undefined,
+          borderRadius: isTile ? 2 : undefined,
         }}
       >
         {empty ? (
@@ -353,6 +393,7 @@ export default function DiyCardPreview({
                     height: "100%",
                     maxHeight: "100%",
                     minHeight: 0,
+                    boxShadow: "0 8px 22px rgba(0, 0, 0, 0.28)",
                   }
                 : undefined
             }
@@ -372,16 +413,18 @@ export default function DiyCardPreview({
         ) : (
           <FlipCardPlate
             revealed={revealed}
+            dense={isTile}
             onPlateClick={toggleFace}
-            plateSx={{
-              cursor: "pointer",
-              ...(isTile
+            plateSx={
+              isTile
                 ? {
                     width: "100%",
                     maxWidth: "100%",
                     height: "100%",
                     maxHeight: "100%",
                     minHeight: 0,
+                    // Beat brand.css `.sp-playing-card { aspect-ratio: 5/7 }` on faces.
+                    "& .sp-playing-card": { aspectRatio: "auto" },
                   }
                 : card.type === "occlusion"
                   ? {
@@ -394,12 +437,14 @@ export default function DiyCardPreview({
                       minWidth: 0,
                       "&&": { aspectRatio: "auto" },
                     }
-                  : {}),
-            }}
+                  : undefined
+            }
             faceSx={
-              card.type === "occlusion" && !isTile
-                ? { overflow: "hidden", "&&": { aspectRatio: "auto" } }
-                : undefined
+              isTile
+                ? { ...tileFaceSx, "&&": { aspectRatio: "auto" } }
+                : card.type === "occlusion"
+                  ? { overflow: "hidden", "&&": { aspectRatio: "auto" } }
+                  : undefined
             }
             front={
               <Box data-card-face-content sx={faceBodySx}>
@@ -444,11 +489,18 @@ export default function DiyCardPreview({
                         src={mediaUrl(parts.imageKey)}
                         alt=""
                         draggable={false}
-                        sx={FACE_MEDIA_SX}
+                        sx={
+                          isTile
+                            ? { ...FACE_MEDIA_SX, maxHeight: "28%", mb: 1 }
+                            : FACE_MEDIA_SX
+                        }
                       />
                     ) : null}
                     {parts.front.trim() ? (
-                      <Typography component="p" sx={FACE_PROMPT_TEXT_SX}>
+                      <Typography
+                        component="p"
+                        sx={isTile ? tilePromptSx : FACE_PROMPT_TEXT_SX}
+                      >
                         {isCloze ? (
                           <ClozePrompt front={parts.front} />
                         ) : (
@@ -458,7 +510,10 @@ export default function DiyCardPreview({
                     ) : (
                       <Typography
                         component="p"
-                        sx={{ ...FACE_PROMPT_TEXT_SX, opacity: 0.45 }}
+                        sx={{
+                          ...(isTile ? tilePromptSx : FACE_PROMPT_TEXT_SX),
+                          opacity: 0.45,
+                        }}
                       >
                         Front
                       </Typography>
@@ -490,16 +545,42 @@ export default function DiyCardPreview({
                         focused={isTile}
                       />
                     ) : !isCloze && parts.front.trim() ? (
-                      <Typography component="p" sx={FACE_FRONT_ECHO_SX}>
+                      <Typography
+                        component="p"
+                        sx={
+                          isTile
+                            ? {
+                                ...FACE_FRONT_ECHO_SX,
+                                fontSize: "0.625rem",
+                                mb: 0.75,
+                                WebkitLineClamp: 2,
+                                display: "-webkit-box",
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
+                                whiteSpace: "normal",
+                              }
+                            : FACE_FRONT_ECHO_SX
+                        }
+                      >
                         {parts.front}
                       </Typography>
                     ) : null}
                     <Box sx={PROMPT_SX}>
-                      <Typography component="p" sx={FACE_ANSWER_TEXT_SX}>
+                      <Typography
+                        component="p"
+                        sx={isTile ? tileAnswerSx : FACE_ANSWER_TEXT_SX}
+                      >
                         {answerText.trim() || "Back"}
                       </Typography>
                       {clozeExtra ? (
-                        <Typography component="p" sx={FACE_HINT_TEXT_SX}>
+                        <Typography
+                          component="p"
+                          sx={
+                            isTile
+                              ? { ...FACE_HINT_TEXT_SX, fontSize: "0.6875rem", mt: 0.75 }
+                              : FACE_HINT_TEXT_SX
+                          }
+                        >
                           {clozeExtra}
                         </Typography>
                       ) : null}

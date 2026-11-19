@@ -325,6 +325,24 @@ function isCompoundFront(front: string): boolean {
   return COMPOUND_FRONT_RE.test(front);
 }
 
+/**
+ * Hygiene reason tags for essay/compound (and related Layer-1) issues.
+ * Empty = passes these screens (may still fail other Layer-1 rules).
+ */
+export function hygieneReasonsForDraft(draft: CardDraft): string[] {
+  if (draft.type === "occlusion") return [];
+  const front = draft.front.trim();
+  const back = draft.back.trim();
+  const reasons: string[] = [];
+  if (isEssayBack(back) || sentenceCount(back) >= 3) {
+    reasons.push("essay_back");
+  }
+  if (isCompoundFront(front)) reasons.push("compound_front");
+  if (isAdverbDebrisFront(front)) reasons.push("adverb_debris");
+  if (isChromeFront(front)) reasons.push("chrome_front");
+  return reasons;
+}
+
 function isAdverbDebrisFront(front: string): boolean {
   if (front.includes("?")) return false;
   return ADVERB_DEBRIS_FRONT_RE.test(front.trim());

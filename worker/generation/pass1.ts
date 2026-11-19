@@ -22,6 +22,7 @@ import {
   remainderAfterRules,
   runGenerationPipeline,
 } from "./pipeline";
+import { createWorkersAiEmbedTexts } from "./workers-ai-embed";
 import {
   bindOcclusionImageKey,
   mergeAndDedupeDrafts,
@@ -430,6 +431,11 @@ export async function runTextDraftPipeline(args: {
       topicHints: args.topicHints,
       avoidPatterns: args.avoidPatterns,
       avoidFronts: args.avoidFronts,
+      // Semantic stage uses Workers AI Neurons; skip on BYO to avoid quota burn.
+      embedTexts:
+        provider === "workers-ai"
+          ? createWorkersAiEmbedTexts(args.env)
+          : null,
       onProgress: args.emit
         ? (e) =>
             args.emit!.emit(

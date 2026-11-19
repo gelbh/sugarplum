@@ -26,6 +26,7 @@ import CardsWorkshop from "../deckHub/CardsWorkshop";
 import ClaimCoverageFilmstrip, {
   type ClaimJumpTarget,
 } from "../deckHub/ClaimCoverageFilmstrip";
+import DeckHygienePanel from "../deckHub/DeckHygienePanel";
 import { createDeckHubWorkshopOpeners } from "../deckHub/deckHubWorkshopOpeners";
 import DeckHubTitleHeader from "../deckHub/DeckHubTitleHeader";
 import MaterialsWorkshop from "../deckHub/MaterialsWorkshop";
@@ -519,37 +520,47 @@ export default function DeckHubPage({ deckId }: Props) {
               ) : null}
 
               {topWorkshop?.id === "cards" ? (
-                <CardsWorkshop
-                  cards={cards}
-                  showArchived={showArchived}
-                  onShowArchivedChange={onShowArchivedChange}
-                  selectedIds={selectedCardIds}
-                  onToggleSelect={onToggleSelect}
-                  onSelectAll={() => onSelectAll(cards)}
-                  onClearSelection={clearSelection}
-                  archiveBusyId={archiveBusyId}
-                  batchBusy={batchBusy}
-                  onBatchArchive={() => {
-                    void onBatchArchive();
-                  }}
-                  onBatchRestore={() => {
-                    void onBatchRestore();
-                  }}
-                  onBatchMove={() => {
-                    void openBatchMove(selectedCardIds);
-                  }}
-                  onEdit={openEdit}
-                  onMove={(card) => {
-                    void openMove(card);
-                  }}
-                  onArchive={(card) => {
-                    void onArchiveCard(card);
-                  }}
-                  onRestore={(card) => {
-                    void onRestoreCard(card);
-                  }}
-                  onCreateCard={openDiyFromCards}
-                />
+                <>
+                  {!isGuest() ? (
+                    <DeckHygienePanel
+                      deckId={deckId}
+                      onChanged={() => {
+                        void refreshCards();
+                      }}
+                    />
+                  ) : null}
+                  <CardsWorkshop
+                    cards={cards}
+                    showArchived={showArchived}
+                    onShowArchivedChange={onShowArchivedChange}
+                    selectedIds={selectedCardIds}
+                    onToggleSelect={onToggleSelect}
+                    onSelectAll={() => onSelectAll(cards)}
+                    onClearSelection={clearSelection}
+                    archiveBusyId={archiveBusyId}
+                    batchBusy={batchBusy}
+                    onBatchArchive={() => {
+                      void onBatchArchive();
+                    }}
+                    onBatchRestore={() => {
+                      void onBatchRestore();
+                    }}
+                    onBatchMove={() => {
+                      void openBatchMove(selectedCardIds);
+                    }}
+                    onEdit={openEdit}
+                    onMove={(card) => {
+                      void openMove(card);
+                    }}
+                    onArchive={(card) => {
+                      void onArchiveCard(card);
+                    }}
+                    onRestore={(card) => {
+                      void onRestoreCard(card);
+                    }}
+                    onCreateCard={openDiyFromCards}
+                  />
+                </>
               ) : null}
 
               {topWorkshop?.id === "materials" ? (
