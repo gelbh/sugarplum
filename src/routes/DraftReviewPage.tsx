@@ -346,7 +346,9 @@ export default function DraftReviewPage() {
                 py: { xs: 2.5, sm: 3 },
               }}
             >
-              <Stack spacing={2.25} alignItems="flex-start">
+              <Stack spacing={2.25} sx={{
+                alignItems: "flex-start"
+              }}>
                 {failedEmpty ? (
                   <>
                     <Box>
@@ -381,10 +383,11 @@ export default function DraftReviewPage() {
                     <Stack
                       direction="row"
                       spacing={1.25}
-                      flexWrap="wrap"
                       useFlexGap
-                      sx={{ pt: 0.5 }}
-                    >
+                      sx={{
+                        flexWrap: "wrap",
+                        pt: 0.5
+                      }}>
                       <Button
                         variant="contained"
                         onClick={() => setRegenConfirmOpen(true)}
@@ -442,10 +445,11 @@ export default function DraftReviewPage() {
                     <Stack
                       direction="row"
                       spacing={1.25}
-                      flexWrap="wrap"
                       useFlexGap
-                      sx={{ pt: 0.5 }}
-                    >
+                      sx={{
+                        flexWrap: "wrap",
+                        pt: 0.5
+                      }}>
                       {emptyCtas ? (
                         <>
                           <Button
@@ -597,17 +601,16 @@ export default function DraftReviewPage() {
               <Stack
                 direction="row"
                 spacing={1}
-                flexWrap="wrap"
                 useFlexGap
-                justifyContent="center"
                 sx={{
+                  flexWrap: "wrap",
+                  justifyContent: "center",
                   flexShrink: 0,
                   pt: 1.25,
                   pb: 0.25,
                   borderTop: "1px solid",
-                  borderColor: "rgba(232, 216, 199, 0.12)",
-                }}
-              >
+                  borderColor: "rgba(232, 216, 199, 0.12)"
+                }}>
                 <Button
                   variant="outlined"
                   startIcon={<DoneAllRoundedIcon sx={{ fontSize: 18 }} />}
@@ -681,7 +684,9 @@ export default function DraftReviewPage() {
             onClose={() => !busy && setConfirmAll(false)}
             fullWidth
             maxWidth="xs"
-            PaperProps={{ sx: DIALOG_PAPER_SX }}
+            slotProps={{
+              paper: { sx: DIALOG_PAPER_SX }
+            }}
           >
             <Box
               sx={{
@@ -732,7 +737,9 @@ export default function DraftReviewPage() {
             onClose={() => !busy && setConfirmRejectDrafts(false)}
             fullWidth
             maxWidth="xs"
-            PaperProps={{ sx: DIALOG_PAPER_SX }}
+            slotProps={{
+              paper: { sx: DIALOG_PAPER_SX }
+            }}
           >
             <Box
               sx={{
@@ -784,7 +791,9 @@ export default function DraftReviewPage() {
             onClose={() => !busy && setRegenConfirmOpen(false)}
             fullWidth
             maxWidth="xs"
-            PaperProps={{ sx: DIALOG_PAPER_SX }}
+            slotProps={{
+              paper: { sx: DIALOG_PAPER_SX }
+            }}
           >
             <Box
               sx={{

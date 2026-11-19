@@ -58,10 +58,11 @@ export default function AnatomyHelpOverlay({
     >
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ mb: 0.75 }}
-      >
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 0.75
+        }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
           Controls
         </Typography>
@@ -78,8 +79,10 @@ export default function AnatomyHelpOverlay({
           <Stack
             key={row.keys}
             direction="row"
-            justifyContent="space-between"
             spacing={1}
+            sx={{
+              justifyContent: "space-between"
+            }}
           >
             <Typography
               variant="caption"
@@ -87,7 +90,9 @@ export default function AnatomyHelpOverlay({
             >
               {row.keys}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{
+              color: "text.secondary"
+            }}>
               {row.action}
             </Typography>
           </Stack>

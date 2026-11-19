@@ -28,14 +28,16 @@ export default function AnatomyHub() {
             href={atlasHubHref()}
             underline="hover"
             variant="body2"
-            color="text.secondary"
             onClick={(ev: MouseEvent<HTMLAnchorElement>) => {
               if (!isPlainClick(ev)) return;
               ev.preventDefault();
               navigate(atlasHubHref());
             }}
-            sx={{ display: "inline-block", mb: 1 }}
-          >
+            sx={{
+              color: "text.secondary",
+              display: "inline-block",
+              mb: 1
+            }}>
             Atlas
           </Link>
           <Typography
@@ -46,7 +48,9 @@ export default function AnatomyHub() {
           >
             Anatomy
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             Interactive 3D anatomy scenes.
           </Typography>
         </Box>

@@ -5,8 +5,9 @@ const MAGNIFIC_URL = "https://www.magnific.com";
 
 export default function MagnificCredits() {
   return (
-    <Typography variant="caption" color="text.secondary" component="p">
-      Fruit medals{" "}
+    <Typography variant="caption" component="p" sx={{
+      color: "text.secondary"
+    }}>Fruit medals{" "}
       <Link
         href={MAGNIFIC_URL}
         target="_blank"

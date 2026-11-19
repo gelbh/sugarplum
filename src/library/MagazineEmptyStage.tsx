@@ -71,9 +71,11 @@ export default function MagazineEmptyStage({
         </Typography>
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{ mt: 1, lineHeight: 1.5 }}
-        >
+          sx={{
+            color: "text.secondary",
+            mt: 1,
+            lineHeight: 1.5
+          }}>
           {description}
         </Typography>
       </Box>

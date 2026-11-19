@@ -93,27 +93,28 @@ export default function TodayDueBreakdown({
           <Stack
             direction="row"
             spacing={1.75}
-            justifyContent="center"
-            sx={{ mt: 1 }}
-          >
+            sx={{
+              justifyContent: "center",
+              mt: 1
+            }}>
             {LEGEND.map(({ label, color }) => (
               <Typography
                 key={label}
                 variant="caption"
-                color="text.secondary"
                 sx={{
+                  color: "text.secondary",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 0.75,
+
                   "&::before": {
                     content: '""',
                     width: 8,
                     height: 8,
                     borderRadius: 0.5,
                     bgcolor: color,
-                  },
-                }}
-              >
+                  }
+                }}>
                 {label}
               </Typography>
             ))}
@@ -133,14 +134,13 @@ export default function TodayDueBreakdown({
         >
           <Typography
             variant="caption"
-            color="text.secondary"
             sx={{
+              color: "text.secondary",
               display: "block",
               mb: 1,
               letterSpacing: "0.12em",
-              textTransform: "uppercase",
-            }}
-          >
+              textTransform: "uppercase"
+            }}>
             From
           </Typography>
           {rows.map((row) => {

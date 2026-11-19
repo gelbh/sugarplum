@@ -80,9 +80,12 @@ export function TaxonomyTreeCard({
         </Box>
         {groupLabel ? (
           <Typography
-            color="text.secondary"
-            sx={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.02em" }}
-          >
+            sx={{
+              color: "text.secondary",
+              fontSize: "0.68rem",
+              fontWeight: 700,
+              letterSpacing: "0.02em"
+            }}>
             {groupLabel}
           </Typography>
         ) : null}
@@ -130,9 +133,12 @@ export function TaxonomyTreeCard({
             ) : null}
             <Box sx={{ minWidth: 0, py: 0.1, flex: "1 1 auto" }}>
               <Typography
-                color="text.secondary"
-                sx={{ fontSize: "0.78rem", fontWeight: 600, lineHeight: 1.3 }}
-              >
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  lineHeight: 1.3
+                }}>
                 {node.label}
                 <CiteSup
                   field={node.field}

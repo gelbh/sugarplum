@@ -21,7 +21,9 @@ export default function InsightsAliceStat({
   size = "md",
 }: Props) {
   return (
-    <Stack direction="row" spacing={0.75} alignItems="baseline">
+    <Stack direction="row" spacing={0.75} sx={{
+      alignItems: "baseline"
+    }}>
       <Typography
         component="span"
         sx={{
@@ -35,7 +37,9 @@ export default function InsightsAliceStat({
       >
         {value}
       </Typography>
-      <Typography variant="caption" color="text.secondary">
+      <Typography variant="caption" sx={{
+        color: "text.secondary"
+      }}>
         {tip ? <MetricTip title={tip}>{label}</MetricTip> : label}
       </Typography>
     </Stack>

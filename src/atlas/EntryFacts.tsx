@@ -78,7 +78,13 @@ export default function EntryFacts({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       {showActions || entry.editedAt ? (
-        <Stack direction="row" gap={1} flexWrap="wrap" alignItems="center">
+        <Stack
+          direction="row"
+          sx={{
+            gap: 1,
+            flexWrap: "wrap",
+            alignItems: "center"
+          }}>
           {entry.editedAt ? (
             <Chip label="Edited" size="small" variant="outlined" />
           ) : null}
@@ -118,15 +124,14 @@ export default function EntryFacts({
         return (
           <Box key={section.id} component="section" aria-label={section.title}>
             <Typography
-              color="text.secondary"
               sx={{
+                color: "text.secondary",
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
-                mb: 1,
-              }}
-            >
+                mb: 1
+              }}>
               {section.title}
             </Typography>
             {tree && tree.length > 0 ? (
@@ -183,15 +188,14 @@ export default function EntryFacts({
       {fullSig ? (
         <Box component="section" aria-label="Notes">
           <Typography
-            color="text.secondary"
             sx={{
+              color: "text.secondary",
               fontSize: "0.78rem",
               fontWeight: 700,
               letterSpacing: "0.06em",
               textTransform: "uppercase",
-              mb: 1,
-            }}
-          >
+              mb: 1
+            }}>
             Notes
           </Typography>
           <Box component="dl" sx={{ m: 0 }}>
@@ -250,9 +254,10 @@ export default function EntryFacts({
                     {caption}
                   </Typography>
                   <Typography
-                    color="text.secondary"
-                    sx={{ fontSize: "0.72rem" }}
-                  >
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: "0.72rem"
+                    }}>
                     <Link
                       href={img.sourceUrl}
                       target="_blank"
@@ -306,7 +311,11 @@ export default function EntryFacts({
               <Typography sx={{ mt: 1.5, fontWeight: 600, fontSize: "0.95rem" }}>
                 {lightbox.caption ?? IMAGE_ROLE_LABELS[lightbox.role]}
               </Typography>
-              <Typography color="text.secondary" sx={{ fontSize: "0.82rem" }}>
+              <Typography
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "0.82rem"
+                }}>
                 <Link
                   href={lightbox.sourceUrl}
                   target="_blank"

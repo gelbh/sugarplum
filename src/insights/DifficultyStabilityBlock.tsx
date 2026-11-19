@@ -47,7 +47,9 @@ export default function DifficultyStabilityBlock({
             Difficulty and stability
           </MetricTip>
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           Grade accepted cards to see FSRS difficulty and stability here.
         </Typography>
       </Stack>
@@ -110,13 +112,17 @@ export default function DifficultyStabilityBlock({
               );
             })}
           </Box>
-          <Stack direction="row" spacing={2.25} useFlexGap flexWrap="wrap">
+          <Stack direction="row" spacing={2.25} useFlexGap sx={{
+            flexWrap: "wrap"
+          }}>
             {DIFFICULTY_SEGMENTS.map(({ key, label }) => (
               <Stack
                 key={key}
                 direction="row"
                 spacing={0.75}
-                alignItems="baseline"
+                sx={{
+                  alignItems: "baseline"
+                }}
               >
                 <Box
                   aria-hidden
@@ -141,7 +147,9 @@ export default function DifficultyStabilityBlock({
                 >
                   {difficulty[key]}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{
+                  color: "text.secondary"
+                }}>
                   <MetricTip title={DIFFICULTY_TIPS[key]}>{label}</MetricTip>
                 </Typography>
               </Stack>
@@ -153,11 +161,17 @@ export default function DifficultyStabilityBlock({
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={{ xs: 1.75, sm: 3 }}
-        alignItems={{ sm: "flex-end" }}
-        justifyContent="space-between"
-      >
+        sx={{
+          alignItems: { sm: "flex-end" },
+          justifyContent: "space-between"
+        }}>
         <Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.35 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mb: 0.35
+            }}>
             <MetricTip title={TIP_STABILITY}>Median stability</MetricTip>
           </Typography>
           <Typography
@@ -185,10 +199,12 @@ export default function DifficultyStabilityBlock({
             direction="row"
             spacing={1.25}
             useFlexGap
-            flexWrap="nowrap"
-            alignItems="flex-end"
-            sx={{ minHeight: 56, pb: 0.25 }}
-          >
+            sx={{
+              flexWrap: "nowrap",
+              alignItems: "flex-end",
+              minHeight: 56,
+              pb: 0.25
+            }}>
             {stability.bins.map((bin) => (
               <Tooltip
                 key={bin.label}
@@ -197,14 +213,18 @@ export default function DifficultyStabilityBlock({
               >
                 <Stack
                   spacing={0.4}
-                  alignItems="center"
-                  sx={{ minWidth: 44, cursor: "default" }}
-                >
+                  sx={{
+                    alignItems: "center",
+                    minWidth: 44,
+                    cursor: "default"
+                  }}>
                   <Typography
                     variant="caption"
-                    color="text.secondary"
-                    sx={{ fontVariantNumeric: "tabular-nums", lineHeight: 1 }}
-                  >
+                    sx={{
+                      color: "text.secondary",
+                      fontVariantNumeric: "tabular-nums",
+                      lineHeight: 1
+                    }}>
                     {bin.count}
                   </Typography>
                   <Box
@@ -219,12 +239,11 @@ export default function DifficultyStabilityBlock({
                   />
                   <Typography
                     variant="caption"
-                    color="text.secondary"
                     sx={{
+                      color: "text.secondary",
                       fontSize: "0.68rem",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
+                      fontVariantNumeric: "tabular-nums"
+                    }}>
                     {bin.label}
                   </Typography>
                 </Stack>

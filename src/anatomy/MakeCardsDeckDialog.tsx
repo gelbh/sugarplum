@@ -146,8 +146,14 @@ export default function MakeCardsDeckDialog({
     >
       <DialogTitle>Make cards</DialogTitle>
       <DialogContent>
-        <Stack gap={2} sx={{ pt: 0.5 }}>
-          <Typography variant="body2" color="text.secondary">
+        <Stack
+          sx={{
+            gap: 2,
+            pt: 0.5
+          }}>
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             {structures.length === 1
               ? `Create a Study card for ${structures[0]?.label ?? "this structure"}.`
               : `Create Study cards for ${structures.length} structures.`}

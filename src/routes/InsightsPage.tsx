@@ -166,15 +166,18 @@ export default function InsightsPage() {
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4.5 } }}>
       {!ready ? (
-        <Typography color="text.secondary">Loading insights…</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>Loading insights…</Typography>
       ) : (
         <Stack spacing={3}>
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={2}
-            alignItems={{ sm: "flex-end" }}
-            justifyContent="space-between"
-          >
+            sx={{
+              alignItems: { sm: "flex-end" },
+              justifyContent: "space-between"
+            }}>
             <Box sx={{ minWidth: 0 }}>
               <Typography variant="h3" component="h1" sx={insightsPageTitleSx}>
                 Insights
@@ -324,9 +327,10 @@ export default function InsightsPage() {
                           direction="row"
                           spacing={2.25}
                           useFlexGap
-                          flexWrap="wrap"
-                          alignItems="baseline"
-                        >
+                          sx={{
+                            flexWrap: "wrap",
+                            alignItems: "baseline"
+                          }}>
                           {COMPOSITION_LEGEND.map((item) => {
                             const count = summary.kpis.composition[item.key];
                             return (
@@ -334,7 +338,9 @@ export default function InsightsPage() {
                                 key={item.key}
                                 direction="row"
                                 spacing={0.75}
-                                alignItems="baseline"
+                                sx={{
+                                  alignItems: "baseline"
+                                }}
                               >
                                 <Box
                                   aria-hidden
@@ -360,9 +366,10 @@ export default function InsightsPage() {
                         {summary.kpis.composition.graduatedPct != null ? (
                           <Typography
                             variant="body2"
-                            color="text.secondary"
-                            sx={{ pt: 0.25 }}
-                          >
+                            sx={{
+                              color: "text.secondary",
+                              pt: 0.25
+                            }}>
                             <Box
                               component="span"
                               sx={{

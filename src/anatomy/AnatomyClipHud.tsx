@@ -35,7 +35,9 @@ export default function AnatomyClipHud({
         py: 0.5,
       }}
     >
-      <Stack direction="row" alignItems="center" spacing={0.5}>
+      <Stack direction="row" spacing={0.5} sx={{
+        alignItems: "center"
+      }}>
         <Typography
           variant="caption"
           sx={{ maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis" }}

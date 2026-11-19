@@ -9,7 +9,7 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import Typography from "@mui/material/Typography";
 import {
@@ -207,7 +207,7 @@ export function StudyCardActions({
               setDeleteId(card.id);
             }}
           >
-            <DeleteOutlineIcon fontSize="small" />
+            <DeleteOutlinedIcon fontSize="small" />
           </IconButton>
         </Stack>
       )}
@@ -216,7 +216,9 @@ export function StudyCardActions({
         onClose={() => !editDialogBusy && setEditCard(null)}
         fullWidth
         maxWidth="sm"
-        PaperProps={{ sx: DIALOG_PAPER_SX }}
+        slotProps={{
+          paper: { sx: DIALOG_PAPER_SX }
+        }}
       >
         <Box
           sx={{

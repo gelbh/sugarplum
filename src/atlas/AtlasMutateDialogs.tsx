@@ -182,7 +182,9 @@ export function EditEntryDialog({
         <DialogActions
           sx={{ justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}
         >
-          <Stack direction="row" gap={1}>
+          <Stack direction="row" sx={{
+            gap: 1
+          }}>
             <Button
               color="error"
               onClick={() => void onSoftDelete()}
@@ -196,7 +198,9 @@ export function EditEntryDialog({
               </Button>
             ) : null}
           </Stack>
-          <Stack direction="row" gap={1}>
+          <Stack direction="row" sx={{
+            gap: 1
+          }}>
             <Button onClick={onClose} disabled={busy}>
               Cancel
             </Button>
@@ -278,9 +282,11 @@ export function EditLifecycleDialog({
           {primary ? (
             <Typography
               variant="body2"
-              color="text.secondary"
-              sx={{ mt: 1, maxWidth: "42ch" }}
-            >
+              sx={{
+                color: "text.secondary",
+                mt: 1,
+                maxWidth: "42ch"
+              }}>
               {primary}
             </Typography>
           ) : null}
@@ -377,29 +383,34 @@ export function RecentlyDeletedDialog({
         <Stack spacing={1.5} sx={{ pt: 0.5 }}>
           {error ? <Alert severity="error">{error}</Alert> : null}
           {entries === null ? (
-            <Typography color="text.secondary">Loading…</Typography>
+            <Typography sx={{
+              color: "text.secondary"
+            }}>Loading…</Typography>
           ) : entries.length === 0 ? (
-            <Typography color="text.secondary">No deleted entries.</Typography>
+            <Typography sx={{
+              color: "text.secondary"
+            }}>No deleted entries.</Typography>
           ) : (
             entries.map((e) => (
               <Stack
                 key={e.id}
                 direction={{ xs: "column", sm: "row" }}
-                alignItems={{ sm: "center" }}
-                justifyContent="space-between"
-                gap={1}
                 sx={{
+                  alignItems: { sm: "center" },
+                  justifyContent: "space-between",
+                  gap: 1,
                   border: 1,
                   borderColor: "divider",
                   borderRadius: 1,
                   px: 1.5,
-                  py: 1,
-                }}
-              >
+                  py: 1
+                }}>
                 <Typography sx={{ fontWeight: 600 }}>
                   {entryTitles(e).primary}
                 </Typography>
-                <Stack direction="row" gap={1}>
+                <Stack direction="row" sx={{
+                  gap: 1
+                }}>
                   <Button
                     size="small"
                     disabled={busyId === e.id}

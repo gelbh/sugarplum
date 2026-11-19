@@ -207,10 +207,12 @@ export default function EntryView({
       <Stack
         component="header"
         direction="row"
-        gap={{ xs: 1.5, sm: 2.25 }}
-        alignItems="flex-start"
-        sx={{ gridArea: "head", minWidth: 0 }}
-      >
+        sx={{
+          gap: { xs: 1.5, sm: 2.25 },
+          alignItems: "flex-start",
+          gridArea: "head",
+          minWidth: 0
+        }}>
         <Box sx={{ flex: "none", width: { xs: 84, sm: 120 } }}>
           <ViewTransition name={atlasHeroName(entry.id)} share="atlas-morph">
             <AtlasImage
@@ -227,9 +229,12 @@ export default function EntryView({
           </ViewTransition>
           {hero ? (
             <Typography
-              color="text.secondary"
-              sx={{ mt: 0.5, fontSize: "0.68rem", lineHeight: 1.3 }}
-            >
+              sx={{
+                color: "text.secondary",
+                mt: 0.5,
+                fontSize: "0.68rem",
+                lineHeight: 1.3
+              }}>
               <Link
                 href={hero.sourceUrl}
                 target="_blank"
@@ -256,17 +261,22 @@ export default function EntryView({
           </Typography>
           {titles.scientific ? (
             <Typography
-              color="text.secondary"
-              sx={{ mt: 0.5, fontStyle: "italic" }}
-            >
+              sx={{
+                color: "text.secondary",
+                mt: 0.5,
+                fontStyle: "italic"
+              }}>
               {titles.scientific}
             </Typography>
           ) : null}
           {meta ? (
             <Typography
-              color="text.secondary"
-              sx={{ mt: 1, fontSize: "0.86rem", lineHeight: 1.4 }}
-            >
+              sx={{
+                color: "text.secondary",
+                mt: 1,
+                fontSize: "0.86rem",
+                lineHeight: 1.4
+              }}>
               {meta}
             </Typography>
           ) : null}
@@ -391,7 +401,9 @@ function Diagnosis({ fields }: { fields: DatasetFields }) {
           Tests
         </Typography>
         {tests.length === 0 ? (
-          <Typography color="text.secondary">No tests recorded yet.</Typography>
+          <Typography sx={{
+            color: "text.secondary"
+          }}>No tests recorded yet.</Typography>
         ) : (
           <Box
             component="ul"
@@ -414,9 +426,10 @@ function Diagnosis({ fields }: { fields: DatasetFields }) {
                     {termLabel(t.name)}
                   </Typography>
                   <Typography
-                    color="text.secondary"
-                    sx={{ fontSize: "0.88rem" }}
-                  >
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: "0.88rem"
+                    }}>
                     {[
                       t.sample && `Sample: ${t.sample}`,
                       when ?? "Window not stated",
@@ -436,7 +449,11 @@ function Diagnosis({ fields }: { fields: DatasetFields }) {
 
 function References({ refs }: { refs: EntryRefs }) {
   if (refs.groups.length === 0) {
-    return <Typography color="text.secondary">No references yet.</Typography>;
+    return (
+      <Typography sx={{
+        color: "text.secondary"
+      }}>No references yet.</Typography>
+    );
   }
   return (
     <Stack spacing={2.5}>
@@ -450,9 +467,12 @@ function References({ refs }: { refs: EntryRefs }) {
         >
           <Typography
             component="h2"
-            color="text.secondary"
-            sx={{ fontSize: "0.78rem", fontWeight: 700, mb: 0.75 }}
-          >
+            sx={{
+              color: "text.secondary",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              mb: 0.75
+            }}>
             {g.label}
           </Typography>
           <Box
@@ -494,9 +514,11 @@ function References({ refs }: { refs: EntryRefs }) {
                   )}
                   {ref.note ? (
                     <Typography
-                      color="text.secondary"
-                      sx={{ fontSize: "0.84rem", mt: 0.25 }}
-                    >
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: "0.84rem",
+                        mt: 0.25
+                      }}>
                       {ref.note}
                     </Typography>
                   ) : null}

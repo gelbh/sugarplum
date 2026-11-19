@@ -85,9 +85,11 @@ export default function LoginPage() {
       </Typography>
       <Typography
         variant="body2"
-        color="text.secondary"
-        sx={{ mb: 3, textAlign: "center" }}
-      >
+        sx={{
+          color: "text.secondary",
+          mb: 3,
+          textAlign: "center"
+        }}>
         Welcome back.
       </Typography>
       <Box component="form" onSubmit={onSubmit} noValidate>
@@ -136,16 +138,28 @@ export default function LoginPage() {
           >
             Continue as guest
           </Button>
-          <Typography variant="body2" textAlign="center" color="text.secondary">
+          <Typography
+            variant="body2"
+            sx={{
+              textAlign: "center",
+              color: "text.secondary"
+            }}>
             Guest keeps decks and reviews in this browser only.
           </Typography>
-          <Typography variant="body2" textAlign="center">
+          <Typography variant="body2" sx={{
+            textAlign: "center"
+          }}>
             No account?{" "}
             <Link href="/register" underline="hover">
               Register
             </Link>
           </Typography>
-          <Typography variant="body2" textAlign="center" color="text.secondary">
+          <Typography
+            variant="body2"
+            sx={{
+              textAlign: "center",
+              color: "text.secondary"
+            }}>
             <Link href="/privacy" underline="hover">
               Privacy
             </Link>

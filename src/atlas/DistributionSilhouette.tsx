@@ -116,7 +116,13 @@ export default function DistributionSilhouette({
         </ComposableMap>
       </Box>
       {chips.length ? (
-        <Stack direction="row" gap={0.75} flexWrap="wrap" sx={{ mt: 1 }}>
+        <Stack
+          direction="row"
+          sx={{
+            gap: 0.75,
+            flexWrap: "wrap",
+            mt: 1
+          }}>
           {chips.map((label) => (
             <Chip
               key={label}

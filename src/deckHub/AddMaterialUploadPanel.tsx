@@ -152,7 +152,12 @@ export default function AddMaterialUploadPanel({
             )}
           </Box>
           {uploadFile ? (
-            <Stack spacing={0.75} alignItems="center" sx={{ width: "100%" }}>
+            <Stack
+              spacing={0.75}
+              sx={{
+                alignItems: "center",
+                width: "100%"
+              }}>
               <Typography
                 component="p"
                 sx={{
@@ -184,7 +189,9 @@ export default function AddMaterialUploadPanel({
               >
                 {uploadFile.name}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 Ready to generate
               </Typography>
               <Button
@@ -208,16 +215,19 @@ export default function AddMaterialUploadPanel({
               </Button>
             </Stack>
           ) : (
-            <Stack spacing={1.25} alignItems="center">
+            <Stack spacing={1.25} sx={{
+              alignItems: "center"
+            }}>
               <Box>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   Drop PDF, PPTX, or image here
                 </Typography>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 0.5 }}
-                >
+                  sx={{
+                    color: "text.secondary",
+                    mt: 0.5
+                  }}>
                   PDF/PPTX max {fileSizeCapMb()}MB · images max{" "}
                   {fileSizeCapMb(MAX_IMAGE_BYTES)}MB
                 </Typography>
@@ -255,21 +265,22 @@ export default function AddMaterialUploadPanel({
           />
         ) : null}
         {uploadFile && !offerLearningObjectives && freePathImageHelper ? (
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             {freePathImageHelper}
           </Typography>
         ) : null}
         <Stack
           direction="row"
           spacing={1.5}
-          justifyContent="space-between"
-          alignItems="center"
           sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
             pt: 2,
             borderTop: "1px solid",
-            borderColor: "rgba(232, 216, 199, 0.12)",
-          }}
-        >
+            borderColor: "rgba(232, 216, 199, 0.12)"
+          }}>
           <Button onClick={onBack} disabled={materialBusy} sx={FOOTER_BTN_SX}>
             Back
           </Button>

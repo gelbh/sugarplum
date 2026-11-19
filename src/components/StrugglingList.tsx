@@ -84,7 +84,9 @@ export default function StrugglingList({
 
   if (rows.length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>
         {emptyMessage}
       </Typography>
     );
@@ -118,9 +120,10 @@ export default function StrugglingList({
             <Stack
               direction="row"
               spacing={1}
-              alignItems="flex-start"
-              justifyContent="space-between"
-            >
+              sx={{
+                alignItems: "flex-start",
+                justifyContent: "space-between"
+              }}>
               <Typography
                 variant="body1"
                 sx={{ fontWeight: 500, flex: 1, minWidth: 0 }}
@@ -134,16 +137,19 @@ export default function StrugglingList({
                 variant={row.is_due ? "filled" : "outlined"}
               />
             </Stack>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{
+              color: "text.secondary"
+            }}>
               {formatStrugglingCaption(row)}
             </Typography>
             <Stack
               direction="row"
               spacing={1}
-              alignItems="center"
-              flexWrap="wrap"
               useFlexGap
-            >
+              sx={{
+                alignItems: "center",
+                flexWrap: "wrap"
+              }}>
               {row.is_due ? (
                 <Button
                   variant="contained"
@@ -154,7 +160,9 @@ export default function StrugglingList({
                   Study
                 </Button>
               ) : (
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   Due {formatStrugglingDue(row.due)}
                 </Typography>
               )}
@@ -175,7 +183,9 @@ export default function StrugglingList({
               <Typography
                 id={noSourceId}
                 variant="caption"
-                color="text.secondary"
+                sx={{
+                  color: "text.secondary"
+                }}
               >
                 No source material to improve from.
               </Typography>

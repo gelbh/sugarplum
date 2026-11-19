@@ -28,7 +28,9 @@ export function CreateMaterialDoneStep({
             ? "Done. Cards are ready to study."
             : "Done. Add more material or continue when ready."}
       </Typography>
-      <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+      <Stack direction="row" spacing={2} useFlexGap sx={{
+        flexWrap: "wrap"
+      }}>
         {jobId ? (
           <Button
             variant="contained"

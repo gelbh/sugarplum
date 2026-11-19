@@ -107,13 +107,12 @@ function SelectedStagePanel({
         >
           <Typography
             aria-hidden
-            color="text.secondary"
             sx={{
+              color: "text.secondary",
               fontSize: "0.78rem",
               fontVariantNumeric: "tabular-nums",
-              whiteSpace: "nowrap",
-            }}
-          >
+              whiteSpace: "nowrap"
+            }}>
             {index + 1} / {total}
           </Typography>
           {transport}
@@ -176,9 +175,12 @@ function SelectedStagePanel({
           ) : null}
           {(stage.durationDays || stage.host) && (
             <Typography
-              color="text.secondary"
-              sx={{ mt: 0.55, fontSize: "0.82rem", lineHeight: 1.4 }}
-            >
+              sx={{
+                color: "text.secondary",
+                mt: 0.55,
+                fontSize: "0.82rem",
+                lineHeight: 1.4
+              }}>
               {[
                 stage.durationDays ? durationLabel(stage.durationDays) : null,
                 stage.host ? termLabel(stage.host) : null,
@@ -189,17 +191,23 @@ function SelectedStagePanel({
           )}
           {stage.note ? (
             <Typography
-              color="text.secondary"
-              sx={{ mt: 0.85, fontSize: "0.88rem", lineHeight: 1.45 }}
-            >
+              sx={{
+                color: "text.secondary",
+                mt: 0.85,
+                fontSize: "0.88rem",
+                lineHeight: 1.45
+              }}>
               {stage.note}
             </Typography>
           ) : null}
           {stage.transmission ? (
             <Typography
-              color="text.secondary"
-              sx={{ mt: 0.65, fontSize: "0.84rem", lineHeight: 1.45 }}
-            >
+              sx={{
+                color: "text.secondary",
+                mt: 0.65,
+                fontSize: "0.84rem",
+                lineHeight: 1.45
+              }}>
               Arrives via {stage.transmission}
             </Typography>
           ) : null}

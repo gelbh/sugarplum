@@ -130,7 +130,9 @@ export default function AdminPage() {
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 5 } }}>
       {!ready ? (
-        <Typography color="text.secondary">Loading admin…</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>Loading admin…</Typography>
       ) : (
         <Stack spacing={3}>
           <Box>
@@ -142,7 +144,9 @@ export default function AdminPage() {
             >
               Admin
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               No automatic deletion; wipe inactive accounts manually.
             </Typography>
           </Box>
@@ -154,7 +158,9 @@ export default function AdminPage() {
           {error ? <Alert severity="error">{error}</Alert> : null}
 
           {!forbidden && overview ? (
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Stack direction="row" spacing={1} useFlexGap sx={{
+              flexWrap: "wrap"
+            }}>
               <Chip label={`Users: ${overview.userCount}`} variant="outlined" />
               <Chip
                 label={`New (7d): ${overview.createdLast7d}`}
@@ -201,9 +207,10 @@ export default function AdminPage() {
                         <TableCell colSpan={3} align="center">
                           <Typography
                             variant="body2"
-                            color="text.secondary"
-                            sx={{ py: 2 }}
-                          >
+                            sx={{
+                              color: "text.secondary",
+                              py: 2
+                            }}>
                             No users match this search.
                           </Typography>
                         </TableCell>

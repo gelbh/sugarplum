@@ -70,7 +70,9 @@ export default function SettingsSectionNav({ sections }: Props) {
         borderColor: "divider",
       }}
     >
-      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+      <Stack direction="row" spacing={1} useFlexGap sx={{
+        flexWrap: "wrap"
+      }}>
         {sections.map((s) => {
           const selected = s.id === activeId;
           const label = s.summary ? `${s.label} · ${s.summary}` : s.label;

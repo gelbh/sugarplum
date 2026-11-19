@@ -9,9 +9,9 @@ import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import AddCircleOutlinedIcon from "@mui/icons-material/AddCircleOutlined";
 import CropOutlinedIcon from "@mui/icons-material/CropOutlined";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import {
   downloadMaterialUrl,
@@ -85,10 +85,11 @@ export default function MaterialRow({
         <Stack
           direction="row"
           spacing={0.75}
-          alignItems="center"
-          flexWrap="wrap"
           useFlexGap
-        >
+          sx={{
+            alignItems: "center",
+            flexWrap: "wrap"
+          }}>
           <Typography variant="body2" sx={{ fontWeight: 500 }}>
             {name}
           </Typography>
@@ -96,7 +97,9 @@ export default function MaterialRow({
             <Chip size="small" label="Figure" variant="outlined" />
           ) : null}
         </Stack>
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" sx={{
+          color: "text.secondary"
+        }}>
           {material.status}
           {" · "}
           {formatMaterialDate(material.created_at)}
@@ -104,8 +107,10 @@ export default function MaterialRow({
         {showDeckTitle ? (
           <Typography
             variant="caption"
-            color="text.secondary"
             component="div"
+            sx={{
+              color: "text.secondary"
+            }}
           >
             <Link
               href={deckHref}
@@ -177,7 +182,7 @@ export default function MaterialRow({
               onClick={() => onRequestGenerate(material)}
               sx={{ width: 48, height: 48 }}
             >
-              <AddCircleOutlineIcon />
+              <AddCircleOutlinedIcon />
             </IconButton>
           </Tooltip>
         ) : null}
@@ -188,7 +193,7 @@ export default function MaterialRow({
             onClick={() => onRequestDelete(material)}
             sx={{ width: 48, height: 48 }}
           >
-            <DeleteOutlineIcon />
+            <DeleteOutlinedIcon />
           </IconButton>
         </Tooltip>
       </Stack>

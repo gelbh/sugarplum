@@ -192,17 +192,19 @@ export default function ClaimCoverageFilmstrip({
                 <ListItemText
                   primary={label}
                   secondary={claimSecondary(row)}
-                  primaryTypographyProps={{
-                    variant: "body2",
-                    sx: {
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
+                  slotProps={{
+                    primary: {
+                      variant: "body2",
+                      sx: {
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      },
                     },
-                  }}
-                  secondaryTypographyProps={{ variant: "caption" }}
-                />
+
+                    secondary: { variant: "caption" }
+                  }} />
               </ListItemButton>
             );
           })}

@@ -42,12 +42,13 @@ export default function SubjectDifficultyStabilityList({ rows }: Props) {
               <Stack
                 direction="row"
                 spacing={1}
-                alignItems="baseline"
-                justifyContent="space-between"
                 useFlexGap
-                flexWrap="wrap"
-                sx={{ mb: hasMix ? 1 : 0 }}
-              >
+                sx={{
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  mb: hasMix ? 1 : 0
+                }}>
                 <Typography
                   sx={{
                     fontFamily: insightsBrandSerif,
@@ -64,9 +65,10 @@ export default function SubjectDifficultyStabilityList({ rows }: Props) {
                 </Typography>
                 <Typography
                   variant="caption"
-                  color="text.secondary"
-                  sx={{ fontVariantNumeric: "tabular-nums" }}
-                >
+                  sx={{
+                    color: "text.secondary",
+                    fontVariantNumeric: "tabular-nums"
+                  }}>
                   <MetricTip title={TIP_STABILITY}>
                     {row.medianStabilityDays == null
                       ? "Median —"

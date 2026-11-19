@@ -112,7 +112,9 @@ export default function JobProgressPanel({
         py: { xs: 3, sm: 3.5 },
       }}
     >
-      <Stack spacing={2.25} alignItems="center">
+      <Stack spacing={2.25} sx={{
+        alignItems: "center"
+      }}>
         {determinate ? (
           <Typography
             component="p"
@@ -134,23 +136,23 @@ export default function JobProgressPanel({
           <Typography
             variant="h6"
             component="p"
-            textAlign="center"
             sx={{
+              textAlign: "center",
               m: 0,
               fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
               fontWeight: 400,
               letterSpacing: "0.02em",
-              lineHeight: 1.25,
-            }}
-          >
+              lineHeight: 1.25
+            }}>
             {headline}
           </Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
-            textAlign="center"
-            sx={{ lineHeight: 1.5 }}
-          >
+            sx={{
+              color: "text.secondary",
+              textAlign: "center",
+              lineHeight: 1.5
+            }}>
             {subline}
           </Typography>
         </Stack>
@@ -242,11 +244,13 @@ export default function JobProgressPanel({
                 </Typography>
                 <Stack
                   direction="row"
-                  alignItems="center"
                   useFlexGap
-                  flexWrap="wrap"
-                  sx={{ columnGap: 0.75, rowGap: 0.5 }}
-                >
+                  sx={{
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    columnGap: 0.75,
+                    rowGap: 0.5
+                  }}>
                   {stages.map((s, i) => {
                     const completed = currentIndex >= 0 && i < currentIndex;
                     const isCurrent =
@@ -257,8 +261,10 @@ export default function JobProgressPanel({
                       <Stack
                         key={s}
                         direction="row"
-                        alignItems="center"
                         spacing={0.75}
+                        sx={{
+                          alignItems: "center"
+                        }}
                       >
                         {i > 0 ? (
                           <Typography
@@ -335,9 +341,11 @@ export default function JobProgressPanel({
                     {details.tokensLine ? (
                       <Typography
                         variant="caption"
-                        color="text.secondary"
-                        sx={{ display: "block", mt: 0.75 }}
-                      >
+                        sx={{
+                          color: "text.secondary",
+                          display: "block",
+                          mt: 0.75
+                        }}>
                         {details.tokensLine}
                       </Typography>
                     ) : null}
@@ -369,7 +377,9 @@ export default function JobProgressPanel({
             )}
 
             {!details.jobLine && details.tokensLine ? (
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{
+                color: "text.secondary"
+              }}>
                 {details.tokensLine}
               </Typography>
             ) : null}
@@ -402,16 +412,19 @@ export default function JobProgressPanel({
                         </Typography>
                         <Typography
                           variant="caption"
-                          color="text.secondary"
-                          sx={{ whiteSpace: "nowrap" }}
-                        >
+                          sx={{
+                            color: "text.secondary",
+                            whiteSpace: "nowrap"
+                          }}>
                           {age}
                         </Typography>
                         <Typography
                           variant="caption"
-                          color="text.secondary"
-                          sx={{ gridColumn: "1 / -1", lineHeight: 1.45 }}
-                        >
+                          sx={{
+                            color: "text.secondary",
+                            gridColumn: "1 / -1",
+                            lineHeight: 1.45
+                          }}>
                           {text}
                         </Typography>
                       </Box>

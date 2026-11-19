@@ -272,7 +272,9 @@ export default function SettingsPage() {
   if (!ready) {
     return (
       <Container maxWidth="sm" sx={{ py: 6 }}>
-        <Typography color="text.secondary">Loading…</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>Loading…</Typography>
       </Container>
     );
   }
@@ -289,7 +291,9 @@ export default function SettingsPage() {
           >
             Settings
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             {freeGenIntroBlurb()}
           </Typography>
           {error ? (
@@ -342,9 +346,10 @@ export default function SettingsPage() {
           <Stack
             direction="row"
             spacing={1}
-            alignItems="center"
-            sx={{ mb: 1.5 }}
-          >
+            sx={{
+              alignItems: "center",
+              mb: 1.5
+            }}>
             <Brightness6Icon color="primary" fontSize="small" />
             <Typography
               variant="subtitle1"
@@ -407,7 +412,9 @@ export default function SettingsPage() {
             ) : (
               <>
                 {accountEmail ? (
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Signed in as {accountEmail}
                   </Typography>
                 ) : null}
@@ -482,7 +489,9 @@ export default function SettingsPage() {
           </Typography>
           {guest ? (
             <Stack spacing={1.5}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 Sign in to earn fruit medals, streaks, and XP.
               </Typography>
               <Button
@@ -495,7 +504,9 @@ export default function SettingsPage() {
             </Stack>
           ) : (
             <Stack spacing={2}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 {gamification
                   ? `Streak ${gamification.streakCurrent} · Level ${gamification.level} · ${gamification.xpTotal} XP`
                   : "Track study milestones and optional weekly leaderboard."}
@@ -563,7 +574,12 @@ export default function SettingsPage() {
           >
             AI & generations
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mb: 2
+            }}>
             {freeGenFaqBody()}
           </Typography>
           {guest ? (

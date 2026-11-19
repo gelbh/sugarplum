@@ -113,9 +113,11 @@ export default function DesktopDrawer({
               <ListItemIcon>{item.icon}</ListItemIcon>
               <ListItemText
                 primary={item.label}
-                primaryTypographyProps={{
-                  variant: "body2",
-                  fontWeight: selected ? 600 : 500,
+                slotProps={{
+                  primary: {
+                    variant: "body2",
+                    sx: { fontWeight: selected ? 600 : 500 },
+                  },
                 }}
               />
             </ListItemButton>

@@ -159,15 +159,14 @@ export default function LibraryPage() {
             <Box sx={{ flexShrink: 0 }}>
               <Stack
                 direction="row"
-                alignItems="flex-end"
-                justifyContent="space-between"
                 spacing={2}
                 sx={{
+                  alignItems: "flex-end",
+                  justifyContent: "space-between",
                   pb: 1.5,
                   borderBottom: 1,
-                  borderColor: "divider",
-                }}
-              >
+                  borderColor: "divider"
+                }}>
                 <Box sx={{ minWidth: 0 }}>
                   <Typography
                     component="p"
@@ -201,9 +200,10 @@ export default function LibraryPage() {
                   {!selectMode && subjects.length > 0 ? (
                     <Typography
                       variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 0.75 }}
-                    >
+                      sx={{
+                        color: "text.secondary",
+                        mt: 0.75
+                      }}>
                       {subjects.length === 1
                         ? "1 subject"
                         : `${subjects.length} subjects`}
@@ -215,9 +215,10 @@ export default function LibraryPage() {
                   {selectMode ? (
                     <Typography
                       variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 0.75 }}
-                    >
+                      sx={{
+                        color: "text.secondary",
+                        mt: 0.75
+                      }}>
                       Tick the decks you want, then download them for Anki.
                     </Typography>
                   ) : null}
@@ -225,9 +226,10 @@ export default function LibraryPage() {
                 <Stack
                   direction="row"
                   spacing={1}
-                  flexShrink={0}
-                  sx={{ pb: 0.25 }}
-                >
+                  sx={{
+                    flexShrink: 0,
+                    pb: 0.25
+                  }}>
                   {!guest && selectMode ? (
                     <>
                       <Button
@@ -392,10 +394,11 @@ export default function LibraryPage() {
             <OperateSection>
               <Stack
                 direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ mb: 1.5 }}
-              >
+                sx={{
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 1.5
+                }}>
                 <Typography
                   variant="subtitle1"
                   component="h2"

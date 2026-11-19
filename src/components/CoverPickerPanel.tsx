@@ -340,11 +340,12 @@ export default function CoverPickerPanel({
     !empty && totalPages > 1 ? (
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="center"
         spacing={1}
-        sx={{ flexShrink: 0 }}
-      >
+        sx={{
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0
+        }}>
         <Button
           size="small"
           disabled={busy || page <= 1}
@@ -352,7 +353,9 @@ export default function CoverPickerPanel({
         >
           Previous
         </Button>
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" sx={{
+          color: "text.secondary"
+        }}>
           {page} / {totalPages}
         </Typography>
         <Button
@@ -368,13 +371,14 @@ export default function CoverPickerPanel({
   const actions = (
     <Stack
       direction="row"
-      alignItems="center"
-      justifyContent="space-between"
-      flexWrap="wrap"
       useFlexGap
-      gap={1}
-      sx={{ flexShrink: 0 }}
-    >
+      sx={{
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: 1,
+        flexShrink: 0
+      }}>
       {onBack ? (
         <Button
           onClick={onBack}
@@ -444,7 +448,9 @@ export default function CoverPickerPanel({
             >
               {uploadTile(false)}
             </Box>
-            <Typography color="text.secondary" variant="body2">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               {notConfigured
                 ? "Cover search is not configured"
                 : "No Unsplash photos matched. Upload your own, or try another search."}
@@ -515,14 +521,13 @@ export default function CoverPickerPanel({
           </Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
             sx={{
+              color: "text.secondary",
               mt: 0.5,
               maxWidth: "42ch",
               lineHeight: 1.4,
-              mx: { sm: "auto" },
-            }}
-          >
+              mx: { sm: "auto" }
+            }}>
             Tap a poster for <Box component="strong">{title}</Box>, upload your
             own, or skip.
           </Typography>
@@ -580,9 +585,11 @@ export default function CoverPickerPanel({
             </Box>
             <Typography
               variant="body2"
-              color="text.secondary"
-              sx={{ maxWidth: "34ch", textAlign: "center" }}
-            >
+              sx={{
+                color: "text.secondary",
+                maxWidth: "34ch",
+                textAlign: "center"
+              }}>
               {notConfigured
                 ? "Cover search is not configured on this environment."
                 : "No Unsplash photos matched. Upload your own, or try another search."}

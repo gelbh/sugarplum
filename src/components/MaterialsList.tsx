@@ -207,9 +207,10 @@ export default function MaterialsList({
       );
     }
     return (
-      <Typography variant="body2" color="text.secondary">
-        No materials yet. Add one above to generate cards.
-      </Typography>
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>No materials yet. Add one above to generate cards.
+              </Typography>
     );
   }
 
@@ -229,15 +230,14 @@ export default function MaterialsList({
           <Box key={kind}>
             <Typography
               variant="caption"
-              color="text.secondary"
               sx={{
+                color: "text.secondary",
                 display: "block",
                 fontWeight: 600,
                 letterSpacing: "0.04em",
                 textTransform: "uppercase",
-                mb: 0.5,
-              }}
-            >
+                mb: 0.5
+              }}>
               {kindLabel(kind)}
             </Typography>
             <Stack
@@ -267,13 +267,12 @@ export default function MaterialsList({
                     <Typography
                       id={stemLabelId}
                       variant="caption"
-                      color="text.secondary"
                       sx={{
+                        color: "text.secondary",
                         display: "block",
                         fontWeight: 600,
-                        mb: 0.25,
-                      }}
-                    >
+                        mb: 0.25
+                      }}>
                       {stemCaption}
                     </Typography>
                     <Stack
@@ -356,7 +355,9 @@ export default function MaterialsList({
               required
               fullWidth
               disabled={topicBusy}
-              inputProps={{ maxLength: 200 }}
+              slotProps={{
+                htmlInput: { maxLength: 200 }
+              }}
             />
           </DialogContent>
           <DialogActions>

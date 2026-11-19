@@ -43,7 +43,12 @@ export default function PptxSplitConsent({
           upload.
         </DialogContentText>
         {progressLabel ? (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 2
+            }}>
             {progressLabel}
           </Typography>
         ) : null}

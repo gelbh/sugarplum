@@ -133,8 +133,14 @@ export default function MakeCardsDeckDialog({
     <Dialog open={open} onClose={busy ? undefined : onClose} fullWidth maxWidth="sm">
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        <Stack gap={2} sx={{ pt: 0.5 }}>
-          <Typography variant="body2" color="text.secondary">
+        <Stack
+          sx={{
+            gap: 2,
+            pt: 0.5
+          }}>
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             {entryKeys.length === 1
               ? "Pick a deck for drafts from this Atlas entry."
               : `Pick a deck for drafts from ${entryKeys.length} Atlas entries.`}

@@ -55,7 +55,12 @@ export default function LegalPage({ title, children }: LegalPageProps) {
         >
           {title}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+            mb: 0.5
+          }}>
           Last updated {LAST_UPDATED}
         </Typography>
         <Box component="article" sx={{ mt: 1 }}>
@@ -76,10 +81,11 @@ export default function LegalPage({ title, children }: LegalPageProps) {
         <Stack
           direction="row"
           spacing={0.5}
-          flexWrap="wrap"
           useFlexGap
-          alignItems="center"
-        >
+          sx={{
+            flexWrap: "wrap",
+            alignItems: "center"
+          }}>
           {LEGAL_NAV.map((item, i) => {
             const active = path === item.href;
             return (
@@ -95,10 +101,11 @@ export default function LegalPage({ title, children }: LegalPageProps) {
                   <Typography
                     component="span"
                     variant="body2"
-                    color="text.secondary"
                     aria-hidden
-                    sx={{ px: 0.25 }}
-                  >
+                    sx={{
+                      color: "text.secondary",
+                      px: 0.25
+                    }}>
                     ·
                   </Typography>
                 ) : null}
@@ -121,22 +128,22 @@ export default function LegalPage({ title, children }: LegalPageProps) {
           <Typography
             component="span"
             variant="body2"
-            color="text.secondary"
             aria-hidden
-            sx={{ px: 0.25 }}
-          >
+            sx={{
+              color: "text.secondary",
+              px: 0.25
+            }}>
             ·
           </Typography>
           <Link
             href="/login"
             underline="hover"
-            color="text.secondary"
             sx={{
+              color: "text.secondary",
               fontSize: "0.875rem",
               fontWeight: 500,
-              textUnderlineOffset: 3,
-            }}
-          >
+              textUnderlineOffset: 3
+            }}>
             Sign in
           </Link>
         </Stack>

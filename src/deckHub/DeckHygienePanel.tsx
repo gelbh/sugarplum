@@ -28,10 +28,7 @@ const REASON_LABELS: Record<string, string> = {
 };
 
 function reasonLabel(reason: string): string {
-  return (
-    REASON_LABELS[reason] ??
-    reason.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-  );
+  return (REASON_LABELS[reason] ?? reason.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()));
 }
 
 type Props = {
@@ -100,12 +97,13 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
     >
       <Stack
         direction="row"
-        alignItems="center"
         spacing={1}
         useFlexGap
-        flexWrap="wrap"
-        sx={{ mb: 0.75 }}
-      >
+        sx={{
+          alignItems: "center",
+          flexWrap: "wrap",
+          mb: 0.75
+        }}>
         <Typography
           component="h3"
           sx={{
@@ -187,23 +185,24 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
               key={card.id}
               direction={{ xs: "column", sm: "row" }}
               spacing={1}
-              alignItems={{ sm: "center" }}
-              justifyContent="space-between"
               sx={{
+                alignItems: { sm: "center" },
+                justifyContent: "space-between",
                 px: 1,
                 py: 0.85,
                 borderRadius: 2,
                 border: "1px solid",
                 borderColor: "rgba(232, 216, 199, 0.12)",
-                bgcolor: "rgba(18, 7, 15, 0.35)",
-              }}
-            >
+                bgcolor: "rgba(18, 7, 15, 0.35)"
+              }}>
               <Stack
                 direction="row"
                 spacing={1}
-                alignItems="center"
-                sx={{ minWidth: 0, flex: 1 }}
-              >
+                sx={{
+                  alignItems: "center",
+                  minWidth: 0,
+                  flex: 1
+                }}>
                 <Box
                   aria-hidden
                   sx={{
@@ -265,9 +264,10 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
                     direction="row"
                     spacing={0.5}
                     useFlexGap
-                    flexWrap="wrap"
-                    sx={{ mt: 0.55 }}
-                  >
+                    sx={{
+                      flexWrap: "wrap",
+                      mt: 0.55
+                    }}>
                     {card.reasons.map((reason) => (
                       <Chip
                         key={reason}
@@ -292,7 +292,13 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
                   </Stack>
                 </Box>
               </Stack>
-              <Stack direction="row" spacing={0.5} flexShrink={0} alignItems="center">
+              <Stack
+                direction="row"
+                spacing={0.5}
+                sx={{
+                  flexShrink: 0,
+                  alignItems: "center"
+                }}>
                 <Button
                   size="small"
                   variant="outlined"

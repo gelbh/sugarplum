@@ -75,21 +75,22 @@ export function Timeline({
           <Typography
             key={t.day}
             component="span"
-            color="text.secondary"
             sx={{
+              color: "text.secondary",
               position: "absolute",
               left: pct(t.day, ax),
+
               transform:
                 i === 0
                   ? "none"
                   : i === ax.ticks.length - 1
                     ? "translateX(-100%)"
                     : "translateX(-50%)",
+
               fontSize: "0.74rem",
               fontVariantNumeric: "tabular-nums",
-              whiteSpace: "nowrap",
-            }}
-          >
+              whiteSpace: "nowrap"
+            }}>
             {t.label}
           </Typography>
         ))}
@@ -145,7 +146,11 @@ export function Timeline({
         }}
       >
         {windows.length === 0 ? (
-          <Typography color="text.secondary" sx={{ fontSize: "0.8rem" }}>
+          <Typography
+            sx={{
+              color: "text.secondary",
+              fontSize: "0.8rem"
+            }}>
             No test windows recorded
           </Typography>
         ) : (

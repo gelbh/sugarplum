@@ -69,11 +69,12 @@ export default function ClaimCoveragePanel({
     >
       <Stack
         direction="row"
-        alignItems="baseline"
-        justifyContent="space-between"
         spacing={1}
-        sx={{ mb: 0.75 }}
-      >
+        sx={{
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          mb: 0.75
+        }}>
         <Typography
           variant="subtitle2"
           sx={{
@@ -86,7 +87,9 @@ export default function ClaimCoveragePanel({
         >
           Claim coverage
         </Typography>
-        <Stack direction="row" alignItems="center" spacing={1}>
+        <Stack direction="row" spacing={1} sx={{
+          alignItems: "center"
+        }}>
           {orphan > 0 && onFillAllOrphans ? (
             <Button
               size="small"

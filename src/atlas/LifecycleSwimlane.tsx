@@ -109,9 +109,10 @@ export default function LifecycleSwimlane({
 
   if (empty || !current || !ctx) {
     return (
-      <Typography color="text.secondary">
-        No lifecycle stages recorded for this parasite yet.
-      </Typography>
+      <Typography sx={{
+        color: "text.secondary"
+      }}>No lifecycle stages recorded for this parasite yet.
+              </Typography>
     );
   }
 
@@ -194,19 +195,18 @@ export default function LifecycleSwimlane({
                 </Typography>
                 {lane.hosts.length > 0 ? (
                   <Typography
-                    color="text.secondary"
+                    title={[...lane.hosts, lane.more > 0 ? `+${lane.more}` : null]
+                      .filter(Boolean)
+                      .join(", ")}
                     sx={{
+                      color: "text.secondary",
                       mt: 0.2,
                       fontSize: "0.72rem",
                       lineHeight: 1.25,
                       overflow: "hidden",
                       textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                    title={[...lane.hosts, lane.more > 0 ? `+${lane.more}` : null]
-                      .filter(Boolean)
-                      .join(", ")}
-                  >
+                      whiteSpace: "nowrap"
+                    }}>
                     <TermList terms={lane.hosts} />
                     {lane.more > 0 ? ` +${lane.more}` : null}
                   </Typography>
@@ -279,16 +279,21 @@ export default function LifecycleSwimlane({
           {compactStepLabel ? (
             <Typography
               aria-live="polite"
-              color="text.secondary"
-              sx={{ fontSize: "0.86rem" }}
-            >
+              sx={{
+                color: "text.secondary",
+                fontSize: "0.86rem"
+              }}>
               Step {index + 1} of {stages.length}:{" "}
               <Box component="b" sx={{ color: "text.primary" }}>
                 {termLabel(current.name)}
               </Box>
             </Typography>
           ) : (
-            <Typography color="text.secondary" sx={{ fontSize: "0.82rem" }}>
+            <Typography
+              sx={{
+                color: "text.secondary",
+                fontSize: "0.82rem"
+              }}>
               {index + 1} / {stages.length}
             </Typography>
           )}

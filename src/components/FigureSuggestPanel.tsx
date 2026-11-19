@@ -409,7 +409,9 @@ export function FigureSuggestPanel({
   return (
     <Stack spacing={1.5}>
       <Typography variant="subtitle2">Figure crops from PDF</Typography>
-      <Typography variant="caption" color="text.secondary">
+      <Typography variant="caption" sx={{
+        color: "text.secondary"
+      }}>
         Suggest figures on-device, or drag a rectangle on the page. Max{" "}
         {MAX_CLIENT_FIGURES} PNG crops.
       </Typography>
@@ -426,7 +428,9 @@ export function FigureSuggestPanel({
         </Alert>
       ) : null}
 
-      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+      <Stack direction="row" spacing={1} useFlexGap sx={{
+        flexWrap: "wrap"
+      }}>
         <Button
           variant="outlined"
           size="small"
@@ -447,7 +451,12 @@ export function FigureSuggestPanel({
             ? "Accepting…"
             : `Accept remaining (${suggestions.length})`}
         </Button>
-        <Typography variant="caption" color="text.secondary" alignSelf="center">
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.secondary",
+            alignSelf: "center"
+          }}>
           {crops.length} / {MAX_CLIENT_FIGURES} accepted
           {scanCount < pageCount
             ? ` · scanning first ${scanCount} of ${pageCount} pages`
@@ -582,7 +591,9 @@ export function FigureSuggestPanel({
           ) : null}
         </Box>
       ) : pageCount === 0 && !loadError ? (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           Rendering pages…
         </Typography>
       ) : null}

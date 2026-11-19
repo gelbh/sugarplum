@@ -149,13 +149,16 @@ export default function CardsWorkshop({
     <Stack spacing={1.75} sx={{ minHeight: 0 }}>
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
         useFlexGap
-        flexWrap="wrap"
-        gap={1.25}
-      >
-        <Stack direction="row" alignItems="center" spacing={1.25} useFlexGap>
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 1.25
+        }}>
+        <Stack direction="row" spacing={1.25} useFlexGap sx={{
+          alignItems: "center"
+        }}>
           <Button
             variant="contained"
             size="small"
@@ -180,7 +183,9 @@ export default function CardsWorkshop({
             {cardCountLabel}
           </Typography>
         </Stack>
-        <Stack direction="row" alignItems="center" spacing={1} useFlexGap>
+        <Stack direction="row" spacing={1} useFlexGap sx={{
+          alignItems: "center"
+        }}>
           {cards.length > 0 ? (
             <ToggleButtonGroup
               size="small"
@@ -249,7 +254,9 @@ export default function CardsWorkshop({
               py: 2.5,
             }}
           >
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               No archived cards in this deck.
             </Typography>
           </Box>
@@ -264,10 +271,10 @@ export default function CardsWorkshop({
         <>
           <Stack
             direction="row"
-            alignItems="center"
             spacing={1}
             useFlexGap
             sx={{
+              alignItems: "center",
               flexShrink: 0,
               flexWrap: "wrap",
               gap: 1,
@@ -276,16 +283,17 @@ export default function CardsWorkshop({
               py: 0.75,
               borderRadius: 2,
               border: "1px solid",
+
               borderColor:
                 selectedCount > 0
                   ? "rgba(209, 163, 226, 0.28)"
                   : "rgba(232, 216, 199, 0.12)",
+
               bgcolor:
                 selectedCount > 0
                   ? "rgba(91, 44, 111, 0.28)"
-                  : "rgba(18, 7, 15, 0.35)",
-            }}
-          >
+                  : "rgba(18, 7, 15, 0.35)"
+            }}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -295,8 +303,10 @@ export default function CardsWorkshop({
                   indeterminate={someSelected}
                   disabled={busy || cards.length === 0}
                   onChange={() => onSelectAll()}
-                  inputProps={{ "aria-label": "Select all cards" }}
                   sx={SELECT_CHECKBOX_SX}
+                  slotProps={{
+                    input: { "aria-label": "Select all cards" }
+                  }}
                 />
               }
               label={allSelected ? "Deselect all" : "Select all"}
@@ -441,15 +451,17 @@ export default function CardsWorkshop({
                       checked={checked}
                       disabled={busy}
                       onChange={() => onToggleSelect(card.id)}
-                      inputProps={{
-                        "aria-label": `Select ${cardFrontPreview(card)}`,
-                      }}
                       sx={{
                         ...SELECT_CHECKBOX_SX,
                         position: "absolute",
                         top: 12,
                         left: 12,
                         zIndex: 2,
+                      }}
+                      slotProps={{
+                        input: {
+                          "aria-label": `Select ${cardFrontPreview(card)}`,
+                        }
                       }}
                     />
                     <Box
@@ -479,17 +491,16 @@ export default function CardsWorkshop({
                     </Box>
                     <Stack
                       direction="row"
-                      alignItems="center"
-                      justifyContent="space-between"
                       spacing={0.5}
                       sx={{
+                        alignItems: "center",
+                        justifyContent: "space-between",
                         px: 1,
                         py: 0.75,
                         borderTop: "1px solid",
                         borderColor: "rgba(232, 216, 199, 0.1)",
-                        bgcolor: "rgba(18, 7, 15, 0.22)",
-                      }}
-                    >
+                        bgcolor: "rgba(18, 7, 15, 0.22)"
+                      }}>
                       <Box
                         component="span"
                         sx={{
@@ -585,10 +596,12 @@ export default function CardsWorkshop({
                       checked={checked}
                       disabled={busy}
                       onChange={() => onToggleSelect(card.id)}
-                      inputProps={{
-                        "aria-label": `Select ${cardFrontPreview(card)}`,
-                      }}
                       sx={SELECT_CHECKBOX_SX}
+                      slotProps={{
+                        input: {
+                          "aria-label": `Select ${cardFrontPreview(card)}`,
+                        }
+                      }}
                     />
                     <Box sx={{ flex: 1, minWidth: 0, py: 0.25 }}>
                       <Typography

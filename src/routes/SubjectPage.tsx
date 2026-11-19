@@ -16,7 +16,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
@@ -249,16 +249,19 @@ export default function SubjectPage({ subjectId }: Props) {
               />
               <Stack
                 direction="row"
-                alignItems="flex-start"
-                justifyContent="space-between"
                 spacing={2}
-              >
+                sx={{
+                  alignItems: "flex-start",
+                  justifyContent: "space-between"
+                }}>
                 <Stack
                   direction="row"
                   spacing={{ xs: 2, sm: 2.5 }}
-                  alignItems="flex-start"
-                  sx={{ flex: 1, minWidth: 0 }}
-                >
+                  sx={{
+                    alignItems: "flex-start",
+                    flex: 1,
+                    minWidth: 0
+                  }}>
                   <CoverHeroThumb
                     src={subjectCover?.imageUrl}
                     placeholderColor={coverPlaceholderColor(
@@ -277,10 +280,11 @@ export default function SubjectPage({ subjectId }: Props) {
                   <Box sx={{ minWidth: 0, flex: 1, pt: { xs: 0.25, sm: 0.5 } }}>
                     <Stack
                       direction="row"
-                      alignItems="flex-start"
-                      justifyContent="space-between"
                       spacing={1}
-                    >
+                      sx={{
+                        alignItems: "flex-start",
+                        justifyContent: "space-between"
+                      }}>
                       <Box sx={{ minWidth: 0, flex: 1 }}>
                         <Typography
                           component="p"
@@ -313,9 +317,10 @@ export default function SubjectPage({ subjectId }: Props) {
                         </Typography>
                         <Typography
                           variant="body2"
-                          color="text.secondary"
-                          sx={{ mt: 0.75 }}
-                        >
+                          sx={{
+                            color: "text.secondary",
+                            mt: 0.75
+                          }}>
                           {decks.length === 0
                             ? "No decks yet"
                             : decks.length === 1
@@ -327,9 +332,10 @@ export default function SubjectPage({ subjectId }: Props) {
                         <Stack
                           direction="row"
                           spacing={0.25}
-                          flexShrink={0}
-                          sx={{ mt: -0.25 }}
-                        >
+                          sx={{
+                            flexShrink: 0,
+                            mt: -0.25
+                          }}>
                           <Tooltip title="Rename subject">
                             <IconButton
                               size="small"
@@ -369,7 +375,7 @@ export default function SubjectPage({ subjectId }: Props) {
                                   disabled
                                   sx={{ color: "text.secondary" }}
                                 >
-                                  <DeleteOutlineIcon fontSize="small" />
+                                  <DeleteOutlinedIcon fontSize="small" />
                                 </IconButton>
                               </span>
                             </Tooltip>
@@ -381,7 +387,7 @@ export default function SubjectPage({ subjectId }: Props) {
                                 onClick={requestDeleteSubject}
                                 sx={{ color: "text.secondary" }}
                               >
-                                <DeleteOutlineIcon fontSize="small" />
+                                <DeleteOutlinedIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
                           )}
@@ -586,12 +592,14 @@ export default function SubjectPage({ subjectId }: Props) {
         onClose={() => !dialogBusy && setTitleDialog(null)}
         fullWidth
         maxWidth="xs"
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            overflow: "hidden",
-            bgcolor: "background.paper",
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 2,
+              overflow: "hidden",
+              bgcolor: "background.paper",
+            },
+          }
         }}
       >
         <Box component="form" onSubmit={onTitleDialogSubmit} noValidate>
@@ -635,9 +643,11 @@ export default function SubjectPage({ subjectId }: Props) {
             {titleDialogChrome?.blurb ? (
               <Typography
                 variant="body2"
-                color="text.secondary"
-                sx={{ mt: 1, maxWidth: "36ch" }}
-              >
+                sx={{
+                  color: "text.secondary",
+                  mt: 1,
+                  maxWidth: "36ch"
+                }}>
                 {titleDialogChrome.blurb}
               </Typography>
             ) : null}
@@ -657,13 +667,15 @@ export default function SubjectPage({ subjectId }: Props) {
               onChange={(ev) => setTitleValue(ev.target.value)}
               required
               fullWidth
-              inputProps={{
-                maxLength: 80,
-                "aria-label": titleDialogChrome?.label ?? "Name",
-              }}
               helperText={`${titleValue.trim().length}/80`}
-              FormHelperTextProps={{ sx: { textAlign: "right", mx: 0 } }}
-            />
+              slotProps={{
+                htmlInput: {
+                  maxLength: 80,
+                  "aria-label": titleDialogChrome?.label ?? "Name",
+                },
+
+                formHelperText: { sx: { textAlign: "right", mx: 0 } }
+              }} />
           </DialogContent>
           <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
             <Button
@@ -692,12 +704,14 @@ export default function SubjectPage({ subjectId }: Props) {
         onClose={() => !subjectDeleteBusy && setConfirmSubjectDelete(false)}
         fullWidth
         maxWidth="xs"
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            overflow: "hidden",
-            bgcolor: "background.paper",
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 2,
+              overflow: "hidden",
+              bgcolor: "background.paper",
+            },
+          }
         }}
       >
         <Box
@@ -776,12 +790,14 @@ export default function SubjectPage({ subjectId }: Props) {
         onClose={() => !deleteBusy && setDeleteTarget(null)}
         fullWidth
         maxWidth="xs"
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            overflow: "hidden",
-            bgcolor: "background.paper",
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 2,
+              overflow: "hidden",
+              bgcolor: "background.paper",
+            },
+          }
         }}
       >
         <Box

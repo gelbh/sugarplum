@@ -98,7 +98,12 @@ export default function StudyPacingSection(props: StudyPacingSectionProps) {
       >
         Study
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+          mb: 2
+        }}>
         Choose how many new cards to start each day. Soft caps keep a busy day
         from exploding; held new cards stay ready. Use Study more for another
         intro slice today.
@@ -106,7 +111,14 @@ export default function StudyPacingSection(props: StudyPacingSectionProps) {
         {ankiExportFsrsBlurb()}
       </Typography>
 
-      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 2 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        useFlexGap
+        sx={{
+          flexWrap: "wrap",
+          mb: 2
+        }}>
         {STUDY_LOAD_PRESET_ORDER.map((id) => {
           const p = STUDY_LOAD_PRESETS[id];
           const selected = matched === id;
@@ -135,10 +147,20 @@ export default function StudyPacingSection(props: StudyPacingSectionProps) {
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 {p.label}
               </Typography>
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  display: "block"
+                }}>
                 {p.blurb}
               </Typography>
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  display: "block"
+                }}>
                 {p.introBudget} new · {p.reviewBudget} reviews
               </Typography>
             </Box>
@@ -147,7 +169,12 @@ export default function StudyPacingSection(props: StudyPacingSectionProps) {
       </Stack>
 
       {matched === "custom" ? (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+            mb: 1
+          }}>
           Custom pace (does not match a preset).
         </Typography>
       ) : null}
@@ -189,8 +216,10 @@ export default function StudyPacingSection(props: StudyPacingSectionProps) {
                 onChange={(ev) => props.onIntroBudgetInput(ev.target.value)}
                 required
                 fullWidth
-                inputProps={{ min: 1, max: 200, step: 1 }}
                 helperText="1–200. Default 20."
+                slotProps={{
+                  htmlInput: { min: 1, max: 200, step: 1 }
+                }}
               />
               <TextField
                 label="Soft cap on reviews"
@@ -200,8 +229,10 @@ export default function StudyPacingSection(props: StudyPacingSectionProps) {
                 onChange={(ev) => props.onReviewBudgetInput(ev.target.value)}
                 required
                 fullWidth
-                inputProps={{ min: 1, max: 2000, step: 1 }}
                 helperText="1–2000. Default 200."
+                slotProps={{
+                  htmlInput: { min: 1, max: 2000, step: 1 }
+                }}
               />
               <TextField
                 label="Target recall when due"
@@ -213,8 +244,10 @@ export default function StudyPacingSection(props: StudyPacingSectionProps) {
                 }
                 required
                 fullWidth
-                inputProps={{ min: 0.7, max: 0.97, step: 0.01 }}
                 helperText="0.70–0.97. Higher means more reviews. Applies on the next grade."
+                slotProps={{
+                  htmlInput: { min: 0.7, max: 0.97, step: 0.01 }
+                }}
               />
             </Stack>
           </Collapse>
@@ -239,7 +272,9 @@ export default function StudyPacingSection(props: StudyPacingSectionProps) {
                 }
                 label="Avoid card pile-ups (fuzz)"
               />
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 Slightly varies due dates so same-interval cards do not all land
                 on one day. Existing dues are unchanged until the next grade.
               </Typography>
@@ -256,7 +291,9 @@ export default function StudyPacingSection(props: StudyPacingSectionProps) {
                 }
                 label="Smooth busy days (load balance)"
               />
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 Within the fuzz window, prefer days with fewer cards due. This
                 does not reduce your total cards. Separate from the soft review
                 cap. Applies on the next grade when fuzz is on.
@@ -264,7 +301,9 @@ export default function StudyPacingSection(props: StudyPacingSectionProps) {
               <Typography variant="subtitle2" sx={{ pt: 1 }}>
                 Easy days (Mon–Sun)
               </Typography>
-              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              <Stack direction="row" spacing={1} useFlexGap sx={{
+                flexWrap: "wrap"
+              }}>
                 {(
                   [
                     "Mon",
@@ -290,7 +329,9 @@ export default function StudyPacingSection(props: StudyPacingSectionProps) {
                       props.onEasyDays(next);
                     }}
                     sx={{ minWidth: 110 }}
-                    SelectProps={{ native: true }}
+                    slotProps={{
+                      select: { native: true }
+                    }}
                   >
                     <option value="normal">Normal</option>
                     <option value="reduced">Reduced</option>
@@ -298,7 +339,9 @@ export default function StudyPacingSection(props: StudyPacingSectionProps) {
                   </TextField>
                 ))}
               </Stack>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 Minimum tries to avoid that weekday when another day in the fuzz
                 window is available. Reduced lowers the chance.
               </Typography>

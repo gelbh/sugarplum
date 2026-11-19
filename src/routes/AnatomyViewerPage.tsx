@@ -291,26 +291,33 @@ export default function AnatomyViewerPage({
     >
       <Stack
         direction="row"
-        alignItems="center"
         spacing={1.5}
         useFlexGap
-        flexWrap="wrap"
-        sx={{ flexShrink: 0, mb: 1, minHeight: 36 }}
-      >
+        sx={{
+          alignItems: "center",
+          flexWrap: "wrap",
+          flexShrink: 0,
+          mb: 1,
+          minHeight: 36
+        }}>
         <Link
           href={anatomyHubHref()}
           underline="hover"
           variant="body2"
-          color="text.secondary"
           onClick={(ev: MouseEvent<HTMLAnchorElement>) => {
             if (!isPlainClick(ev)) return;
             ev.preventDefault();
             navigate(anatomyHubHref());
           }}
+          sx={{
+            color: "text.secondary"
+          }}
         >
           Anatomy
         </Link>
-        <Typography color="text.secondary" variant="body2" aria-hidden>
+        <Typography variant="body2" aria-hidden sx={{
+          color: "text.secondary"
+        }}>
           /
         </Typography>
         <Typography
@@ -323,7 +330,9 @@ export default function AnatomyViewerPage({
         {selectedLabel ? (
           <Chip label={selectedLabel} size="small" color="primary" />
         ) : (
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             Pick a structure in the list or on the model.
           </Typography>
         )}
@@ -365,9 +374,11 @@ export default function AnatomyViewerPage({
         <Stack
           direction={showRail ? "row" : "column"}
           spacing={1.25}
-          alignItems="stretch"
-          sx={{ flex: 1, minHeight: 0 }}
-        >
+          sx={{
+            alignItems: "stretch",
+            flex: 1,
+            minHeight: 0
+          }}>
           {showRail ? (
             <Stack
               spacing={1.25}
@@ -428,19 +439,18 @@ export default function AnatomyViewerPage({
           >
             <Stack
               direction="row"
-              alignItems="center"
               spacing={0.25}
-              flexWrap="wrap"
               useFlexGap
               sx={{
+                alignItems: "center",
+                flexWrap: "wrap",
                 flexShrink: 0,
                 px: 0.75,
                 py: 0.35,
                 borderBottom: 1,
                 borderColor: "divider",
-                bgcolor: "action.hover",
-              }}
-            >
+                bgcolor: "action.hover"
+              }}>
               <Tooltip title="Reset view">
                 <span>
                   <IconButton
@@ -652,9 +662,11 @@ export default function AnatomyViewerPage({
                   <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
                   <Typography
                     variant="caption"
-                    color="text.secondary"
-                    sx={{ px: 0.5, userSelect: "none" }}
-                  >
+                    sx={{
+                      color: "text.secondary",
+                      px: 0.5,
+                      userSelect: "none"
+                    }}>
                     BG
                   </Typography>
                   {bgChoices.map((choice) => bgSwatchButton(choice))}
@@ -743,11 +755,15 @@ export default function AnatomyViewerPage({
               <Divider />
               <Stack
                 direction="row"
-                alignItems="center"
                 spacing={0.5}
-                sx={{ px: 1.5, py: 0.75 }}
-              >
-                <Typography variant="caption" color="text.secondary">
+                sx={{
+                  alignItems: "center",
+                  px: 1.5,
+                  py: 0.75
+                }}>
+                <Typography variant="caption" sx={{
+                  color: "text.secondary"
+                }}>
                   BG
                 </Typography>
                 {bgChoices.map((choice) => bgSwatchButton(choice))}
@@ -766,7 +782,12 @@ export default function AnatomyViewerPage({
               }}
             >
               {loads.length === 0 ? (
-                <Typography color="text.secondary" sx={{ py: 6, px: 2 }}>
+                <Typography
+                  sx={{
+                    color: "text.secondary",
+                    py: 6,
+                    px: 2
+                  }}>
                   Enable a region to load 3D models.
                 </Typography>
               ) : (
@@ -865,7 +886,9 @@ export default function AnatomyViewerPage({
           </Box>
         </Stack>
       ) : !error && !manifest ? (
-        <Typography color="text.secondary">Loading scene…</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>Loading scene…</Typography>
       ) : null}
 
       {manifest ? (

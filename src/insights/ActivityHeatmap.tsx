@@ -91,13 +91,17 @@ export default function ActivityHeatmap({
 
       {total === 0 ? (
         <Box role="img" aria-label={aria}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             No review activity in this window yet.
           </Typography>
         </Box>
       ) : (
         <Stack spacing={1.75}>
-          <Stack direction="row" spacing={2.5} useFlexGap flexWrap="wrap">
+          <Stack direction="row" spacing={2.5} useFlexGap sx={{
+            flexWrap: "wrap"
+          }}>
             <InsightsAliceStat
               value={
                 windowDays != null
@@ -177,11 +181,14 @@ export default function ActivityHeatmap({
           <Stack
             direction="row"
             spacing={1}
-            alignItems="center"
-            flexWrap="wrap"
             useFlexGap
-          >
-            <Typography variant="caption" color="text.secondary">
+            sx={{
+              alignItems: "center",
+              flexWrap: "wrap"
+            }}>
+            <Typography variant="caption" sx={{
+              color: "text.secondary"
+            }}>
               Less
             </Typography>
             {fills.map((fill, i) => (
@@ -196,14 +203,17 @@ export default function ActivityHeatmap({
                 }}
               />
             ))}
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{
+              color: "text.secondary"
+            }}>
               More
             </Typography>
             <Typography
               variant="caption"
-              color="text.secondary"
-              sx={{ ml: { xs: 0, sm: 0.5 } }}
-            >
+              sx={{
+                color: "text.secondary",
+                ml: { xs: 0, sm: 0.5 }
+              }}>
               <Box
                 component="span"
                 sx={{

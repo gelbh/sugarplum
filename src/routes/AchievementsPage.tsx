@@ -66,19 +66,31 @@ function GalleryLayout({
           >
             Achievements
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             Collect fruit medals as you study, accept cards, and keep your
             streak alive.
           </Typography>
           {gamification ? (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                mt: 1
+              }}>
               Streak {gamification.streakCurrent} (best{" "}
               {gamification.streakBest}) · Level {gamification.level} ·{" "}
               {gamification.xpTotal} XP
             </Typography>
           ) : null}
           {tally ? (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                mt: 0.5
+              }}>
               {tally.collected} / {tally.total} collected
             </Typography>
           ) : null}
@@ -124,7 +136,9 @@ export default function AchievementsPage() {
     case "loading":
       return (
         <Container maxWidth="sm" sx={{ py: 6 }}>
-          <Typography color="text.secondary">Loading achievements…</Typography>
+          <Typography sx={{
+            color: "text.secondary"
+          }}>Loading achievements…</Typography>
         </Container>
       );
     case "guest":
@@ -179,17 +193,20 @@ export default function AchievementsPage() {
               </Typography>
               <Typography
                 variant="caption"
-                color="text.secondary"
-                display="block"
-                sx={{ mb: 1.5 }}
-              >
+                sx={{
+                  color: "text.secondary",
+                  display: "block",
+                  mb: 1.5
+                }}>
                 Week {board.weekKey} (UTC)
                 {gamification && !gamification.boardOptIn
                   ? " · Opt in under Settings to appear on the board"
                   : null}
               </Typography>
               {board.entries.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   No entries yet this week.
                 </Typography>
               ) : (

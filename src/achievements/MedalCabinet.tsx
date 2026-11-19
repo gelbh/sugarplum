@@ -114,7 +114,9 @@ function MedalTile({
             locked={held.completedAt == null}
             sheenOnce={sheenIds.has(held.def.id)}
           />
-          <Typography component="span" variant="subtitle2" fontWeight={600}>
+          <Typography component="span" variant="subtitle2" sx={{
+            fontWeight: 600
+          }}>
             {held.def.title}
           </Typography>
           <Box
@@ -125,7 +127,9 @@ function MedalTile({
               justifyContent: "space-between",
             }}
           >
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{
+              color: "text.secondary"
+            }}>
               {unlocked} of {items.length}
             </Typography>
             <ExpandMoreIcon

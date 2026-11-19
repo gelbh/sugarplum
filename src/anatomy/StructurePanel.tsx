@@ -91,10 +91,16 @@ export default function StructurePanel({
         >
           <Stack
             direction="row"
-            alignItems="center"
-            justifyContent="space-between"
-            sx={{ mb: 0.75, position: "sticky", top: 0, zIndex: 1, bgcolor: "background.paper", pt: 0.25 }}
-          >
+            sx={{
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 0.75,
+              position: "sticky",
+              top: 0,
+              zIndex: 1,
+              bgcolor: "background.paper",
+              pt: 0.25
+            }}>
             <Typography
               variant="subtitle2"
               component="h2"
@@ -137,20 +143,20 @@ export default function StructurePanel({
                 >
                   <Stack
                     direction="row"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    sx={{ mb: 0.5 }}
-                  >
+                    sx={{
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 0.5
+                    }}>
                     <Typography
                       variant="caption"
-                      color="text.secondary"
                       sx={{
+                        color: "text.secondary",
                         fontWeight: 600,
                         letterSpacing: "0.04em",
                         textTransform: "uppercase",
-                        fontSize: "0.65rem",
-                      }}
-                    >
+                        fontSize: "0.65rem"
+                      }}>
                       {family}
                     </Typography>
                     <Button
@@ -196,11 +202,14 @@ export default function StructurePanel({
 
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ flexShrink: 0 }}
-      >
-        <Stack direction="row" alignItems="baseline" spacing={0.75}>
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexShrink: 0
+        }}>
+        <Stack direction="row" spacing={0.75} sx={{
+          alignItems: "baseline"
+        }}>
           <Typography
             variant="subtitle2"
             component="h2"
@@ -208,7 +217,9 @@ export default function StructurePanel({
           >
             Structures
           </Typography>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{
+            color: "text.secondary"
+          }}>
             {filtered.length}
           </Typography>
         </Stack>
@@ -260,9 +271,10 @@ export default function StructurePanel({
       {regions && regions.length > 0 && visibleStructures.length === 0 ? (
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{ flexShrink: 0 }}
-        >
+          sx={{
+            color: "text.secondary",
+            flexShrink: 0
+          }}>
           Enable a region to load structures.
         </Typography>
       ) : null}
@@ -282,24 +294,26 @@ export default function StructurePanel({
               {group.label ? (
                 <Typography
                   variant="caption"
-                  color="text.secondary"
                   sx={{
+                    color: "text.secondary",
                     display: "block",
                     px: 0.75,
                     mb: 0.35,
                     fontWeight: 600,
                     letterSpacing: "0.03em",
                     textTransform: "uppercase",
-                    fontSize: "0.65rem",
-                  }}
-                >
+                    fontSize: "0.65rem"
+                  }}>
                   {group.label}
                   <Typography
                     component="span"
                     variant="caption"
-                    color="text.disabled"
-                    sx={{ ml: 0.75, fontWeight: 500, letterSpacing: 0 }}
-                  >
+                    sx={{
+                      color: "text.disabled",
+                      ml: 0.75,
+                      fontWeight: 500,
+                      letterSpacing: 0
+                    }}>
                     {group.items.length}
                   </Typography>
                 </Typography>

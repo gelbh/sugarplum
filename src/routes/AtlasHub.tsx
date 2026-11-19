@@ -79,7 +79,9 @@ export default function AtlasHub() {
           >
             Atlas
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             Choose a discipline to study.
           </Typography>
         </Box>

@@ -58,13 +58,17 @@ export default function HourlySuccessChart({ series }: Props) {
 
       {reviewed === 0 ? (
         <Box role="img" aria-label={aria}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             No reviews yet to chart by hour.
           </Typography>
         </Box>
       ) : (
         <Stack spacing={1.75}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             {best != null && best.rate != null ? (
               <>
                 Best hour (≥{BEST_HOUR_MIN_N} reviews){" "}
@@ -186,7 +190,9 @@ export default function HourlySuccessChart({ series }: Props) {
             </ResponsiveContainer>
           </Box>
 
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{
+            color: "text.secondary"
+          }}>
             Local hour · empty hours stay dim, not 100%
           </Typography>
         </Stack>

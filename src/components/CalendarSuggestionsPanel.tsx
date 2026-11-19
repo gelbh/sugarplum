@@ -35,21 +35,22 @@ export default function CalendarSuggestionsPanel({
             key={suggestion.clusterKey}
             direction={{ xs: "column", sm: "row" }}
             spacing={1}
-            alignItems={{ sm: "center" }}
             sx={{
+              alignItems: { sm: "center" },
               p: 1.5,
               border: 1,
               borderColor: "divider",
-              borderRadius: 1,
-            }}
-          >
+              borderRadius: 1
+            }}>
             <Box sx={{ flex: 1 }}>
               <Typography variant="body1" sx={{ fontWeight: 600 }}>
                 {linked
                   ? `Link ${suggestion.title} to ${linked.title}?`
                   : `Add ${suggestion.title}?`}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{
+                color: "text.secondary"
+              }}>
                 {suggestion.evidence}
               </Typography>
             </Box>

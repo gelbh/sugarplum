@@ -129,11 +129,15 @@ export default function TestYourself({
 
       {mode !== "explore" ? (
         <>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{
+            color: "text.secondary"
+          }}>
             Progress: {progressDone}/{progressTotal}
           </Typography>
           {modeHint ? (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               {modeHint}
             </Typography>
           ) : null}
@@ -195,7 +199,9 @@ export default function TestYourself({
           ) : null}
         </>
       ) : (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           Explore freely, or switch to Type / MCQ to test yourself.
         </Typography>
       )}

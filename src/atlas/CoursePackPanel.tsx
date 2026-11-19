@@ -148,13 +148,18 @@ export default function CoursePackPanel({ atlasId, onFocusChanged }: Props) {
     <Paper variant="outlined" sx={{ mb: 2, overflow: "hidden" }}>
       <Stack
         direction="row"
-        alignItems="center"
-        sx={{ px: 1.5, py: 1, cursor: "pointer" }}
         onClick={() => setOpen((v) => !v)}
-      >
+        sx={{
+          alignItems: "center",
+          px: 1.5,
+          py: 1,
+          cursor: "pointer"
+        }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography sx={{ fontWeight: 600 }}>Course pack</Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             Rank Focus from tutorials, practicals, and past papers. These files
             do not create flashcards.
           </Typography>
@@ -170,7 +175,9 @@ export default function CoursePackPanel({ atlasId, onFocusChanged }: Props) {
         <Stack spacing={2} sx={{ px: 1.5, pb: 1.5 }}>
           {error ? <Alert severity="error">{error}</Alert> : null}
           {materials.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               Empty pack: Key needs a tutorial, practical, or past paper that
               names the parasite, or mark one important manually.
             </Typography>
@@ -181,20 +188,21 @@ export default function CoursePackPanel({ atlasId, onFocusChanged }: Props) {
                   key={m.id}
                   direction={{ xs: "column", sm: "row" }}
                   spacing={1}
-                  alignItems={{ sm: "center" }}
                   sx={{
+                    alignItems: { sm: "center" },
                     border: 1,
                     borderColor: "divider",
                     borderRadius: 1,
                     px: 1.25,
-                    py: 1,
-                  }}
-                >
+                    py: 1
+                  }}>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography sx={{ fontWeight: 600 }} noWrap>
                       {m.filename || m.kind}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{
+                      color: "text.secondary"
+                    }}>
                       {m.kind} · {m.status}
                     </Typography>
                   </Box>

@@ -232,11 +232,12 @@ export default function ReviewCard({
     >
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
         spacing={1.5}
-        sx={{ flexShrink: 0 }}
-      >
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexShrink: 0
+        }}>
         <Typography
           variant="caption"
           sx={{
@@ -320,11 +321,12 @@ export default function ReviewCard({
 
       <Stack
         spacing={0.75}
-        alignItems="center"
         role="group"
         aria-labelledby="reject-reason-label"
-        sx={{ flexShrink: 0 }}
-      >
+        sx={{
+          alignItems: "center",
+          flexShrink: 0
+        }}>
         <Typography
           id="reject-reason-label"
           variant="caption"
@@ -335,10 +337,11 @@ export default function ReviewCard({
         <Stack
           direction="row"
           spacing={0.75}
-          flexWrap="wrap"
           useFlexGap
-          justifyContent="center"
-        >
+          sx={{
+            flexWrap: "wrap",
+            justifyContent: "center"
+          }}>
           {REJECT_REASONS.map((code) => {
             const selected = reason === code;
             return (
@@ -378,10 +381,11 @@ export default function ReviewCard({
       <Stack
         direction="row"
         spacing={3}
-        justifyContent="center"
-        alignItems="center"
-        sx={{ flexShrink: 0 }}
-      >
+        sx={{
+          justifyContent: "center",
+          alignItems: "center",
+          flexShrink: 0
+        }}>
         <RoundAction
           label="Reject card"
           rating={1}

@@ -81,10 +81,10 @@ export default function AnatomyMobileSheet({
       open={open}
       onClose={onClose}
       aria-labelledby={titleId}
-      ModalProps={{
-        container: container ?? undefined,
-      }}
       slotProps={{
+        root: {
+          container: container ?? undefined,
+        },
         paper: {
           sx: {
             maxHeight: "min(70dvh, 560px)",
@@ -100,9 +100,12 @@ export default function AnatomyMobileSheet({
     >
       <Stack
         direction="row"
-        alignItems="center"
-        sx={{ px: 1.5, pt: 1, flexShrink: 0 }}
-      >
+        sx={{
+          alignItems: "center",
+          px: 1.5,
+          pt: 1,
+          flexShrink: 0
+        }}>
         <Typography
           id={titleId}
           variant="subtitle2"

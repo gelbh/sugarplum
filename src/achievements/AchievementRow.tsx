@@ -56,7 +56,9 @@ function ProgressLine({
         value={target > 0 ? Math.min(100, (current / target) * 100) : 0}
         sx={{ height: 6, borderRadius: 1 }}
       />
-      <Typography variant="caption" color="text.secondary">
+      <Typography variant="caption" sx={{
+        color: "text.secondary"
+      }}>
         {label ? `${label} ` : ""}
         {current} / {target}
       </Typography>
@@ -108,9 +110,10 @@ function StatusCaption({
     <Typography
       variant="caption"
       color={color}
-      display="block"
-      sx={{ mt: 0.5 }}
-    >
+      sx={{
+        display: "block",
+        mt: 0.5
+      }}>
       {children}
     </Typography>
   );
@@ -205,16 +208,23 @@ export default function AchievementRow({
         locked={!unlocked}
         sheenOnce={sheenOnce}
       />
-      <Box flex={1} minWidth={0}>
-        <Typography variant="subtitle2" fontWeight={600}>
+      <Box
+        sx={{
+          flex: 1,
+          minWidth: 0
+        }}>
+        <Typography variant="subtitle2" sx={{
+          fontWeight: 600
+        }}>
           {item.def.title}
         </Typography>
         <Typography
           variant="caption"
-          color="text.secondary"
-          display="block"
           className={descriptionMode === "hover" ? "medal-desc" : undefined}
-        >
+          sx={{
+            color: "text.secondary",
+            display: "block"
+          }}>
           {RARITY_LABEL[item.def.rarity]} · {item.def.description}
         </Typography>
         <RowStatus state={state} progress={item.progress} />

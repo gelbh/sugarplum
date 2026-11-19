@@ -486,11 +486,13 @@ export default function StudyNotesDialog({
                   if (Number.isFinite(n)) goToPage(n);
                   else setPageInput(String(viewPage));
                 }}
-                inputProps={{
-                  inputMode: "numeric",
-                  "aria-label":
-                    materialKind === "pptx" ? "Slide number" : "Page number",
-                  style: { width: "3rem", textAlign: "center" },
+                slotProps={{
+                  htmlInput: {
+                    inputMode: "numeric",
+                    "aria-label":
+                      materialKind === "pptx" ? "Slide number" : "Page number",
+                    style: { width: "3rem", textAlign: "center" },
+                  }
                 }}
               />
               <Typography variant="body2" component="span">

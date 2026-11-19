@@ -310,7 +310,9 @@ export default function StudyPage() {
   if (!ready) {
     return (
       <Container maxWidth="sm" sx={{ py: 6 }}>
-        <Typography color="text.secondary">Loading study…</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>Loading study…</Typography>
       </Container>
     );
   }
@@ -363,11 +365,13 @@ export default function StudyPage() {
         >
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
             spacing={1}
-            sx={{ position: "relative", flexShrink: 0 }}
-          >
+            sx={{
+              justifyContent: "space-between",
+              alignItems: "center",
+              position: "relative",
+              flexShrink: 0
+            }}>
             <IconButton
               aria-label="Leave study"
               onClick={leaveStudy}
@@ -466,7 +470,9 @@ export default function StudyPage() {
                 ) : null}
               </Stack>
             ) : !hadCards && canStudyMore ? (
-              <Stack spacing={1.5} alignItems="stretch">
+              <Stack spacing={1.5} sx={{
+                alignItems: "stretch"
+              }}>
                 <Typography
                   variant="body1"
                   sx={{ textAlign: "center", opacity: stage ? 0.9 : 1 }}
@@ -483,7 +489,9 @@ export default function StudyPage() {
                 </Button>
               </Stack>
             ) : !hadCards ? (
-              <Stack spacing={1.5} alignItems="stretch">
+              <Stack spacing={1.5} sx={{
+                alignItems: "stretch"
+              }}>
                 <Typography
                   variant="body1"
                   sx={{ textAlign: "center", opacity: stage ? 0.9 : 1 }}

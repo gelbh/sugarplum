@@ -92,7 +92,12 @@ export default function PromotePackMaterialDialog({
     >
       <DialogTitle>Copy to deck</DialogTitle>
       <DialogContent>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+            mb: 1.5
+          }}>
           Copies “{materialLabel}” into a deck for card generation later. The
           course pack file stays; no cards are created until you generate in
           Materials.
@@ -118,7 +123,12 @@ export default function PromotePackMaterialDialog({
           </Select>
         </FormControl>
         {!loading && decks.length === 0 ? (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             Create a deck first, then promote.
           </Typography>
         ) : null}
