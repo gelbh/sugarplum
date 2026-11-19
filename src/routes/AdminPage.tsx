@@ -161,10 +161,6 @@ export default function AdminPage() {
                 variant="outlined"
               />
               <Chip
-                label={`Tokens (all): ${overview.tokensAllTime ?? 0}`}
-                variant="outlined"
-              />
-              <Chip
                 label={`Tokens (30d): ${overview.tokens30d ?? 0}`}
                 variant="outlined"
               />
@@ -197,16 +193,12 @@ export default function AdminPage() {
                       <TableCell>Email</TableCell>
                       <TableCell>Created</TableCell>
                       <TableCell align="center">Google</TableCell>
-                      <TableCell align="right">Decks</TableCell>
-                      <TableCell align="right">Cards</TableCell>
-                      <TableCell align="right">Jobs</TableCell>
-                      <TableCell align="right">Tokens (30d)</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {users.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} align="center">
+                        <TableCell colSpan={3} align="center">
                           <Typography
                             variant="body2"
                             color="text.secondary"
@@ -232,12 +224,6 @@ export default function AdminPage() {
                           <TableCell>{formatCreated(user.created_at)}</TableCell>
                           <TableCell align="center">
                             {user.google_linked ? "Yes" : "No"}
-                          </TableCell>
-                          <TableCell align="right">{user.deckCount}</TableCell>
-                          <TableCell align="right">{user.cardCount}</TableCell>
-                          <TableCell align="right">{user.jobCount}</TableCell>
-                          <TableCell align="right">
-                            {user.tokens30d ?? 0}
                           </TableCell>
                         </TableRow>
                       ))

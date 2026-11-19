@@ -18,10 +18,6 @@ export type AdminUserListItem = {
   created_at: string;
   google_linked: boolean;
   disabled_at: string | null;
-  deckCount: number;
-  cardCount: number;
-  jobCount: number;
-  tokens30d: number;
 };
 
 export type AdminUsageSummary = {

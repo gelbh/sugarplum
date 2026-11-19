@@ -197,24 +197,30 @@ studyRoutes.get("/struggling", async (c) => {
               s.lapses, s.difficulty, s.due, s.last_review,
               s.stability, s.elapsed_days, s.scheduled_days, s.learning_steps,
               s.reps, s.state, s.stability_fast,
-              (
-                SELECT COUNT(*) FROM review_logs rl
-                WHERE rl.card_id = c.id
-                  AND rl.rating = 1
-                  AND rl.reviewed_at >= ?
-              ) AS again_14d,
-              (
-                SELECT COUNT(*) FROM review_logs rl
-                WHERE rl.card_id = c.id
-                  AND rl.rating = 2
-                  AND rl.reviewed_at >= ?
-              ) AS hard_14d
+              COALESCE(ag.again_14d, 0) AS again_14d,
+              COALESCE(hd.hard_14d, 0) AS hard_14d
        FROM cards c
        INNER JOIN card_schedules s ON s.card_id = c.id
        INNER JOIN decks d ON d.id = c.deck_id
+       LEFT JOIN (
+         SELECT rl.card_id AS card_id, COUNT(*) AS again_14d
+         FROM review_logs rl
+         INNER JOIN cards c2 ON c2.id = rl.card_id
+         INNER JOIN decks d2 ON d2.id = c2.deck_id
+         WHERE d2.user_id = ? AND rl.rating = 1 AND rl.reviewed_at >= ?
+         GROUP BY rl.card_id
+       ) ag ON ag.card_id = c.id
+       LEFT JOIN (
+         SELECT rl.card_id AS card_id, COUNT(*) AS hard_14d
+         FROM review_logs rl
+         INNER JOIN cards c2 ON c2.id = rl.card_id
+         INNER JOIN decks d2 ON d2.id = c2.deck_id
+         WHERE d2.user_id = ? AND rl.rating = 2 AND rl.reviewed_at >= ?
+         GROUP BY rl.card_id
+       ) hd ON hd.card_id = c.id
        WHERE d.user_id = ? AND c.status = ?`,
     )
-    .bind(since, since, userId, "accepted")
+    .bind(userId, since, userId, since, userId, "accepted")
     .all<StrugglingSqlRow>();
 
   const candidates = (results ?? []).map((row) => {

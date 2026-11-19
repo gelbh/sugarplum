@@ -35,22 +35,26 @@ export async function loadDueCandidates(
     now.getTime() - 14 * 24 * 60 * 60 * 1000,
   ).toISOString();
 
+  // User-scoped grouped join for again_14d (avoids correlated COUNT + global scans).
   let sql = `SELECT c.id, c.deck_id, c.job_id, c.type, c.front_json, c.back_json,
               c.media_r2_keys_json, c.provenance_json, c.status, c.created_at, c.updated_at,
               s.due, s.stability, s.difficulty, s.elapsed_days, s.scheduled_days,
               s.learning_steps, s.reps, s.lapses, s.state, s.last_review,
               s.stability_fast,
-              (
-                SELECT COUNT(*) FROM review_logs rl
-                WHERE rl.card_id = c.id
-                  AND rl.rating = 1
-                  AND rl.reviewed_at >= ?
-              ) AS again_14d
+              COALESCE(ag.again_14d, 0) AS again_14d
        FROM cards c
        INNER JOIN card_schedules s ON s.card_id = c.id
        INNER JOIN decks d ON d.id = c.deck_id
+       LEFT JOIN (
+         SELECT rl.card_id AS card_id, COUNT(*) AS again_14d
+         FROM review_logs rl
+         INNER JOIN cards c2 ON c2.id = rl.card_id
+         INNER JOIN decks d2 ON d2.id = c2.deck_id
+         WHERE d2.user_id = ? AND rl.rating = 1 AND rl.reviewed_at >= ?
+         GROUP BY rl.card_id
+       ) ag ON ag.card_id = c.id
        WHERE d.user_id = ? AND c.status = ? AND s.due <= ?`;
-  const binds: unknown[] = [since14d, userId, "accepted", nowIso];
+  const binds: unknown[] = [userId, since14d, userId, "accepted", nowIso];
 
   if (scope.deckId) {
     sql += " AND c.deck_id = ?";
