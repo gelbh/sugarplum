@@ -105,7 +105,7 @@ export function salvageCompleteJsonObjects(text: string): unknown[] {
   return out;
 }
 
-function looksLikeTruncatedJson(text: string): boolean {
+export function looksLikeTruncatedJson(text: string): boolean {
   const t = text.trim();
   if (!(t.startsWith("{") || t.startsWith("["))) return false;
   let depth = 0;

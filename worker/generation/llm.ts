@@ -1,6 +1,7 @@
 import {
   JSON_OBJECT_RESPONSE_FORMAT,
-  openAiJsonSchemaResponseFormat,
+  responseFormatForJsonShape,
+  type CompleteJsonShape,
 } from "./cards-json-schema";
 import { parseCardDrafts, type CardDraft } from "./schema";
 import { appendExtraUserSuffix } from "./feedback-hints";
@@ -91,6 +92,8 @@ export type CompleteInput = {
   user: string;
   apiKey: string;
   provider: string;
+  /** Constrains Workers AI / OpenAI response_format. Default cards (critique/write). */
+  jsonShape?: CompleteJsonShape;
 };
 
 /** Best-effort token counts from a provider response (nulls when silent). */
@@ -227,8 +230,48 @@ export function mockLlmAdapter(): LlmAdapter {
       }
       return textDrafts(text);
     },
-    async complete() {
-      // Keep the fixed generate set so consumer + pipeline tests get 3 drafts.
+    async complete({ system, user }) {
+      const s = system.toLowerCase();
+      // Claim extract: return grounded claims so the text pipeline can write cards.
+      if (s.includes("extract") && s.includes("claim")) {
+        const start = user.indexOf("--- MATERIAL ---");
+        const end = user.indexOf("--- END ---");
+        const material =
+          start >= 0 && end > start
+            ? user.slice(start + "--- MATERIAL ---".length, end).trim()
+            : user.trim();
+        const span = material.slice(0, Math.min(80, material.length));
+        if (!span) {
+          return { text: JSON.stringify({ claims: [] }), usage: null };
+        }
+        return {
+          text: JSON.stringify({
+            claims: [
+              {
+                subject: "Notes",
+                predicate: "state the primary topic",
+                source_span: span,
+                pages: [1],
+              },
+              {
+                subject: "Material",
+                predicate: "includes a key fact",
+                source_span: span,
+                pages: [1],
+              },
+              {
+                subject: "Source",
+                predicate: "mentions a key term",
+                object: "concept",
+                source_span: span,
+                pages: [1],
+              },
+            ],
+          }),
+          usage: null,
+        };
+      }
+      // Write + critique (+ unknown): fixed 3-card set for consumer/pipeline tests.
       return {
         text: JSON.stringify({
           cards: textDrafts("mock critique excerpt"),
@@ -325,7 +368,11 @@ function openAiCompatibleAdapter(opts: {
     extraBody,
   } = opts;
 
-  async function complete({ system, user, apiKey }: CompleteInput) {
+  async function complete({ system, user, apiKey, jsonShape }: CompleteInput) {
+    const shape = jsonShape ?? "cards";
+    const preferredFormat = jsonSchema
+      ? responseFormatForJsonShape(shape)
+      : JSON_OBJECT_RESPONSE_FORMAT;
     const textInit = (responseFormat: unknown): RequestInit => ({
       method: "POST",
       headers: {
@@ -347,12 +394,10 @@ function openAiCompatibleAdapter(opts: {
     const res = await postLlm(
       provider,
       requestUrl,
-      textInit(
-        jsonSchema
-          ? openAiJsonSchemaResponseFormat()
-          : JSON_OBJECT_RESPONSE_FORMAT,
-      ),
-      jsonSchema ? textInit(JSON_OBJECT_RESPONSE_FORMAT) : undefined,
+      textInit(preferredFormat),
+      jsonSchema && preferredFormat !== JSON_OBJECT_RESPONSE_FORMAT
+        ? textInit(JSON_OBJECT_RESPONSE_FORMAT)
+        : undefined,
     );
 
     const body = (await res.json()) as {

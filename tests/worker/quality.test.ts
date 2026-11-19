@@ -282,6 +282,59 @@ describe("filterDraftsByQuality", () => {
     ]);
   });
 
+  it("drops essay backs over 25 words (empty cloze Extra still ok)", () => {
+    const essay = qa(
+      "What is MHC class II presentation?",
+      "Antigen-presenting cells process extracellular proteins into peptides that load onto MHC class II molecules in specialized compartments before traffic to the cell surface for CD4 T cell recognition during adaptive responses.",
+    );
+    const short = qa("What is MHC class II?", "Presents antigen to CD4 T cells");
+    const emptyCloze: CardDraft = {
+      type: "cloze",
+      front: "MHC {{c1::II}} presents to CD4 T cells.",
+      back: "",
+      provenance: { pages: [1], excerpt: "MHC II" },
+    };
+    expect(filterDraftsByQuality([essay, short, emptyCloze])).toEqual([
+      short,
+      emptyCloze,
+    ]);
+  });
+
+  it("drops compound fronts but keeps noun-pair fronts without compound cues", () => {
+    const compoundAndWhat = qa(
+      "What is MHC and what does it present?",
+      "Peptide antigen",
+    );
+    const compoundVersus = qa(
+      "MHC class I versus MHC class II",
+      "I is endogenous; II is exogenous",
+    );
+    const compoundVs = qa(
+      "Innate vs adaptive immunity primary difference",
+      "Speed of response",
+    );
+    const nounPair = qa(
+      "Cytokines and Chemokines",
+      "Soluble immune signaling proteins",
+    );
+    expect(
+      filterDraftsByQuality([
+        compoundAndWhat,
+        compoundVersus,
+        compoundVs,
+        nounPair,
+      ]),
+    ).toEqual([nounPair]);
+  });
+
+  it("drops adverb debris and Learning Objectives / SIGNAL chrome; keeps mitochondria", () => {
+    const adverb = qa("rapidly", "how cytokines act in inflammation");
+    const lo = qa("Learning Objectives", "List the steps of antigen presentation");
+    const signal = qa("SIGNAL 1", "TCR recognition of peptide-MHC");
+    const mito = qa("mitochondria", "powerhouse of the cell");
+    expect(filterDraftsByQuality([adverb, lo, signal, mito])).toEqual([mito]);
+  });
+
   it("drops post-regen failures from live cards (0c24a8cf) and keeps controls", () => {
     const mito = qa("mitochondria", "powerhouse of the cell");
     const gallinaeHost: CardDraft = {

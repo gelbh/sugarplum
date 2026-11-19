@@ -42,10 +42,38 @@ function loadGolden(caseDir: string): CardDraft[] {
   ) as CardDraft[];
 }
 
+function materialFromUser(user: string): string {
+  const start = user.indexOf("--- MATERIAL ---");
+  const end = user.indexOf("--- END ---");
+  if (start >= 0 && end > start) {
+    return user.slice(start + "--- MATERIAL ---".length, end).trim();
+  }
+  return user.trim();
+}
+
+/** Stub that feeds golden cards through extract → write → critique sniffing. */
 function keepAllCritiqueLlm(golden: CardDraft[]): PipelineLlm {
   return {
     generateDrafts: async () => golden,
-    complete: async () => JSON.stringify({ cards: golden }),
+    complete: async ({ system, user }) => {
+      const s = system.toLowerCase();
+      if (s.includes("extract") && s.includes("claim")) {
+        const material = materialFromUser(user);
+        const span = material.slice(0, Math.min(80, material.length)) || material;
+        return {
+          text: JSON.stringify({
+            claims: golden.map((g, i) => ({
+              subject: `Claim${i + 1}`,
+              predicate: "is grounded in the source",
+              source_span: span,
+              pages: g.provenance.pages ?? [1],
+            })),
+          }),
+          usage: null,
+        };
+      }
+      return { text: JSON.stringify({ cards: golden }), usage: null };
+    },
   };
 }
 

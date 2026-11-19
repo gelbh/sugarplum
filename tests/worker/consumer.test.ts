@@ -467,10 +467,10 @@ describe("processGenerateJob free path", () => {
     const gate = Promise.withResolvers<void>();
     const firstLlm = spyLlm({
       async generateDrafts(input) {
-        await gate.promise;
         return mockLlmAdapter().generateDrafts(input);
       },
       async complete(input) {
+        await gate.promise;
         return mockLlmAdapter().complete(input);
       },
     });
@@ -518,6 +518,9 @@ describe("processGenerateJob free path", () => {
     const base = mockLlmAdapter();
     const llm = spyLlm({
       async generateDrafts(input) {
+        return base.generateDrafts(input);
+      },
+      async complete(input) {
         if (!sawClaimHeartbeat) {
           const row = env.getGenerationJobs().find((j) => j.id === msg.jobId);
           const progress = JSON.parse(row!.progress_json!) as {
@@ -527,9 +530,6 @@ describe("processGenerateJob free path", () => {
           expect(Date.parse(progress.updated_at!)).not.toBeNaN();
           sawClaimHeartbeat = true;
         }
-        return base.generateDrafts(input);
-      },
-      async complete(input) {
         return base.complete(input);
       },
     });
@@ -648,7 +648,8 @@ describe("processGenerateJob free path", () => {
 
     await processGenerateJob(env, msg, { llm });
 
-    expect(llm.generateDrafts).toHaveBeenCalled();
+    expect(llm.generateDrafts).not.toHaveBeenCalled();
+    expect(llm.complete).toHaveBeenCalled();
     const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("needs_review");
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(0);
@@ -711,7 +712,8 @@ describe("processGenerateJob free path", () => {
 
     await processGenerateJob(env, msg, { llm });
 
-    expect(llm.generateDrafts).toHaveBeenCalled();
+    expect(llm.generateDrafts).not.toHaveBeenCalled();
+    expect(llm.complete).toHaveBeenCalled();
     const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("failed");
     expect(job?.error).toMatch(/simulated LLM failure/);
@@ -750,20 +752,46 @@ describe("processGenerateJob free path", () => {
       options: ["Adenosine triphosphate", "Adenosine diphosphate", "RNA"],
       provenance: { pages: [1], excerpt: "ATP stores energy" },
     };
+    const paste = "ATP (adenosine triphosphate) stores cellular energy.";
     const llm = spyLlm({
-      generateDrafts: async () => [mcqDraft],
-      complete: async () => ({
-        text: JSON.stringify({ cards: [] }),
-        usage: null,
-      }),
+      generateDrafts: async () => [],
+      complete: async ({ system, user }) => {
+        const s = system.toLowerCase();
+        if (s.includes("extract") && s.includes("claim")) {
+          const span = paste.slice(0, 40);
+          return {
+            text: JSON.stringify({
+              claims: [
+                {
+                  subject: "ATP",
+                  predicate: "stores cellular energy",
+                  source_span: span,
+                  pages: [1],
+                },
+              ],
+            }),
+            usage: null,
+          };
+        }
+        if (s.includes("critique")) {
+          return {
+            text: JSON.stringify({ cards: [mcqDraft] }),
+            usage: null,
+          };
+        }
+        // write
+        expect(user).toMatch(/claim/i);
+        return {
+          text: JSON.stringify({ cards: [mcqDraft] }),
+          usage: null,
+        };
+      },
     });
-    const msg = await seedPasteJob(
-      env,
-      "ATP (adenosine triphosphate) stores cellular energy.",
-    );
+    const msg = await seedPasteJob(env, paste);
 
     await processGenerateJob(env, msg, { llm });
 
+    expect(llm.generateDrafts).not.toHaveBeenCalled();
     const cards = env.getCards();
     expect(cards).toHaveLength(1);
     expect(cards[0]!.type).toBe("mcq");
@@ -784,14 +812,17 @@ describe("processGenerateJob free path", () => {
       label: string;
     }> = [];
     const llm: LlmAdapter = {
-      generateDrafts: vi.fn(async (input) => {
-        const job = env.getGenerationJobs()[0];
-        if (job?.progress_json) {
-          midGenerate.push(JSON.parse(job.progress_json));
+      generateDrafts: vi.fn(async (input) => base.generateDrafts(input)),
+      complete: vi.fn(async (args) => {
+        const s = args.system.toLowerCase();
+        if (s.includes("extract") && s.includes("claim")) {
+          const job = env.getGenerationJobs()[0];
+          if (job?.progress_json) {
+            midGenerate.push(JSON.parse(job.progress_json));
+          }
         }
-        return base.generateDrafts(input);
+        return base.complete(args);
       }),
-      complete: vi.fn(async (args) => base.complete(args)),
     };
 
     const block = "x".repeat(3500);
@@ -799,7 +830,14 @@ describe("processGenerateJob free path", () => {
 
     await processGenerateJob(env, msg, { llm });
 
-    expect(llm.generateDrafts).toHaveBeenCalledTimes(2);
+    expect(llm.generateDrafts).not.toHaveBeenCalled();
+    const extractCalls = vi
+      .mocked(llm.complete)
+      .mock.calls.filter((c) => {
+        const s = (c[0] as { system: string }).system.toLowerCase();
+        return s.includes("extract") && s.includes("claim");
+      });
+    expect(extractCalls).toHaveLength(2);
     expect(midGenerate.length).toBeGreaterThanOrEqual(1);
     expect(midGenerate[0]!.stage).toBe("generate");
     expect(midGenerate[0]!.total).toBeGreaterThanOrEqual(2);

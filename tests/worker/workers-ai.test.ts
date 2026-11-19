@@ -3,7 +3,11 @@ import {
   createLlmAdapter,
   parseLlmProvider,
 } from "../../worker/generation/llm";
-import { workersAiJsonSchemaResponseFormat } from "../../worker/generation/cards-json-schema";
+import {
+  workersAiClaimsJsonSchemaResponseFormat,
+  workersAiJsonSchemaResponseFormat,
+} from "../../worker/generation/cards-json-schema";
+import { isTruncationParseError } from "../../worker/generation/llm-json";
 import {
   WORKERS_AI_MODEL,
   createWorkersAiAdapter,
@@ -340,15 +344,45 @@ describe("Workers AI adapter", () => {
     });
   });
 
-  it("complete rejects finish_reason length without salvage", async () => {
+  it("complete with jsonShape claims sends claims schema", async () => {
+    const run = vi.fn(
+      async (
+        _model: string,
+        inputs: { response_format?: unknown },
+      ) => {
+        expect(inputs.response_format).toEqual(
+          workersAiClaimsJsonSchemaResponseFormat(),
+        );
+        return chatCompletionResult('{"claims":[]}');
+      },
+    );
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+
+    const result = await adapter.complete({
+      system: "extract-system",
+      user: "extract-user",
+      apiKey: "",
+      provider: "workers-ai",
+      jsonShape: "claims",
+    });
+
+    expect(result.text).toBe('{"claims":[]}');
+    expect(run).toHaveBeenCalledOnce();
+  });
+
+  it("complete rejects finish_reason length with truncated mid-JSON for compact retry", async () => {
+    const truncated = '{"cards":[{"type":"qa","front":"Q","back":"A';
     const run = vi.fn(async () => ({
-      ...chatCompletionResult('{"cards":[{"type":"qa","front":"Q","back":"A'),
+      ...chatCompletionResult(truncated),
       choices: [
         {
           index: 0,
           message: {
             role: "assistant" as const,
-            content: '{"cards":[{"type":"qa","front":"Q","back":"A',
+            content: truncated,
             refusal: null,
           },
           finish_reason: "length" as const,
@@ -361,14 +395,20 @@ describe("Workers AI adapter", () => {
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 
-    await expect(
-      adapter.complete({
+    const err = await adapter
+      .complete({
         system: "critique-system",
         user: "critique-user",
         apiKey: "",
         provider: "workers-ai",
-      }),
-    ).rejects.toThrow(/hit token limit/i);
+      })
+      .then(
+        () => null,
+        (e: unknown) => e,
+      );
+    expect(err).toBeInstanceOf(Error);
+    expect(isTruncationParseError(err)).toBe(true);
+    expect((err as Error).message).toMatch(/truncated mid-JSON/i);
   });
 
   it("throws when AI binding is missing", () => {

@@ -1,3 +1,20 @@
+import {
+  CARD_FROM_CLAIM_COMPACT_SYSTEM_PROMPT,
+  CARD_FROM_CLAIM_SYSTEM_PROMPT,
+  cardFromClaimCompactUserPrompt,
+  cardFromClaimUserPrompt,
+} from "./card-from-claim-prompts";
+import {
+  CLAIM_EXTRACT_COMPACT_SYSTEM_PROMPT,
+  CLAIM_EXTRACT_SYSTEM_PROMPT,
+  claimExtractCompactUserPrompt,
+  claimExtractUserPrompt,
+} from "./claim-prompts";
+import {
+  filterClaimsAgainstChunk,
+  parseClaimsPayload,
+  type StudyClaim,
+} from "./claims";
 import { CRITIQUE_SYSTEM_PROMPT, critiqueUserPrompt } from "./critique-prompts";
 import {
   appendExtraUserSuffix,
@@ -5,13 +22,13 @@ import {
   coveredFrontsPromptSuffix,
 } from "./feedback-hints";
 import {
+  isTruncationParseError,
+  parseCardsPayload,
   salvageCompleteJsonObjects,
   unwrapLlmJsonText,
+  withCompactTruncationRetry,
 } from "./llm-json";
-import {
-  type GenerateDraftsInput,
-  type LlmAdapter,
-} from "./llm";
+import { type LlmAdapter } from "./llm";
 import { parseCardDrafts, type CardDraft } from "./schema";
 
 /** Hard cap per generate/critique chunk (~4–6k chars). */
@@ -21,8 +38,8 @@ export const CHUNK_CHAR_LIMIT = 5000;
 export const MAX_PIPELINE_CHUNKS = 4;
 
 /**
- * LLM used by the pipeline: generateDrafts for the create pass,
- * complete for the critique pass (custom system/user prompts).
+ * LLM used by the pipeline: complete for text extract/write/critique;
+ * generateDrafts remains on the adapter for vision (unused by text path).
  */
 export type PipelineLlm = LlmAdapter;
 
@@ -273,8 +290,8 @@ export async function critiqueDraftsAgainstSource(
 }
 
 /**
- * Chunk remainder text → generate drafts → critique (keep/rewrite/drop).
- * Critique unparseable/empty after 1 retry → fall back to schema-valid generate drafts.
+ * Chunk remainder text → extract claims → write cards → critique (keep/rewrite/drop).
+ * Critique unparseable/empty after 1 retry → fall back to schema-valid write drafts.
  * Empty/whitespace text → [] without calling the LLM.
  */
 async function safeOnProgress(
@@ -301,6 +318,111 @@ async function safeOnChunkDrafts(
   }
 }
 
+type ClaimStageLlm = {
+  llm: PipelineLlm;
+  apiKey: string;
+  provider: string;
+};
+
+async function extractClaimsForChunk(
+  chunk: string,
+  args: ClaimStageLlm & { extraUserSuffix?: string },
+): Promise<StudyClaim[]> {
+  const { llm, apiKey, provider, extraUserSuffix } = args;
+  const completeOnce = (system: string, user: string) =>
+    llm.complete({
+      system,
+      user: appendExtraUserSuffix(user, extraUserSuffix ?? ""),
+      apiKey,
+      provider,
+      jsonShape: "claims",
+    });
+
+  try {
+    return await withCompactTruncationRetry(
+      async () =>
+        filterClaimsAgainstChunk(
+          parseClaimsPayload(
+            (
+              await completeOnce(
+                CLAIM_EXTRACT_SYSTEM_PROMPT,
+                claimExtractUserPrompt(chunk),
+              )
+            ).text,
+          ),
+          chunk,
+        ),
+      async () =>
+        filterClaimsAgainstChunk(
+          parseClaimsPayload(
+            (
+              await completeOnce(
+                CLAIM_EXTRACT_COMPACT_SYSTEM_PROMPT,
+                claimExtractCompactUserPrompt(chunk),
+              )
+            ).text,
+          ),
+          chunk,
+        ),
+    );
+  } catch (err) {
+    // Double truncation → empty chunk; other errors (network) must propagate.
+    if (isTruncationParseError(err)) return [];
+    throw err;
+  }
+}
+
+function isCardsParseFailure(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    (/non-JSON/i.test(err.message) ||
+      /must be an array or \{\"cards\"/i.test(err.message))
+  );
+}
+
+async function writeCardsFromClaims(
+  claims: StudyClaim[],
+  args: ClaimStageLlm & { extraUserSuffix?: string },
+): Promise<CardDraft[]> {
+  if (claims.length === 0) return [];
+  const { llm, apiKey, provider, extraUserSuffix } = args;
+  const completeOnce = (system: string, user: string) =>
+    llm.complete({
+      system,
+      user: appendExtraUserSuffix(user, extraUserSuffix ?? ""),
+      apiKey,
+      provider,
+      jsonShape: "cards",
+    });
+
+  try {
+    return await withCompactTruncationRetry(
+      async () =>
+        parseCardsPayload(
+          (
+            await completeOnce(
+              CARD_FROM_CLAIM_SYSTEM_PROMPT,
+              cardFromClaimUserPrompt(claims),
+            )
+          ).text,
+        ),
+      async () =>
+        parseCardsPayload(
+          (
+            await completeOnce(
+              CARD_FROM_CLAIM_COMPACT_SYSTEM_PROMPT,
+              cardFromClaimCompactUserPrompt(claims),
+            )
+          ).text,
+        ),
+    );
+  } catch (err) {
+    // Double truncation or unparseable → same as empty generate for this chunk.
+    if (isTruncationParseError(err) || isCardsParseFailure(err)) return [];
+    throw err;
+  }
+}
+
 export async function runGenerationPipeline(
   input: RunGenerationPipelineInput,
 ): Promise<CardDraft[]> {
@@ -317,7 +439,8 @@ export async function runGenerationPipeline(
   } = input;
   if (!text.trim()) return [];
 
-  const generateSuffix = buildExtraUserSuffix({ topicHints, avoidPatterns });
+  const extractSuffix = buildExtraUserSuffix({ topicHints });
+  const writeSuffix = buildExtraUserSuffix({ avoidPatterns });
   const critiqueSuffix = buildExtraUserSuffix({ avoidPatterns });
   const coveredFronts = [...(avoidFronts ?? [])];
 
@@ -332,36 +455,97 @@ export async function runGenerationPipeline(
       stage: "generate" | "critique",
       current: number,
       halfStepsDone: number,
+      label: string,
     ) =>
       safeOnProgress(onProgress, {
         stage,
         current,
         total,
         halfStepsDone,
-        label: `${stage === "generate" ? "Generating" : "Critiquing"} cards (chunk ${chunkLabel}/${total})`,
+        label,
       });
 
-    await report("generate", chunkLabel, 2 * i);
+    const chunkTag = `chunk ${chunkLabel}/${total}`;
 
-    const coveredSuffix = coveredFrontsPromptSuffix(coveredFronts);
-    const generateInput: GenerateDraftsInput = {
-      text: chunk,
+    await report(
+      "generate",
+      chunkLabel,
+      2 * i,
+      `Extracting claims (${chunkTag})`,
+    );
+
+    const claims = await extractClaimsForChunk(chunk, {
+      llm,
       apiKey,
       provider,
-      extraUserSuffix: [generateSuffix, coveredSuffix].filter(Boolean).join("\n\n"),
-    };
-    const generated = await llm.generateDrafts(generateInput);
+      extraUserSuffix: extractSuffix,
+    });
 
-    await report("generate", chunkLabel, 2 * i + 1);
+    const coveredSuffix = coveredFrontsPromptSuffix(coveredFronts);
+    const writeExtra = [writeSuffix, coveredSuffix].filter(Boolean).join("\n\n");
+    const critiqueExtra = [critiqueSuffix, coveredSuffix]
+      .filter(Boolean)
+      .join("\n\n");
 
-    if (generated.length === 0) {
-      // Keep critique half-steps aligned with total even when generate is empty.
-      await report("critique", chunkLabel, 2 * i + 1);
-      await report("critique", chunkLabel, 2 * i + 2);
+    if (claims.length === 0) {
+      // Keep critique half-steps aligned with total even when extract is empty.
+      await report(
+        "generate",
+        chunkLabel,
+        2 * i + 1,
+        `Writing cards (${chunkTag})`,
+      );
+      await report(
+        "critique",
+        chunkLabel,
+        2 * i + 1,
+        `Critiquing cards (${chunkTag})`,
+      );
+      await report(
+        "critique",
+        chunkLabel,
+        2 * i + 2,
+        `Critiquing cards (${chunkTag})`,
+      );
       continue;
     }
 
-    await report("critique", chunkLabel, 2 * i + 1);
+    await report(
+      "generate",
+      chunkLabel,
+      2 * i + 1,
+      `Writing cards (${chunkTag})`,
+    );
+
+    const generated = await writeCardsFromClaims(claims, {
+      llm,
+      apiKey,
+      provider,
+      extraUserSuffix: writeExtra,
+    });
+
+    if (generated.length === 0) {
+      await report(
+        "critique",
+        chunkLabel,
+        2 * i + 1,
+        `Critiquing cards (${chunkTag})`,
+      );
+      await report(
+        "critique",
+        chunkLabel,
+        2 * i + 2,
+        `Critiquing cards (${chunkTag})`,
+      );
+      continue;
+    }
+
+    await report(
+      "critique",
+      chunkLabel,
+      2 * i + 1,
+      `Critiquing cards (${chunkTag})`,
+    );
 
     const critiqued = await critiqueChunk({
       chunk,
@@ -369,11 +553,17 @@ export async function runGenerationPipeline(
       llm,
       apiKey,
       provider,
-      extraUserSuffix: [critiqueSuffix, coveredSuffix].filter(Boolean).join("\n\n"),
+      extraUserSuffix: critiqueExtra,
     });
 
-    await report("critique", chunkLabel, 2 * i + 2);
+    await report(
+      "critique",
+      chunkLabel,
+      2 * i + 2,
+      `Critiquing cards (${chunkTag})`,
+    );
 
+    // Critique null (unparseable/empty after retry) → fall back to write drafts.
     const batch = critiqued ?? generated;
     out.push(...batch);
     for (const draft of batch) {

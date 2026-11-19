@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  CARD_FROM_CLAIM_COMPACT_SYSTEM_PROMPT,
+  CARD_FROM_CLAIM_SYSTEM_PROMPT,
+  cardFromClaimCompactUserPrompt,
+  cardFromClaimUserPrompt,
+} from "../../worker/generation/card-from-claim-prompts";
+import {
+  CLAIM_EXTRACT_COMPACT_SYSTEM_PROMPT,
+  CLAIM_EXTRACT_SYSTEM_PROMPT,
+  claimExtractCompactUserPrompt,
+  claimExtractUserPrompt,
+} from "../../worker/generation/claim-prompts";
+import {
   CRITIQUE_SYSTEM_PROMPT,
   critiqueUserPrompt,
 } from "../../worker/generation/critique-prompts";
@@ -9,6 +21,8 @@ import {
   IMAGE_GENERATE_SYSTEM_PROMPT,
   generateUserPrompt,
 } from "../../worker/generation/prompts";
+import { REGEN_ONE_SYSTEM_PROMPT } from "../../worker/generation/card-regen";
+import type { StudyClaim } from "../../worker/generation/claims";
 import type { CardDraft } from "../../worker/generation/schema";
 
 const sample: CardDraft[] = [
@@ -122,6 +136,18 @@ describe("drop-biased quality prompts (5B)", () => {
     expect(user).toMatch(/not\s+among|among\s+the\s+options/);
   });
 
+  it("critique prompts drop over-long/compound cards and do not essay-split", () => {
+    for (const text of [
+      CRITIQUE_SYSTEM_PROMPT,
+      critiqueUserPrompt("source", sample),
+    ]) {
+      const p = text.toLowerCase();
+      expect(p).toMatch(/over-?long|25\s+words/);
+      expect(p).toMatch(/compound/);
+      expect(p).toMatch(/do\s+not\s+split|drop\s+them\s+instead|not\s+split\s+essay/);
+    }
+  });
+
   it("generate and critique prompts treat cloze Extra/back as optional", () => {
     for (const prompt of [
       GENERATE_SYSTEM_PROMPT,
@@ -177,5 +203,95 @@ describe("organism / cloze / mcq prompt phrases (post-regen)", () => {
 
   it("critique user reinforces organism, taxon, cloze-topic, and single-fact mcq drops", () => {
     assertOrganismClozeMcqPhrases(critiqueUserPrompt("source text", sample));
+  });
+});
+
+const sampleClaim: StudyClaim = {
+  subject: "Lysozyme",
+  predicate: "digests peptidoglycan in bacterial cell walls",
+  object: "peptidoglycan",
+  source_span: "Lysozyme digests peptidoglycan in bacterial cell walls",
+};
+
+describe("claim extract prompt phrases", () => {
+  it("extract system requires atomic claims, pronoun resolve, split compounds, skip chrome", () => {
+    for (const prompt of [
+      CLAIM_EXTRACT_SYSTEM_PROMPT,
+      CLAIM_EXTRACT_COMPACT_SYSTEM_PROMPT,
+    ]) {
+      const p = prompt.toLowerCase();
+      expect(p).toMatch(/atomic\s+claim|one\s+(?:atomic\s+)?(?:fact|assertion)/);
+      expect(p).toMatch(/resolve\s+pronoun|pronoun/);
+      expect(p).toMatch(/split\s+compound|two\s+claims|compound/);
+      expect(p).toMatch(
+        /learning[-\s]?objective|table\s+of\s+contents|references|slide\s+chrome|chrome/,
+      );
+      expect(p).toMatch(/ground|source|span/);
+      expect(p).toMatch(/claims/);
+      expect(p).toMatch(/verbatim/);
+      expect(p).not.toMatch(/lightly\s+trimmed/);
+      assertNoAlwaysRewrite(prompt);
+    }
+  });
+
+  it("extract user prompts include material and claim instructions", () => {
+    for (const user of [
+      claimExtractUserPrompt("sample material"),
+      claimExtractCompactUserPrompt("sample material"),
+    ]) {
+      const p = user.toLowerCase();
+      expect(p).toMatch(/sample material/);
+      expect(p).toMatch(/claim/);
+      expect(p).toMatch(/material/);
+    }
+  });
+});
+
+describe("card-from-claim prompt phrases", () => {
+  it("write system: one card per claim, short backs, prefer qa/cloze, mcq closed set, no compound stems", () => {
+    const p = CARD_FROM_CLAIM_SYSTEM_PROMPT.toLowerCase();
+    expect(p).toMatch(/one\s+card\s+per\s+claim|at\s+most\s+one\s+card/);
+    expect(p).toMatch(/25\s+words|under\s+~?25/);
+    expect(p).toMatch(/\bqa\b/);
+    expect(p).toMatch(/cloze/);
+    expect(p).toMatch(/\bmcq\b/);
+    expect(p).toMatch(/closed\s+(?:option\s+)?set|option\s+set|listed\s+.*options?/);
+    expect(p).toMatch(
+      /compound\s+stem|and\s+what|versus|no\s+compound/,
+    );
+    expect(p).toMatch(/omit|skip/);
+    assertNoAlwaysRewrite(CARD_FROM_CLAIM_SYSTEM_PROMPT);
+  });
+
+  it("write compact caps card count and short backs", () => {
+    const p = CARD_FROM_CLAIM_COMPACT_SYSTEM_PROMPT.toLowerCase();
+    expect(p).toMatch(/3|fewer|short/);
+    expect(p).toMatch(/15\s+words|under\s+~?15|25\s+words/);
+    expect(p).toMatch(/one\s+card\s+per\s+claim|at\s+most\s+one\s+card/);
+    assertNoAlwaysRewrite(CARD_FROM_CLAIM_COMPACT_SYSTEM_PROMPT);
+  });
+
+  it("write user includes claims JSON and card instructions", () => {
+    const user = cardFromClaimUserPrompt([sampleClaim]).toLowerCase();
+    expect(user).toMatch(/lysozyme/);
+    expect(user).toMatch(/claim/);
+    expect(user).toMatch(/card|flashcard/);
+  });
+
+  it("write compact user includes claims JSON", () => {
+    const user = cardFromClaimCompactUserPrompt([sampleClaim]).toLowerCase();
+    expect(user).toMatch(/lysozyme/);
+    expect(user).toMatch(/claim/);
+    expect(user).toMatch(/3|short|fewer/);
+  });
+});
+
+describe("card regen prompt phrases", () => {
+  it("regen system: atomic ≤25 words, no compound stems", () => {
+    const p = REGEN_ONE_SYSTEM_PROMPT.toLowerCase();
+    expect(p).toMatch(/atomic/);
+    expect(p).toMatch(/25\s+words|under\s+~?25/);
+    expect(p).toMatch(/compound\s+stem|and\s+what|versus|no\s+compound/);
+    assertNoAlwaysRewrite(REGEN_ONE_SYSTEM_PROMPT);
   });
 });
