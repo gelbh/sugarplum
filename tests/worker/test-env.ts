@@ -277,6 +277,8 @@ export type TestEnv = Env & {
   getFreeGenUsageRows: () => FreeGenUsageRow[];
   getQueueMessages: () => unknown[];
   getExportQueueMessages: () => unknown[];
+  getAdminOverviewPrepareCount: () => number;
+  clearCache: () => void;
   getR2Keys: () => string[];
   getR2: (key: string) => string | ArrayBuffer | undefined;
   getAchievementCompletions: () => AchievementCompletionRow[];
@@ -354,6 +356,8 @@ export function createTestEnv(opts?: {
   const knowledgeSummaries = new Map<string, KnowledgeSummaryRow>();
   const reviewLogs: ReviewLogRow[] = [];
   const sessions = new Map<string, string>();
+  const cacheKv = new Map<string, string>();
+  let adminOverviewPrepareCount = 0;
   const exportJobs = new Map<string, ExportJobRow>();
   const r2 = new Map<string, string | ArrayBuffer>();
   const queueMessages: unknown[] = [];
@@ -376,6 +380,9 @@ export function createTestEnv(opts?: {
   function prepare(sql: string) {
     const normalized = sql.replace(/\s+/g, " ").trim();
     let bound: unknown[] = [];
+    if (normalized.includes("sugarplum:admin-overview")) {
+      adminOverviewPrepareCount += 1;
+    }
 
     const stmt = {
       bind(...args: unknown[]) {
@@ -4888,6 +4895,21 @@ export function createTestEnv(opts?: {
         sessions.delete(key);
       },
     } as unknown as KVNamespace,
+    CACHE: {
+      async get(key: string) {
+        return cacheKv.get(key) ?? null;
+      },
+      async put(
+        key: string,
+        value: string,
+        _options?: { expirationTtl?: number },
+      ) {
+        cacheKv.set(key, value);
+      },
+      async delete(key: string) {
+        cacheKv.delete(key);
+      },
+    } as unknown as KVNamespace,
     GENERATE_QUEUE: {
       send: async (body: unknown) => {
         queueMessages.push(body);
@@ -5048,6 +5070,10 @@ export function createTestEnv(opts?: {
     getFreeGenUsageRows: () => [...freeGenUsage.values()],
     getQueueMessages: () => [...queueMessages],
     getExportQueueMessages: () => [...exportQueueMessages],
+    getAdminOverviewPrepareCount: () => adminOverviewPrepareCount,
+    clearCache: () => {
+      cacheKv.clear();
+    },
     getWorkflowCreates: () => [...workflowCreates],
     getWorkflowTerminates: () => [...workflowTerminates],
     getR2Keys: () => [...r2.keys()],

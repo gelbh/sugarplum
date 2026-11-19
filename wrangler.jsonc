@@ -61,6 +61,10 @@
       "binding": "SESSIONS",
       "id": "4b51ba56cbdd48bd97a31ff775a9e684",
     },
+    {
+      "binding": "CACHE",
+      "id": "782df54519e4490fb18479c52eca5f51",
+    },
   ],
   "ai": {
     "binding": "AI",
