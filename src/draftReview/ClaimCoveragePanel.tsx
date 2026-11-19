@@ -12,7 +12,6 @@ const CLAIM_SPAN_GAP_DISPLAY_CAP = 10;
 type Props = {
   coverage: ClaimCoverage;
   drafts: CardDraftView[];
-  /** Residual unclaimed note lines from coverage_json.claim_span.gaps. */
   claimSpanGaps?: string[];
   onJumpToDraft?: (cardId: string) => void;
   onGenerateOrphan?: (claimId: string) => void;

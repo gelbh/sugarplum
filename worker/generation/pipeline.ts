@@ -73,9 +73,7 @@ export type GenerationPipelineResult = {
   drafts: CardDraft[];
   /** All extracted claims for the job (incl. orphans with no card). */
   claims: StoredClaim[];
-  /** Sum of gap re-extract passes across chunks. */
   claim_gap_extract_passes: number;
-  /** Residual uncovered study lines after gap extract (job material). */
   claim_span_gaps: string[];
 };
 
