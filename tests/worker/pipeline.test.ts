@@ -146,8 +146,8 @@ describe("runGenerationPipeline", () => {
       apiKey: "k",
       provider: "mock",
     });
-    expect(empty).toEqual([]);
-    expect(ws).toEqual([]);
+    expect(empty).toEqual({ drafts: [], claims: [] });
+    expect(ws).toEqual({ drafts: [], claims: [] });
     expect(llm.generateDrafts).not.toHaveBeenCalled();
     expect(llm.complete).not.toHaveBeenCalled();
   });
@@ -160,7 +160,7 @@ describe("runGenerationPipeline", () => {
     const text = `${block}\n\n${block}`;
     expect(text.length).toBeGreaterThan(CHUNK_CHAR_LIMIT);
 
-    const drafts = await runGenerationPipeline({
+    const { drafts } = await runGenerationPipeline({
       text,
       llm,
       apiKey: "k",
@@ -325,7 +325,7 @@ describe("runGenerationPipeline", () => {
       },
     });
 
-    const drafts = await runGenerationPipeline({
+    const { drafts } = await runGenerationPipeline({
       text: "The mitochondria produces ATP.",
       llm,
       apiKey: "k",
@@ -362,7 +362,7 @@ describe("runGenerationPipeline", () => {
         JSON.stringify({ cards: [grounded] }),
     });
 
-    const drafts = await runGenerationPipeline({
+    const { drafts } = await runGenerationPipeline({
       text: "The mitochondria produces ATP.",
       llm,
       apiKey: "k",
@@ -384,7 +384,7 @@ describe("runGenerationPipeline", () => {
       critique: async () => "NOT JSON {{{",
     });
 
-    const drafts = await runGenerationPipeline({
+    const { drafts } = await runGenerationPipeline({
       text: "The mitochondria produces ATP.",
       llm,
       apiKey: "k",
@@ -415,7 +415,7 @@ describe("runGenerationPipeline", () => {
       critique: async () => truncated,
     });
 
-    const drafts = await runGenerationPipeline({
+    const { drafts } = await runGenerationPipeline({
       text: "The mitochondria produces ATP.",
       llm,
       apiKey: "k",
@@ -438,7 +438,7 @@ describe("runGenerationPipeline", () => {
       critique: async () => JSON.stringify({ cards: [] }),
     });
 
-    const drafts = await runGenerationPipeline({
+    const { drafts } = await runGenerationPipeline({
       text: "The mitochondria produces ATP.",
       llm,
       apiKey: "k",

@@ -96,12 +96,12 @@ export async function runEvalCase(caseId: string): Promise<EvalScoreReport> {
     const remainder = remainderAfterRules(material, rawRules);
     let llmDrafts: CardDraft[] = [];
     if (remainder.trim()) {
-      llmDrafts = await runGenerationPipeline({
+      llmDrafts = (await runGenerationPipeline({
         text: remainder,
         llm: keepAllCritiqueLlm(golden),
         apiKey: "eval",
         provider: "eval-mock",
-      });
+      })).drafts;
     }
     const merged = mergeAndDedupeDrafts(layer1Rules, llmDrafts);
     survivors = filterDraftsByQuality(merged);

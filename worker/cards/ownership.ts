@@ -11,7 +11,8 @@ export async function requireOwnedCard(
   const row = await db
     .prepare(
       `SELECT c.id, c.deck_id, c.job_id, c.type, c.front_json, c.back_json,
-              c.media_r2_keys_json, c.provenance_json, c.status, c.created_at, c.updated_at
+              c.media_r2_keys_json, c.provenance_json, c.status, c.created_at, c.updated_at,
+              c.claim_id
        FROM cards c
        INNER JOIN decks d ON d.id = c.deck_id
        WHERE c.id = ? AND d.user_id = ?`,

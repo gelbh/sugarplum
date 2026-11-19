@@ -58,8 +58,13 @@ async function finalizeAfterPersist(
     drafts,
     autoFollowup: args.autoFollowup,
     atlasProvenance: args.atlasProvenance,
-    runPipeline: ({ topicHints: hints, avoidFronts, onUsage, heartbeat }) =>
-      runTextDraftPipeline({
+    runPipeline: async ({
+      topicHints: hints,
+      avoidFronts,
+      onUsage,
+      heartbeat,
+    }) => {
+      const result = await runTextDraftPipeline({
         text: args.coverageMaterial,
         env,
         userId: args.userId,
@@ -71,7 +76,10 @@ async function finalizeAfterPersist(
         avoidFronts,
         onUsage,
         heartbeat,
-      }),
+      });
+      // Gap-fill cards stay claim_id null (no claim persist on follow-up).
+      return result.drafts;
+    },
   });
 
   let coverageJson: string | null = null;

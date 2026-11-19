@@ -13,6 +13,9 @@ export type StudyClaim = {
   pages?: number[];
 };
 
+/** StudyClaim with a stable id minted at extract time (persisted to D1). */
+export type StoredClaim = StudyClaim & { id: string };
+
 const PRONOUN_SUBJECT = /^(it|they|this|these|those)\b/i;
 
 function normalizeWs(s: string): string {
@@ -176,4 +179,70 @@ export function pickClaimForRegen(
   }
 
   return claims[0] ?? null;
+}
+
+/**
+ * Match a draft provenance excerpt to a buffered claim id.
+ * Exact normalized equality only (no substring overlap) so short spans cannot steal joins.
+ */
+export function matchClaimIdForDraft(
+  claims: StoredClaim[],
+  excerpt: string,
+): string | null {
+  const needle = normalizeWs(excerpt);
+  if (!needle || claims.length === 0) return null;
+  const hit = claims.find(
+    (claim) => normalizeWs(claim.source_span) === needle,
+  );
+  return hit?.id ?? null;
+}
+
+type StudyClaimRow = {
+  subject: string;
+  predicate: string;
+  source_span: string;
+  object: string | null;
+  qualifiers_json: string | null;
+  pages_json: string | null;
+};
+
+/** Map a study_claims D1 row to StudyClaim (invalid JSON → omit optional fields). */
+export function studyClaimFromRow(row: StudyClaimRow): StudyClaim {
+  const claim: StudyClaim = {
+    subject: row.subject,
+    predicate: row.predicate,
+    source_span: row.source_span,
+  };
+  const object = asNonEmptyString(row.object);
+  if (object) claim.object = object;
+
+  if (row.qualifiers_json) {
+    try {
+      const parsed: unknown = JSON.parse(row.qualifiers_json);
+      if (Array.isArray(parsed)) {
+        const qualifiers = parsed
+          .map((q) => asNonEmptyString(q))
+          .filter((q): q is string => q !== null);
+        if (qualifiers.length > 0) claim.qualifiers = qualifiers;
+      }
+    } catch {
+      // Invalid JSON: leave qualifiers unset.
+    }
+  }
+
+  if (row.pages_json) {
+    try {
+      const parsed: unknown = JSON.parse(row.pages_json);
+      if (Array.isArray(parsed)) {
+        const pages = parsed.filter(
+          (p): p is number => typeof p === "number" && Number.isFinite(p),
+        );
+        if (pages.length > 0) claim.pages = pages;
+      }
+    } catch {
+      // Invalid JSON: leave pages unset.
+    }
+  }
+
+  return claim;
 }

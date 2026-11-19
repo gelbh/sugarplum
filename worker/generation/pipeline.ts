@@ -8,6 +8,7 @@ import {
   buildExtraUserSuffix,
   coveredFrontsPromptSuffix,
 } from "./feedback-hints";
+import type { StoredClaim } from "./claims";
 import {
   salvageCompleteJsonObjects,
   unwrapLlmJsonText,
@@ -51,6 +52,12 @@ export type RunGenerationPipelineInput = {
   onProgress?: (event: PipelineProgressEvent) => void | Promise<void>;
   /** Fired after each chunk's critique (or generate fallback). Best-effort. */
   onChunkDrafts?: (drafts: CardDraft[]) => void | Promise<void>;
+};
+
+export type GenerationPipelineResult = {
+  drafts: CardDraft[];
+  /** All extracted claims for the job (incl. orphans with no card). */
+  claims: StoredClaim[];
 };
 
 /**
@@ -304,7 +311,7 @@ async function safeOnChunkDrafts(
 
 export async function runGenerationPipeline(
   input: RunGenerationPipelineInput,
-): Promise<CardDraft[]> {
+): Promise<GenerationPipelineResult> {
   const {
     text,
     llm,
@@ -316,7 +323,7 @@ export async function runGenerationPipeline(
     onProgress,
     onChunkDrafts,
   } = input;
-  if (!text.trim()) return [];
+  if (!text.trim()) return { drafts: [], claims: [] };
 
   const extractSuffix = buildExtraUserSuffix({ topicHints });
   const writeSuffix = buildExtraUserSuffix({ avoidPatterns });
@@ -326,6 +333,7 @@ export async function runGenerationPipeline(
   const chunks = chunkText(text).slice(0, MAX_PIPELINE_CHUNKS);
   const total = chunks.length;
   const out: CardDraft[] = [];
+  const storedClaims: StoredClaim[] = [];
 
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i]!;
@@ -359,6 +367,11 @@ export async function runGenerationPipeline(
       provider,
       extraUserSuffix: extractSuffix,
     });
+    const minted: StoredClaim[] = claims.map((claim) => ({
+      ...claim,
+      id: crypto.randomUUID(),
+    }));
+    storedClaims.push(...minted);
 
     const coveredSuffix = coveredFrontsPromptSuffix(coveredFronts);
     const writeExtra = [writeSuffix, coveredSuffix].filter(Boolean).join("\n\n");
@@ -366,7 +379,7 @@ export async function runGenerationPipeline(
       .filter(Boolean)
       .join("\n\n");
 
-    if (claims.length === 0) {
+    if (minted.length === 0) {
       // Keep critique half-steps aligned with total even when extract is empty.
       await report(
         "generate",
@@ -396,12 +409,16 @@ export async function runGenerationPipeline(
       `Writing cards (${chunkTag})`,
     );
 
-    const generated = await writeCardsFromClaims(claims, {
-      llm,
-      apiKey,
-      provider,
-      extraUserSuffix: writeExtra,
-    });
+    // Strip minted ids from the LLM payload; join happens post-write via excerpt.
+    const generated = await writeCardsFromClaims(
+      minted.map(({ id: _id, ...claim }) => claim),
+      {
+        llm,
+        apiKey,
+        provider,
+        extraUserSuffix: writeExtra,
+      },
+    );
 
     if (generated.length === 0) {
       await report(
@@ -453,5 +470,5 @@ export async function runGenerationPipeline(
     await safeOnChunkDrafts(onChunkDrafts, batch);
   }
 
-  return out;
+  return { drafts: out, claims: storedClaims };
 }

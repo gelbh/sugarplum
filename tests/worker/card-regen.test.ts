@@ -186,6 +186,54 @@ function regenRequest(env: ReturnType<typeof createTestEnv>) {
 }
 
 describe("POST /api/cards/:id/regen", () => {
+  it("skips extract when card has claim_id and keeps claim_id after update", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    env.seedStudyClaim({
+      id: "cl-mid",
+      job_id: "job-a",
+      deck_id: "deck-a",
+      subject: "Mitochondria",
+      predicate: "produce ATP",
+      source_span: "Mitochondria produce ATP",
+      object: "ATP",
+      qualifiers_json: null,
+      pages_json: JSON.stringify([1]),
+      created_at: "2026-01-01T01:06:00.000Z",
+    });
+    const mid = env.getCards().find((c) => c.id === "c-mid")!;
+    env.seedCard({ ...mid, claim_id: "cl-mid" });
+    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+
+    const run = vi.fn(async (_model: string, input: unknown) => {
+      expect(_model).toBe(WORKERS_AI_MODEL);
+      const messages = (input as { messages?: Array<{ role: string; content: string }> })
+        .messages;
+      const system = messages?.find((m) => m.role === "system")?.content ?? "";
+      expect(system.toLowerCase()).not.toMatch(/extract/);
+      expect(system.toLowerCase()).toMatch(/flashcard|claim|write/);
+      return {
+        choices: [
+          {
+            index: 0,
+            message: { role: "assistant" as const, content: VALID_MCQ },
+            finish_reason: "stop" as const,
+          },
+        ],
+        usage: { prompt_tokens: 50, completion_tokens: 20, total_tokens: 70 },
+      };
+    });
+    env.AI = { run } as unknown as Ai;
+
+    const res = await regenRequest(env);
+    expect(res.status).toBe(200);
+    expect(run).toHaveBeenCalled();
+    const updated = env.getCards().find((c) => c.id === "c-mid")!;
+    expect(updated.claim_id).toBe("cl-mid");
+    expect(JSON.parse(updated.front_json)).toBe("Which organelle produces ATP?");
+  });
+
   it("regenerates middle draft as mcq and leaves sibling fronts intact", async () => {
     const env = createTestEnv();
     seedOwner(env);
