@@ -75,6 +75,11 @@
       "binding": "GENERATION_WORKFLOW",
       "class_name": "GenerationWorkflow",
     },
+    {
+      "name": "sugarplum-fill-all",
+      "binding": "FILL_ALL_WORKFLOW",
+      "class_name": "FillAllWorkflow",
+    },
   ],
   "durable_objects": {
     "bindings": [

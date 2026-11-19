@@ -16,7 +16,12 @@ function isInFlightWorkflowStatus(status: string): boolean {
 function isNotFoundError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
   const msg = err.message.toLowerCase();
-  return msg.includes("not found") || msg.includes("does not exist");
+  // Miniflare/Workers use both "not found" and "instance.not_found".
+  return (
+    msg.includes("not found") ||
+    msg.includes("not_found") ||
+    msg.includes("does not exist")
+  );
 }
 
 /** Best-effort terminate + delete so regen can reuse jobId as instance id. */

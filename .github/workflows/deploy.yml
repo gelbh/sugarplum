@@ -52,7 +52,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           packageManager: npm
-          wranglerVersion: "4.153.0"
+          wranglerVersion: "4.165.0"
           command: d1 migrations apply sugarplum --remote
 
       - name: Deploy Worker
@@ -61,7 +61,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           packageManager: npm
-          wranglerVersion: "4.153.0"
+          wranglerVersion: "4.165.0"
           vars: |
             R2_ACCOUNT_ID
           command: deploy

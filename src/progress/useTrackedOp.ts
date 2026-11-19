@@ -97,5 +97,26 @@ export function useTrackedOp(
     };
   }, [trackOnMount, begin, fail]);
 
-  return { busy, begin, end, run };
+  const update = useCallback(
+    (patch: {
+      label?: string;
+      mode?: "determinate" | "indeterminate";
+      percent?: number;
+    }) => {
+      if (!activeRef.current) return;
+      const label = patch.label ?? labelRef.current;
+      labelRef.current = label;
+      const mode = patch.mode ?? "indeterminate";
+      upsert({
+        id: idRef.current,
+        label,
+        mode,
+        percent: patch.percent ?? 0,
+        source: "client",
+      });
+    },
+    [upsert],
+  );
+
+  return { busy, begin, end, run, update };
 }

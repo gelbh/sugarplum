@@ -15,6 +15,10 @@ export interface Env {
   GENERATION_WORKFLOW?: Workflow<
     import("./generation/workflowParams").GenerationWorkflowParams
   >;
+  /** Fill-all Workflow binding (create / get by fill-all-${jobId}). */
+  FILL_ALL_WORKFLOW?: Workflow<
+    import("./generation/fillAllWorkflowParams").FillAllWorkflowParams
+  >;
   /** Cap-2 generation slot leases (Durable Object). */
   GENERATION_SLOTS?: DurableObjectNamespace;
   /** Dedicated Anki export queue; over-threshold builds must not run in HTTP. */

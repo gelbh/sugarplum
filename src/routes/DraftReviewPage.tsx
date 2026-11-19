@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -80,7 +80,7 @@ export default function DraftReviewPage() {
   const { user } = useSession();
   const jobProgress = useJobProgress(user && progressGate ? jobId : null);
   const { begin: beginLoad, end: endLoad } = useTrackedOp("Loading drafts…");
-  const { busy, begin, end } = useTrackedOp("Working…");
+  const { busy, begin, end, update } = useTrackedOp("Working…");
   const { enqueueUnlocks } = useUnlockToasts();
 
   useEffect(() => {
@@ -163,11 +163,13 @@ export default function DraftReviewPage() {
     onDismissFailed,
     onGenerateOrphan,
     onFillAllOrphans,
+    resumeFillAllIfRunning,
   } = createDraftReviewRegen({
       jobId,
       current,
       begin,
       end,
+      update,
       setDrafts,
       setDirty,
       setError,
@@ -186,6 +188,23 @@ export default function DraftReviewPage() {
       cardRegenBusy,
       busy,
     });
+
+  const fillAllResumeAttachedRef = useRef(false);
+  useEffect(() => {
+    fillAllResumeAttachedRef.current = false;
+  }, [jobId]);
+  useEffect(() => {
+    if (fillAllResumeAttachedRef.current) return;
+    if (!jobId || !claimCoverage || claimCoverage.summary.orphan <= 0) return;
+    let cancelled = false;
+    void (async () => {
+      const attached = await resumeFillAllIfRunning();
+      if (!cancelled && attached) fillAllResumeAttachedRef.current = true;
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId, claimCoverage, resumeFillAllIfRunning]);
 
   const jobActionDisabled = busy || jobProgress.pending;
   const failedEmpty = !current && jobStatus === "failed";
@@ -427,7 +446,7 @@ export default function DraftReviewPage() {
                           lineHeight: 1.25,
                         }}
                       >
-                        No drafts left
+                        {fillAllBusy ? "Filling orphan claims" : "No drafts left"}
                       </Typography>
                       <Typography
                         variant="body2"
@@ -438,70 +457,74 @@ export default function DraftReviewPage() {
                           color: "rgba(232, 216, 199, 0.72)",
                         }}
                       >
-                        This job is clear. Start study, open other drafts, or
-                        regenerate from the same material.
+                        {fillAllBusy
+                          ? "New drafts will appear here as claims are filled. Coverage above tracks progress."
+                          : "This job is clear. Start study, open other drafts, or regenerate from the same material."}
                       </Typography>
                     </Box>
-                    <Stack
-                      direction="row"
-                      spacing={1.25}
-                      useFlexGap
-                      sx={{
-                        flexWrap: "wrap",
-                        pt: 0.5
-                      }}>
-                      {emptyCtas ? (
-                        <>
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            href={emptyCtas.primary.href}
-                            startIcon={
-                              emptyCtas.primary.label === "Start study" ? (
-                                <PlayArrowIcon />
-                              ) : undefined
-                            }
-                            sx={PRIMARY_PILL_SX}
-                          >
-                            {emptyCtas.primary.label}
-                          </Button>
-                          {emptyCtas.otherDrafts ? (
-                            <Button
-                              variant="outlined"
-                              href={emptyCtas.otherDrafts.href}
-                              sx={{
-                                ...PRIMARY_PILL_SX,
-                                borderColor: "rgba(232, 216, 199, 0.28)",
-                                bgcolor: "transparent",
-                                color: "var(--sp-ivory)",
-                              }}
-                            >
-                              {emptyCtas.otherDrafts.label}
-                            </Button>
-                          ) : null}
-                        </>
-                      ) : (
-                        <Link
-                          href="/library"
-                          sx={{ color: "rgba(232, 216, 199, 0.72)" }}
-                        >
-                          Back to library
-                        </Link>
-                      )}
-                      <Button
-                        variant="text"
-                        color="inherit"
-                        onClick={() => setRegenConfirmOpen(true)}
-                        disabled={jobActionDisabled}
+                    {!fillAllBusy ? (
+                      <Stack
+                        direction="row"
+                        spacing={1.25}
+                        useFlexGap
                         sx={{
-                          color: "rgba(232, 216, 199, 0.72)",
-                          textTransform: "none",
-                          fontWeight: 500,
+                          flexWrap: "wrap",
+                          pt: 0.5,
                         }}
                       >
-                        Regenerate
-                      </Button>
-                    </Stack>
+                        {emptyCtas ? (
+                          <>
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              href={emptyCtas.primary.href}
+                              startIcon={
+                                emptyCtas.primary.label === "Start study" ? (
+                                  <PlayArrowIcon />
+                                ) : undefined
+                              }
+                              sx={PRIMARY_PILL_SX}
+                            >
+                              {emptyCtas.primary.label}
+                            </Button>
+                            {emptyCtas.otherDrafts ? (
+                              <Button
+                                variant="outlined"
+                                href={emptyCtas.otherDrafts.href}
+                                sx={{
+                                  ...PRIMARY_PILL_SX,
+                                  borderColor: "rgba(232, 216, 199, 0.28)",
+                                  bgcolor: "transparent",
+                                  color: "var(--sp-ivory)",
+                                }}
+                              >
+                                {emptyCtas.otherDrafts.label}
+                              </Button>
+                            ) : null}
+                          </>
+                        ) : (
+                          <Link
+                            href="/library"
+                            sx={{ color: "rgba(232, 216, 199, 0.72)" }}
+                          >
+                            Back to library
+                          </Link>
+                        )}
+                        <Button
+                          variant="text"
+                          color="inherit"
+                          onClick={() => setRegenConfirmOpen(true)}
+                          disabled={jobActionDisabled}
+                          sx={{
+                            color: "rgba(232, 216, 199, 0.72)",
+                            textTransform: "none",
+                            fontWeight: 500,
+                          }}
+                        >
+                          Regenerate
+                        </Button>
+                      </Stack>
+                    ) : null}
                   </>
                 )}
               </Stack>

@@ -1,6 +1,6 @@
 import { isGuest } from "../guest/session";
 import type { UnlockView } from "../achievements/wire";
-import { api, guestUnsupported } from "./core";
+import { api, ApiError, guestUnsupported, type ApiErrorBody } from "./core";
 import { notifyGamificationChanged } from "./events";
 import { sanitizeTopicHints } from "./materials";
 import type {
@@ -45,19 +45,80 @@ export type FillOrphanClaimsResult = {
   cards: CardDraftView[];
 };
 
-/** Batch-fill orphan claims for a job (soft-fail; server caps per request). */
-export function generateCardsFromOrphanClaims(
+export type FillAllKickoff =
+  | ({ kind: "empty" } & FillOrphanClaimsResult)
+  | {
+      kind: "started";
+      runId: string;
+      orphanTotal: number;
+      status: "running" | "queued";
+    };
+
+export type FillAllRunStatus = {
+  runId: string;
+  status:
+    | "idle"
+    | "queued"
+    | "running"
+    | "complete"
+    | "errored"
+    | "terminated";
+  output: {
+    attempted: number;
+    filled: number;
+    skipped: number;
+    remaining: number;
+    stopReason: string;
+  } | null;
+};
+
+/** Kick off durable Fill-all (202) or empty zeros (200). */
+export async function generateCardsFromOrphanClaims(
   jobId: string,
   body?: { type?: RegenCardType },
-) {
+): Promise<FillAllKickoff> {
   if (isGuest()) guestUnsupported("generate cards from claims");
-  return api<FillOrphanClaimsResult>(
-    `/api/jobs/${jobId}/claims/fill-orphans`,
-    {
-      method: "POST",
-      json: body ?? {},
-    },
-  );
+  const headers = new Headers();
+  headers.set("content-type", "application/json");
+  const res = await fetch(`/api/jobs/${jobId}/claims/fill-orphans`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body ?? {}),
+    credentials: "include",
+  });
+  if (!res.ok) {
+    let message = res.statusText || "Request failed";
+    try {
+      const data = (await res.json()) as ApiErrorBody;
+      message = data.message ?? data.error ?? message;
+    } catch {
+      /* ignore */
+    }
+    throw new ApiError(res.status, message);
+  }
+  const json = (await res.json()) as Record<string, unknown>;
+  if (res.status === 202 && typeof json.runId === "string") {
+    return {
+      kind: "started",
+      runId: json.runId,
+      orphanTotal: Number(json.orphanTotal ?? 0),
+      status: json.status === "queued" ? "queued" : "running",
+    };
+  }
+  return {
+    kind: "empty",
+    attempted: Number(json.attempted ?? 0),
+    filled: Number(json.filled ?? 0),
+    skipped: Number(json.skipped ?? 0),
+    remaining: Number(json.remaining ?? 0),
+    cards: Array.isArray(json.cards) ? (json.cards as CardDraftView[]) : [],
+  };
+}
+
+/** Poll Fill-all Workflow status (does not use generation progress_json). */
+export function getFillAllOrphansStatus(jobId: string, init?: RequestInit) {
+  if (isGuest()) guestUnsupported("view fill-all status");
+  return api<FillAllRunStatus>(`/api/jobs/${jobId}/claims/fill-orphans`, init);
 }
 
 /** Wipe all job cards (including accepted), reset to queued, and requeue generation. */
