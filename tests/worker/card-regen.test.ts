@@ -3,7 +3,7 @@ import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import {
   capRegenSourceText,
-  regenerateOneUserPrompt,
+  resolveRegenCorpus,
 } from "../../worker/generation/card-regen";
 import { studyStrugglePromptSuffix } from "../../worker/generation/feedback-hints";
 import { CHUNK_CHAR_LIMIT } from "../../worker/generation/pipeline";
@@ -61,7 +61,10 @@ function seedThreeDrafts(env: ReturnType<typeof createTestEnv>) {
     front_json: JSON.stringify("Left front?"),
     back_json: JSON.stringify("Left back"),
     media_r2_keys_json: null,
-    provenance_json: JSON.stringify({ pages: [1], excerpt: "left" }),
+    provenance_json: JSON.stringify({
+      pages: [1],
+      excerpt: "Mitochondria produce ATP",
+    }),
     status: "draft",
     created_at: "2026-01-01T01:06:00.000Z",
     updated_at: "2026-01-01T01:06:00.000Z",
@@ -74,7 +77,10 @@ function seedThreeDrafts(env: ReturnType<typeof createTestEnv>) {
     front_json: JSON.stringify("Middle front?"),
     back_json: JSON.stringify("Middle back"),
     media_r2_keys_json: null,
-    provenance_json: JSON.stringify({ pages: [1], excerpt: "middle" }),
+    provenance_json: JSON.stringify({
+      pages: [1],
+      excerpt: "Mitochondria produce ATP",
+    }),
     status: "draft",
     created_at: "2026-01-01T01:07:00.000Z",
     updated_at: "2026-01-01T01:07:00.000Z",
@@ -87,18 +93,46 @@ function seedThreeDrafts(env: ReturnType<typeof createTestEnv>) {
     front_json: JSON.stringify("Right {{c1::blank}}."),
     back_json: JSON.stringify("blank"),
     media_r2_keys_json: null,
-    provenance_json: JSON.stringify({ pages: [1], excerpt: "right" }),
+    provenance_json: JSON.stringify({
+      pages: [1],
+      excerpt: "Mitochondria produce ATP",
+    }),
     status: "draft",
     created_at: "2026-01-01T01:08:00.000Z",
     updated_at: "2026-01-01T01:08:00.000Z",
   });
 }
 
+const VALID_CLAIMS = JSON.stringify({
+  claims: [
+    {
+      subject: "Mitochondria",
+      predicate: "produce ATP",
+      object: "ATP",
+      source_span: "Mitochondria produce ATP",
+    },
+  ],
+});
+
 const VALID_MCQ = JSON.stringify({
   cards: [
     {
       type: "mcq",
       front: "Which organelle produces ATP?",
+      back: "Mitochondria",
+      options: ["Mitochondria", "Nucleus", "Ribosome", "Golgi"],
+      provenance: { pages: [1], excerpt: "Mitochondria produce ATP" },
+    },
+  ],
+});
+
+/** Valid MCQ shape that Layer-1 drops (compound front). */
+const COMPOUND_MCQ = JSON.stringify({
+  cards: [
+    {
+      type: "mcq",
+      front:
+        "What is mitochondria and which pathway and how does ATP work versus glycolysis?",
       back: "Mitochondria",
       options: ["Mitochondria", "Nucleus", "Ribosome", "Golgi"],
       provenance: { pages: [1], excerpt: "Mitochondria produce ATP" },
@@ -131,8 +165,9 @@ function stubWorkersAiSequence(
   return run;
 }
 
+/** Happy path: extract claims, then write one typed card. */
 function stubWorkersAiMcq(env: ReturnType<typeof createTestEnv>) {
-  return stubWorkersAiSequence(env, [VALID_MCQ]);
+  return stubWorkersAiSequence(env, [VALID_CLAIMS, VALID_MCQ]);
 }
 
 function regenRequest(env: ReturnType<typeof createTestEnv>) {
@@ -225,9 +260,9 @@ describe("POST /api/cards/:id/regen", () => {
       kind: "regen",
       path: "free",
       provider: "workers-ai",
-      tokens_prompt: 100,
-      tokens_completion: 40,
-      tokens_total: 140,
+      tokens_prompt: 200,
+      tokens_completion: 80,
+      tokens_total: 280,
     });
   });
 
@@ -262,7 +297,7 @@ describe("POST /api/cards/:id/regen", () => {
     );
   });
 
-  it("caps oversized material text before the LLM prompt", async () => {
+  it("prefers provenance excerpt over oversized material as extract corpus", async () => {
     const env = createTestEnv();
     seedOwner(env);
     seedThreeDrafts(env);
@@ -289,10 +324,8 @@ describe("POST /api/cards/:id/regen", () => {
       messages?: { role: string; content: string }[];
     };
     const userMsg = body.messages?.find((m) => m.role === "user")?.content ?? "";
-    expect(userMsg).toContain("--- MATERIAL ---");
-    const material = userMsg.split("--- MATERIAL ---")[1]?.split("--- END ---")[0] ?? "";
-    expect(material.trim().length).toBeLessThanOrEqual(CHUNK_CHAR_LIMIT);
-    expect(material).not.toContain("XXXX");
+    expect(userMsg).toContain("Mitochondria produce ATP");
+    expect(userMsg).not.toContain("XXXX");
     expect(capRegenSourceText(huge).length).toBe(CHUNK_CHAR_LIMIT);
   });
 
@@ -316,7 +349,10 @@ describe("POST /api/cards/:id/regen", () => {
       front_json: JSON.stringify("Label the organelle"),
       back_json: JSON.stringify("Mitochondria"),
       media_r2_keys_json: JSON.stringify(["materials/deck-a/fig.png"]),
-      provenance_json: JSON.stringify({ pages: [1], excerpt: "mito" }),
+      provenance_json: JSON.stringify({
+        pages: [1],
+        excerpt: "Mitochondria produce ATP",
+      }),
       status: "draft",
       created_at: "2026-01-01T01:06:00.000Z",
       updated_at: "2026-01-01T01:06:00.000Z",
@@ -447,7 +483,10 @@ describe("POST /api/cards/:id/regen", () => {
       front_json: JSON.stringify("Accepted Q?"),
       back_json: JSON.stringify("A"),
       media_r2_keys_json: null,
-      provenance_json: JSON.stringify({ pages: [1], excerpt: "ex" }),
+      provenance_json: JSON.stringify({
+        pages: [1],
+        excerpt: "Mitochondria produce ATP",
+      }),
       status: "accepted",
       created_at: "2026-01-01T01:06:00.000Z",
       updated_at: "2026-01-01T01:06:00.000Z",
@@ -513,7 +552,10 @@ describe("POST /api/cards/:id/regen", () => {
       front_json: JSON.stringify("Struggle Q?"),
       back_json: JSON.stringify("A"),
       media_r2_keys_json: null,
-      provenance_json: JSON.stringify({ pages: [1], excerpt: "ex" }),
+      provenance_json: JSON.stringify({
+        pages: [1],
+        excerpt: "Mitochondria produce ATP",
+      }),
       status: "accepted",
       created_at: "2026-01-01T01:06:00.000Z",
       updated_at: "2026-01-01T01:06:00.000Z",
@@ -560,46 +602,58 @@ describe("POST /api/cards/:id/regen", () => {
     );
     expect(res.status).toBe(200);
     expect(run).toHaveBeenCalled();
-    const body = run.mock.calls[0]![1] as {
-      messages?: { role: string; content: string }[];
-    };
-    const userMsg = body.messages?.find((m) => m.role === "user")?.content ?? "";
     const expected = studyStrugglePromptSuffix({ again_14d: 1, lapses: 2 });
     expect(expected.length).toBeGreaterThan(0);
-    expect(userMsg).toContain(expected);
+    const anyUser = run.mock.calls.some((call) => {
+      const body = call[1] as {
+        messages?: { role: string; content: string }[];
+      };
+      const userMsg =
+        body.messages?.find((m) => m.role === "user")?.content ?? "";
+      return userMsg.includes(expected);
+    });
+    expect(anyUser).toBe(true);
   });
 
-  it("retries once with the validation error when the first reply is invalid", async () => {
+  it("retries once with the validation error when the write reply is invalid", async () => {
     const env = createTestEnv();
     seedOwner(env);
     seedThreeDrafts(env);
     env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
-    const run = stubWorkersAiSequence(env, ["not json at all", VALID_MCQ]);
+    const run = stubWorkersAiSequence(env, [
+      VALID_CLAIMS,
+      "not json at all",
+      VALID_MCQ,
+    ]);
 
     const res = await regenRequest(env);
     expect(res.status).toBe(200);
-    expect(run).toHaveBeenCalledTimes(2);
-    const secondInput = run.mock.calls[1][1] as {
+    expect(run).toHaveBeenCalledTimes(3);
+    const writeReask = run.mock.calls[2][1] as {
       messages: { role: string; content: string }[];
     };
-    const user = secondInput.messages.find((m) => m.role === "user")!.content;
+    const user = writeReask.messages.find((m) => m.role === "user")!.content;
     expect(user).toMatch(/previous reply was rejected/i);
     expect(
       env.getUsageEvents().filter((e) => e.kind === "regen")[0],
-    ).toMatchObject({ tokens_total: 280 });
+    ).toMatchObject({ tokens_total: 420 });
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
   });
 
-  it("returns 502 JSON with the validation error after two invalid replies", async () => {
+  it("returns 502 JSON with the validation error after two invalid write replies", async () => {
     const env = createTestEnv();
     seedOwner(env);
     seedThreeDrafts(env);
     env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
-    const run = stubWorkersAiSequence(env, ["not json at all"]);
+    const run = stubWorkersAiSequence(env, [
+      VALID_CLAIMS,
+      "not json at all",
+      "still not json",
+    ]);
 
     const res = await regenRequest(env);
     expect(res.status).toBe(502);
-    expect(run).toHaveBeenCalledTimes(2);
+    expect(run).toHaveBeenCalledTimes(3);
     expect(((await res.json()) as { message: string }).message).toMatch(
       /non-JSON/,
     );
@@ -644,47 +698,83 @@ describe("POST /api/cards/:id/regen", () => {
         },
       ],
     });
-    const run = stubWorkersAiSequence(env, [badMcq, VALID_MCQ]);
+    const run = stubWorkersAiSequence(env, [VALID_CLAIMS, badMcq, VALID_MCQ]);
 
     const res = await regenRequest(env);
     expect(res.status).toBe(200);
-    expect(run).toHaveBeenCalledTimes(2);
+    expect(run).toHaveBeenCalledTimes(3);
   });
 
-  it("does not reask when the first reply is truncated mid-JSON", async () => {
+  it("compact-retries write when the first write reply is truncated mid-JSON", async () => {
     const env = createTestEnv();
     seedOwner(env);
     seedThreeDrafts(env);
     env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
     const run = stubWorkersAiSequence(env, [
+      VALID_CLAIMS,
       '{"cards":[{"type":"mcq","front":"Which',
       VALID_MCQ,
     ]);
 
     const res = await regenRequest(env);
-    expect(res.status).toBe(502);
+    expect(res.status).toBe(200);
+    expect(run).toHaveBeenCalledTimes(3);
+  });
+
+  it("returns 422 when extract yields no claims", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const run = stubWorkersAiSequence(env, [
+      JSON.stringify({ claims: [] }),
+      VALID_MCQ,
+    ]);
+
+    const res = await regenRequest(env);
+    expect(res.status).toBe(422);
     expect(run).toHaveBeenCalledTimes(1);
+    expect(
+      JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json),
+    ).toBe("Middle front?");
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(0);
+  });
+
+  it("returns 422 when Layer-1 rejects the card after quality reask", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const run = stubWorkersAiSequence(env, [
+      VALID_CLAIMS,
+      COMPOUND_MCQ,
+      COMPOUND_MCQ,
+    ]);
+
+    const res = await regenRequest(env);
+    expect(res.status).toBe(422);
+    expect(run.mock.calls.length).toBeGreaterThanOrEqual(3);
+    expect(
+      JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json),
+    ).toBe("Middle front?");
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(0);
   });
 });
 
-describe("regenerateOneUserPrompt", () => {
-  it("appends study struggle suffix when again or lapses are positive", () => {
-    const suffix = studyStrugglePromptSuffix({ again_14d: 2, lapses: 0 });
-    const prompt = regenerateOneUserPrompt({
-      text: "source",
-      type: "qa",
-      studyStruggle: { again_14d: 2, lapses: 0 },
-    });
-    expect(suffix.length).toBeGreaterThan(0);
-    expect(prompt).toContain(suffix);
+describe("resolveRegenCorpus", () => {
+  it("prefers a non-empty excerpt over material text", () => {
+    expect(
+      resolveRegenCorpus({
+        excerpt: "  ATP stores energy  ",
+        materialText: "Long material about many facts including ATP stores energy and more.",
+      }),
+    ).toBe("ATP stores energy");
   });
 
-  it("omits struggle text when again and lapses are zero", () => {
-    const prompt = regenerateOneUserPrompt({
-      text: "source",
-      type: "qa",
-      studyStruggle: { again_14d: 0, lapses: 0 },
-    });
-    expect(prompt).not.toContain("struggling in study");
+  it("falls back to capped material when excerpt is empty", () => {
+    const material = "x".repeat(CHUNK_CHAR_LIMIT + 50);
+    expect(
+      resolveRegenCorpus({ excerpt: "   ", materialText: material }),
+    ).toBe(material.slice(0, CHUNK_CHAR_LIMIT));
   });
 });

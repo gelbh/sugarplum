@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   filterClaimsAgainstChunk,
   parseClaimsPayload,
+  pickClaimForRegen,
 } from "../../worker/generation/claims";
 
 describe("claims parse and filter", () => {
@@ -53,5 +54,43 @@ describe("claims parse and filter", () => {
   it("throws truncated mid-JSON when nothing can be salvaged", () => {
     const truncated = `{"claims":[{"subject":"Lysozyme","predicate":"digests`;
     expect(() => parseClaimsPayload(truncated)).toThrow(/truncated mid-JSON/i);
+  });
+});
+
+describe("pickClaimForRegen", () => {
+  const lysozyme = {
+    subject: "Lysozyme",
+    predicate: "digests peptidoglycan",
+    source_span: "Lysozyme digests peptidoglycan",
+  };
+  const atp = {
+    subject: "ATP",
+    predicate: "stores energy",
+    source_span: "ATP stores energy",
+  };
+
+  it("returns null for an empty claim list", () => {
+    expect(pickClaimForRegen([])).toBeNull();
+  });
+
+  it("prefers a claim whose source_span matches the excerpt", () => {
+    expect(
+      pickClaimForRegen([lysozyme, atp], {
+        excerpt: "ATP stores energy",
+      }),
+    ).toEqual(atp);
+  });
+
+  it("falls back to previous-front subject match when excerpt does not match", () => {
+    expect(
+      pickClaimForRegen([atp, lysozyme], {
+        excerpt: "unrelated excerpt",
+        previousFront: "What does Lysozyme digest?",
+      }),
+    ).toEqual(lysozyme);
+  });
+
+  it("returns the first claim when no excerpt or front match", () => {
+    expect(pickClaimForRegen([lysozyme, atp])).toEqual(lysozyme);
   });
 });
