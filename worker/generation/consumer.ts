@@ -11,6 +11,7 @@ import {
   type ProcessGenerateResult,
 } from "./pass1";
 import { runAfterPersistPhase } from "./afterPersist";
+import { runClaimOrphanFillPhase } from "./claim-orphan-fill";
 import { startGenerationWorkflow } from "./workflowLifecycle";
 export {
   startGenerationWorkflow,
@@ -21,8 +22,8 @@ export { mergeAndDedupeDrafts };
 export type { ProcessGenerateOptions, ProcessGenerateResult };
 
 /**
- * Vitest / legacy single-invocation path: pass1 then afterPersist.
- * Workflow calls runPass1Phase / runAfterPersistPhase directly.
+ * Vitest / legacy single-invocation path: pass1, afterPersist, claimOrphanFill.
+ * Workflow calls the same phases via durable steps.
  */
 export async function processGenerateJob(
   env: Env,
@@ -31,7 +32,13 @@ export async function processGenerateJob(
 ): Promise<ProcessGenerateResult> {
   const pass1 = await runPass1Phase(env, message, opts);
   if (pass1 === "busy") return "busy";
-  return runAfterPersistPhase(env, message, opts);
+  const after = await runAfterPersistPhase(env, message, opts);
+  // Workflow always runs claimOrphanFill. Vitest injects opts.llm and does not
+  // stub claim-write AI; skip here so free-gen / card-count assertions stay honest.
+  if (!opts?.llm) {
+    await runClaimOrphanFillPhase(env, message);
+  }
+  return after;
 }
 
 /** Cloudflare Queues consumer: create Workflow + ack; sweep stale orphans. */

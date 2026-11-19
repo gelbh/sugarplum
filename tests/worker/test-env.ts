@@ -2806,6 +2806,26 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.includes("FROM study_claims sc") &&
+          normalized.includes("NOT EXISTS") &&
+          normalized.includes("WHERE sc.job_id =")
+        ) {
+          const jobId = bound[0] as string;
+          const rows = [...studyClaims.values()]
+            .filter((sc) => sc.job_id === jobId)
+            .filter(
+              (sc) =>
+                ![...cards.values()].some((card) => card.claim_id === sc.id),
+            )
+            .sort(
+              (a, b) =>
+                a.created_at.localeCompare(b.created_at) ||
+                a.id.localeCompare(b.id),
+            )
+            .map((sc) => ({ id: sc.id }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM study_claims sc") &&
           normalized.includes("SELECT c.id FROM cards c") &&
           (normalized.includes("WHERE sc.job_id =") ||
             normalized.includes("WHERE sc.deck_id ="))
