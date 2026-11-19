@@ -31,12 +31,15 @@ const materials: FocusMaterial[] = fixture.materials.map((m) => ({
 }));
 
 describe("atlas Focus course-pack eval", () => {
-  it("locks exactly the four Key parasites from course-like materials", () => {
-    expect(fixture.expectedKey).toEqual([
-      "Fasciola hepatica",
-      "Toxoplasma gondii",
+  it("locks Key parasites from course-like materials including late KEY_ROLE pages", () => {
+    expect([...fixture.expectedKey].sort()).toEqual([
+      "Anoplocephala perfoliata",
       "Ctenocephalides felis",
       "Dipylidium caninum",
+      "Fasciola hepatica",
+      "Haematobia irritans",
+      "Neospora caninum",
+      "Toxoplasma gondii",
     ]);
 
     const byTier = new Map<string, string[]>();
@@ -56,13 +59,10 @@ describe("atlas Focus course-pack eval", () => {
     }
   });
 
-  it("does not Key filler parasites named only in lectures or late tutorial pages", () => {
+  it("does not Key fillers named only in lectures or notes", () => {
     const fillers = [
       "Calicophoron daubneyi",
-      "Anoplocephala perfoliata",
       "Echinococcus granulosus",
-      "Neospora caninum",
-      "Haematobia irritans",
       "Toxocara canis",
     ];
     for (const name of fillers) {
