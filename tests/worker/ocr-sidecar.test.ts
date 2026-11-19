@@ -7,6 +7,7 @@ import { enqueueGeneration } from "../../worker/generation/enqueue";
 import { extractPdfPageNumbers } from "../../worker/materials/extract-pdf";
 import {
   applyOcrSidecar,
+  focusSidecarCacheHit,
   mergeOcrPages,
   nextUnstudiedPages,
   ocrSidecarKey,
@@ -526,5 +527,37 @@ describe("ocr refetch", () => {
     expect(second.status).toBe(200);
     expect(await second.json()).toEqual({ stored: 2 });
     expect(env.getR2(ocrSidecarKey("deck-a", "mat-1"))).toBe(beforeSecond);
+  });
+});
+
+describe("focusSidecarCacheHit", () => {
+  it("hits when hash matches and a page has text", () => {
+    expect(
+      focusSidecarCacheHit(
+        {
+          pages: [{ page: 1, text: "Fasciola hepatica" }],
+          sourceContentHash: "abc",
+        },
+        "abc",
+      ),
+    ).toBe(true);
+  });
+
+  it("misses when hash missing, mismatched, or all pages empty", () => {
+    expect(
+      focusSidecarCacheHit({ pages: [{ page: 1, text: "x" }] }, "abc"),
+    ).toBe(false);
+    expect(
+      focusSidecarCacheHit(
+        { pages: [{ page: 1, text: "x" }], sourceContentHash: "old" },
+        "abc",
+      ),
+    ).toBe(false);
+    expect(
+      focusSidecarCacheHit(
+        { pages: [{ page: 1, text: "  " }], sourceContentHash: "abc" },
+        "abc",
+      ),
+    ).toBe(false);
   });
 });

@@ -14,7 +14,21 @@ const OCR_REFILL_WINDOW_SPAN = 120;
 
 export type OcrPageText = { page: number; text: string };
 
-export type OcrSidecar = { pages: OcrPageText[]; unstudiedPages?: number[] };
+export type OcrSidecar = {
+  pages: OcrPageText[];
+  unstudiedPages?: number[];
+  /** Atlas Focus cache: skip R2 extract when this matches material.content_hash. */
+  sourceContentHash?: string;
+};
+
+export function focusSidecarCacheHit(
+  sidecar: OcrSidecar | null | undefined,
+  contentHash: string | null | undefined,
+): boolean {
+  if (!sidecar || !contentHash) return false;
+  if (sidecar.sourceContentHash !== contentHash) return false;
+  return sidecar.pages.some((p) => p.text.trim().length > 0);
+}
 
 export function ocrRefillWindow(
   startPage: number,
@@ -258,23 +272,7 @@ export async function readOcrSidecar(
     obj = await env.MATERIALS.get(ocrSidecarKey(deckId, materialId));
   }
   if (!obj) return null;
-  try {
-    const parsed: unknown = JSON.parse(await obj.text());
-    const pages = parseStoredOcrPages(
-      parsed && typeof parsed === "object" && "pages" in parsed
-        ? (parsed as { pages?: unknown }).pages
-        : undefined,
-    );
-    if (!pages) return null;
-    const unstudiedPages = parseUnstudiedPages(
-      parsed && typeof parsed === "object" && "unstudiedPages" in parsed
-        ? (parsed as { unstudiedPages?: unknown }).unstudiedPages
-        : undefined,
-    );
-    return unstudiedPages ? { pages, unstudiedPages } : { pages };
-  } catch {
-    return null;
-  }
+  return parseSidecarObject(obj);
 }
 
 export async function writeOcrSidecar(
@@ -312,7 +310,18 @@ async function parseSidecarObject(
         ? (parsed as { unstudiedPages?: unknown }).unstudiedPages
         : undefined,
     );
-    return unstudiedPages ? { pages, unstudiedPages } : { pages };
+    const rawHash =
+      parsed &&
+      typeof parsed === "object" &&
+      "sourceContentHash" in parsed
+        ? (parsed as { sourceContentHash?: unknown }).sourceContentHash
+        : undefined;
+    const sourceContentHash =
+      typeof rawHash === "string" && rawHash.trim() ? rawHash : undefined;
+    const body: OcrSidecar = { pages };
+    if (unstudiedPages) body.unstudiedPages = unstudiedPages;
+    if (sourceContentHash) body.sourceContentHash = sourceContentHash;
+    return body;
   } catch {
     return null;
   }
@@ -339,11 +348,17 @@ export async function writeAtlasOcrSidecar(
   atlasId: string,
   materialId: string,
   pages: readonly OcrPageText[],
-  unstudiedPages: readonly number[] = [],
+  opts: {
+    unstudiedPages?: readonly number[];
+    sourceContentHash?: string;
+  } = {},
 ): Promise<void> {
   const body: OcrSidecar = { pages: [...pages] };
-  if (unstudiedPages.length > 0) {
-    body.unstudiedPages = [...unstudiedPages];
+  if (opts.unstudiedPages && opts.unstudiedPages.length > 0) {
+    body.unstudiedPages = [...opts.unstudiedPages];
+  }
+  if (opts.sourceContentHash?.trim()) {
+    body.sourceContentHash = opts.sourceContentHash;
   }
   const sandboxId = await sandboxIdForAtlas(env, atlasId);
   await env.MATERIALS.put(
