@@ -172,3 +172,15 @@ export async function countReadyAtlasMaterials(
   const rows = await loadAtlasMaterialRows(db, atlasId);
   return rows.length;
 }
+
+/** Bump when Focus scan rules change so complete maps rescan without a migration. */
+export const FOCUS_PACK_FINGERPRINT_VERSION = "v1";
+
+export function focusPackFingerprint(
+  rows: ReadonlyArray<{ id: string; content_hash: string | null }>,
+): string {
+  const markers = rows
+    .map((r) => r.content_hash ?? `id:${r.id}`)
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  return `${FOCUS_PACK_FINGERPRINT_VERSION}:${markers.join("|")}`;
+}

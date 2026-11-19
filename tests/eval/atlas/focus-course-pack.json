@@ -1,10 +1,13 @@
 {
-  "source": "Checked AB2 Parasitology course-pack excerpts for Focus Key lock. PDFs are not committed; filenames and page 1–2 snippets stand in for uploaded materials. Decisions lock Key = tutorial/practical/past_paper name in filename or pages 1–2.",
+  "source": "Checked AB2 Parasitology course-pack excerpts for Focus Key lock. PDFs are not committed; filenames and page snippets stand in for uploaded materials. Key = tutorial/practical/past_paper name in filename or any page.",
   "expectedKey": [
-    "Fasciola hepatica",
-    "Toxoplasma gondii",
+    "Anoplocephala perfoliata",
     "Ctenocephalides felis",
-    "Dipylidium caninum"
+    "Dipylidium caninum",
+    "Fasciola hepatica",
+    "Haematobia irritans",
+    "Neospora caninum",
+    "Toxoplasma gondii"
   ],
   "entries": [
     {

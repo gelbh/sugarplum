@@ -45,7 +45,7 @@ describe("scanFocus", () => {
     });
   });
 
-  it("Key via page 1 or 2 text", () => {
+  it("Key via early page text", () => {
     const materials = [
       mat({
         id: "m2",
@@ -64,16 +64,23 @@ describe("scanFocus", () => {
     });
   });
 
-  it("does not Key from page 3+ only", () => {
+  it("Key via any page text on tutorial / practical / past_paper", () => {
     const materials = [
       mat({
         id: "m3",
         sourceRole: "tutorial",
         filename: "tut.pdf",
-        pages: [{ page: 3, text: "Appendix: Fasciola hepatica" }],
+        pages: [
+          { page: 1, text: "Intro only" },
+          { page: 13, text: "Appendix: Fasciola hepatica" },
+        ],
       }),
     ];
-    expect(scanFocus(entry, materials).tier).toBe("standard");
+    expect(scanFocus(entry, materials)).toEqual({
+      tier: "key",
+      reason: 'Named in tutorial "tut.pdf"',
+      materialIds: ["m3"],
+    });
   });
 
   it("lecture cannot Key even when named on page 1", () => {

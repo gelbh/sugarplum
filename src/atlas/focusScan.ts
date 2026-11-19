@@ -78,10 +78,7 @@ function materialKeysEntry(
   if (material.filename && textMentionsEntry(material.filename, forms)) {
     return true;
   }
-  return material.pages.some(
-    (p) =>
-      (p.page === 1 || p.page === 2) && textMentionsEntry(p.text, forms),
-  );
+  return material.pages.some((p) => textMentionsEntry(p.text, forms));
 }
 
 function materialMentionsEntry(

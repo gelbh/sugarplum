@@ -4,8 +4,9 @@ import { scanFocus } from "../../src/atlas/focusScan";
 import { loadParasiteDataset } from "./datasets/parasites";
 import { overlayAtlas, type OverlayRow } from "./merge";
 import {
-  countReadyAtlasMaterials,
+  focusPackFingerprint,
   loadAtlasFocusMaterials,
+  loadAtlasMaterialRows,
 } from "./atlas-materials";
 
 export type FocusRow = {
@@ -158,6 +159,28 @@ async function loadMergedEntries(
   return overlayAtlas(loadParasiteDataset().entries, overlays);
 }
 
+async function loadStoredFocusPackFingerprint(
+  db: D1Database,
+  atlasId: string,
+): Promise<string | null> {
+  const row = await db
+    .prepare("SELECT focus_pack_fingerprint FROM atlases WHERE id = ?")
+    .bind(atlasId)
+    .first<{ focus_pack_fingerprint: string | null }>();
+  return row?.focus_pack_fingerprint ?? null;
+}
+
+async function saveFocusPackFingerprint(
+  db: D1Database,
+  atlasId: string,
+  fingerprint: string,
+): Promise<void> {
+  await db
+    .prepare("UPDATE atlases SET focus_pack_fingerprint = ? WHERE id = ?")
+    .bind(fingerprint, atlasId)
+    .run();
+}
+
 export async function refreshAtlasFocus(
   db: D1Database,
   env: Env,
@@ -172,8 +195,10 @@ export async function refreshAtlasFocus(
   if (!atlas) return;
 
   const existing = await loadFocusMap(db, atlasId);
+  const materialRows = await loadAtlasMaterialRows(db, atlasId);
   const focusMaterials = await loadAtlasFocusMaterials(db, env, atlasId);
   const now = new Date().toISOString();
+  const fingerprint = focusPackFingerprint(materialRows);
 
   if (focusMaterials.length === 0) {
     // Keep manual pins when nothing is scannable so Focus PATCH sticks.
@@ -204,6 +229,7 @@ export async function refreshAtlasFocus(
         .bind(atlasId, entryKey)
         .run();
     }
+    await saveFocusPackFingerprint(db, atlasId, fingerprint);
     return;
   }
 
@@ -255,6 +281,8 @@ export async function refreshAtlasFocus(
       .bind(atlasId, entryKey)
       .run();
   }
+
+  await saveFocusPackFingerprint(db, atlasId, fingerprint);
 }
 
 export async function refreshFocusBestEffort(
@@ -280,11 +308,22 @@ export async function listEntriesWithFocus(
 ): Promise<AtlasEntryView[]> {
   let focus = await loadFocusMap(db, opts.atlasId);
   const missing = opts.entries.some((e) => !focus.has(focusEntryKey(e)));
-  const readyCount = await countReadyAtlasMaterials(db, opts.atlasId);
-  // Pack-only Focus: empty pack must clear stale deck-era automatic rows
-  // (complete maps would otherwise skip refresh forever). Incomplete maps
-  // still scan when the pack has ready materials.
-  if ((missing && readyCount > 0) || (focus.size > 0 && readyCount === 0)) {
+  const materialRows = await loadAtlasMaterialRows(db, opts.atlasId);
+  const readyCount = materialRows.length;
+  const currentFingerprint = focusPackFingerprint(materialRows);
+  const storedFingerprint = await loadStoredFocusPackFingerprint(
+    db,
+    opts.atlasId,
+  );
+  const fingerprintStale = storedFingerprint !== currentFingerprint;
+  // Pack-only Focus: empty pack must clear stale deck-era automatic rows.
+  // Incomplete maps still scan when the pack has ready materials. Pack
+  // fingerprint mismatch (incl. NULL after migrate) heals complete stale maps.
+  if (
+    (missing && readyCount > 0) ||
+    (focus.size > 0 && readyCount === 0) ||
+    fingerprintStale
+  ) {
     await refreshFocusBestEffort(db, env, { atlasId: opts.atlasId });
     focus = await loadFocusMap(db, opts.atlasId);
   }
