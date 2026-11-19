@@ -37,6 +37,7 @@ import {
   requireOwnedSubjectId,
 } from "./ownership";
 import { listFigureKeysInR2 } from "./figures";
+import { buildClaimCoverage } from "../generation/claim-coverage";
 import {
   DEFAULT_R2_BUCKET,
   FILE_READY,
@@ -185,6 +186,39 @@ deckRoutes.get("/:id/stats", async (c) => {
     archived: archived?.count ?? 0,
     materials: materials?.count ?? 0,
   });
+});
+
+deckRoutes.get("/:id/claim-coverage", async (c) => {
+  const userId = await requireUser(c);
+  const deckId = c.req.param("id");
+  const db = getDb(c.env);
+  await requireOwnedDeck(db, deckId, userId);
+
+  const { results } = await db
+    .prepare(
+      `SELECT sc.id, sc.job_id, sc.subject, sc.predicate, sc.object, sc.source_span,
+              sc.pages_json, c.id AS card_id, c.status AS card_status,
+              c.created_at AS card_created_at
+       FROM study_claims sc
+       LEFT JOIN cards c ON c.claim_id = sc.id
+       WHERE sc.deck_id = ?
+       ORDER BY sc.created_at ASC`,
+    )
+    .bind(deckId)
+    .all<{
+      id: string;
+      job_id: string;
+      subject: string;
+      predicate: string;
+      object: string | null;
+      source_span: string;
+      pages_json: string | null;
+      card_id: string | null;
+      card_status: string | null;
+      card_created_at: string | null;
+    }>();
+
+  return c.json(buildClaimCoverage(results ?? []));
 });
 
 deckRoutes.get("/:id/composition", async (c) => {

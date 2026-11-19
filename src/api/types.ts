@@ -271,6 +271,8 @@ export type ClaimCoverageRow = {
   pages?: number[] | null;
   card_id: string | null;
   card_status?: string | null;
+  /** Present on deck-scoped coverage for draft jump. */
+  job_id?: string | null;
 };
 
 export type ClaimCoverage = {

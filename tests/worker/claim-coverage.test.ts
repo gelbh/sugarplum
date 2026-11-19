@@ -179,3 +179,154 @@ describe("GET /api/jobs/:id/claim-coverage", () => {
     expect(foreign.status).toBe(404);
   });
 });
+
+describe("GET /api/decks/:id/claim-coverage", () => {
+  function seedDeckWithTwoJobs(env: ReturnType<typeof createTestEnv>) {
+    env.seedUser({
+      id: "user-a",
+      email: "a@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-a",
+      user_id: "user-a",
+      title: "Bio",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedMaterial({
+      id: "mat-a",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedMaterial({
+      id: "mat-b",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedGenerationJob({
+      id: "job-a",
+      material_id: "mat-a",
+      status: "needs_review",
+      error: null,
+      coverage_json: null,
+      created_at: "2026-01-01T01:00:00.000Z",
+      finished_at: "2026-01-01T01:05:00.000Z",
+    });
+    env.seedGenerationJob({
+      id: "job-b",
+      material_id: "mat-b",
+      status: "done",
+      error: null,
+      coverage_json: null,
+      created_at: "2026-01-01T02:00:00.000Z",
+      finished_at: "2026-01-01T02:05:00.000Z",
+    });
+    env.seedSession("sess-a", "user-a");
+  }
+
+  it("aggregates claims across jobs for the deck owner", async () => {
+    const env = createTestEnv();
+    seedDeckWithTwoJobs(env);
+    env.seedStudyClaim({
+      id: "cl-job-a",
+      job_id: "job-a",
+      deck_id: "deck-a",
+      subject: "Lysozyme",
+      predicate: "digests peptidoglycan",
+      object: null,
+      source_span: "Lysozyme digests peptidoglycan",
+      qualifiers_json: null,
+      pages_json: "[1]",
+      created_at: "2026-01-01T01:01:00.000Z",
+    });
+    env.seedStudyClaim({
+      id: "cl-job-b-orphan",
+      job_id: "job-b",
+      deck_id: "deck-a",
+      subject: "IgA",
+      predicate: "protects mucosa",
+      object: null,
+      source_span: "IgA protects mucosa",
+      qualifiers_json: null,
+      pages_json: null,
+      created_at: "2026-01-01T02:01:00.000Z",
+    });
+    env.seedCard({
+      id: "card-linked",
+      deck_id: "deck-a",
+      job_id: "job-a",
+      type: "qa",
+      front_json: JSON.stringify("What does lysozyme digest?"),
+      back_json: JSON.stringify("Peptidoglycan"),
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "accepted",
+      created_at: "2026-01-01T01:03:00.000Z",
+      updated_at: "2026-01-01T01:03:00.000Z",
+      claim_id: "cl-job-a",
+    });
+
+    const res = await app.request(
+      "/api/decks/deck-a/claim-coverage",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      summary: { total: number; linked: number; orphan: number };
+      claims: Array<{
+        id: string;
+        card_id: string | null;
+        job_id?: string | null;
+      }>;
+    };
+    expect(body.summary).toEqual({ total: 2, linked: 1, orphan: 1 });
+    expect(body.claims.find((c) => c.id === "cl-job-a")?.card_id).toBe(
+      "card-linked",
+    );
+    expect(
+      body.claims.find((c) => c.id === "cl-job-b-orphan")?.card_id,
+    ).toBeNull();
+    expect(body.claims.find((c) => c.id === "cl-job-a")?.job_id).toBe("job-a");
+  });
+
+  it("returns 404 for non-owner or missing deck", async () => {
+    const env = createTestEnv();
+    seedDeckWithTwoJobs(env);
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-b", "user-b");
+
+    const missing = await app.request(
+      "/api/decks/no-such-deck/claim-coverage",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(missing.status).toBe(404);
+
+    const foreign = await app.request(
+      "/api/decks/deck-a/claim-coverage",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-b` } },
+      env,
+    );
+    expect(foreign.status).toBe(404);
+  });
+});
