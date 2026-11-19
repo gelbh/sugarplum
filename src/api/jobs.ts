@@ -21,6 +21,22 @@ export function getJobClaimCoverage(jobId: string, init?: RequestInit) {
   return api<ClaimCoverage>(`/api/jobs/${jobId}/claim-coverage`, init);
 }
 
+/** Write one draft from an orphan study claim (no job re-extract). Default type qa. */
+export function generateCardFromClaim(
+  jobId: string,
+  claimId: string,
+  body?: { type?: RegenCardType },
+) {
+  if (isGuest()) guestUnsupported("generate card from claim");
+  return api<CardDraftView>(
+    `/api/jobs/${jobId}/claims/${encodeURIComponent(claimId)}/generate`,
+    {
+      method: "POST",
+      json: body ?? {},
+    },
+  );
+}
+
 /** Wipe all job cards (including accepted), reset to queued, and requeue generation. */
 export function regenJob(jobId: string, topicHints: string[] = []) {
   if (isGuest()) guestUnsupported("regenerate cards");

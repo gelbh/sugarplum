@@ -25,6 +25,9 @@ const STAGE_ORDER: ProgressStage[] = [
   "persist",
 ];
 
+/** Stages whose weights form the interleaved LLM progress band. */
+export const PIPELINE_BAND = ["claims", "generate", "critique"] as const;
+
 export type ProgressEvent = {
   at: string;
   kind: "excerpt" | "draft" | "stage";
@@ -413,8 +416,8 @@ export function computePercent(
 }
 
 /**
- * Monotonic percent for interleaved generate/critique over `chunkTotal` chunks.
- * Half-steps 0..2n map across weight(generate)+weight(critique) after pre-generate base.
+ * Monotonic percent for interleaved LLM half-steps over `chunkTotal` chunks.
+ * Half-steps 0..2n map across present `PIPELINE_BAND` weights after the pre-band base.
  */
 export function computePipelineBandPercent(
   halfStepsDone: number,
@@ -422,16 +425,14 @@ export function computePipelineBandPercent(
   presentStages: readonly ProgressStage[],
 ): number {
   const weights = effectiveWeights(presentStages);
-  const bandStart = presentStages.includes("claims") ? "claims" : "generate";
+  const bandStages = PIPELINE_BAND.filter((s) => presentStages.includes(s));
+  const bandStart = bandStages[0] ?? "generate";
   let base = 0;
   for (const s of STAGE_ORDER) {
     if (s === bandStart) break;
     if (presentStages.includes(s)) base += weights[s];
   }
-  const band =
-    (presentStages.includes("claims") ? weights.claims : 0) +
-    weights.generate +
-    weights.critique;
+  const band = bandStages.reduce((sum, s) => sum + weights[s], 0);
   const denom = Math.max(1, chunkTotal * 2);
   const within = Math.min(1, Math.max(0, halfStepsDone) / denom);
   const raw = 100 * (base + band * within);

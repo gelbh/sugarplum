@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { overlayAtlas } from "./merge";
 import {
@@ -62,6 +62,18 @@ const DEFAULT_R2_BUCKET = "sugarplum-materials";
 
 export const atlasItemRoutes = new Hono<AppEnv>();
 
+function scheduleFocusRefresh(
+  c: Context<AppEnv>,
+): ((promise: Promise<unknown>) => void) | undefined {
+  // Hono throws when a request has no execution context (Vitest app.request).
+  try {
+    const ctx = c.executionCtx;
+    return (promise) => ctx.waitUntil(promise);
+  } catch {
+    return undefined;
+  }
+}
+
 atlasItemRoutes.get("/", async (c) => {
   const { atlas } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   return c.json(atlasMeta(atlas));
@@ -75,12 +87,17 @@ atlasItemRoutes.get("/entries", async (c) => {
   const rows = await loadEntryRows(db, atlas.id);
   const overlays = await toOverlayRows(db, atlas.id, rows);
   const merged = overlayAtlas(loadParasiteDataset().entries, overlays);
-  const entries = await listEntriesWithFocus(db, c.env, {
-    atlasId: atlas.id,
-    userId,
-    entries: merged,
-  });
-  return c.json({ entries });
+  const { entries, focusRefreshPending } = await listEntriesWithFocus(
+    db,
+    c.env,
+    {
+      atlasId: atlas.id,
+      userId,
+      entries: merged,
+      schedule: scheduleFocusRefresh(c),
+    },
+  );
+  return c.json({ entries, focusRefreshPending });
 });
 
 atlasItemRoutes.get("/deleted", async (c) => {
@@ -110,7 +127,8 @@ atlasItemRoutes.post("/make-cards", async (c) => {
   const rows = await loadEntryRows(db, atlas.id);
   const overlays = await toOverlayRows(db, atlas.id, rows);
   const merged = overlayAtlas(loadParasiteDataset().entries, overlays);
-  const entries = await listEntriesWithFocus(db, c.env, {
+  // Await Focus so Key tiers are consistent before enqueue (no waitUntil).
+  const { entries } = await listEntriesWithFocus(db, c.env, {
     atlasId: atlas.id,
     userId,
     entries: merged,

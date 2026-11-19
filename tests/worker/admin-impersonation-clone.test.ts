@@ -215,7 +215,74 @@ describe("admin impersonation D1 clone", () => {
     );
   });
 
-  it("clones atlas course pack materials and R2 objects", async () => {
+  it("clones study_claims and remaps card claim_id", async () => {
+    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
+    seedAdminAndLearnerWithLibrary(env);
+    env.seedStudyClaim({
+      id: "cl-atlas",
+      job_id: "job-running",
+      deck_id: "deck-a",
+      subject: "C1",
+      predicate: "is called",
+      source_span: "C1 is called the atlas",
+      object: "atlas",
+      qualifiers_json: null,
+      pages_json: "[1]",
+      created_at: NOW,
+    });
+    env.seedCard({
+      id: "card-claimed",
+      deck_id: "deck-a",
+      job_id: "job-running",
+      type: "qa",
+      front_json: JSON.stringify("What is C1 called?"),
+      back_json: JSON.stringify("Atlas"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({
+        pages: [1],
+        excerpt: "C1 is called the atlas",
+      }),
+      status: "draft",
+      created_at: NOW,
+      updated_at: NOW,
+      claim_id: "cl-atlas",
+    });
+
+    const start = await app.request(
+      "/api/admin/users/u-alice/impersonate",
+      { method: "POST", headers: adminHeaders },
+      env,
+    );
+    expect(start.status).toBe(200);
+    const body = (await start.json()) as {
+      impersonation: { sandboxUserId: string };
+    };
+    const sandboxId = body.impersonation.sandboxUserId;
+    const sandboxDeck = env.getDecks().find((d) => d.user_id === sandboxId)!;
+    const sandboxClaims = env
+      .getStudyClaims()
+      .filter((c) => c.deck_id === sandboxDeck.id);
+    expect(sandboxClaims).toHaveLength(1);
+    expect(sandboxClaims[0]!.id).not.toBe("cl-atlas");
+    expect(sandboxClaims[0]!.subject).toBe("C1");
+    expect(sandboxClaims[0]!.job_id).not.toBe("job-running");
+
+    const sandboxClaimed = env
+      .getCards()
+      .find(
+        (c) =>
+          c.deck_id === sandboxDeck.id &&
+          c.front_json === JSON.stringify("What is C1 called?"),
+      );
+    expect(sandboxClaimed).toBeTruthy();
+    expect(sandboxClaimed!.claim_id).toBe(sandboxClaims[0]!.id);
+    expect(env.getStudyClaims().find((c) => c.id === "cl-atlas")).toBeTruthy();
+    expect(env.getCards().find((c) => c.id === "card-claimed")!.claim_id).toBe(
+      "cl-atlas",
+    );
+  });
+
+  it("clones atlas course pack materials with read-through R2 keys", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearnerWithLibrary(env);
     const packR2 = "atlas/atlas-alice/pack-1.txt";
@@ -277,13 +344,8 @@ describe("admin impersonation D1 clone", () => {
     expect(sandboxPack).toHaveLength(1);
     expect(sandboxPack[0]!.id).not.toBe("pack-1");
     expect(sandboxPack[0]!.source_role).toBe("tutorial");
-    expect(sandboxPack[0]!.r2_key).not.toBe(packR2);
-    const copied = env.getR2(sandboxPack[0]!.r2_key!);
-    const copiedText =
-      typeof copied === "string"
-        ? copied
-        : new TextDecoder().decode(copied as ArrayBuffer);
-    expect(copiedText).toBe("Fasciola hepatica tutorial notes");
+    // Read-through: same R2 key as source (no byte-copy on impersonate).
+    expect(sandboxPack[0]!.r2_key).toBe(packR2);
     expect(env.getR2(packR2)).toBe("Fasciola hepatica tutorial notes");
 
     const sandboxAtlasId = sandboxAtlases[0]!.id;
@@ -450,7 +512,7 @@ describe("admin impersonation D1 clone", () => {
     ).toHaveLength(0);
   });
 
-  it("startImpersonation wipes sandbox R2 when clone fails after pack copy", async () => {
+  it("startImpersonation deletes sandbox user when atlas clone fails", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearnerWithLibrary(env);
     const packR2 = "atlas/atlas-alice/pack-fail.txt";
@@ -474,18 +536,27 @@ describe("admin impersonation D1 clone", () => {
     });
     env.seedR2(packR2, "pack body");
 
-    const realPut = env.MATERIALS.put.bind(env.MATERIALS);
-    env.MATERIALS.put = (async (key, value, options) => {
-      const out = await realPut(key, value, options);
-      if (
-        typeof key === "string" &&
-        key.startsWith("sandbox/") &&
-        key.includes("/atlas/")
-      ) {
-        throw new Error("forced failure after atlas R2 copy");
+    const realPrepare = env.DB.prepare.bind(env.DB);
+    env.DB.prepare = ((sql: string) => {
+      const normalized = sql.replace(/\s+/g, " ").trim();
+      if (normalized.includes("INSERT INTO atlas_materials")) {
+        return {
+          bind() {
+            return this;
+          },
+          async run() {
+            throw new Error("forced failure during atlas materials insert");
+          },
+          async first() {
+            throw new Error("forced failure during atlas materials insert");
+          },
+          async all() {
+            throw new Error("forced failure during atlas materials insert");
+          },
+        };
       }
-      return out;
-    }) as typeof env.MATERIALS.put;
+      return realPrepare(sql);
+    }) as typeof env.DB.prepare;
 
     const start = await app.request(
       "/api/admin/users/u-alice/impersonate",

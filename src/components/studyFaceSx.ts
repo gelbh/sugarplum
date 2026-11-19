@@ -128,7 +128,11 @@ export const FACE_OUTLINE_BUTTON_SX = {
   },
 } as const;
 
-export function faceMotionSx(revealedFace: boolean, thisFaceVisible: boolean) {
+export function faceMotionSx(
+  revealedFace: boolean,
+  thisFaceVisible: boolean,
+  dense = false,
+) {
   return {
     ...FACE_SX,
     height: "100%",
@@ -137,17 +141,30 @@ export function faceMotionSx(revealedFace: boolean, thisFaceVisible: boolean) {
     position: "absolute" as const,
     inset: 0,
     ...(revealedFace ? { transform: "rotateY(180deg)" } : {}),
-    "@media (prefers-reduced-motion: reduce)": {
-      transform: "none",
-      transition: "none",
-      opacity: thisFaceVisible ? 1 : 0,
-      visibility: thisFaceVisible ? "visible" : "hidden",
-      pointerEvents: thisFaceVisible ? "auto" : "none",
-      position: thisFaceVisible ? "relative" : "absolute",
-      inset: thisFaceVisible ? "auto" : 0,
-      width: "100%",
-      height: thisFaceVisible ? "auto" : undefined,
-      minHeight: thisFaceVisible ? 280 : undefined,
-    },
+    "@media (prefers-reduced-motion: reduce)": dense
+      ? {
+          transform: "none",
+          transition: "none",
+          opacity: thisFaceVisible ? 1 : 0,
+          visibility: thisFaceVisible ? "visible" : "hidden",
+          pointerEvents: thisFaceVisible ? "auto" : "none",
+          position: "absolute" as const,
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          minHeight: 0,
+        }
+      : {
+          transform: "none",
+          transition: "none",
+          opacity: thisFaceVisible ? 1 : 0,
+          visibility: thisFaceVisible ? "visible" : "hidden",
+          pointerEvents: thisFaceVisible ? "auto" : "none",
+          position: thisFaceVisible ? "relative" : "absolute",
+          inset: thisFaceVisible ? "auto" : 0,
+          width: "100%",
+          height: thisFaceVisible ? "auto" : undefined,
+          minHeight: thisFaceVisible ? 280 : undefined,
+        },
   };
 }

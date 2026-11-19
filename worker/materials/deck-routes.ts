@@ -37,6 +37,7 @@ import {
   requireOwnedSubjectId,
 } from "./ownership";
 import { listFigureKeysInR2 } from "./figures";
+import { buildClaimCoverage } from "../generation/claim-coverage";
 import {
   DEFAULT_R2_BUCKET,
   FILE_READY,
@@ -48,6 +49,7 @@ import {
   parseUploadUrlRequest,
   requireR2UploadCredentials,
 } from "./upload-request";
+import { flagAcceptedCardsForHygiene } from "../generation/deck-hygiene";
 
 const DECK_UPLOAD_KINDS = new Set(["pdf", "pptx", "image"] as const);
 
@@ -185,6 +187,72 @@ deckRoutes.get("/:id/stats", async (c) => {
     archived: archived?.count ?? 0,
     materials: materials?.count ?? 0,
   });
+});
+
+deckRoutes.get("/:id/claim-coverage", async (c) => {
+  const userId = await requireUser(c);
+  const deckId = c.req.param("id");
+  const db = getDb(c.env);
+  await requireOwnedDeck(db, deckId, userId);
+
+  const { results } = await db
+    .prepare(
+      `SELECT sc.id, sc.job_id, sc.subject, sc.predicate, sc.object,
+              (
+                SELECT c.id FROM cards c
+                WHERE c.claim_id = sc.id
+                ORDER BY c.created_at ASC, c.id ASC
+                LIMIT 1
+              ) AS card_id,
+              (
+                SELECT c.status FROM cards c
+                WHERE c.claim_id = sc.id
+                ORDER BY c.created_at ASC, c.id ASC
+                LIMIT 1
+              ) AS card_status
+       FROM study_claims sc
+       WHERE sc.deck_id = ?
+       ORDER BY sc.created_at ASC`,
+    )
+    .bind(deckId)
+    .all<{
+      id: string;
+      job_id: string;
+      subject: string;
+      predicate: string;
+      object: string | null;
+      card_id: string | null;
+      card_status: string | null;
+    }>();
+
+  return c.json(buildClaimCoverage(results ?? []));
+});
+
+deckRoutes.get("/:id/hygiene", async (c) => {
+  const userId = await requireUser(c);
+  const deckId = c.req.param("id");
+  const db = getDb(c.env);
+  await requireOwnedDeck(db, deckId, userId);
+
+  const { results } = await db
+    .prepare(
+      `SELECT id, type, front_json, back_json, provenance_json, media_r2_keys_json
+       FROM cards
+       WHERE deck_id = ? AND status = 'accepted'
+       ORDER BY created_at ASC`.replace(/\s+/g, " "),
+    )
+    .bind(deckId)
+    .all<{
+      id: string;
+      type: string;
+      front_json: string;
+      back_json: string;
+      provenance_json: string | null;
+      media_r2_keys_json: string | null;
+    }>();
+
+  const cards = flagAcceptedCardsForHygiene(results ?? []);
+  return c.json({ cards, summary: { flagged: cards.length } });
 });
 
 deckRoutes.get("/:id/composition", async (c) => {

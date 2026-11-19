@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -23,6 +23,10 @@ import CompositionSpark from "../components/CompositionSpark";
 import CoverPickerDialog from "../components/CoverPickerDialog";
 import { useShellBackOverride } from "../components/shell/ShellBackOverride";
 import CardsWorkshop from "../deckHub/CardsWorkshop";
+import ClaimCoverageFilmstrip, {
+  type ClaimJumpTarget,
+} from "../deckHub/ClaimCoverageFilmstrip";
+import DeckHygienePanel from "../deckHub/DeckHygienePanel";
 import { createDeckHubWorkshopOpeners } from "../deckHub/deckHubWorkshopOpeners";
 import DeckHubTitleHeader from "../deckHub/DeckHubTitleHeader";
 import MaterialsWorkshop from "../deckHub/MaterialsWorkshop";
@@ -30,6 +34,7 @@ import MissionBoard from "../deckHub/MissionBoard";
 import StudyReadySheet from "../deckHub/StudyReadySheet";
 import WorkshopShell from "../deckHub/WorkshopShell";
 import { type WorkshopFrame } from "../deckHub/workshopStack";
+import { navigate } from "../nav/navigate";
 import { useCreateCardController } from "../deckHub/useCreateCardController";
 import { useAddMaterialWorkshop } from "../deckHub/useAddMaterialWorkshop";
 import { useCardsWorkshop } from "../deckHub/useCardsWorkshop";
@@ -45,7 +50,9 @@ import "../deckHub/deckHubMotion.css";
 import {
   asRegenType,
   cardHasRegenSource,
+  listDeckCards,
   type CardDraftView,
+  type ClaimCoverage,
   type Deck,
   type JobListItem,
   type MaterialListItem,
@@ -120,6 +127,9 @@ export default function DeckHubPage({ deckId }: Props) {
   /** Accepted (non-archived) count — independent of Show archived filter. */
   const [acceptedCount, setAcceptedCount] = useState(0);
   const [composition, setComposition] = useState<SubjectKnowledge | null>(null);
+  const [claimCoverage, setClaimCoverage] = useState<ClaimCoverage | null>(
+    null,
+  );
   const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -264,6 +274,7 @@ export default function DeckHubPage({ deckId }: Props) {
     setCards,
     setAcceptedCount,
     setComposition,
+    setClaimCoverage,
     setDraftJobs,
     setMaterials,
     setError,
@@ -318,6 +329,43 @@ export default function DeckHubPage({ deckId }: Props) {
     deck,
     acceptedCount,
   });
+
+  const onJumpToClaimCard = useCallback(
+    (target: ClaimJumpTarget) => {
+      void (async () => {
+        if (target.cardStatus === "draft" && target.jobId) {
+          navigate(`/jobs/${encodeURIComponent(target.jobId)}/drafts`);
+          return;
+        }
+        if (target.cardStatus !== "accepted") return;
+        let card = cards.find((c) => c.id === target.cardId);
+        if (!card && showArchived) {
+          onShowArchivedChange(false);
+          try {
+            const accepted = await listDeckCards(deckId);
+            setCards(accepted);
+            setAcceptedCount(accepted.length);
+            card = accepted.find((c) => c.id === target.cardId);
+          } catch {
+            return;
+          }
+        }
+        if (!card) return;
+        openWorkshop("cards");
+        openEdit(card);
+      })();
+    },
+    [
+      cards,
+      deckId,
+      onShowArchivedChange,
+      openEdit,
+      openWorkshop,
+      setAcceptedCount,
+      setCards,
+      showArchived,
+    ],
+  );
 
   const { onExportAnki } = useDeckHubExport({
     guest,
@@ -472,37 +520,47 @@ export default function DeckHubPage({ deckId }: Props) {
               ) : null}
 
               {topWorkshop?.id === "cards" ? (
-                <CardsWorkshop
-                  cards={cards}
-                  showArchived={showArchived}
-                  onShowArchivedChange={onShowArchivedChange}
-                  selectedIds={selectedCardIds}
-                  onToggleSelect={onToggleSelect}
-                  onSelectAll={() => onSelectAll(cards)}
-                  onClearSelection={clearSelection}
-                  archiveBusyId={archiveBusyId}
-                  batchBusy={batchBusy}
-                  onBatchArchive={() => {
-                    void onBatchArchive();
-                  }}
-                  onBatchRestore={() => {
-                    void onBatchRestore();
-                  }}
-                  onBatchMove={() => {
-                    void openBatchMove(selectedCardIds);
-                  }}
-                  onEdit={openEdit}
-                  onMove={(card) => {
-                    void openMove(card);
-                  }}
-                  onArchive={(card) => {
-                    void onArchiveCard(card);
-                  }}
-                  onRestore={(card) => {
-                    void onRestoreCard(card);
-                  }}
-                  onCreateCard={openDiyFromCards}
-                />
+                <>
+                  {!isGuest() ? (
+                    <DeckHygienePanel
+                      deckId={deckId}
+                      onChanged={() => {
+                        void refreshCards();
+                      }}
+                    />
+                  ) : null}
+                  <CardsWorkshop
+                    cards={cards}
+                    showArchived={showArchived}
+                    onShowArchivedChange={onShowArchivedChange}
+                    selectedIds={selectedCardIds}
+                    onToggleSelect={onToggleSelect}
+                    onSelectAll={() => onSelectAll(cards)}
+                    onClearSelection={clearSelection}
+                    archiveBusyId={archiveBusyId}
+                    batchBusy={batchBusy}
+                    onBatchArchive={() => {
+                      void onBatchArchive();
+                    }}
+                    onBatchRestore={() => {
+                      void onBatchRestore();
+                    }}
+                    onBatchMove={() => {
+                      void openBatchMove(selectedCardIds);
+                    }}
+                    onEdit={openEdit}
+                    onMove={(card) => {
+                      void openMove(card);
+                    }}
+                    onArchive={(card) => {
+                      void onArchiveCard(card);
+                    }}
+                    onRestore={(card) => {
+                      void onRestoreCard(card);
+                    }}
+                    onCreateCard={openDiyFromCards}
+                  />
+                </>
               ) : null}
 
               {topWorkshop?.id === "materials" ? (
@@ -548,18 +606,32 @@ export default function DeckHubPage({ deckId }: Props) {
                       draftJobs.length > 0
                         ? `${draftJobs.length} draft job${draftJobs.length === 1 ? "" : "s"}`
                         : null,
+                      claimCoverage != null &&
+                      claimCoverage.summary.total > 0
+                        ? `${claimCoverage.summary.linked}/${claimCoverage.summary.total} claims`
+                        : null,
                     ]
                       .filter(Boolean)
                       .join(" · ")}
                     spark={
-                      composition != null && composition.total > 0 ? (
-                        <CompositionSpark
-                          new={composition.new}
-                          learning={composition.learning}
-                          young={composition.young}
-                          mature={composition.mature}
-                          total={composition.total}
-                        />
+                      composition != null && composition.total > 0 ||
+                      (claimCoverage != null &&
+                        claimCoverage.summary.total > 0) ? (
+                        <Stack spacing={0} sx={{ alignItems: "flex-start" }}>
+                          {composition != null && composition.total > 0 ? (
+                            <CompositionSpark
+                              new={composition.new}
+                              learning={composition.learning}
+                              young={composition.young}
+                              mature={composition.mature}
+                              total={composition.total}
+                            />
+                          ) : null}
+                          <ClaimCoverageFilmstrip
+                            coverage={claimCoverage}
+                            onJumpToCard={onJumpToClaimCard}
+                          />
+                        </Stack>
                       ) : null
                     }
                     exportBusy={exportBusy}

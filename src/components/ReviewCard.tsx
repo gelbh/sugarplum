@@ -42,6 +42,8 @@ export type ReviewCardProps = {
   remaining: number;
   disabled?: boolean;
   stackBehind: boolean;
+  /** Fill parent height instead of fixed dvh card face (draft review viewport fit). */
+  fillHeight?: boolean;
   regen: { busy: boolean; disabled: boolean; onClick: () => void };
   onChange: (next: DraftEditorChange) => void;
   /** Resolve true once the card was decided; false unlocks it again. */
@@ -170,6 +172,7 @@ export default function ReviewCard({
   remaining,
   disabled = false,
   stackBehind,
+  fillHeight = false,
   regen,
   onChange,
   onDecide,
@@ -215,9 +218,12 @@ export default function ReviewCard({
     <Stack
       ref={stageRef}
       tabIndex={-1}
-      spacing={2}
+      spacing={fillHeight ? 1.25 : 2}
       sx={{
         outline: "none",
+        ...(fillHeight
+          ? { flex: 1, minHeight: 0, height: "100%" }
+          : {}),
         "&:focus-visible": {
           outline: "2px solid var(--sp-ivory)",
           outlineOffset: 2,
@@ -229,6 +235,7 @@ export default function ReviewCard({
         alignItems="center"
         justifyContent="space-between"
         spacing={1.5}
+        sx={{ flexShrink: 0 }}
       >
         <Typography
           variant="caption"
@@ -246,10 +253,14 @@ export default function ReviewCard({
       <Box
         sx={{
           position: "relative",
-          height: {
-            xs: "min(42dvh, 360px)",
-            sm: "min(48dvh, 420px)",
-          },
+          ...(fillHeight
+            ? { flex: 1, minHeight: 140 }
+            : {
+                height: {
+                  xs: "min(42dvh, 360px)",
+                  sm: "min(48dvh, 420px)",
+                },
+              }),
         }}
       >
         {stackBehind ? (
@@ -312,6 +323,7 @@ export default function ReviewCard({
         alignItems="center"
         role="group"
         aria-labelledby="reject-reason-label"
+        sx={{ flexShrink: 0 }}
       >
         <Typography
           id="reject-reason-label"
@@ -368,6 +380,7 @@ export default function ReviewCard({
         spacing={3}
         justifyContent="center"
         alignItems="center"
+        sx={{ flexShrink: 0 }}
       >
         <RoundAction
           label="Reject card"
