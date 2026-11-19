@@ -280,7 +280,7 @@ describe("POST /api/guest/import", () => {
     expect(cards[0].deck_id).toBe("deck-bio-old");
   });
 
-  it("appends cards on sequential imports into the same matching deck", async () => {
+  it("skips duplicate content_fp on sequential imports into the same deck", async () => {
     const env = createTestEnv();
     seedOwner(env);
     env.seedSubject({
@@ -309,21 +309,104 @@ describe("POST /api/guest/import", () => {
       ],
     };
 
-    for (let i = 0; i < 2; i++) {
-      const res = await app.request(
-        "/api/guest/import",
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            cookie: `${SESSION_COOKIE}=sess-a`,
-          },
-          body: JSON.stringify(payload),
+    const first = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
         },
-        env,
-      );
-      expect(res.status).toBe(200);
-    }
+        body: JSON.stringify(payload),
+      },
+      env,
+    );
+    expect(first.status).toBe(200);
+    expect(await first.json()).toEqual({ deckCount: 0, cardCount: 1 });
+
+    const second = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify(payload),
+      },
+      env,
+    );
+    expect(second.status).toBe(200);
+    expect(await second.json()).toEqual({ deckCount: 0, cardCount: 0 });
+
+    const cards = env.getCards();
+    expect(cards).toHaveLength(1);
+    expect(cards[0]!.deck_id).toBe("deck-a");
+  });
+
+  it("appends a different stem on a later import into the same deck", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedSubject({
+      id: "subj-a",
+      user_id: "user-a",
+      title: "Science",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-a",
+      user_id: "user-a",
+      title: "Anatomy",
+      subject_hint: null,
+      subject_id: "subj-a",
+      created_at: "2026-01-02T00:00:00.000Z",
+    });
+
+    const first = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          decks: [{ clientId: "guest-deck-1", title: "anatomy" }],
+          cards: [
+            {
+              clientDeckId: "guest-deck-1",
+              front: "First front",
+              back: "First back",
+            },
+          ],
+        }),
+      },
+      env,
+    );
+    expect(first.status).toBe(200);
+
+    const second = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          decks: [{ clientId: "guest-deck-1", title: "anatomy" }],
+          cards: [
+            {
+              clientDeckId: "guest-deck-1",
+              front: "Second front",
+              back: "Second back",
+            },
+          ],
+        }),
+      },
+      env,
+    );
+    expect(second.status).toBe(200);
 
     const cards = env.getCards();
     expect(cards).toHaveLength(2);
