@@ -19,12 +19,13 @@ import {
   fillDraftFromClaim,
   parseClaimFillType,
 } from "./claim-fill";
-import {
-  FILL_ALL_REQUEST_CAP,
-  fillOrphanClaims,
-} from "./claim-orphan-fill";
 import { ClaimAwareRegenError } from "./card-regen";
 import { WorkersAiCapacityError } from "./workers-ai";
+import {
+  fillAllInstanceId,
+  getFillAllWorkflowStatus,
+  startFillAllWorkflow,
+} from "./fillAllLifecycle";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -280,7 +281,7 @@ jobRoutes.get("/:id/claim-coverage", async (c) => {
   return c.json(buildClaimCoverage(results ?? []));
 });
 
-/** Batch-fill orphan study_claims (soft-fail; cap FILL_ALL_REQUEST_CAP per request). */
+/** Kick off durable Fill-all Workflow (202) or return zeros when no orphans (200). */
 jobRoutes.post("/:id/claims/fill-orphans", async (c) => {
   const userId = await requireUser(c);
   const jobId = c.req.param("id");
@@ -317,14 +318,76 @@ jobRoutes.post("/:id/claims/fill-orphans", async (c) => {
     });
   }
 
-  const result = await fillOrphanClaims({
-    env: c.env,
-    userId,
+  const { results: orphanRows } = await getDb(c.env)
+    .prepare(
+      `SELECT sc.id AS id
+       FROM study_claims sc
+       WHERE sc.job_id = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM cards c WHERE c.claim_id = sc.id
+         )
+       ORDER BY sc.created_at ASC, sc.id ASC`,
+    )
+    .bind(jobId)
+    .all<{ id: string }>();
+  const orphanTotal = (orphanRows ?? []).length;
+  if (orphanTotal === 0) {
+    return c.json({
+      attempted: 0,
+      filled: 0,
+      skipped: 0,
+      remaining: 0,
+      cards: [],
+    });
+  }
+
+  if (!c.env.FILL_ALL_WORKFLOW) {
+    throw new HTTPException(503, {
+      message: "Fill-all workflow is not configured",
+    });
+  }
+
+  const started = await startFillAllWorkflow(c.env, {
     jobId,
-    cap: FILL_ALL_REQUEST_CAP,
+    userId,
     type,
   });
-  return c.json(result);
+  if (started === "already") {
+    throw new HTTPException(409, {
+      message: "Fill-all already in progress",
+    });
+  }
+
+  return c.json(
+    {
+      runId: fillAllInstanceId(jobId),
+      orphanTotal,
+      status: "running" as const,
+    },
+    202,
+  );
+});
+
+/** Fill-all Workflow run status (P1; does not read generation progress_json). */
+jobRoutes.get("/:id/claims/fill-orphans", async (c) => {
+  const userId = await requireUser(c);
+  const jobId = c.req.param("id");
+
+  const owned = await getDb(c.env)
+    .prepare(
+      `SELECT j.id
+       FROM generation_jobs j
+       INNER JOIN materials m ON m.id = j.material_id
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE j.id = ? AND d.user_id = ?`,
+    )
+    .bind(jobId, userId)
+    .first<{ id: string }>();
+  if (!owned) {
+    throw new HTTPException(404, { message: "Job not found" });
+  }
+
+  return c.json(await getFillAllWorkflowStatus(c.env, jobId));
 });
 
 /** Generate one draft from an orphan study_claims row (write + Layer-1; no extract). */
