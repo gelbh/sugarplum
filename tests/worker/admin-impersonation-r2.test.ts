@@ -4,9 +4,7 @@ import { SESSION_COOKIE } from "../../worker/auth/session";
 import {
   applySandboxKeyPrefix,
   deleteSandboxR2Prefix,
-  sandboxR2Prefix,
 } from "../../worker/admin/sandbox-r2";
-import { writeOcrSidecar } from "../../worker/materials/ocr-sidecar";
 import { createTestEnv } from "./test-env";
 
 const ADMIN_EMAIL = "ops@example.com";
@@ -92,113 +90,45 @@ describe("sandbox R2 helpers", () => {
   });
 });
 
-describe("admin impersonation R2", () => {
-  it("paste while impersonating lands under sandbox prefix and Exit cleans it", async () => {
+describe("admin view-as R2", () => {
+  it("paste while view-as is 403 and leaves source R2 untouched", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearnerWithLibrary(env);
     env.seedR2(SOURCE_R2, "pdf-bytes");
 
-    const start = await app.request(
+    await app.request(
       "/api/admin/users/u-alice/impersonate",
       { method: "POST", headers: adminHeaders },
       env,
     );
-    expect(start.status).toBe(200);
-    const startBody = (await start.json()) as {
-      impersonation: { sandboxUserId: string };
-    };
-    const sandboxId = startBody.impersonation.sandboxUserId;
-    const sandboxDeck = env.getDecks().find((d) => d.user_id === sandboxId)!;
 
     const paste = await app.request(
-      `/api/decks/${sandboxDeck.id}/materials/paste`,
+      "/api/decks/deck-a/materials/paste",
       {
         method: "POST",
         headers: adminHeaders,
-        body: JSON.stringify({ text: "sandbox note body", filename: "n.txt" }),
+        body: JSON.stringify({ text: "note body", filename: "n.txt" }),
       },
       env,
     );
-    expect(paste.status).toBe(201);
-    const pasteBody = (await paste.json()) as { id: string; r2_key: string };
-    expect(pasteBody.r2_key.startsWith(sandboxR2Prefix(sandboxId))).toBe(true);
-    expect(env.getR2(pasteBody.r2_key)).toBe("sandbox note body");
+    expect(paste.status).toBe(403);
     expect(env.getR2(SOURCE_R2)).toBe("pdf-bytes");
-
-    const exit = await app.request(
-      "/api/admin/impersonation/exit",
-      { method: "POST", headers: adminHeaders },
-      env,
-    );
-    expect(exit.status).toBe(200);
-    expect(env.getR2(pasteBody.r2_key)).toBeUndefined();
-    expect(env.getR2(SOURCE_R2)).toBe("pdf-bytes");
-    expect(env.getUsers().some((u) => u.id === sandboxId)).toBe(false);
+    expect(env.getR2Keys().filter((k) => k.startsWith("sandbox/"))).toEqual([]);
   });
 
-  it("OCR sidecar write under sandbox is prefixed and Exit cleans it", async () => {
+  it("GET media for source material returns 200; Exit keeps source", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearnerWithLibrary(env);
     env.seedR2(SOURCE_R2, "pdf-bytes");
 
-    const start = await app.request(
+    await app.request(
       "/api/admin/users/u-alice/impersonate",
       { method: "POST", headers: adminHeaders },
       env,
     );
-    expect(start.status).toBe(200);
-    const startBody = (await start.json()) as {
-      impersonation: { sandboxUserId: string };
-    };
-    const sandboxId = startBody.impersonation.sandboxUserId;
-    const sandboxDeck = env.getDecks().find((d) => d.user_id === sandboxId)!;
-    const sandboxMaterial = env
-      .getMaterials()
-      .find((m) => m.deck_id === sandboxDeck.id)!;
-
-    await writeOcrSidecar(
-      env,
-      sandboxDeck.id,
-      sandboxMaterial.id,
-      [{ page: 1, text: "ocr" }],
-      [],
-    );
-    const ocrKey = `${sandboxR2Prefix(sandboxId)}materials/${sandboxDeck.id}/ocr/${sandboxMaterial.id}.json`;
-    expect(env.getR2(ocrKey)).toBeTruthy();
-
-    const exit = await app.request(
-      "/api/admin/impersonation/exit",
-      { method: "POST", headers: adminHeaders },
-      env,
-    );
-    expect(exit.status).toBe(200);
-    expect(env.getR2(ocrKey)).toBeUndefined();
-    expect(env.getR2(SOURCE_R2)).toBe("pdf-bytes");
-  });
-
-  it("GET media for cloned material with source key returns 200; Exit keeps source", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearnerWithLibrary(env);
-    env.seedR2(SOURCE_R2, "pdf-bytes");
-
-    const start = await app.request(
-      "/api/admin/users/u-alice/impersonate",
-      { method: "POST", headers: adminHeaders },
-      env,
-    );
-    expect(start.status).toBe(200);
-    const startBody = (await start.json()) as {
-      impersonation: { sandboxUserId: string };
-    };
-    const sandboxId = startBody.impersonation.sandboxUserId;
-    const sandboxDeck = env.getDecks().find((d) => d.user_id === sandboxId)!;
-    const sandboxMaterial = env
-      .getMaterials()
-      .find((m) => m.deck_id === sandboxDeck.id && m.r2_key === SOURCE_R2)!;
-    expect(sandboxMaterial.r2_key).toBe(SOURCE_R2);
 
     const dl = await app.request(
-      `/api/materials/${sandboxMaterial.id}/download`,
+      "/api/materials/mat-1/download",
       { method: "GET", headers: adminHeaders },
       env,
     );

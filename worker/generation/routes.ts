@@ -178,7 +178,7 @@ jobRoutes.get("/:id", async (c) => {
 
   if (!row) throw new HTTPException(404, { message: "Job not found" });
 
-  if (row.status === "running") {
+  if (row.status === "running" && !c.get("viewingAs")) {
     const healed = await failRunningJobIfStale(
       c.env,
       {

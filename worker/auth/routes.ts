@@ -23,11 +23,7 @@ import {
   oauthDoneKey,
   parseOAuthDone,
 } from "./oauth-replay";
-import {
-  hashPassword,
-  isPasswordLongEnough,
-  verifyPassword,
-} from "./password";
+import { hashPassword, isPasswordLongEnough, verifyPassword } from "./password";
 import {
   createSession,
   destroySession,
@@ -42,7 +38,9 @@ import { verifyTurnstileToken } from "./turnstile";
 
 type AuthEnv = { Bindings: Env; Variables: AuthVariables };
 
-function connectingIp(c: { req: { header: (name: string) => string | undefined } }): string | undefined {
+function connectingIp(c: {
+  req: { header: (name: string) => string | undefined };
+}): string | undefined {
   return c.req.header("CF-Connecting-IP")?.trim() || undefined;
 }
 
@@ -210,10 +208,11 @@ authRoutes.get("/me", async (c) => {
   const imp = session?.record.impersonation;
 
   if (imp && session?.record.actorUserId) {
+    // requireUser already bound userId to the source during view-as.
     const [source, actor] = await Promise.all([
       db
         .prepare("SELECT id, email, oauth_subject FROM users WHERE id = ?")
-        .bind(imp.sourceUserId)
+        .bind(userId)
         .first<{ id: string; email: string; oauth_subject: string | null }>(),
       db
         .prepare("SELECT id, email, oauth_subject FROM users WHERE id = ?")
@@ -224,10 +223,9 @@ authRoutes.get("/me", async (c) => {
       throw new HTTPException(401, { message: "Unauthorized" });
     }
     if (!source) {
-      // Source wiped mid-act-as: tear down and return actor /me.
-      const { teardownImpersonationSession } = await import(
-        "../admin/impersonation"
-      );
+      // Source wiped mid view-as: tear down and return actor /me.
+      const { teardownImpersonationSession } =
+        await import("../admin/impersonation");
       await teardownImpersonationSession(c, session.id, session.record);
       return c.json({
         id: actor.id,
@@ -241,12 +239,12 @@ authRoutes.get("/me", async (c) => {
       });
     }
     return c.json({
-      id: imp.sourceUserId,
-      email: imp.sourceEmail,
+      id: source.id,
+      email: source.email,
       google_linked: source.oauth_subject != null,
       is_admin: isAdminUser(actor, c.env.ADMIN_EMAILS),
       anatomy_viewer: isAnatomyViewerEnabled(
-        imp.sourceEmail,
+        source.email,
         c.env.ANATOMY_VIEWER_EMAILS,
       ),
       impersonation: {
@@ -466,8 +464,7 @@ authRoutes.get("/google/callback", async (c) => {
       pending = null;
     }
   }
-  const intent =
-    pending?.intent === "link" ? "link" : ("login" as const);
+  const intent = pending?.intent === "link" ? "link" : ("login" as const);
   const fail = (errorCode: string) =>
     intent === "link"
       ? oauthSettingsRedirect(appUrl, { error: errorCode })
@@ -538,10 +535,7 @@ authRoutes.get("/google/callback", async (c) => {
     if (bySubject && bySubject.id !== account.id) {
       return oauthSettingsRedirect(appUrl, { error: "oauth_conflict" });
     }
-    if (
-      account.oauth_subject != null &&
-      account.oauth_subject !== subject
-    ) {
+    if (account.oauth_subject != null && account.oauth_subject !== subject) {
       return oauthSettingsRedirect(appUrl, { error: "oauth_conflict" });
     }
     if (account.oauth_subject == null) {
@@ -580,10 +574,7 @@ authRoutes.get("/google/callback", async (c) => {
       .first<OauthUserRow>();
 
     if (byEmail) {
-      if (
-        byEmail.oauth_subject != null &&
-        byEmail.oauth_subject !== subject
-      ) {
+      if (byEmail.oauth_subject != null && byEmail.oauth_subject !== subject) {
         return oauthLoginRedirect(appUrl, "oauth_conflict");
       }
       // Do not auto-link password accounts (unverified email signup → hijack).

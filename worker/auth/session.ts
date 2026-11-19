@@ -12,7 +12,6 @@ export const IMPERSONATION_TTL_SECONDS = 60 * 60;
 
 export type ImpersonationMeta = {
   sourceUserId: string;
-  sandboxUserId: string;
   sourceEmail: string;
   startedAt: number;
 };
@@ -26,6 +25,8 @@ export type SessionRecord = {
 
 export type AuthVariables = {
   userId: string;
+  /** True when the effective session is mid view-as (after TTL teardown). */
+  viewingAs?: boolean;
 };
 
 type AuthContext = Context<{ Bindings: Env; Variables: AuthVariables }>;
@@ -39,7 +40,8 @@ function randomSessionId(): string {
 
 /** Secure cookies only on https so http://localhost can set the session. */
 export function sessionCookieSecure(url: string | URL): boolean {
-  const protocol = typeof url === "string" ? new URL(url).protocol : url.protocol;
+  const protocol =
+    typeof url === "string" ? new URL(url).protocol : url.protocol;
   return protocol === "https:";
 }
 
@@ -57,16 +59,14 @@ export async function createSession(
   c: AuthContext,
   userId: string,
 ): Promise<string> {
-  // Abandon any prior impersonation sandbox before minting a new session.
+  // End any prior view-as before minting a new session.
   const priorId = getCookie(c, SESSION_COOKIE);
   if (priorId) {
     const priorRaw = await c.env.SESSIONS.get(priorId);
     const prior = priorRaw ? parseSessionRecord(priorRaw) : null;
     if (prior?.impersonation) {
-      const { abandonImpersonationSandbox } = await import(
-        "../admin/impersonation"
-      );
-      await abandonImpersonationSandbox(c, prior);
+      const { abandonViewAs } = await import("../admin/impersonation");
+      await abandonViewAs(c, prior);
     }
     await c.env.SESSIONS.delete(priorId);
   }
@@ -91,10 +91,8 @@ export async function destroySession(c: AuthContext): Promise<void> {
     const raw = await c.env.SESSIONS.get(id);
     const record = raw ? parseSessionRecord(raw) : null;
     if (record?.impersonation) {
-      const { abandonImpersonationSandbox } = await import(
-        "../admin/impersonation"
-      );
-      await abandonImpersonationSandbox(c, record);
+      const { abandonViewAs } = await import("../admin/impersonation");
+      await abandonViewAs(c, record);
     }
     await c.env.SESSIONS.delete(id);
   }
@@ -115,6 +113,38 @@ export async function readSessionRecord(c: AuthContext): Promise<{
   return { id, record };
 }
 
+/**
+ * Same as readSessionRecord, but expires view-as via absolute TTL first so
+ * middleware and requireUser share one policy.
+ */
+export async function readSessionRecordFresh(c: AuthContext): Promise<{
+  id: string;
+  record: SessionRecord;
+} | null> {
+  const session = await readSessionRecord(c);
+  if (!session) return null;
+  const record = await applyImpersonationTtl(c, session.id, session.record);
+  return { id: session.id, record };
+}
+
+/** Tear down view-as when absolute impersonation TTL has elapsed. */
+export async function applyImpersonationTtl(
+  c: AuthContext,
+  sessionId: string,
+  record: SessionRecord,
+): Promise<SessionRecord> {
+  if (
+    !record.impersonation ||
+    Date.now() <=
+      record.impersonation.startedAt + IMPERSONATION_TTL_SECONDS * 1000
+  ) {
+    return record;
+  }
+  const { teardownImpersonationSession } =
+    await import("../admin/impersonation");
+  return teardownImpersonationSession(c, sessionId, record);
+}
+
 /** Rewrite a session record in KV, preserving expiresAt via remaining TTL. */
 export async function writeSessionRecord(
   c: AuthContext,
@@ -133,7 +163,7 @@ export async function writeSessionRecord(
 /**
  * Load session from cookie + KV. Throws 401 if missing/expired.
  * Sets `userId` on the context and returns it.
- * Expired impersonation tears down the sandbox and restores the actor.
+ * Expired impersonation restores the actor (session-only; no D1 teardown).
  */
 export async function requireUser(c: AuthContext): Promise<string> {
   const id = getCookie(c, SESSION_COOKIE);
@@ -164,43 +194,34 @@ export async function requireUser(c: AuthContext): Promise<string> {
     throw new HTTPException(401, { message: "Unauthorized" });
   }
 
-  if (
-    record.impersonation &&
-    Date.now() >
-      record.impersonation.startedAt + IMPERSONATION_TTL_SECONDS * 1000
-  ) {
-    // Dynamic import avoids a session ↔ impersonation cycle at module init.
-    const { teardownImpersonationSession } = await import(
-      "../admin/impersonation"
-    );
-    record = await teardownImpersonationSession(c, id, record);
-  }
+  record = await applyImpersonationTtl(c, id, record);
 
   let user = await getDb(c.env)
     .prepare("SELECT disabled_at FROM users WHERE id = ?")
     .bind(record.userId)
     .first<{ disabled_at: string | null }>();
-  if (
-    (!user || user.disabled_at != null) &&
-    record.impersonation &&
-    record.actorUserId
-  ) {
-    // Sandbox gone mid-session: restore actor instead of hard logout.
-    const { teardownImpersonationSession } = await import(
-      "../admin/impersonation"
-    );
-    record = await teardownImpersonationSession(c, id, record);
-    user = await getDb(c.env)
-      .prepare("SELECT disabled_at FROM users WHERE id = ?")
-      .bind(record.userId)
-      .first<{ disabled_at: string | null }>();
-  }
-  if (!user || user.disabled_at != null) {
+  if (record.impersonation && record.actorUserId) {
+    // Source wiped mid view-as: restore actor. Disabled sources stay browsable.
+    if (!user) {
+      const { teardownImpersonationSession } =
+        await import("../admin/impersonation");
+      record = await teardownImpersonationSession(c, id, record);
+      user = await getDb(c.env)
+        .prepare("SELECT disabled_at FROM users WHERE id = ?")
+        .bind(record.userId)
+        .first<{ disabled_at: string | null }>();
+      if (!user || user.disabled_at != null) {
+        await destroySession(c);
+        throw new HTTPException(401, { message: "Unauthorized" });
+      }
+    }
+  } else if (!user || user.disabled_at != null) {
     await destroySession(c);
     throw new HTTPException(401, { message: "Unauthorized" });
   }
 
   c.set("userId", record.userId);
+  c.set("viewingAs", Boolean(record.impersonation));
   return record.userId;
 }
 

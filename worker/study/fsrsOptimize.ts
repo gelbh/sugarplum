@@ -52,19 +52,22 @@ export async function getFsrsOptimizeStatus(
   db: D1Database,
   userId: string,
   _now: Date = new Date(),
+  opts?: { skipCutover?: boolean },
 ): Promise<FsrsOptimizeStatus> {
   const prefs = await loadStudyPrefs(db, userId);
   // Best-effort FSRS-7 memory cutover (preserve dues) when Settings/status loads.
-  try {
-    const { cutoverUserSchedulesToFsrs7 } = await import("./fsrsCutover");
-    await cutoverUserSchedulesToFsrs7(db, userId, {
-      desiredRetention: prefs.desiredRetention,
-      enableFuzz: false,
-      modelVersion: "FSRS-7",
-      ...(prefs.w ? { w: prefs.w } : {}),
-    });
-  } catch {
-    // Cutover must not block optimize status.
+  if (!opts?.skipCutover) {
+    try {
+      const { cutoverUserSchedulesToFsrs7 } = await import("./fsrsCutover");
+      await cutoverUserSchedulesToFsrs7(db, userId, {
+        desiredRetention: prefs.desiredRetention,
+        enableFuzz: false,
+        modelVersion: "FSRS-7",
+        ...(prefs.w ? { w: prefs.w } : {}),
+      });
+    } catch {
+      // Cutover must not block optimize status.
+    }
   }
   const reviewCount = await countUserReviews(db, userId);
   const lastOptimizedAt = prefs.fsrsLastOptimizedAt ?? null;
@@ -154,9 +157,7 @@ export async function saveFsrsWeights(
     return { w: validated, rescheduled };
   } catch (err) {
     if (err instanceof FsrsRescheduleError) throw err;
-    throw new FsrsRescheduleError(
-      "Weights saved; schedule reschedule failed",
-    );
+    throw new FsrsRescheduleError("Weights saved; schedule reschedule failed");
   }
 }
 
@@ -187,9 +188,7 @@ export async function resetFsrsWeights(
     return { rescheduled };
   } catch (err) {
     if (err instanceof FsrsRescheduleError) throw err;
-    throw new FsrsRescheduleError(
-      "Weights reset; schedule reschedule failed",
-    );
+    throw new FsrsRescheduleError("Weights reset; schedule reschedule failed");
   }
 }
 

@@ -88,6 +88,62 @@ describe("focusRefreshLeaseActive", () => {
   });
 });
 
+describe("listEntriesWithFocus skipMutatingRefresh", () => {
+  it("enriches without scheduling or rewriting fingerprint", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const paste = await pasteAtlasPack(env, atlasId, {
+      text: "Intro to flukes",
+      filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
+    });
+    expect(paste.status).toBe(201);
+    await env.DB.prepare(
+      `INSERT OR REPLACE INTO atlas_entry_focus (
+         atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        atlasId,
+        "fasciola-hepatica",
+        "standard",
+        "Standard",
+        "[]",
+        null,
+        "2026-01-01T00:00:00.000Z",
+      )
+      .run();
+    await env.DB.prepare(
+      "UPDATE atlases SET focus_pack_fingerprint = ? WHERE id = ?",
+    )
+      .bind("stale-before-skip", atlasId)
+      .run();
+
+    let scheduled = false;
+    const merged = overlayAtlas(loadParasiteDataset().entries, []);
+    const result = await listEntriesWithFocus(env.DB, env, {
+      atlasId,
+      userId: "user-a",
+      entries: merged,
+      schedule: () => {
+        scheduled = true;
+      },
+      skipMutatingRefresh: true,
+    });
+    expect(scheduled).toBe(false);
+    expect(result.focusRefreshPending).toBe(false);
+    expect(
+      result.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
+    ).toBe("standard");
+    const fp = await env.DB.prepare(
+      "SELECT focus_pack_fingerprint FROM atlases WHERE id = ?",
+    )
+      .bind(atlasId)
+      .first<{ focus_pack_fingerprint: string | null }>();
+    expect(fp?.focus_pack_fingerprint).toBe("stale-before-skip");
+  });
+});
+
 describe("atlas focus persistence helpers", () => {
   it("GET shows override even when refresh never rewrote tier", async () => {
     const env = createTestEnv();
@@ -392,10 +448,14 @@ describe("atlas focus empty materials and lazy GET", () => {
     );
     expect(pin.status).toBe(200);
 
-    const del = await app.request(`/api/atlas/materials/${material.id}`, {
-      method: "DELETE",
-      headers: authHeaders(),
-    }, env);
+    const del = await app.request(
+      `/api/atlas/materials/${material.id}`,
+      {
+        method: "DELETE",
+        headers: authHeaders(),
+      },
+      env,
+    );
     expect(del.status).toBe(204);
 
     const list = await app.request(
@@ -620,9 +680,9 @@ describe("atlas focus empty materials and lazy GET", () => {
       },
     });
     expect(first.focusRefreshPending).toBe(true);
-    expect(
-      first.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
-    ).toBe("standard");
+    expect(first.entries.find((e) => e.id === "fasciola-hepatica")?.tier).toBe(
+      "standard",
+    );
     const lease = await env.DB.prepare(
       "SELECT focus_pack_fingerprint FROM atlases WHERE id = ?",
     )
