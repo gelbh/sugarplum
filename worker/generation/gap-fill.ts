@@ -94,7 +94,7 @@ export function withAtlasProvenance<T extends CardDraft & { mediaR2Keys?: string
   }));
 }
 
-/** Insert draft rows. Shared by the first pass and the gap-fill pass. Returns new card ids. */
+/** Insert draft rows. Shared by the first pass and the gap-fill pass. */
 export async function insertDraftCards(
   db: D1Database,
   args: {
