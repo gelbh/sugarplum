@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import type { JobListItem } from "../api/client";
-import { navigate } from "../nav/navigate";
+import { navigate } from "../shared/nav/navigate";
 
 type Args = {
   draftJobs: JobListItem[];

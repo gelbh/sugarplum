@@ -2,7 +2,7 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import type { ProgressSnapshot } from "./types";
-import { SHELL_FG, SHELL_MUTED } from "../components/shell/chromeTokens";
+import { SHELL_FG, SHELL_MUTED } from "../app/shell/chromeTokens";
 
 type Props = {
   snapshot: ProgressSnapshot | null;

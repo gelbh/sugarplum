@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   DRAWER_WIDTH,
   RAIL_WIDTH,
-} from "../../src/components/shell/chromeTokens";
-import { resolveShellSideChrome } from "../../src/components/shell/shellSideChrome";
+} from "../../src/app/shell/chromeTokens";
+import { resolveShellSideChrome } from "../../src/app/shell/shellSideChrome";
 
 describe("resolveShellSideChrome", () => {
   it("hides side chrome when zen", () => {

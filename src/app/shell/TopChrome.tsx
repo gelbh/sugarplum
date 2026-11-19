@@ -2,7 +2,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
-import { goShellBack } from "../../nav/navigate";
+import { goShellBack } from "../../shared/nav/navigate";
 import { useResolvedShellBack } from "./ShellBackOverride";
 import {
   SHELL_BG,

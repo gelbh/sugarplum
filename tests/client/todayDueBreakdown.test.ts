@@ -4,14 +4,14 @@
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { navigate } from "../../src/nav/navigate";
+import { navigate } from "../../src/shared/nav/navigate";
 import TodayDueBreakdown from "../../src/study/TodayDueBreakdown";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;
 
-vi.mock("../../src/nav/navigate", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../src/nav/navigate")>();
+vi.mock("../../src/shared/nav/navigate", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/shared/nav/navigate")>();
   return {
     ...actual,
     navigate: vi.fn(),

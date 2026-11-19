@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { subscribeLocation } from "../nav/navigate";
+import { subscribeLocation } from "../shared/nav/navigate";
 import { useProgressRegistry } from "./ProgressProvider";
 import { useSpinDelay } from "./spinDelay";
 import type { ProgressSnapshot } from "./types";

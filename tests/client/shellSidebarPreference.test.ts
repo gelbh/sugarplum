@@ -3,7 +3,7 @@ import {
   loadShellSidebarCollapsed,
   saveShellSidebarCollapsed,
   SHELL_SIDEBAR_COLLAPSED_KEY,
-} from "../../src/components/shell/shellSidebarPreference";
+} from "../../src/app/shell/shellSidebarPreference";
 
 function memStore(seed: Record<string, string> = {}) {
   const map = new Map(Object.entries(seed));

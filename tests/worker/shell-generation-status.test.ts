@@ -3,7 +3,7 @@ import {
   resolveShellGenerationStatus,
   type ShellGenerationJobInput,
   type ShellGenerationJourneyInput,
-} from "../../src/shell/resolveShellGenerationStatus";
+} from "../../src/app/shell/resolveShellGenerationStatus";
 
 function journey(
   overrides: Partial<ShellGenerationJourneyInput> = {},

@@ -3,11 +3,11 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import ShellSidebarEdgeBar from "../../src/components/shell/ShellSidebarEdgeBar";
+import ShellSidebarEdgeBar from "../../src/app/shell/ShellSidebarEdgeBar";
 import {
   DRAWER_WIDTH,
   RAIL_WIDTH,
-} from "../../src/components/shell/chromeTokens";
+} from "../../src/app/shell/chromeTokens";
 
 async function renderBar(props: {
   collapsed: boolean;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { getJob, getJourneyGeneration } from "../api/client";
+import { getJob, getJourneyGeneration } from "../../api/client";
 import { shellGenerationPollMs } from "./shellGenerationPollMs";
-import { isGuest } from "../guest/session";
+import { isGuest } from "../../guest/session";
 import {
   resolveShellGenerationStatus,
   type ShellGenerationJobInput,

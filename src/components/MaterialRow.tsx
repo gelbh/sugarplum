@@ -29,7 +29,7 @@ import {
   type SourceRole,
 } from "../lib/sourceRole";
 import { SOURCE_ROLE_ICONS } from "../lib/sourceRoleIcons";
-import { navigate } from "../nav/navigate";
+import { navigate } from "../shared/nav/navigate";
 import {
   SelectEnumItem,
   renderSelectEnumValue,

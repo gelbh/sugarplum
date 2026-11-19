@@ -24,7 +24,7 @@ import { partitionSplitSiblings } from "../materials/splitSiblingGroups";
 import type { SourceRole } from "../lib/sourceRole";
 import EmptyNext from "./EmptyNext";
 import MaterialRow from "./MaterialRow";
-import { shouldAutoFocusText } from "../lib/autoFocusText";
+import { shouldAutoFocusText } from "../shared/lib/autoFocusText";
 
 export type MaterialsListProps = {
   materials: MaterialListItem[];

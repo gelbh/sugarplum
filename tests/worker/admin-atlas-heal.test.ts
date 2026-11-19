@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { emptyParasiteFields } from "../../worker/atlas/templates/parasite";
-import { loadParasiteDataset } from "../../worker/atlas/datasets/parasites";
+import { loadParasiteDataset } from "../../worker/atlas/datasets/parasites/index";
 import { createTestEnv } from "./test-env";
 
 const ADMIN_EMAIL = "ops@example.com";

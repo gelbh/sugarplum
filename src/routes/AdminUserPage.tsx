@@ -30,10 +30,10 @@ import {
   ApiError,
   type AdminUserDetail,
 } from "../api/client";
-import { navigate } from "../nav/navigate";
+import { navigate } from "../shared/nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { useSession } from "../session/SessionContext";
-import { shouldAutoFocusText } from "../lib/autoFocusText";
+import { shouldAutoFocusText } from "../shared/lib/autoFocusText";
 
 const RETENTION_NOTE =
   "No automatic deletion; wipe inactive accounts manually.";

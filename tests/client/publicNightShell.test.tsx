@@ -5,7 +5,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { afterEach, describe, expect, it } from "vitest";
-import PublicNightShell from "../../src/components/PublicNightShell";
+import PublicNightShell from "../../src/app/PublicNightShell";
 import { HOME_BRAND } from "../../src/home/homeCopy";
 import { theme } from "../../src/theme";
 

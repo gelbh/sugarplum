@@ -4,7 +4,7 @@ import Button from "@mui/material/Button";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import PublicNightShell from "../components/PublicNightShell";
+import PublicNightShell from "../app/PublicNightShell";
 import { continueAsGuest } from "../guest/enterGuest";
 import HomeFoyerCardPreview from "../home/HomeFoyerCardPreview";
 import { HOME_BRAND, HOME_PURPOSE, HOME_TAGLINE } from "../home/homeCopy";

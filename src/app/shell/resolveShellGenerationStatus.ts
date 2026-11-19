@@ -1,4 +1,4 @@
-import { friendlyStageHeadline } from "../progress/copy";
+import { friendlyStageHeadline } from "../../progress/copy";
 
 export type ShellGenerationKind = "drafts_ready" | "failed" | "generating";
 

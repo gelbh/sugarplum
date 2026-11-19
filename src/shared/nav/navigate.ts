@@ -1,4 +1,4 @@
-import { atlasHref, matchAtlasPath } from "../atlas/paths";
+import { atlasHref, matchAtlasPath } from "../../atlas/paths";
 
 /** Pathname + search for SPA location equality (query-only study scopes). */
 export function locationKey(href = window.location.href): string {

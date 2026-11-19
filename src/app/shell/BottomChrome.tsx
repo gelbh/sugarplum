@@ -2,7 +2,7 @@ import Badge from "@mui/material/Badge";
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
 import Paper from "@mui/material/Paper";
-import type { ShellGenerationKind } from "../../shell/resolveShellGenerationStatus";
+import type { ShellGenerationKind } from "./resolveShellGenerationStatus";
 import {
   BOTTOM_NAV_HEIGHT,
   SHELL_BG,

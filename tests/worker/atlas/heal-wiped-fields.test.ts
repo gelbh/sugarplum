@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites";
+import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites/index";
 import { healOverlayFieldsFromDataset } from "../../../worker/atlas/heal-wiped-fields";
 import {
   emptyParasiteFields,

@@ -19,8 +19,8 @@ import { useAddEntryDialog } from "./useAddEntryDialog";
 import { useEditEntryDialog } from "./useEditEntryDialog";
 import { useEditLifecycleDialog } from "./useEditLifecycleDialog";
 import { useRecentlyDeletedDialog } from "./useRecentlyDeletedDialog";
-import { shouldAutoFocusText } from "../lib/autoFocusText";
-import DialogEyebrow from "../ui/DialogEyebrow";
+import { shouldAutoFocusText } from "../shared/lib/autoFocusText";
+import DialogEyebrow from "../shared/ui/DialogEyebrow";
 
 /** Deck Hub dialog title voice: Alice display, not form chrome. */
 const LIFECYCLE_DIALOG_TITLE_SX = {

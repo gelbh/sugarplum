@@ -7,7 +7,7 @@ import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { isPlainClick, navigate } from "../../nav/navigate";
+import { isPlainClick, navigate } from "../../shared/nav/navigate";
 
 export type BoardTileSelect = {
   checked: boolean;

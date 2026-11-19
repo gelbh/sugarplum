@@ -16,7 +16,7 @@ import CompositionSpark, {
   COMPOSITION_SEGMENT_COLORS,
 } from "../components/CompositionSpark";
 import EmptyNext from "../components/EmptyNext";
-import { navigate } from "../nav/navigate";
+import { navigate } from "../shared/nav/navigate";
 import ActivityHeatmap from "../insights/ActivityHeatmap";
 import {
   INSIGHTS_RANGE_PRESETS,

@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { atlasHubHref } from "../atlas/paths";
-import { navigateReplace } from "../nav/navigate";
+import { navigateReplace } from "../shared/nav/navigate";
 import { useSession } from "../session/SessionContext";
 import { sessionAnatomyViewerEnabled } from "./anatomyViewerAccess";
 

@@ -20,7 +20,7 @@ import {
   type AdminOverview,
   type AdminUserListItem,
 } from "../api/client";
-import { navigate } from "../nav/navigate";
+import { navigate } from "../shared/nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
 const SEARCH_DEBOUNCE_MS = 300;

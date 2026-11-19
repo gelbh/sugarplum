@@ -5,7 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { shellBackHref } from "../../nav/navigate";
+import { shellBackHref } from "../../shared/nav/navigate";
 
 type ShellBackOverrideValue = {
   href: string | null;

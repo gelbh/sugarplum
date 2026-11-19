@@ -25,10 +25,10 @@ import CoverPickerPanel from "../components/CoverPickerPanel";
 import BoardTile from "../library/board/BoardTile";
 import LibraryBoard from "../library/board/LibraryBoard";
 import { coverPlaceholderColor } from "../library/board/coverPlaceholder";
-import CoverHeroThumb from "../ui/CoverHeroThumb";
+import CoverHeroThumb from "../shared/ui/CoverHeroThumb";
 import { LibraryCreateSubjectPanel } from "../library/LibraryCreateSubjectPanel";
 import MagazineEmptyStage from "../library/MagazineEmptyStage";
-import StageBreadcrumbs from "../ui/StageBreadcrumbs";
+import StageBreadcrumbs from "../shared/ui/StageBreadcrumbs";
 import {
   type Deck,
   type DeckStats,
@@ -48,7 +48,7 @@ import { createSubjectExport } from "../subjects/subjectExport";
 import { createSubjectTitleDialogs } from "../subjects/subjectTitleDialogs";
 import type { CoverTarget, TitleDialog } from "../subjects/subjectTypes";
 import { useSubjectLoad } from "../subjects/useSubjectLoad";
-import { shouldAutoFocusText } from "../lib/autoFocusText";
+import { shouldAutoFocusText } from "../shared/lib/autoFocusText";
 
 type Props = {
   subjectId: string;

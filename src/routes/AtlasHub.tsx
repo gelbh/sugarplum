@@ -9,7 +9,7 @@ import { sessionAnatomyViewerEnabled } from "../anatomy/anatomyViewerAccess";
 import { anatomyHubHref } from "../anatomy/paths";
 import HubNavCard from "../components/HubNavCard";
 import { isGuest } from "../guest/session";
-import { isPlainClick, navigate } from "../nav/navigate";
+import { isPlainClick, navigate } from "../shared/nav/navigate";
 import { useSession } from "../session/SessionContext";
 import ParasitologyAtlasBounce from "./ParasitologyAtlasBounce";
 
