@@ -1,5 +1,3 @@
-import Typography from "@mui/material/Typography";
-
 export const PRIMARY_PILL_SX = {
   minWidth: 140,
   px: 2.5,
@@ -54,28 +52,3 @@ export const DIALOG_CANCEL_SX = {
   fontWeight: 500,
   "&:hover": { color: "text.primary", bgcolor: "transparent" },
 } as const;
-
-export function DialogEyebrow({
-  label,
-  tone = "primary",
-}: {
-  label: string;
-  tone?: "primary" | "error" | "warning";
-}) {
-  return (
-    <Typography
-      component="p"
-      sx={{
-        m: 0,
-        mb: 0.75,
-        fontSize: "0.6875rem",
-        fontWeight: 500,
-        letterSpacing: "0.22em",
-        textTransform: "uppercase",
-        color: `${tone}.main`,
-      }}
-    >
-      {label}
-    </Typography>
-  );
-}

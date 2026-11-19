@@ -37,9 +37,9 @@ import {
   DIALOG_CANCEL_SX,
   DIALOG_PAPER_SX,
   DIALOG_TITLE_SX,
-  DialogEyebrow,
   PRIMARY_PILL_SX,
 } from "../draftReview/draftReviewChrome";
+import DialogEyebrow from "../ui/DialogEyebrow";
 import { jobIdFromPath } from "../draftReview/draftReviewPath";
 import { createDraftReviewBatch } from "../draftReview/draftReviewBatch";
 import { createDraftReviewDecide } from "../draftReview/draftReviewDecide";
