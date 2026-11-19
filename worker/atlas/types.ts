@@ -8,4 +8,5 @@ export type AtlasRow = {
   user_id: string;
   template_key: string;
   created_at: string;
+  focus_pack_fingerprint?: string | null;
 };

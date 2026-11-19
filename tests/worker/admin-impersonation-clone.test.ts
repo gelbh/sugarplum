@@ -238,6 +238,21 @@ describe("admin impersonation D1 clone", () => {
       source_role: "tutorial",
     });
     env.seedR2(packR2, "Fasciola hepatica tutorial notes");
+    await env.DB.prepare(
+      `INSERT INTO atlas_entry_focus (
+         atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        "atlas-alice",
+        "fasciola-hepatica",
+        "standard",
+        "Standard",
+        "[]",
+        null,
+        NOW,
+      )
+      .run();
 
     const start = await app.request(
       "/api/admin/users/u-alice/impersonate",
@@ -270,6 +285,18 @@ describe("admin impersonation D1 clone", () => {
         : new TextDecoder().decode(copied as ArrayBuffer);
     expect(copiedText).toBe("Fasciola hepatica tutorial notes");
     expect(env.getR2(packR2)).toBe("Fasciola hepatica tutorial notes");
+
+    const sandboxFocus = await env.DB.prepare(
+      `SELECT tier, reason FROM atlas_entry_focus
+       WHERE atlas_id = ? AND entry_key = ?`,
+    )
+      .bind(sandboxAtlases[0]!.id, "fasciola-hepatica")
+      .first<{ tier: string; reason: string }>();
+    expect(sandboxFocus).toMatchObject({
+      tier: "key",
+      reason: expect.stringMatching(/tutorial/i),
+    });
+    expect(sandboxAtlases[0]!.focus_pack_fingerprint).toMatch(/^v1:/);
   });
 
   it("study edit mutates sandbox only; source unchanged after Exit", async () => {

@@ -544,6 +544,86 @@ describe("atlas focus empty materials and lazy GET", () => {
     ).toBeNull();
   });
 
+  it("rescans complete Focus map when pack fingerprint is missing or stale", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+
+    const paste = await pasteAtlasPack(env, atlasId, {
+      text: "Fasciola hepatica named late in the handout.",
+      filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
+      source_role: "tutorial",
+    });
+    expect(paste.status).toBe(201);
+
+    const warm = await app.request(
+      `/api/atlas/${atlasId}/entries`,
+      { headers: authHeaders() },
+      env,
+    );
+    expect(warm.status).toBe(200);
+    const warmBody = (await warm.json()) as { entries: AtlasEntryView[] };
+    expect(
+      warmBody.entries.find((e) => e.id === "fasciola-hepatica"),
+    ).toMatchObject({ tier: "key" });
+
+    const fpRow = await env.DB.prepare(
+      "SELECT focus_pack_fingerprint FROM atlases WHERE id = ?",
+    )
+      .bind(atlasId)
+      .first<{ focus_pack_fingerprint: string | null }>();
+    expect(fpRow?.focus_pack_fingerprint).toMatch(/^v1:/);
+
+    await env.DB.prepare(
+      `INSERT OR REPLACE INTO atlas_entry_focus (
+         atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        atlasId,
+        "fasciola-hepatica",
+        "standard",
+        "Standard",
+        "[]",
+        null,
+        "2026-01-01T00:00:00.000Z",
+      )
+      .run();
+
+    const matchedFp = await app.request(
+      `/api/atlas/${atlasId}/entries`,
+      { headers: authHeaders() },
+      env,
+    );
+    expect(matchedFp.status).toBe(200);
+    const matchedBody = (await matchedFp.json()) as {
+      entries: AtlasEntryView[];
+    };
+    expect(
+      matchedBody.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
+    ).toBe("standard");
+
+    await env.DB.prepare(
+      "UPDATE atlases SET focus_pack_fingerprint = ? WHERE id = ?",
+    )
+      .bind(null, atlasId)
+      .run();
+
+    const healed = await app.request(
+      `/api/atlas/${atlasId}/entries`,
+      { headers: authHeaders() },
+      env,
+    );
+    expect(healed.status).toBe(200);
+    const healedBody = (await healed.json()) as { entries: AtlasEntryView[] };
+    expect(
+      healedBody.entries.find((e) => e.id === "fasciola-hepatica"),
+    ).toMatchObject({
+      tier: "key",
+      reason: expect.stringMatching(/tutorial/i),
+    });
+  });
+
   it("deck-only ready materials do not Key; atlas pack paste can", async () => {
     const env = createTestEnv();
     seedOwner(env);

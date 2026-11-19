@@ -3,6 +3,7 @@ export type AtlasRow = {
   user_id: string;
   template_key: string;
   created_at: string;
+  focus_pack_fingerprint?: string | null;
 };
 
 export type AtlasEntryRow = {
@@ -145,6 +146,19 @@ export function atlasFirst<T>(
   if (normalized.startsWith("SELECT id, user_id FROM atlases WHERE id =")) {
     const row = state.atlases.get(bound[0] as string);
     return row ? ({ id: row.id, user_id: row.user_id } as T) : null;
+  }
+
+  if (
+    normalized.startsWith(
+      "SELECT focus_pack_fingerprint FROM atlases WHERE id =",
+    )
+  ) {
+    const row = state.atlases.get(bound[0] as string);
+    return row
+      ? ({
+          focus_pack_fingerprint: row.focus_pack_fingerprint ?? null,
+        } as T)
+      : null;
   }
 
   if (
@@ -356,7 +370,28 @@ export function atlasRun(
         );
       }
     }
-    state.atlases.set(id, { id, user_id, template_key, created_at });
+    state.atlases.set(id, {
+      id,
+      user_id,
+      template_key,
+      created_at,
+      focus_pack_fingerprint: null,
+    });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+
+  if (
+    normalized.startsWith(
+      "UPDATE atlases SET focus_pack_fingerprint = ? WHERE id =",
+    )
+  ) {
+    const [fingerprint, atlasId] = bound as [string | null, string];
+    const row = state.atlases.get(atlasId);
+    if (!row) return { success: true, meta: { changes: 0 } } as D1Result;
+    state.atlases.set(atlasId, {
+      ...row,
+      focus_pack_fingerprint: fingerprint,
+    });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
 
