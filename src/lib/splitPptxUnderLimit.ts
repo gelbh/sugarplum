@@ -223,7 +223,10 @@ async function serializeSlideRange(
     if (relsFile) {
       const rels = await relsFile.async("string");
       const notesMatch = [...rels.matchAll(/<Relationship\b[^>]*\/?>/gi)].find(
-        (m) => (m[0] ?? "").includes(NOTES_REL_TYPE),
+        (m) => {
+          const type = /\bType="([^"]+)"/i.exec(m[0] ?? "")?.[1];
+          return type === NOTES_REL_TYPE;
+        },
       );
       if (notesMatch) {
         const target = /\bTarget="([^"]+)"/i.exec(notesMatch[0]!)?.[1];

@@ -36,6 +36,10 @@ const sampleCardsJson = JSON.stringify({
   ],
 });
 
+function hostnameOf(url: string): string {
+  return new URL(url).hostname;
+}
+
 describe("LLM provider allowlist", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -70,7 +74,7 @@ describe("LLM provider allowlist", () => {
             (url.includes("key=") ? "query-key" : ""),
         );
 
-        if (url.includes("api.anthropic.com")) {
+        if (hostnameOf(url) === "api.anthropic.com") {
           return new Response(
             JSON.stringify({
               content: [{ type: "text", text: sampleCardsJson }],
@@ -78,7 +82,7 @@ describe("LLM provider allowlist", () => {
             { status: 200, headers: { "content-type": "application/json" } },
           );
         }
-        if (url.includes("generativelanguage.googleapis.com")) {
+        if (hostnameOf(url) === "generativelanguage.googleapis.com") {
           return new Response(
             JSON.stringify({
               candidates: [
@@ -107,12 +111,12 @@ describe("LLM provider allowlist", () => {
     });
 
     expect(urls).toHaveLength(2);
-    expect(urls.every((u) => !u.includes("api.openai.com"))).toBe(true);
+    expect(urls.every((u) => hostnameOf(u) !== "api.openai.com")).toBe(true);
     expect(urls[0]).toBe(providerRequestUrl("anthropic"));
-    expect(urls[0]).toContain("api.anthropic.com");
+    expect(hostnameOf(urls[0]!)).toBe("api.anthropic.com");
     expect(urls[1]).toBe(providerRequestUrl("google"));
-    expect(urls[1]).toContain("generativelanguage.googleapis.com");
-    expect(urls[1]).not.toContain("api.openai.com");
+    expect(hostnameOf(urls[1]!)).toBe("generativelanguage.googleapis.com");
+    expect(hostnameOf(urls[1]!)).not.toBe("api.openai.com");
     expect(urls[1]).not.toContain(encodeURIComponent(googleKey));
     expect(urls[1]).not.toMatch(/[?&]key=/);
     expect(authHeaders[0]).toBe(anthropicKey);

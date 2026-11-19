@@ -15,25 +15,25 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-async function flush(): Promise<void> {
-  await new Promise<void>((resolve) => setTimeout(resolve, 0));
-}
-
 describe("sessionSync", () => {
   it("postSessionHint sends type session without user fields", async () => {
     if (typeof BroadcastChannel === "undefined") {
       expect(() => postSessionHint()).not.toThrow();
       return;
     }
-    const received: unknown[] = [];
     const peer = new BroadcastChannel(SESSION_SYNC_CHANNEL);
-    peer.addEventListener("message", (event) => {
-      received.push(event.data);
+    const got = new Promise<unknown>((resolve) => {
+      peer.addEventListener("message", (event) => resolve(event.data), {
+        once: true,
+      });
     });
     postSessionHint();
-    await flush();
-    expect(received).toHaveLength(1);
-    const hint = received[0] as { type: string; ts: number; user?: unknown };
+    const hint = (await Promise.race([
+      got,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("session hint timeout")), 1000),
+      ),
+    ])) as { type: string; ts: number; user?: unknown };
     expect(hint.type).toBe("session");
     expect(typeof hint.ts).toBe("number");
     expect(hint.user).toBeUndefined();
@@ -45,8 +45,16 @@ describe("sessionSync", () => {
     const onHint = vi.fn();
     const unsub = subscribeSessionSync(onHint);
     const peer = new BroadcastChannel(SESSION_SYNC_CHANNEL);
+    const got = new Promise<void>((resolve) => {
+      onHint.mockImplementation(() => resolve());
+    });
     peer.postMessage({ type: "session", ts: 1 });
-    await flush();
+    await Promise.race([
+      got,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("session subscribe timeout")), 1000),
+      ),
+    ]);
     expect(onHint).toHaveBeenCalledTimes(1);
     peer.close();
     unsub();
