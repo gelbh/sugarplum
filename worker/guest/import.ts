@@ -327,6 +327,12 @@ guestRoutes.post("/import", async (c) => {
     );
   }
   let insertedCards = 0;
+  const cardPairs: Array<{
+    contentFp: string;
+    deckId: string;
+    card: D1PreparedStatement;
+    schedule: D1PreparedStatement;
+  }> = [];
   for (const card of cards) {
     const deckId = clientToServerDeck.get(card.clientDeckId);
     if (!deckId) {
@@ -354,8 +360,6 @@ guestRoutes.post("/import", async (c) => {
       seenFpByDeck.set(deckId, seen);
     }
     if (seen.has(contentFp)) continue;
-    seen.add(contentFp);
-    insertedCards += 1;
 
     const cardId = crypto.randomUUID();
     const schedule = scheduleColumnsFromCard(newCard());
@@ -365,8 +369,10 @@ guestRoutes.post("/import", async (c) => {
     });
     const backJson = encodeStoredBack(card.type, back, options);
 
-    statements.push(
-      db
+    cardPairs.push({
+      contentFp,
+      deckId,
+      card: db
         .prepare(
           `INSERT INTO cards (
             id, deck_id, job_id, type, front_json, back_json,
@@ -389,9 +395,7 @@ guestRoutes.post("/import", async (c) => {
           null,
           contentFp,
         ),
-    );
-    statements.push(
-      db
+      schedule: db
         .prepare(
           `INSERT INTO card_schedules (
             card_id, due, stability, difficulty, elapsed_days, scheduled_days,
@@ -411,11 +415,28 @@ guestRoutes.post("/import", async (c) => {
           schedule.state,
           schedule.last_review,
         ),
-    );
+    });
   }
 
   if (statements.length > 0) {
     await db.batch(statements);
+  }
+
+  for (const pair of cardPairs) {
+    const seen = seenFpByDeck.get(pair.deckId)!;
+    if (seen.has(pair.contentFp)) continue;
+    try {
+      await db.batch([pair.card, pair.schedule]);
+      seen.add(pair.contentFp);
+      insertedCards += 1;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (/UNIQUE|unique|constraint/i.test(message)) {
+        seen.add(pair.contentFp);
+        continue;
+      }
+      throw err;
+    }
   }
 
   return c.json({ deckCount: decks.length, cardCount: insertedCards });

@@ -10,6 +10,12 @@ export function frontToFingerprintText(front: unknown): string {
   return normalizeCardField(JSON.stringify(front));
 }
 
+function normalizeBackField(back: unknown): string {
+  if (typeof back === "string") return normalizeCardField(back);
+  if (back == null) return "";
+  return normalizeCardField(JSON.stringify(back));
+}
+
 /** Sync payload shared by Worker SHA-256 and Node backfill script. */
 export function assembleCardFingerprintPayload(input: {
   type: string;
@@ -21,15 +27,13 @@ export function assembleCardFingerprintPayload(input: {
   const media = [...(input.mediaR2Keys ?? [])].filter(Boolean).sort().join("\0");
   const parts = [input.type, frontToFingerprintText(input.front), media];
   if (input.type === "mcq") {
-    const answer =
-      typeof input.back === "string"
-        ? normalizeCardField(input.back)
-        : normalizeCardField(JSON.stringify(input.back ?? ""));
     const opts = [...(input.options ?? [])]
       .map((o) => normalizeCardField(o))
       .sort()
       .join("\0");
-    parts.push(answer, opts);
+    parts.push(normalizeBackField(input.back), opts);
+  } else if (input.type === "image_label" || input.type === "diagram") {
+    parts.push(normalizeBackField(input.back));
   }
   return parts.join("\0");
 }
