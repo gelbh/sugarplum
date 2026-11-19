@@ -1,8 +1,8 @@
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { FlipCardPlate } from "../components/CardFace";
-import { FACE_BODY_SX, FACE_PROMPT_TEXT_SX } from "../components/studyFaceSx";
+import { FlipCardPlate } from "../study/CardFace";
+import { FACE_BODY_SX, FACE_PROMPT_TEXT_SX } from "../study/studyFaceSx";
 import { HOME_DEMO_BACK, HOME_DEMO_FRONT } from "./homeCopy";
 
 /** Static demo flashcard for the public foyer (click to flip). */

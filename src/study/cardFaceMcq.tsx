@@ -16,12 +16,12 @@ import {
   mcqOptionButtonDisabled,
   mcqTapRating,
   shuffledMcqOptions,
-} from "../study/mcqStudy";
+} from "./mcqStudy";
 import {
   mcqOptionIndexForKey,
   mcqOptionKey,
   plainShortcutKey,
-} from "../study/studyKeys";
+} from "./studyKeys";
 import { FaceOverline } from "./faceOverline";
 import KeyChip from "./KeyChip";
 import { FACE_SANS, FACE_SX } from "./studyFaceSx";

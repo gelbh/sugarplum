@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import type { ReviewDecision } from "../components/ReviewCard";
+import type { ReviewDecision } from "../study/ReviewCard";
 import {
   ApiError,
   acceptCard,
