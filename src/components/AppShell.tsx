@@ -292,7 +292,7 @@ function AppShellChrome({ children }: AppShellProps) {
             </Button>
           }
         >
-          Viewing as {impersonation.sourceEmail}
+          Viewing as {impersonation.sourceEmail} (read-only)
         </Alert>
       ) : null}
       {routeOverlay || hideGlobalProgress ? null : (

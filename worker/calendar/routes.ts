@@ -46,7 +46,9 @@ type ConnectionRow = {
 type SubjectRow = { id: string; title: string };
 
 function hasScope(scopes: string, needle: string): boolean {
-  return scopes.split(/\s+/).some((s) => s === needle || s.endsWith(`/${needle}`));
+  return scopes
+    .split(/\s+/)
+    .some((s) => s === needle || s.endsWith(`/${needle}`));
 }
 
 function requireGoogleCreds(env: Env): {
@@ -72,7 +74,10 @@ function oauthCtxCookieAttrs(c: { req: { url: string } }) {
   };
 }
 
-function settingsRedirect(appUrl: string, params: Record<string, string>): Response {
+function settingsRedirect(
+  appUrl: string,
+  params: Record<string, string>,
+): Response {
   const base = appUrl.replace(/\/$/, "") || "";
   const url = new URL(`${base}/settings`);
   for (const [key, value] of Object.entries(params)) {
@@ -147,7 +152,8 @@ async function refreshAccessToken(
     throw new Error(`Google refresh failed (${res.status})`);
   }
   const json = (await res.json()) as { access_token?: string };
-  if (!json.access_token) throw new Error("Google refresh missing access_token");
+  if (!json.access_token)
+    throw new Error("Google refresh missing access_token");
   return { accessToken: json.access_token };
 }
 
@@ -217,6 +223,7 @@ async function loadClusters(
   userId: string,
   connection: ConnectionRow,
   fetchImpl: typeof fetch = fetch,
+  opts?: { readOnly?: boolean },
 ): Promise<Cluster[] | "reconnect" | "empty"> {
   if (!hasScope(connection.scopes, EVENTS_SCOPE)) return "empty";
 
@@ -243,9 +250,11 @@ async function loadClusters(
   try {
     const refreshed = await refreshAccessToken(c.env, refreshToken, fetchImpl);
     if ("invalidGrant" in refreshed) {
-      await deleteConnection(getDb(c.env), userId);
-      await c.env.SESSIONS.delete(clusterCacheKey(userId));
-      await c.env.SESSIONS.put(reconnectKey(userId), "1");
+      if (!opts?.readOnly) {
+        await deleteConnection(getDb(c.env), userId);
+        await c.env.SESSIONS.delete(clusterCacheKey(userId));
+        await c.env.SESSIONS.put(reconnectKey(userId), "1");
+      }
       return "reconnect";
     }
     accessToken = refreshed.accessToken;
@@ -265,11 +274,13 @@ async function loadClusters(
       fetchImpl,
     );
     const clusters = parseClusters(events);
-    await c.env.SESSIONS.put(
-      clusterCacheKey(userId),
-      JSON.stringify(clusters),
-      { expirationTtl: CLUSTER_CACHE_TTL },
-    );
+    if (!opts?.readOnly) {
+      await c.env.SESSIONS.put(
+        clusterCacheKey(userId),
+        JSON.stringify(clusters),
+        { expirationTtl: CLUSTER_CACHE_TTL },
+      );
+    }
     return clusters;
   } catch {
     return "empty";
@@ -427,12 +438,18 @@ calendarRoutes.delete("/", async (c) => {
 calendarRoutes.get("/suggestions", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
-  const empty = { subjects: [], decksBySubjectId: {} as Record<string, string[]> };
+  const empty = {
+    subjects: [],
+    decksBySubjectId: {} as Record<string, string[]>,
+  };
   const connection = await loadConnection(db, userId);
   if (!connection) return c.json(empty);
 
-  const clustersOr = await loadClusters(c, userId, connection);
-  if (clustersOr === "reconnect" || clustersOr === "empty") return c.json(empty);
+  const clustersOr = await loadClusters(c, userId, connection, fetch, {
+    readOnly: Boolean(c.get("viewingAs")),
+  });
+  if (clustersOr === "reconnect" || clustersOr === "empty")
+    return c.json(empty);
   const clusters = clustersOr;
 
   const [linkRows, dismissRows, subjectRows] = await Promise.all([

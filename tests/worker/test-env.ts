@@ -232,7 +232,6 @@ type SessionRecord = {
   actorUserId?: string;
   impersonation?: {
     sourceUserId: string;
-    sandboxUserId: string;
     sourceEmail: string;
     startedAt: number;
   };

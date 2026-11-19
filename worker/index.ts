@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "./env";
 import { authRoutes } from "./auth/routes";
-import type { AuthVariables } from "./auth/session";
+import { readSessionRecordFresh, type AuthVariables } from "./auth/session";
+import { isViewAsBlockedGetPath } from "./admin/impersonation";
 import { deckRoutes, materialRoutes } from "./materials/routes";
 import { subjectRoutes } from "./subjects/routes";
 import { atlasRoutes } from "./atlas/routes";
@@ -41,7 +42,8 @@ const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 app.use("/api/*", async (c, next) => {
-  if (MUTATING.has(c.req.method)) {
+  const mutating = MUTATING.has(c.req.method);
+  if (mutating) {
     const appUrl = c.env?.APP_URL?.trim();
     if (!appUrl) {
       throw new HTTPException(500, {
@@ -51,6 +53,24 @@ app.use("/api/*", async (c, next) => {
     const origin = c.req.header("origin");
     if (!isAllowedMutatingOrigin(origin, appUrl)) {
       throw new HTTPException(403, { message: "Forbidden origin" });
+    }
+  }
+  const session = await readSessionRecordFresh(c);
+  if (session?.record.impersonation) {
+    const path = c.req.path;
+    if (mutating) {
+      // Learner product is read-only; only Exit + logout may mutate.
+      const allowed =
+        path === "/api/auth/logout" || path === "/api/admin/impersonation/exit";
+      if (!allowed) {
+        throw new HTTPException(403, {
+          message: "Read-only while viewing as user",
+        });
+      }
+    } else if (isViewAsBlockedGetPath(path)) {
+      throw new HTTPException(403, {
+        message: "Read-only while viewing as user",
+      });
     }
   }
   await next();
@@ -92,16 +112,10 @@ const worker = {
     env: Env,
   ): Promise<void> {
     if (batch.queue === EXPORT_QUEUE_NAME) {
-      await handleExportQueue(
-        batch as MessageBatch<ExportQueueMessage>,
-        env,
-      );
+      await handleExportQueue(batch as MessageBatch<ExportQueueMessage>, env);
       return;
     }
-    await handleGenerateQueue(
-      batch as MessageBatch<GenerateQueueMessage>,
-      env,
-    );
+    await handleGenerateQueue(batch as MessageBatch<GenerateQueueMessage>, env);
   },
   async scheduled(
     controller: ScheduledController,

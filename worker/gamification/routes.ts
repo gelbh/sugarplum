@@ -99,7 +99,9 @@ export function isoWeekWindow(d = new Date()): {
   return { weekKey, startIso, endIso };
 }
 
-function toGamificationResponse(row: UserGamificationRow): GamificationResponse {
+function toGamificationResponse(
+  row: UserGamificationRow,
+): GamificationResponse {
   return {
     streakCurrent: row.streak_current,
     streakBest: row.streak_best,
@@ -114,8 +116,9 @@ function toGamificationResponse(row: UserGamificationRow): GamificationResponse 
 async function loadGamification(
   db: D1Database,
   userId: string,
+  opts?: { readOnly?: boolean },
 ): Promise<UserGamificationRow> {
-  await ensureUserGamification(db, userId);
+  if (!opts?.readOnly) await ensureUserGamification(db, userId);
   const row = await db
     .prepare(
       `SELECT streak_current, streak_best, streak_day, xp_total, level,
@@ -125,6 +128,17 @@ async function loadGamification(
     .bind(userId)
     .first<UserGamificationRow>();
   if (!row) {
+    if (opts?.readOnly) {
+      return {
+        streak_current: 0,
+        streak_best: 0,
+        streak_day: null,
+        xp_total: 0,
+        level: 1,
+        display_name: null,
+        board_opt_in: 0,
+      };
+    }
     throw new HTTPException(500, { message: "Gamification row missing" });
   }
   return row;
@@ -158,12 +172,14 @@ export const gamificationRoutes = new Hono<AppEnv>();
 gamificationRoutes.get("/achievements", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
-  await ensureUserGamification(db, userId);
-
-  try {
-    await backfillUser(db, userId);
-  } catch (err) {
-    console.error("gamification backfill failed", err);
+  const viewingAs = Boolean(c.get("viewingAs"));
+  if (!viewingAs) {
+    await ensureUserGamification(db, userId);
+    try {
+      await backfillUser(db, userId);
+    } catch (err) {
+      console.error("gamification backfill failed", err);
+    }
   }
 
   const { results } = await db
@@ -213,7 +229,9 @@ gamificationRoutes.get("/achievements", async (c) => {
 
 gamificationRoutes.get("/gamification", async (c) => {
   const userId = await requireUser(c);
-  const row = await loadGamification(getDb(c.env), userId);
+  const row = await loadGamification(getDb(c.env), userId, {
+    readOnly: Boolean(c.get("viewingAs")),
+  });
   return c.json(toGamificationResponse(row) satisfies GamificationResponse);
 });
 

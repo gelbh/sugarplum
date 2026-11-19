@@ -123,7 +123,6 @@ export function adminImpersonateUser(id: string) {
     ok: true;
     impersonation: {
       sourceUserId: string;
-      sandboxUserId: string;
       sourceEmail: string;
       startedAt: number;
     };
