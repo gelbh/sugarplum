@@ -47,3 +47,50 @@ export function cardFromClaimCompactUserPrompt(claims: StudyClaim[]): string {
 Claims (JSON):
 ${JSON.stringify(claims)}`;
 }
+
+/** Sync regen: exactly one card of a forced type from one claim. */
+export const CARD_FROM_ONE_CLAIM_TYPED_SYSTEM_PROMPT = `You write one spaced-repetition flashcard from a single atomic study claim.
+
+Rules:
+- Produce exactly one card of the requested type.
+- Keep front/back under ~25 words. No essay backs.
+- No compound stems: do not ask "and what/which/how/why", do not use versus-paired multi-fact questions.
+- Cloze front must use exactly one Anki-style blank: {{c1::answer}}. Never multiple blanks. Cloze Extra (back) is optional: use "" when unused.
+- For type "mcq": front is a single-fact question; back is the correct option (must appear in options); options is a unique array of 3–5 strings including back. Every distractor must come from the claim source_span; do not invent trivia.
+- provenance.excerpt must equal the claim source_span (verbatim; whitespace normalization OK). pages from the claim or [1].
+- Respond with JSON only: {"cards":[{ "type": "qa"|"cloze"|"mcq", "front": string, "back": string, "options"?: string[], "provenance": { "pages": number[], "excerpt": string } }]}
+- Do not wrap the array in markdown fences. Finish every string and close all braces.`;
+
+export const CARD_FROM_ONE_CLAIM_TYPED_COMPACT_SYSTEM_PROMPT = `You write one short spaced-repetition flashcard from a single atomic study claim.
+
+Rules:
+- Produce exactly one card of the requested type.
+- Keep front/back under ~15 words. No essay backs.
+- No compound stems: do not ask "and what/which/how/why", do not use versus-paired multi-fact questions.
+- Cloze front must use exactly one Anki-style blank: {{c1::answer}}. Never multiple blanks. Cloze Extra (back) is optional: use "" when unused.
+- For type "mcq": front is a single-fact question; back is the correct option (must appear in options); options is a unique array of 3–5 strings including back. Every distractor must come from the claim source_span; do not invent trivia.
+- provenance.excerpt must equal the claim source_span (verbatim; whitespace normalization OK). pages from the claim or [1].
+- Respond with JSON only: {"cards":[{ "type": "qa"|"cloze"|"mcq", "front": string, "back": string, "options"?: string[], "provenance": { "pages": number[], "excerpt": string } }]}
+- Do not wrap the array in markdown fences. Finish every string and close all braces.`;
+
+export function cardFromOneClaimTypedUserPrompt(
+  claim: StudyClaim,
+  type: "qa" | "cloze" | "mcq",
+): string {
+  return `Produce exactly one flashcard of type "${type}" from this claim. Keep front/back under ~25 words. No compound stems.
+
+Claim (JSON):
+${JSON.stringify(claim)}
+
+Respond with JSON only as {"cards":[...]} containing exactly one card of type "${type}".`;
+}
+
+export function cardFromOneClaimTypedCompactUserPrompt(
+  claim: StudyClaim,
+  type: "qa" | "cloze" | "mcq",
+): string {
+  return `Produce exactly one short flashcard of type "${type}" from this claim. Keep front/back under 15 words. Respond with JSON only as {"cards":[...]}.
+
+Claim (JSON):
+${JSON.stringify(claim)}`;
+}

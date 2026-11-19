@@ -4,13 +4,17 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import {
-  capRegenSourceText,
-  generateOneCard,
+  ClaimAwareRegenError,
   loadCardSourceText,
+  regenerateClaimAwareCard,
   resolveRegenLlm,
 } from "../generation/card-regen";
 import { recordRegenUsageEvent } from "../generation/usage";
 import { WorkersAiCapacityError } from "../generation/workers-ai";
+import {
+  parseProvenanceJson,
+  provenanceExcerptText,
+} from "../../src/study/regenSource";
 import { requireOwnedDeck } from "../materials/routes";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 import { onCardAccepted } from "../gamification/onStudyEvent";
@@ -306,14 +310,16 @@ cardRoutes.post("/:id/regen", async (c) => {
   }
   const { type: regenType } = parseRegenBody(body);
 
-  const sourceRaw = await loadCardSourceText(c.env, row);
-  if (!sourceRaw) {
+  const materialText = await loadCardSourceText(c.env, row);
+  const excerpt = provenanceExcerptText(
+    parseProvenanceJson(row.provenance_json),
+  );
+  if (!materialText && !excerpt) {
     throw new HTTPException(422, {
       message:
         "No source text available for this card. Edit manually or regenerate from material with text.",
     });
   }
-  const sourceText = capRegenSourceText(sourceRaw);
 
   let llmBundle: Awaited<ReturnType<typeof resolveRegenLlm>>;
   try {
@@ -344,10 +350,11 @@ cardRoutes.post("/:id/regen", async (c) => {
   };
 
   const existingFront = parseJsonField<unknown>(row.front_json, null);
-  let generated: Awaited<ReturnType<typeof generateOneCard>>;
+  let generated: Awaited<ReturnType<typeof regenerateClaimAwareCard>>;
   try {
-    generated = await generateOneCard({
-      text: sourceText,
+    generated = await regenerateClaimAwareCard({
+      excerpt,
+      materialText,
       type: regenType,
       existingFront:
         typeof existingFront === "string" ? existingFront : undefined,
@@ -357,6 +364,11 @@ cardRoutes.post("/:id/regen", async (c) => {
       provider: llmBundle.provider,
     });
   } catch (err) {
+    if (err instanceof ClaimAwareRegenError) {
+      // Soft-fail: no card update; refund free slot reserved at resolve.
+      await llmBundle.releaseQuota().catch((e) => console.error(e));
+      throw new HTTPException(422, { message: err.message });
+    }
     if (err instanceof WorkersAiCapacityError) {
       await llmBundle.releaseQuota().catch((e) => console.error(e));
     }

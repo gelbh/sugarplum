@@ -21,7 +21,7 @@ import {
   IMAGE_GENERATE_SYSTEM_PROMPT,
   generateUserPrompt,
 } from "../../worker/generation/prompts";
-import { REGEN_ONE_SYSTEM_PROMPT } from "../../worker/generation/card-regen";
+import { CARD_FROM_ONE_CLAIM_TYPED_SYSTEM_PROMPT } from "../../worker/generation/card-from-claim-prompts";
 import type { StudyClaim } from "../../worker/generation/claims";
 import type { CardDraft } from "../../worker/generation/schema";
 
@@ -287,11 +287,10 @@ describe("card-from-claim prompt phrases", () => {
 });
 
 describe("card regen prompt phrases", () => {
-  it("regen system: atomic ≤25 words, no compound stems", () => {
-    const p = REGEN_ONE_SYSTEM_PROMPT.toLowerCase();
-    expect(p).toMatch(/atomic/);
+  it("typed claim regen system: ≤25 words, no compound stems", () => {
+    const p = CARD_FROM_ONE_CLAIM_TYPED_SYSTEM_PROMPT.toLowerCase();
     expect(p).toMatch(/25\s+words|under\s+~?25/);
     expect(p).toMatch(/compound\s+stem|and\s+what|versus|no\s+compound/);
-    assertNoAlwaysRewrite(REGEN_ONE_SYSTEM_PROMPT);
+    assertNoAlwaysRewrite(CARD_FROM_ONE_CLAIM_TYPED_SYSTEM_PROMPT);
   });
 });
