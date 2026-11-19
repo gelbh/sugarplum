@@ -262,6 +262,22 @@ export type JobListItem = {
   created_at: string;
 };
 
+export type ClaimCoverageRow = {
+  id: string;
+  subject: string;
+  predicate: string;
+  object?: string | null;
+  source_span: string;
+  pages?: number[] | null;
+  card_id: string | null;
+  card_status?: string | null;
+};
+
+export type ClaimCoverage = {
+  claims: ClaimCoverageRow[];
+  summary: { total: number; linked: number; orphan: number };
+};
+
 export type UploadUrlResponse = {
   materialId: string;
   uploadUrl: string;

@@ -204,13 +204,13 @@ describe("runGenerationPipeline", () => {
     for (const e of events) {
       expect(e.total).toBe(n);
     }
-    // Per chunk: generate start/done, critique start/done; half-steps never rewind
+    // Per chunk: claims extract, generate write, critique start/done; half-steps never rewind
     expect(events.map((e) => [e.stage, e.current, e.halfStepsDone])).toEqual([
-      ["generate", 1, 0],
+      ["claims", 1, 0],
       ["generate", 1, 1],
       ["critique", 1, 1],
       ["critique", 1, 2],
-      ["generate", 2, 2],
+      ["claims", 2, 2],
       ["generate", 2, 3],
       ["critique", 2, 3],
       ["critique", 2, 4],
@@ -242,7 +242,7 @@ describe("runGenerationPipeline", () => {
     });
 
     expect(events.map((e) => [e.stage, e.halfStepsDone])).toEqual([
-      ["generate", 0],
+      ["claims", 0],
       ["generate", 1],
       ["critique", 1],
       ["critique", 2],

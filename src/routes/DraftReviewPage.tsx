@@ -21,6 +21,7 @@ import {
   asRegenType,
   cardHasRegenSource,
   type CardDraftView,
+  type ClaimCoverage,
 } from "../api/client";
 import {
   CreateFlowNoticeFade,
@@ -46,6 +47,7 @@ import { createDraftReviewDecide } from "../draftReview/draftReviewDecide";
 import { createDraftReviewRegen } from "../draftReview/draftReviewRegen";
 import type { DraftReviewNotice } from "../draftReview/draftReviewTypes";
 import { friendlyJobError } from "../draftReview/friendlyJobError";
+import ClaimCoveragePanel from "../draftReview/ClaimCoveragePanel";
 import { useDraftReviewLoad } from "../draftReview/useDraftReviewLoad";
 
 export default function DraftReviewPage() {
@@ -57,6 +59,9 @@ export default function DraftReviewPage() {
   const [notice, setNotice] = useState<DraftReviewNotice | null>(null);
   const [undoBusy, setUndoBusy] = useState(false);
   const [jobStatus, setJobStatus] = useState<string | null>(null);
+  const [claimCoverage, setClaimCoverage] = useState<ClaimCoverage | null>(
+    null,
+  );
   const [crumbs, setCrumbs] = useState<StageCrumb[]>([
     { label: "Library", href: "/library" },
   ]);
@@ -93,9 +98,26 @@ export default function DraftReviewPage() {
     setCrumbs,
     setReady,
     setDirty,
+    setClaimCoverage,
   });
 
   const current = drafts[0] ?? null;
+
+  const jumpToDraft = (cardId: string) => {
+    if (dirty) return;
+    let moved = false;
+    setDrafts((prev) => {
+      const idx = prev.findIndex((d) => d.id === cardId);
+      if (idx <= 0) return prev;
+      const next = [...prev];
+      const [card] = next.splice(idx, 1);
+      if (!card) return prev;
+      next.unshift(card);
+      moved = true;
+      return next;
+    });
+    if (moved) setRegenNonce((n) => n + 1);
+  };
 
   const { onEditorChange, onUndoDecision, onDecide } = createDraftReviewDecide({
     jobId,
@@ -456,6 +478,16 @@ export default function DraftReviewPage() {
                     justifyContent: "center",
                   }}
                 >
+                  {jobStatus === "needs_review" &&
+                  claimCoverage &&
+                  claimCoverage.summary.total > 0 ? (
+                    <ClaimCoveragePanel
+                      coverage={claimCoverage}
+                      drafts={drafts}
+                      onJumpToDraft={jumpToDraft}
+                    />
+                  ) : null}
+                  <Box data-card-id={current.id} sx={{ width: "100%" }}>
                   <ReviewCard
                     key={`${current.id}:${regenNonce}`}
                     card={current}
@@ -474,6 +506,7 @@ export default function DraftReviewPage() {
                       },
                     }}
                   />
+                  </Box>
 
                   {current.provenance &&
                   typeof current.provenance === "object" &&

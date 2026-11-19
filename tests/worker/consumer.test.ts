@@ -801,7 +801,7 @@ describe("processGenerateJob free path", () => {
     });
   });
 
-  it("multi-chunk paste emits generate/critique progress with real total", async () => {
+  it("multi-chunk paste emits claims/generate/critique progress with real total", async () => {
     const env = createTestEnv();
     await seedOwner(env, true);
     const base = mockLlmAdapter();
@@ -839,10 +839,10 @@ describe("processGenerateJob free path", () => {
       });
     expect(extractCalls).toHaveLength(2);
     expect(midGenerate.length).toBeGreaterThanOrEqual(1);
-    expect(midGenerate[0]!.stage).toBe("generate");
+    expect(midGenerate[0]!.stage).toBe("claims");
     expect(midGenerate[0]!.total).toBeGreaterThanOrEqual(2);
     expect(midGenerate[0]!.current).toBe(1);
-    expect(midGenerate[0]!.label).toMatch(/chunk 1\//);
+    expect(midGenerate[0]!.label).toMatch(/Extracting claims \(chunk 1\//);
 
     const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("needs_review");

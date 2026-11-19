@@ -11,6 +11,7 @@ import { getFreeGenUsage } from "./quota";
 import { failRunningJobIfStale } from "./staleFail";
 import { normalizeTopicHints } from "./topic-hints";
 import { parseOptionalJsonBody } from "../optional-json";
+import { buildClaimCoverage } from "./claim-coverage";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -216,6 +217,48 @@ jobRoutes.get("/:id", async (c) => {
   });
 });
 
+jobRoutes.get("/:id/claim-coverage", async (c) => {
+  const userId = await requireUser(c);
+  const jobId = c.req.param("id");
+  const db = getDb(c.env);
+
+  const owned = await db
+    .prepare(
+      `SELECT j.id
+       FROM generation_jobs j
+       INNER JOIN materials m ON m.id = j.material_id
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE j.id = ? AND d.user_id = ?`,
+    )
+    .bind(jobId, userId)
+    .first<{ id: string }>();
+  if (!owned) throw new HTTPException(404, { message: "Job not found" });
+
+  const { results } = await db
+    .prepare(
+      `SELECT sc.id, sc.subject, sc.predicate, sc.object, sc.source_span, sc.pages_json,
+              c.id AS card_id, c.status AS card_status, c.created_at AS card_created_at
+       FROM study_claims sc
+       LEFT JOIN cards c ON c.claim_id = sc.id
+       WHERE sc.job_id = ?
+       ORDER BY sc.created_at ASC`,
+    )
+    .bind(jobId)
+    .all<{
+      id: string;
+      subject: string;
+      predicate: string;
+      object: string | null;
+      source_span: string;
+      pages_json: string | null;
+      card_id: string | null;
+      card_status: string | null;
+      card_created_at: string | null;
+    }>();
+
+  return c.json(buildClaimCoverage(results ?? []));
+});
+
 /**
  * Clear a failed (or empty needs_review) job from pending chrome.
  * Rejects leftover drafts, marks job done; returns deck_id for navigation.
@@ -409,6 +452,11 @@ jobRoutes.post("/:id/regen", async (c) => {
     )
     .run();
 
+  // Wipe claims with cards so coverage does not accumulate orphans across regens.
+  await db
+    .prepare("DELETE FROM study_claims WHERE job_id = ?")
+    .bind(jobId)
+    .run();
   await db.prepare("DELETE FROM cards WHERE job_id = ?").bind(jobId).run();
 
   try {

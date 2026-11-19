@@ -29,11 +29,11 @@ export const MAX_PIPELINE_CHUNKS = 4;
 export type PipelineLlm = LlmAdapter;
 
 export type PipelineProgressEvent = {
-  stage: "generate" | "critique";
+  stage: "claims" | "generate" | "critique";
   current: number;
   total: number;
   label: string;
-  /** Completed generate+critique half-steps in 0..2*total (monotonic). */
+  /** Completed claims+generate+critique half-steps in 0..2*total (monotonic). */
   halfStepsDone: number;
 };
 
@@ -339,7 +339,7 @@ export async function runGenerationPipeline(
     const chunk = chunks[i]!;
     const chunkLabel = i + 1;
     const report = (
-      stage: "generate" | "critique",
+      stage: "claims" | "generate" | "critique",
       current: number,
       halfStepsDone: number,
       label: string,
@@ -355,7 +355,7 @@ export async function runGenerationPipeline(
     const chunkTag = `chunk ${chunkLabel}/${total}`;
 
     await report(
-      "generate",
+      "claims",
       chunkLabel,
       2 * i,
       `Extracting claims (${chunkTag})`,

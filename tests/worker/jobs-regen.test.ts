@@ -107,6 +107,18 @@ describe("POST /api/jobs/:id/regen", () => {
     const env = createTestEnv();
     seedOwner(env);
     seedNeedsReviewJob(env);
+    env.seedStudyClaim({
+      id: "cl-stale",
+      job_id: "job-a",
+      deck_id: "deck-a",
+      subject: "Stale",
+      predicate: "claim",
+      source_span: "Stale claim",
+      object: null,
+      qualifiers_json: null,
+      pages_json: null,
+      created_at: "2026-01-01T01:06:00.000Z",
+    });
 
     const res = await app.request(
       "/api/jobs/job-a/regen",
@@ -117,6 +129,7 @@ describe("POST /api/jobs/:id/regen", () => {
       env,
     );
     expect(res.status).toBe(200);
+    expect(env.getStudyClaims()).toEqual([]);
     const body = (await res.json()) as {
       id: string;
       material_id: string;

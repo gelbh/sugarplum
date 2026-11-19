@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   GENERATE_QUEUE_MAX_RETRIES,
   GENERATE_QUEUE_RETRY_DELAY_SEC,
+  IMAGE_STAGES,
+  PDF_STAGES,
+  RULES_ONLY_STAGES,
   RUNNING_JOB_STALE_MS,
   STAGE_WEIGHTS,
+  TEXT_LLM_STAGES,
   accumulateTokenUsage,
   computePercent,
   computePipelineBandPercent,
@@ -24,6 +28,7 @@ const FULL_STAGES = [
   "queued",
   "extract",
   "rules",
+  "claims",
   "generate",
   "critique",
   "persist",
@@ -37,19 +42,27 @@ describe("STAGE_WEIGHTS", () => {
     expect(STAGE_WEIGHTS.extract).toBe(0.08);
     expect(STAGE_WEIGHTS.figures).toBe(0.1);
     expect(STAGE_WEIGHTS.rules).toBe(0.05);
-    expect(STAGE_WEIGHTS.generate).toBe(0.35);
+    expect(STAGE_WEIGHTS.claims).toBe(0.15);
+    expect(STAGE_WEIGHTS.generate).toBe(0.2);
     expect(STAGE_WEIGHTS.critique).toBe(0.3);
     expect(STAGE_WEIGHTS.persist).toBe(0.1);
     const sum = Object.values(STAGE_WEIGHTS).reduce((a, b) => a + b, 0);
     expect(sum).toBeCloseTo(1, 10);
   });
+
+  it("includes claims in TEXT_LLM and PDF catalogs only", () => {
+    expect(TEXT_LLM_STAGES).toContain("claims");
+    expect(PDF_STAGES).toContain("claims");
+    expect(IMAGE_STAGES).not.toContain("claims");
+    expect(RULES_ONLY_STAGES).not.toContain("claims");
+  });
 });
 
 describe("computePercent", () => {
   it("computes mid-chunk generate percent with full stage set", () => {
-    // completed: queued+extract+rules = 0.15; generate 0.45 * (2/5) = 0.18 → 33%
+    // completed: queued+extract+rules+claims = 0.30; figures→generate 0.30 * (2/5) = 0.12 → 42%
     expect(computePercent("generate", 2, 5, [...FULL_STAGES])).toBeCloseTo(
-      33,
+      42,
       5,
     );
   });
