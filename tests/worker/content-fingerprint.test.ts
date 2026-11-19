@@ -28,11 +28,29 @@ describe("cardContentFingerprint", () => {
       type: "image_label",
       front: "name",
       mediaR2Keys: ["materials/d1/a.png"],
+      back: "IgA",
     });
     const b = await cardContentFingerprint({
       type: "image_label",
       front: "name",
       mediaR2Keys: ["materials/d1/b.png"],
+      back: "IgA",
+    });
+    expect(a).not.toBe(b);
+  });
+
+  it("differs when image_label back differs with same media", async () => {
+    const a = await cardContentFingerprint({
+      type: "image_label",
+      front: "name",
+      mediaR2Keys: ["materials/d1/a.png"],
+      back: "IgA",
+    });
+    const b = await cardContentFingerprint({
+      type: "image_label",
+      front: "name",
+      mediaR2Keys: ["materials/d1/a.png"],
+      back: "IgM",
     });
     expect(a).not.toBe(b);
   });

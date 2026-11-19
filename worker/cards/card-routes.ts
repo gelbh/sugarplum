@@ -104,16 +104,24 @@ cardRoutes.patch("/:id", async (c) => {
   const media = row.media_r2_keys_json
     ? parseJsonField<string[]>(row.media_r2_keys_json, [])
     : null;
-  const decoded =
-    resolved.type === "mcq"
-      ? decodeStoredBack(resolved.type, resolved.back_json)
-      : { back: undefined as string | undefined, options: undefined };
+  let fpBack: unknown;
+  let fpOptions: string[] | null = null;
+  if (resolved.type === "mcq") {
+    const decoded = decodeStoredBack(resolved.type, resolved.back_json);
+    fpBack = decoded.back;
+    fpOptions = decoded.options ?? null;
+  } else if (
+    resolved.type === "image_label" ||
+    resolved.type === "diagram"
+  ) {
+    fpBack = parseJsonField(resolved.back_json, resolved.back_json);
+  }
   const contentFp = await cardContentFingerprint({
     type: resolved.type,
     front,
     mediaR2Keys: media,
-    back: decoded.back,
-    options: decoded.options ?? null,
+    back: fpBack,
+    options: fpOptions,
   });
   if (row.claim_id == null) {
     const clash = await db
@@ -458,11 +466,19 @@ cardRoutes.post("/:id/regen", async (c) => {
   const nextProvenanceJson = JSON.stringify(draft.provenance);
   const updatedAt = new Date().toISOString();
 
+  const regenMedia = row.media_r2_keys_json
+    ? parseJsonField<string[]>(row.media_r2_keys_json, [])
+    : null;
   const regenFp = await cardContentFingerprint({
     type: draft.type,
     front: draft.front,
-    mediaR2Keys: null,
-    back: draft.type === "mcq" ? draft.back : undefined,
+    mediaR2Keys: regenMedia,
+    back:
+      draft.type === "mcq" ||
+      draft.type === "image_label" ||
+      draft.type === "diagram"
+        ? draft.back
+        : undefined,
     options: draft.type === "mcq" ? draft.options : null,
   });
   if (row.claim_id == null) {
@@ -482,23 +498,34 @@ cardRoutes.post("/:id/regen", async (c) => {
       });
     }
   }
-  await db
-    .prepare(
-      `UPDATE cards
-       SET type = ?, front_json = ?, back_json = ?, provenance_json = ?,
-           media_r2_keys_json = NULL, content_fp = ?, updated_at = ?
-       WHERE id = ?`,
-    )
-    .bind(
-      draft.type,
-      nextFrontJson,
-      nextBackJson,
-      nextProvenanceJson,
-      regenFp,
-      updatedAt,
-      cardId,
-    )
-    .run();
+  try {
+    await db
+      .prepare(
+        `UPDATE cards
+         SET type = ?, front_json = ?, back_json = ?, provenance_json = ?,
+             content_fp = ?, updated_at = ?
+         WHERE id = ?`,
+      )
+      .bind(
+        draft.type,
+        nextFrontJson,
+        nextBackJson,
+        nextProvenanceJson,
+        regenFp,
+        updatedAt,
+        cardId,
+      )
+      .run();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (/UNIQUE|unique|constraint/i.test(message)) {
+      await llmBundle.releaseQuota().catch((e) => console.error(e));
+      throw new HTTPException(409, {
+        message: "Another live card in this deck already has this content",
+      });
+    }
+    throw err;
+  }
 
   try {
     await recordRegenUsageEvent(db, {
@@ -519,7 +546,6 @@ cardRoutes.post("/:id/regen", async (c) => {
       front_json: nextFrontJson,
       back_json: nextBackJson,
       provenance_json: nextProvenanceJson,
-      media_r2_keys_json: null,
       updated_at: updatedAt,
     }),
   );
