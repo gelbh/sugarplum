@@ -51,10 +51,7 @@ function logImpersonationStopped(meta: {
 }
 
 /** Clear view-as metadata for logout (session delete follows). No D1/R2 teardown. */
-export async function abandonViewAs(
-  c: AdminContext,
-  record: SessionRecord,
-): Promise<void> {
+export async function abandonViewAs(record: SessionRecord): Promise<void> {
   if (!record.impersonation || !record.actorUserId) return;
   const { sourceUserId, startedAt } = record.impersonation;
   logImpersonationStopped({

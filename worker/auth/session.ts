@@ -66,7 +66,7 @@ export async function createSession(
     const prior = priorRaw ? parseSessionRecord(priorRaw) : null;
     if (prior?.impersonation) {
       const { abandonViewAs } = await import("../admin/impersonation");
-      await abandonViewAs(c, prior);
+      await abandonViewAs(prior);
     }
     await c.env.SESSIONS.delete(priorId);
   }
@@ -92,7 +92,7 @@ export async function destroySession(c: AuthContext): Promise<void> {
     const record = raw ? parseSessionRecord(raw) : null;
     if (record?.impersonation) {
       const { abandonViewAs } = await import("../admin/impersonation");
-      await abandonViewAs(c, record);
+      await abandonViewAs(record);
     }
     await c.env.SESSIONS.delete(id);
   }
