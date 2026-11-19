@@ -256,6 +256,10 @@ export const TEST_SECRETS_WRAP_KEY = "0123456789abcdef0123456789abcdef";
 export type TestEnv = Env & {
   getWorkflowCreates: () => unknown[];
   getWorkflowTerminates: () => string[];
+  setWorkflowInstance: (
+    id: string,
+    patch: { status?: string; output?: unknown },
+  ) => void;
   seedUser: (row: UserRow) => void;
   seedSubject: (row: SubjectRow) => void;
   seedDeck: (row: DeckRow) => void;
@@ -337,7 +341,7 @@ export function createTestEnv(opts?: {
   const workflowTerminates: string[] = [];
   const workflowInstances = new Map<
     string,
-    { status: string; params?: unknown }
+    { status: string; params?: unknown; output?: unknown }
   >();
   let generationSlotHolders: SlotHolder[] = [];
   const generationSlotsStub = {
@@ -5137,6 +5141,7 @@ export function createTestEnv(opts?: {
           id,
           status: async () => ({
             status: workflowInstances.get(id)?.status ?? "unknown",
+            output: workflowInstances.get(id)?.output,
           }),
           terminate: async () => {
             workflowTerminates.push(id);
@@ -5153,7 +5158,7 @@ export function createTestEnv(opts?: {
         if (!row) throw new Error(`Workflow instance not found: ${id}`);
         return {
           id,
-          status: async () => ({ status: row.status }),
+          status: async () => ({ status: row.status, output: row.output }),
           terminate: async () => {
             workflowTerminates.push(id);
             row.status = "terminated";
@@ -5164,6 +5169,49 @@ export function createTestEnv(opts?: {
         };
       },
     } as unknown as NonNullable<Env["GENERATION_WORKFLOW"]>,
+    FILL_ALL_WORKFLOW: {
+      create: async (options?: { id?: string; params?: unknown }) => {
+        const id = options?.id ?? crypto.randomUUID();
+        if (workflowInstances.has(id)) {
+          throw new Error(`Workflow instance already exists: ${id}`);
+        }
+        workflowCreates.push(options ?? { id });
+        workflowInstances.set(id, {
+          status: "running",
+          params: options?.params,
+        });
+        return {
+          id,
+          status: async () => ({
+            status: workflowInstances.get(id)?.status ?? "unknown",
+            output: workflowInstances.get(id)?.output,
+          }),
+          terminate: async () => {
+            workflowTerminates.push(id);
+            const row = workflowInstances.get(id);
+            if (row) row.status = "terminated";
+          },
+          delete: async () => {
+            workflowInstances.delete(id);
+          },
+        };
+      },
+      get: async (id: string) => {
+        const row = workflowInstances.get(id);
+        if (!row) throw new Error(`Workflow instance not found: ${id}`);
+        return {
+          id,
+          status: async () => ({ status: row.status, output: row.output }),
+          terminate: async () => {
+            workflowTerminates.push(id);
+            row.status = "terminated";
+          },
+          delete: async () => {
+            workflowInstances.delete(id);
+          },
+        };
+      },
+    } as unknown as NonNullable<Env["FILL_ALL_WORKFLOW"]>,
     GENERATION_SLOTS: {
       idFromName(name: string) {
         return { name, toString: () => name };
@@ -5287,6 +5335,12 @@ export function createTestEnv(opts?: {
     },
     getWorkflowCreates: () => [...workflowCreates],
     getWorkflowTerminates: () => [...workflowTerminates],
+    setWorkflowInstance: (id, patch) => {
+      const row = workflowInstances.get(id) ?? { status: "running" };
+      if (patch.status !== undefined) row.status = patch.status;
+      if (patch.output !== undefined) row.output = patch.output;
+      workflowInstances.set(id, row);
+    },
     getR2Keys: () => [...r2.keys()],
     getR2: (key: string) => r2.get(key),
     getAchievementCompletions: () => [

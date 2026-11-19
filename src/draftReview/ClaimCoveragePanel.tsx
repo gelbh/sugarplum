@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
+import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { CardDraftView, ClaimCoverage } from "../api/client";
@@ -45,12 +47,38 @@ export default function ClaimCoveragePanel({
   fillAllBusy = false,
   generateDisabled = false,
 }: Props) {
-  if (coverage.summary.total === 0) return null;
+  const { linked, orphan, total } = coverage.summary;
+
+  const [baselineOrphan, setBaselineOrphan] = useState<number | null>(null);
+  useEffect(() => {
+    if (!fillAllBusy) {
+      setBaselineOrphan(null);
+      return;
+    }
+    setBaselineOrphan((prev) => prev ?? Math.max(orphan, 1));
+  }, [fillAllBusy, orphan]);
+
+  if (total === 0) return null;
 
   const draftIds = new Set(drafts.map((d) => d.id));
-  const { linked, orphan, total } = coverage.summary;
   const orphanBusy =
     generateDisabled || generatingClaimId != null || fillAllBusy;
+  const filledSinceStart =
+    baselineOrphan != null
+      ? Math.max(0, baselineOrphan - orphan)
+      : 0;
+  const fillPercent =
+    baselineOrphan != null && baselineOrphan > 0
+      ? Math.min(100, Math.round((filledSinceStart / baselineOrphan) * 100))
+      : 0;
+  const showFillControl = Boolean(
+    onFillAllOrphans && (orphan > 0 || fillAllBusy),
+  );
+  const fillButtonLabel = fillAllBusy
+    ? baselineOrphan != null
+      ? `Filling ${filledSinceStart}/${baselineOrphan}…`
+      : "Filling…"
+    : `Fill all (${orphan})`;
 
   return (
     <Box
@@ -73,8 +101,9 @@ export default function ClaimCoveragePanel({
         sx={{
           alignItems: "baseline",
           justifyContent: "space-between",
-          mb: 0.75
-        }}>
+          mb: 0.75,
+        }}
+      >
         <Typography
           variant="subtitle2"
           sx={{
@@ -87,15 +116,20 @@ export default function ClaimCoveragePanel({
         >
           Claim coverage
         </Typography>
-        <Stack direction="row" spacing={1} sx={{
-          alignItems: "center"
-        }}>
-          {orphan > 0 && onFillAllOrphans ? (
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{
+            alignItems: "center",
+          }}
+        >
+          {showFillControl ? (
             <Button
               size="small"
               variant="outlined"
               disabled={orphanBusy}
-              onClick={() => onFillAllOrphans()}
+              onClick={() => onFillAllOrphans?.()}
+              aria-busy={fillAllBusy || undefined}
               sx={{
                 flexShrink: 0,
                 textTransform: "none",
@@ -107,22 +141,43 @@ export default function ClaimCoveragePanel({
                 lineHeight: 1.3,
               }}
             >
-              {fillAllBusy ? "…" : `Fill all (${orphan})`}
+              {fillButtonLabel}
             </Button>
           ) : null}
           <Typography
             variant="caption"
+            aria-live="polite"
             sx={{
               m: 0,
-              color: "rgba(232, 216, 199, 0.72)",
+              color: fillAllBusy
+                ? "var(--sp-ivory)"
+                : "rgba(232, 216, 199, 0.72)",
               whiteSpace: "nowrap",
               lineHeight: 1.3,
             }}
           >
-            {linked} linked · {orphan} orphan · {total} claims
+            {fillAllBusy
+              ? `${filledSinceStart} filled · ${orphan} left · ${total} claims`
+              : `${linked} linked · ${orphan} orphan · ${total} claims`}
           </Typography>
         </Stack>
       </Stack>
+      {fillAllBusy ? (
+        <LinearProgress
+          variant={baselineOrphan != null ? "determinate" : "indeterminate"}
+          value={baselineOrphan != null ? fillPercent : undefined}
+          aria-label={fillButtonLabel}
+          sx={{
+            mb: 0.75,
+            height: 3,
+            borderRadius: 1,
+            bgcolor: "rgba(232, 216, 199, 0.12)",
+            "& .MuiLinearProgress-bar": {
+              bgcolor: "rgba(232, 216, 199, 0.72)",
+            },
+          }}
+        />
+      ) : null}
       <Stack
         spacing={0.5}
         sx={{

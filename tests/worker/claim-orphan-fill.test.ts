@@ -510,6 +510,7 @@ describe("fillOrphanClaims", () => {
       skipped: 0,
       remaining: 0,
       cards: [],
+      inconclusive: true,
     });
   });
 });

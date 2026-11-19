@@ -281,7 +281,7 @@ describe("POST /api/jobs/:id/claims/:claimId/generate", () => {
 });
 
 describe("POST /api/jobs/:id/claims/fill-orphans", () => {
-  it("fills orphan claims and returns summary cards", async () => {
+  it("starts Fill-all Workflow and returns 202", async () => {
     const env = createTestEnv();
     seedOwnerNeedsReview(env);
     seedOrphanClaim(env);
@@ -297,35 +297,6 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
       pages_json: "[1]",
       created_at: "2026-01-01T01:03:00.000Z",
     });
-    const run = vi.fn(async (_model: string, input: unknown) => {
-      const messages = (
-        input as { messages?: Array<{ role: string; content: string }> }
-      ).messages;
-      const user = messages?.find((m) => m.role === "user")?.content ?? "";
-      const content = user.includes("IgG")
-        ? JSON.stringify({
-            cards: [
-              {
-                type: "qa",
-                front: "Where is IgG?",
-                back: "Blood",
-                provenance: { pages: [1], excerpt: "IgG is in blood" },
-              },
-            ],
-          })
-        : VALID_QA;
-      return {
-        choices: [
-          {
-            index: 0,
-            message: { role: "assistant" as const, content },
-            finish_reason: "stop" as const,
-          },
-        ],
-        usage: { prompt_tokens: 40, completion_tokens: 20, total_tokens: 60 },
-      };
-    });
-    env.AI = { run } as unknown as Ai;
 
     const res = await app.request(
       "/api/jobs/job-a/claims/fill-orphans",
@@ -339,18 +310,41 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
       },
       env,
     );
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      attempted: number;
-      filled: number;
-      remaining: number;
-      cards: Array<{ id: string; claim_id: string | null }>;
+    expect(res.status).toBe(202);
+    expect(await res.json()).toEqual({
+      runId: "fill-all-job-a",
+      orphanTotal: 2,
+      status: "running",
+    });
+    expect(env.getWorkflowCreates()).toEqual([
+      {
+        id: "fill-all-job-a",
+        params: { jobId: "job-a", userId: "user-a", type: "qa" },
+      },
+    ]);
+  });
+
+  it("returns 409 when Fill-all already in progress", async () => {
+    const env = createTestEnv();
+    seedOwnerNeedsReview(env);
+    seedOrphanClaim(env);
+
+    const headers = {
+      "content-type": "application/json",
+      cookie: `${SESSION_COOKIE}=sess-a`,
     };
-    expect(body.filled).toBe(2);
-    expect(body.attempted).toBe(2);
-    expect(body.remaining).toBe(0);
-    expect(body.cards).toHaveLength(2);
-    expect(env.getCards().filter((c) => c.claim_id != null)).toHaveLength(2);
+    const first = await app.request(
+      "/api/jobs/job-a/claims/fill-orphans",
+      { method: "POST", headers, body: "{}" },
+      env,
+    );
+    expect(first.status).toBe(202);
+    const second = await app.request(
+      "/api/jobs/job-a/claims/fill-orphans",
+      { method: "POST", headers, body: "{}" },
+      env,
+    );
+    expect(second.status).toBe(409);
   });
 
   it("returns zeros when no orphans", async () => {
@@ -376,6 +370,46 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
       filled: 0,
       remaining: 0,
       cards: [],
+    });
+    expect(env.getWorkflowCreates()).toEqual([]);
+  });
+
+  it("GET status is idle then running", async () => {
+    const env = createTestEnv();
+    seedOwnerNeedsReview(env);
+    seedOrphanClaim(env);
+
+    const idle = await app.request(
+      "/api/jobs/job-a/claims/fill-orphans",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(idle.status).toBe(200);
+    expect(await idle.json()).toMatchObject({
+      runId: "fill-all-job-a",
+      status: "idle",
+    });
+
+    await app.request(
+      "/api/jobs/job-a/claims/fill-orphans",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: "{}",
+      },
+      env,
+    );
+    const running = await app.request(
+      "/api/jobs/job-a/claims/fill-orphans",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(await running.json()).toMatchObject({
+      runId: "fill-all-job-a",
+      status: "running",
     });
   });
 

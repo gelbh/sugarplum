@@ -33,6 +33,11 @@ export type ClaimOrphanFillSummary = {
 export type FillOrphanClaimsResult = ClaimOrphanFillSummary & {
   remaining: number;
   cards: Awaited<ReturnType<typeof fillDraftFromClaim>>[];
+  /**
+   * Setup failed or job left needs_review: remaining may be unknown/0.
+   * Callers must not treat this as a successful empty fill.
+   */
+  inconclusive?: boolean;
 };
 
 type DeckOwnerRow = {
@@ -105,12 +110,12 @@ export async function fillOrphanClaims(args: {
         created_at: string;
       }>();
     if (!statusRow || statusRow.status !== "needs_review") {
-      return zeros;
+      return { ...zeros, inconclusive: true };
     }
     orphanIds = await listOrphanIds(db, jobId);
   } catch (err) {
     console.error("fillOrphanClaims setup soft-failed", jobId, err);
-    return zeros;
+    return { ...zeros, inconclusive: true };
   }
 
   if (orphanIds.length === 0) {
