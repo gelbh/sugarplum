@@ -466,26 +466,12 @@ cardRoutes.post("/:id/regen", async (c) => {
   const nextProvenanceJson = JSON.stringify(draft.provenance);
   const updatedAt = new Date().toISOString();
 
-  const keepMedia =
-    draft.type === "image_label" ||
-    draft.type === "diagram" ||
-    draft.type === "occlusion";
-  const regenMedia = keepMedia
-    ? row.media_r2_keys_json
-      ? parseJsonField<string[]>(row.media_r2_keys_json, [])
-      : null
-    : null;
-  const nextMediaJson = keepMedia ? row.media_r2_keys_json : null;
+  // Regen targets qa/cloze/mcq only; drop figure media so text cards do not keep stale keys.
   const regenFp = await cardContentFingerprint({
     type: draft.type,
     front: draft.front,
-    mediaR2Keys: regenMedia,
-    back:
-      draft.type === "mcq" ||
-      draft.type === "image_label" ||
-      draft.type === "diagram"
-        ? draft.back
-        : undefined,
+    mediaR2Keys: null,
+    back: draft.type === "mcq" ? draft.back : undefined,
     options: draft.type === "mcq" ? draft.options : null,
   });
   if (row.claim_id == null) {
@@ -510,7 +496,7 @@ cardRoutes.post("/:id/regen", async (c) => {
       .prepare(
         `UPDATE cards
          SET type = ?, front_json = ?, back_json = ?, provenance_json = ?,
-             media_r2_keys_json = ?, content_fp = ?, updated_at = ?
+             media_r2_keys_json = NULL, content_fp = ?, updated_at = ?
          WHERE id = ?`,
       )
       .bind(
@@ -518,7 +504,6 @@ cardRoutes.post("/:id/regen", async (c) => {
         nextFrontJson,
         nextBackJson,
         nextProvenanceJson,
-        nextMediaJson,
         regenFp,
         updatedAt,
         cardId,
@@ -554,7 +539,7 @@ cardRoutes.post("/:id/regen", async (c) => {
       front_json: nextFrontJson,
       back_json: nextBackJson,
       provenance_json: nextProvenanceJson,
-      media_r2_keys_json: nextMediaJson,
+      media_r2_keys_json: null,
       updated_at: updatedAt,
     }),
   );
