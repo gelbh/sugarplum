@@ -1,0 +1,6 @@
+# Allow tag/ref pins; Dependabot updates github-actions. Hash-pinning is optional follow-up.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "*": ref-pin
