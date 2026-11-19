@@ -50,7 +50,14 @@ describe("HomePage foyer", () => {
     expect(host.querySelector("[data-foyer-card-preview]")).not.toBeNull();
     expect(host.textContent).toMatch(/spaced repetition/i);
 
-    expect(host.textContent).toContain(HOME_BRAND);
+    const brandHeading = host.querySelector("h1");
+    expect(brandHeading).not.toBeNull();
+    expect(brandHeading?.textContent).toContain(HOME_BRAND);
+
+    const brandSelfLink = [...host.querySelectorAll('a[href="/"]')].find((a) =>
+      a.textContent?.includes(HOME_BRAND),
+    );
+    expect(brandSelfLink).toBeUndefined();
 
     const signIn = host.querySelector('a[href="/login"]');
     const register = host.querySelector('a[href="/register"]');
