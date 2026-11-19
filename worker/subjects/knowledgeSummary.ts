@@ -194,7 +194,6 @@ export async function refreshKnowledgeSummaryForSubject(
   await recomputeSubjectKnowledgeSummary(db, userId, subjectId, now);
 }
 
-/** Recompute once per distinct subject among owned card ids. */
 export async function refreshKnowledgeSummariesForOwnedCards(
   db: D1Database,
   userId: string,
