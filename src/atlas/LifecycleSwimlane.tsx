@@ -1,12 +1,12 @@
-import { type ReactNode } from "react";
+import { type ReactNode, type Ref } from "react";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
-import { alpha } from "@mui/material/styles";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { termLabel } from "./filter";
-import { stageSpan } from "./lifecycle";
 import LifecycleStageCell, { LANE_PX } from "./LifecycleStageCell";
 import TermList from "./TermList";
 import type { DatasetFields } from "./types";
@@ -15,33 +15,87 @@ import {
   STAGE_MIN_PX,
   Timeline,
   laneWash,
-  motion,
 } from "./LifecycleTimeline";
 import {
   useLifecycleSwimlane,
   type LifecycleSwimCtx,
 } from "./useLifecycleSwimlane";
 
-export type { LifecycleSwimCtx };
+export type LifecycleDetailCtx = LifecycleSwimCtx & {
+  transport: ReactNode;
+};
 
 type Props = {
   fields: DatasetFields;
-  /** Compact Step N of M label above the play controls (editor preview). */
+  /** Compact Step N of M + transport under the board (editor preview). */
   compactStepLabel?: boolean;
-  afterTimeline?: (ctx: LifecycleSwimCtx) => ReactNode;
+  /** Stage detail under the board; owns transport. Timeline stays below. */
+  afterBoard?: (ctx: LifecycleDetailCtx) => ReactNode;
   afterControls?: (ctx: LifecycleSwimCtx) => ReactNode;
 };
+
+function Transport({
+  playRef,
+  playing,
+  index,
+  last,
+  onStep,
+  onToggle,
+}: {
+  playRef: Ref<HTMLButtonElement>;
+  playing: boolean;
+  index: number;
+  last: number;
+  onStep: (delta: number) => void;
+  onToggle: () => void;
+}) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+      <IconButton
+        size="small"
+        onClick={() => onStep(-1)}
+        disabled={index === 0}
+        aria-label="Previous stage"
+      >
+        <ChevronLeftIcon fontSize="small" />
+      </IconButton>
+      <IconButton
+        ref={playRef}
+        size="small"
+        onClick={onToggle}
+        aria-label={playing ? "Pause lifecycle" : "Play lifecycle"}
+        aria-pressed={playing}
+        color="primary"
+      >
+        {playing ? (
+          <PauseIcon fontSize="small" />
+        ) : (
+          <PlayArrowIcon fontSize="small" />
+        )}
+      </IconButton>
+      <IconButton
+        size="small"
+        onClick={() => onStep(1)}
+        disabled={index === last}
+        aria-label="Next stage"
+      >
+        <ChevronRightIcon fontSize="small" />
+      </IconButton>
+    </Box>
+  );
+}
 
 export default function LifecycleSwimlane({
   fields,
   compactStepLabel = false,
-  afterTimeline,
+  afterBoard,
   afterControls,
 }: Props) {
   const {
     model,
     stages,
     index,
+    setIndex,
     playing,
     setPlaying,
     step,
@@ -64,7 +118,17 @@ export default function LifecycleSwimlane({
   }
 
   const { lanes, stageLane, axis: ax } = model;
-  const span = ax ? stageSpan(fields, index, ax) : null;
+  const transport = (
+    <Transport
+      playRef={playRef}
+      playing={playing}
+      index={index}
+      last={last}
+      onStep={step}
+      onToggle={togglePlay}
+    />
+  );
+  const detailCtx: LifecycleDetailCtx = { ...ctx, transport };
 
   return (
     <Box
@@ -96,6 +160,10 @@ export default function LifecycleSwimlane({
               left: 0,
               zIndex: 2,
               bgcolor: "background.paper",
+              borderRight: 1,
+              borderColor: "divider",
+              boxShadow: (t) =>
+                `4px 0 12px ${t.palette.mode === "dark" ? "rgba(0,0,0,0.35)" : "rgba(30,13,27,0.06)"}`,
             }}
           >
             {lanes.map((lane) => (
@@ -106,26 +174,40 @@ export default function LifecycleSwimlane({
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "center",
-                  pr: 1.5,
-                  borderBottom: "1px dashed",
+                  px: 1.25,
+                  borderBottom: 1,
                   borderColor: "divider",
                   bgcolor: (t) => laneWash(lane.role, t.palette.primary.main),
+                  overflow: "hidden",
                 }}
               >
-                <Typography sx={{ fontWeight: 600, fontSize: "0.84rem" }}>
+                <Typography
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: "0.8rem",
+                    color: "text.primary",
+                    lineHeight: 1.2,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {lane.title}
                 </Typography>
                 {lane.hosts.length > 0 ? (
                   <Typography
                     color="text.secondary"
                     sx={{
-                      fontSize: "0.76rem",
-                      lineHeight: 1.3,
-                      display: "-webkit-box",
-                      WebkitLineClamp: { xs: 1, sm: 2 },
-                      WebkitBoxOrient: "vertical",
+                      mt: 0.2,
+                      fontSize: "0.72rem",
+                      lineHeight: 1.25,
                       overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
+                    title={[...lane.hosts, lane.more > 0 ? `+${lane.more}` : null]
+                      .filter(Boolean)
+                      .join(", ")}
                   >
                     <TermList terms={lane.hosts} />
                     {lane.more > 0 ? ` +${lane.more}` : null}
@@ -161,23 +243,6 @@ export default function LifecycleSwimlane({
                 }}
               />
             ))}
-            <Box
-              aria-hidden
-              sx={{
-                gridRow: 1,
-                gridColumn: 1,
-                height: LANE_PX,
-                borderRadius: 1.5,
-                bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
-                boxShadow: (t) =>
-                  `inset 0 0 0 1.5px ${alpha(t.palette.primary.main, 0.55)}`,
-                transform: `translate(${index * 100}%, ${
-                  stageLane[index] * 100
-                }%)`,
-                ...motion("transform"),
-                zIndex: 1,
-              }}
-            />
             {stages.map((s, i) => (
               <LifecycleStageCell
                 key={`${s.name}-${i}`}
@@ -185,80 +250,55 @@ export default function LifecycleSwimlane({
                 index={i}
                 selected={i === index}
                 laneRow={stageLane[i]}
+                onSelect={() => {
+                  setPlaying(false);
+                  setIndex(i);
+                }}
               />
             ))}
           </Box>
         </Box>
       </Box>
 
-      {ax ? (
-        <Timeline
-          axis={ax}
-          ppp={model.ppp}
-          windows={model.windows}
-          span={span}
-          emphasizePpp={current.hostRole === "definitive"}
-        />
-      ) : null}
-
-      {afterTimeline?.(ctx)}
-
-      <Box
-        sx={{
-          mt: compactStepLabel ? 1.5 : 2.5,
-          pt: 2,
-          borderTop: 1,
-          borderColor: "divider",
-        }}
-      >
-        {compactStepLabel ? (
-          <Typography
-            aria-live="polite"
-            color="text.secondary"
-            sx={{ mb: 1.25, fontSize: "0.86rem" }}
-          >
-            Step {index + 1} of {stages.length}:{" "}
-            <Box component="b" sx={{ color: "text.primary" }}>
-              {termLabel(current.name)}
-            </Box>
-          </Typography>
-        ) : null}
+      {afterBoard ? (
+        afterBoard(detailCtx)
+      ) : (
         <Box
           sx={{
-            display: { xs: "grid", sm: "flex" },
-            gridTemplateColumns: "1fr 1fr",
-            gridTemplateAreas: '"play play" "prev next"',
+            mt: 1.25,
+            pt: 1.25,
+            borderTop: 1,
+            borderColor: "divider",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
             gap: 1,
-            "& > :nth-of-type(1)": { gridArea: "prev" },
-            "& > :nth-of-type(2)": { gridArea: "play" },
-            "& > :nth-of-type(3)": { gridArea: "next" },
+            flexWrap: "wrap",
           }}
         >
-          <Button
-            variant="outlined"
-            onClick={() => step(-1)}
-            disabled={index === 0}
-          >
-            Previous stage
-          </Button>
-          <Button
-            ref={playRef}
-            variant="contained"
-            onClick={togglePlay}
-            startIcon={playing ? <PauseIcon /> : <PlayArrowIcon />}
-            aria-pressed={playing}
-          >
-            {playing ? "Pause" : "Play lifecycle"}
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => step(1)}
-            disabled={index === last}
-          >
-            Next stage
-          </Button>
+          {compactStepLabel ? (
+            <Typography
+              aria-live="polite"
+              color="text.secondary"
+              sx={{ fontSize: "0.86rem" }}
+            >
+              Step {index + 1} of {stages.length}:{" "}
+              <Box component="b" sx={{ color: "text.primary" }}>
+                {termLabel(current.name)}
+              </Box>
+            </Typography>
+          ) : (
+            <Typography color="text.secondary" sx={{ fontSize: "0.82rem" }}>
+              {index + 1} / {stages.length}
+            </Typography>
+          )}
+          {transport}
         </Box>
-      </Box>
+      )}
+
+      {ax ? (
+        <Timeline axis={ax} ppp={model.ppp} windows={model.windows} />
+      ) : null}
 
       {afterControls?.(ctx)}
     </Box>

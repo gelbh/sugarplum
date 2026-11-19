@@ -98,18 +98,28 @@ export default function StageListEditor({
           sx={{
             border: 1,
             borderColor: "divider",
-            borderRadius: 1,
+            borderRadius: 2,
             p: 1.25,
             display: "grid",
             gap: 1,
           }}
         >
           <Stack direction="row" spacing={1} alignItems="center">
-            <Typography sx={{ fontWeight: 700, minWidth: 24 }}>{i + 1}</Typography>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                minWidth: 24,
+                color: "primary.main",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {i + 1}
+            </Typography>
             <Button
               size="small"
               disabled={disabled || i === 0}
               onClick={() => move(i, -1)}
+              sx={{ textTransform: "none" }}
             >
               Up
             </Button>
@@ -117,6 +127,7 @@ export default function StageListEditor({
               size="small"
               disabled={disabled || i === stages.length - 1}
               onClick={() => move(i, 1)}
+              sx={{ textTransform: "none" }}
             >
               Down
             </Button>
@@ -125,6 +136,7 @@ export default function StageListEditor({
               color="error"
               disabled={disabled}
               onClick={() => onChange(stages.filter((_, j) => j !== i))}
+              sx={{ textTransform: "none" }}
             >
               Remove
             </Button>
@@ -260,6 +272,7 @@ export default function StageListEditor({
         variant="outlined"
         disabled={disabled}
         onClick={() => onChange([...stages, emptyStage()])}
+        sx={{ textTransform: "none" }}
       >
         Add stage
       </Button>

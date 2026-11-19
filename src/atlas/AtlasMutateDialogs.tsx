@@ -20,6 +20,24 @@ import { useEditEntryDialog } from "./useEditEntryDialog";
 import { useEditLifecycleDialog } from "./useEditLifecycleDialog";
 import { useRecentlyDeletedDialog } from "./useRecentlyDeletedDialog";
 import { shouldAutoFocusText } from "../lib/autoFocusText";
+import DialogEyebrow from "../ui/DialogEyebrow";
+
+/** Deck Hub dialog title voice: Alice display, not form chrome. */
+const LIFECYCLE_DIALOG_TITLE_SX = {
+  p: 0,
+  fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
+  fontWeight: 400,
+  letterSpacing: "0.02em",
+  lineHeight: 1.15,
+  fontSize: "1.75rem",
+} as const;
+
+const LIFECYCLE_DIALOG_CANCEL_SX = {
+  color: "text.secondary",
+  textTransform: "none",
+  fontWeight: 500,
+  "&:hover": { color: "text.primary", bgcolor: "transparent" },
+} as const;
 
 type AddProps = {
   open: boolean;
@@ -209,25 +227,75 @@ export function EditLifecycleDialog({
 }: LifecycleEditProps) {
   const { stages, setStages, busy, error, previewFields, onSubmit } =
     useEditLifecycleDialog({ open, atlasId, entry, onClose, onDone });
+  const primary = entry ? entryTitles(entry).primary : null;
 
   return (
     <Dialog
       open={open}
       onClose={() => !busy && onClose()}
       fullWidth
-      maxWidth="lg"
+      maxWidth="md"
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 2,
+            display: "flex",
+            flexDirection: "column",
+            maxHeight: "90vh",
+            overflow: "hidden",
+            bgcolor: "background.paper",
+          },
+        },
+      }}
     >
-      <form onSubmit={onSubmit}>
-        <DialogTitle>
-          Edit lifecycle
-          {entry ? (
-            <>
-              {" — "}
-              {entryTitles(entry).primary}
-            </>
+      <Box
+        component="form"
+        onSubmit={onSubmit}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0,
+          flex: 1,
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          sx={{
+            flex: "none",
+            px: 3,
+            pt: 2.5,
+            pb: 1.5,
+            borderBottom: 1,
+            borderColor: "divider",
+            background:
+              "linear-gradient(180deg, rgba(91, 44, 111, 0.12) 0%, transparent 100%)",
+          }}
+        >
+          <DialogEyebrow label="Lifecycle" />
+          <DialogTitle sx={LIFECYCLE_DIALOG_TITLE_SX}>
+            Edit lifecycle
+          </DialogTitle>
+          {primary ? (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1, maxWidth: "42ch" }}
+            >
+              {primary}
+            </Typography>
           ) : null}
-        </DialogTitle>
-        <DialogContent>
+        </Box>
+        <DialogContent
+          dividers
+          sx={{
+            px: 3,
+            py: 2,
+            flex: "1 1 auto",
+            minHeight: 0,
+            overflowY: "auto",
+            overscrollBehavior: "contain",
+          }}
+        >
           {error ? (
             <Alert severity="error" sx={{ mb: 1.5 }}>
               {error}
@@ -240,14 +308,26 @@ export function EditLifecycleDialog({
               disabled={busy}
             />
             <Box
-              sx={{
+              sx={(theme) => ({
                 border: 1,
                 borderColor: "divider",
-                borderRadius: 1,
+                borderRadius: 2,
                 p: 1.5,
-              }}
+                ...theme.applyStyles("dark", {
+                  bgcolor: "rgba(232, 216, 199, 0.04)",
+                }),
+              })}
             >
-              <Typography sx={{ fontWeight: 600, mb: 1, fontSize: "0.9rem" }}>
+              <Typography
+                sx={{
+                  mb: 1,
+                  fontSize: "0.6875rem",
+                  fontWeight: 500,
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                  color: "text.secondary",
+                }}
+              >
                 Live preview
               </Typography>
               {previewFields ? (
@@ -256,15 +336,20 @@ export function EditLifecycleDialog({
             </Box>
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} disabled={busy}>
+        <DialogActions sx={{ flex: "none", px: 3, py: 2, gap: 1 }}>
+          <Button onClick={onClose} disabled={busy} sx={LIFECYCLE_DIALOG_CANCEL_SX}>
             Cancel
           </Button>
-          <Button type="submit" variant="contained" disabled={busy || !entry}>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={busy || !entry}
+            sx={{ textTransform: "none", borderRadius: 2, px: 2.25, fontWeight: 600 }}
+          >
             {busy ? "Saving…" : "Save"}
           </Button>
         </DialogActions>
-      </form>
+      </Box>
     </Dialog>
   );
 }

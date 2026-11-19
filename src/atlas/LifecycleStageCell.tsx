@@ -1,11 +1,12 @@
 import Box from "@mui/material/Box";
-import Chip from "@mui/material/Chip";
+import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
-import { durationLabel, stageIsDiagnostic } from "./lifecycle";
+import { alpha } from "@mui/material/styles";
+import { stageIsDiagnostic } from "./lifecycle";
 import { termLabel } from "./filter";
 import type { DatasetFields } from "./types";
 
-const LANE_PX = 88;
+const LANE_PX = 70;
 
 type Stage = DatasetFields["lifecycleStages"][number];
 
@@ -14,6 +15,7 @@ type Props = {
   index: number;
   selected: boolean;
   laneRow: number;
+  onSelect: () => void;
 };
 
 export { LANE_PX };
@@ -23,6 +25,7 @@ export default function LifecycleStageCell({
   index,
   selected,
   laneRow,
+  onSelect,
 }: Props) {
   const diagnostic = stageIsDiagnostic(stage);
   return (
@@ -31,97 +34,112 @@ export default function LifecycleStageCell({
         gridColumn: index + 1,
         gridRow: laneRow + 1,
         display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        px: 0.5,
-        py: 0.5,
+        alignItems: "center",
+        px: 0.35,
+        py: 0.35,
         minWidth: 0,
         zIndex: 2,
       }}
     >
-      <Box
-        sx={{
-          border: 1,
-          borderColor: selected ? "primary.main" : "divider",
-          borderRadius: 1,
-          bgcolor: "background.paper",
-          px: 0.75,
-          py: 0.5,
-          minHeight: LANE_PX - 12,
+      <ButtonBase
+        onClick={onSelect}
+        aria-current={selected ? "step" : undefined}
+        sx={(t) => ({
+          width: "100%",
+          minHeight: LANE_PX - 14,
+          maxHeight: LANE_PX - 10,
+          borderRadius: 1.5,
+          px: 0.9,
+          py: 0.55,
           display: "flex",
           flexDirection: "column",
+          alignItems: "flex-start",
           justifyContent: "center",
-          gap: 0.25,
-          position: "relative",
-        }}
+          gap: 0.15,
+          textAlign: "left",
+          overflow: "hidden",
+          bgcolor: selected
+            ? alpha(t.palette.primary.main, 0.14)
+            : "transparent",
+          outline: selected
+            ? `1px solid ${alpha(t.palette.primary.main, 0.55)}`
+            : "1px solid transparent",
+          "&:hover": {
+            bgcolor: selected
+              ? alpha(t.palette.primary.main, 0.18)
+              : alpha(t.palette.primary.main, 0.06),
+          },
+        })}
       >
-        {stage.transmission ? (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "baseline",
+            gap: 0.55,
+            width: "100%",
+            minWidth: 0,
+          }}
+        >
           <Typography
             component="span"
             sx={{
-              fontSize: "0.62rem",
-              lineHeight: 1.2,
-              color: "primary.main",
-              fontWeight: 600,
+              flex: "none",
+              fontSize: "0.66rem",
+              fontWeight: 700,
+              color: selected ? "primary.main" : "text.secondary",
+              fontVariantNumeric: "tabular-nums",
             }}
           >
-            ← {stage.transmission}
+            {index + 1}
           </Typography>
-        ) : null}
-        <Typography
-          component="span"
-          sx={{
-            fontSize: "0.7rem",
-            fontWeight: 700,
-            color: selected ? "primary.main" : "text.secondary",
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
-          {index + 1}
-        </Typography>
-        <Typography
-          component="span"
-          sx={{
-            fontSize: "0.78rem",
-            fontWeight: 600,
-            lineHeight: 1.15,
-            hyphens: "auto",
-            overflowWrap: "break-word",
-          }}
-        >
-          {termLabel(stage.name)}
-        </Typography>
-        {stage.durationDays ? (
           <Typography
             component="span"
-            color="text.secondary"
-            sx={{ fontSize: "0.68rem", lineHeight: 1.2 }}
+            sx={{
+              minWidth: 0,
+              fontSize: "0.82rem",
+              fontWeight: selected ? 600 : 500,
+              lineHeight: 1.2,
+              color: "text.primary",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
           >
-            {durationLabel(stage.durationDays)}
+            {termLabel(stage.name)}
           </Typography>
-        ) : null}
+        </Box>
         {stage.infective || diagnostic ? (
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.4 }}>
+          <Box
+            aria-hidden
+            sx={{ display: "flex", alignItems: "center", gap: 0.45, mt: 0.1 }}
+          >
             {stage.infective ? (
-              <Chip
-                size="small"
-                label="Infective"
-                color="primary"
-                sx={{ height: 18, fontSize: "0.62rem" }}
+              <Box
+                title="Infective"
+                sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  bgcolor: "primary.main",
+                }}
               />
             ) : null}
             {diagnostic ? (
-              <Chip
-                size="small"
-                label="Diagnostic"
-                variant="outlined"
-                color="primary"
-                sx={{ height: 18, fontSize: "0.62rem" }}
+              <Box
+                title="Diagnostic"
+                sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  border: 1.5,
+                  borderColor: "secondary.main",
+                  bgcolor: "transparent",
+                }}
               />
             ) : null}
           </Box>
         ) : null}
-      </Box>
+      </ButtonBase>
     </Box>
   );
 }

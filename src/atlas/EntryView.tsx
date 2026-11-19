@@ -316,12 +316,16 @@ export default function EntryView({
 
       <Paper
         variant="outlined"
-        sx={{
+        sx={(theme) => ({
           gridArea: "board",
           minWidth: 0,
           px: { xs: 2, sm: 2.75 },
           pb: 2.5,
-        }}
+          borderRadius: 2,
+          ...theme.applyStyles("dark", {
+            bgcolor: "rgba(232, 216, 199, 0.045)",
+          }),
+        })}
       >
         <Tabs
           value={tab}
@@ -355,10 +359,6 @@ export default function EntryView({
               key={entry.id}
               fields={fields}
               images={entry.images}
-              onCiteLifecycle={() => {
-                setCite({ field: "lifecycleStages" });
-                setTab("references");
-              }}
               onEditLifecycle={onEditLifecycle}
             />
           ) : tab === "diagnosis" ? (
