@@ -22,12 +22,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
           node-version: "22"
-          cache: npm
+          package-manager-cache: false
 
       - name: Install
         run: npm ci
@@ -65,3 +67,18 @@ jobs:
           command: deploy
         env:
           R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Smoke production
+        run: |
+          set -euo pipefail
+          url="https://sugarplum.gelbhart.dev"
+          for attempt in 1 2 3 4 5; do
+            if curl -fsS --max-time 15 "$url" -o /dev/null; then
+              echo "Smoke OK (attempt $attempt)"
+              exit 0
+            fi
+            echo "Smoke not ready (attempt $attempt); retrying in 5s…"
+            sleep 5
+          done
+          echo "::error::Production smoke failed for $url"
+          exit 1
