@@ -219,4 +219,34 @@ describe("subject knowledge summaries", () => {
     }>;
     expect(body[0]).toMatchObject({ total: 1, new: 0, young: 1 });
   });
+
+  it("undo-review refreshes summary after un-accept", async () => {
+    const env = createTestEnv();
+    seedBase(env);
+    const db = getDb(env);
+    await recomputeSubjectKnowledgeSummary(db, "user-a", "sub-1", NOW);
+
+    const undoRes = await app.request(
+      "/api/cards/c-young/undo-review",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(undoRes.status).toBe(200);
+
+    const res = await app.request(
+      "/api/subjects/composition-summaries",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Array<{
+      total: number;
+      new: number;
+      young: number;
+    }>;
+    expect(body[0]).toMatchObject({ total: 1, new: 1, young: 0 });
+  });
 });

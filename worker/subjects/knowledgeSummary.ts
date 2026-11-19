@@ -161,18 +161,37 @@ export async function recomputeSubjectKnowledgeSummary(
   return row;
 }
 
+export async function subjectIdForOwnedCard(
+  db: D1Database,
+  userId: string,
+  cardId: string,
+): Promise<string | null> {
+  const row = await db
+    .prepare(CARD_SUBJECT_SQL)
+    .bind(cardId, userId)
+    .first<{ subject_id: string | null }>();
+  return row?.subject_id ?? null;
+}
+
 export async function refreshKnowledgeSummaryForOwnedCard(
   db: D1Database,
   userId: string,
   cardId: string,
   now: Date = new Date(),
 ): Promise<void> {
-  const row = await db
-    .prepare(CARD_SUBJECT_SQL)
-    .bind(cardId, userId)
-    .first<{ subject_id: string | null }>();
-  if (row?.subject_id == null) return;
-  await recomputeSubjectKnowledgeSummary(db, userId, row.subject_id, now);
+  const subjectId = await subjectIdForOwnedCard(db, userId, cardId);
+  if (subjectId == null) return;
+  await recomputeSubjectKnowledgeSummary(db, userId, subjectId, now);
+}
+
+export async function refreshKnowledgeSummaryForSubject(
+  db: D1Database,
+  userId: string,
+  subjectId: string | null | undefined,
+  now: Date = new Date(),
+): Promise<void> {
+  if (subjectId == null) return;
+  await recomputeSubjectKnowledgeSummary(db, userId, subjectId, now);
 }
 
 /** Recompute once per distinct subject among owned card ids. */

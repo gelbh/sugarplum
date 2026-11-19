@@ -18,6 +18,8 @@ import { parseOptionalJsonBody } from "../optional-json";
 import {
   recomputeSubjectKnowledgeSummary,
   refreshKnowledgeSummaryForOwnedCard,
+  refreshKnowledgeSummaryForSubject,
+  subjectIdForOwnedCard,
 } from "../subjects/knowledgeSummary";
 import {
   acceptDraftCard,
@@ -216,6 +218,10 @@ cardRoutes.post("/:id/undo-review", async (c) => {
       .run();
   }
 
+  if (row.status === "accepted") {
+    await refreshKnowledgeSummaryForOwnedCard(db, userId, cardId);
+  }
+
   return c.json(
     serializeCard({
       ...row,
@@ -251,11 +257,24 @@ cardRoutes.post("/:id/move", async (c) => {
 
   await requireOwnedDeck(db, targetDeckId, userId);
 
+  const fromSubjectId =
+    row.status === "accepted"
+      ? await subjectIdForOwnedCard(db, userId, cardId)
+      : null;
+
   const updatedAt = new Date().toISOString();
   await db
     .prepare(`UPDATE cards SET deck_id = ?, updated_at = ? WHERE id = ?`)
     .bind(targetDeckId, updatedAt, cardId)
     .run();
+
+  if (row.status === "accepted") {
+    const toSubjectId = await subjectIdForOwnedCard(db, userId, cardId);
+    await refreshKnowledgeSummaryForSubject(db, userId, fromSubjectId);
+    if (toSubjectId !== fromSubjectId) {
+      await refreshKnowledgeSummaryForSubject(db, userId, toSubjectId);
+    }
+  }
 
   return c.json(
     serializeCard({
@@ -439,16 +458,7 @@ cardRoutes.delete("/:id", async (c) => {
       message: "Only accepted cards can be deleted",
     });
   }
-  const subjectRow = await db
-    .prepare(
-      `-- sugarplum:subject-knowledge-card-subject
-       SELECT d.subject_id AS subject_id
-       FROM cards c
-       INNER JOIN decks d ON d.id = c.deck_id
-       WHERE c.id = ? AND d.user_id = ?`,
-    )
-    .bind(cardId, userId)
-    .first<{ subject_id: string | null }>();
+  const subjectId = await subjectIdForOwnedCard(db, userId, cardId);
   const result = await db
     .prepare("DELETE FROM cards WHERE id = ? AND status = ?")
     .bind(cardId, "accepted")
@@ -466,12 +476,8 @@ cardRoutes.delete("/:id", async (c) => {
     .prepare("DELETE FROM card_schedules WHERE card_id = ?")
     .bind(cardId)
     .run();
-  if (subjectRow?.subject_id != null) {
-    await recomputeSubjectKnowledgeSummary(
-      db,
-      userId,
-      subjectRow.subject_id,
-    );
+  if (subjectId != null) {
+    await recomputeSubjectKnowledgeSummary(db, userId, subjectId);
   }
   return c.body(null, 204);
 });
@@ -551,6 +557,8 @@ cardRoutes.post("/:id/reset-schedule", async (c) => {
       schedule.last_review,
     )
     .run();
+
+  await refreshKnowledgeSummaryForOwnedCard(db, userId, cardId);
 
   return c.json(serializeCard(row));
 });
