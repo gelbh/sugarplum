@@ -104,7 +104,7 @@ export async function insertDraftCards(
     atlasProvenance?: AtlasJobProvenance | null;
     claims?: StoredClaim[];
   },
-): Promise<void> {
+): Promise<string[]> {
   if (args.claims && args.claims.length > 0) {
     await insertStudyClaims(db, {
       deckId: args.deckId,
@@ -114,6 +114,7 @@ export async function insertDraftCards(
   }
   const now = new Date().toISOString();
   const drafts = withAtlasProvenance(args.drafts, args.atlasProvenance ?? null);
+  const ids: string[] = [];
   for (const draft of drafts) {
     const mediaJson =
       draft.mediaR2Keys && draft.mediaR2Keys.length > 0
@@ -157,7 +158,9 @@ export async function insertDraftCards(
         claimId,
       )
       .run();
+    ids.push(id);
   }
+  return ids;
 }
 
 type GapFillPipeline = (args: {

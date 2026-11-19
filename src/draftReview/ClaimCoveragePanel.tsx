@@ -1,4 +1,5 @@
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -8,6 +9,9 @@ type Props = {
   coverage: ClaimCoverage;
   drafts: CardDraftView[];
   onJumpToDraft?: (cardId: string) => void;
+  onGenerateOrphan?: (claimId: string) => void;
+  generatingClaimId?: string | null;
+  generateDisabled?: boolean;
 };
 
 function claimLabel(row: ClaimCoverage["claims"][number]): string {
@@ -16,10 +20,26 @@ function claimLabel(row: ClaimCoverage["claims"][number]): string {
   return parts.join(" ");
 }
 
+const rowSx = (interactive: boolean) => ({
+  display: "block" as const,
+  width: "100%",
+  textAlign: "left" as const,
+  borderRadius: 1,
+  border: interactive
+    ? "1px solid rgba(232, 216, 199, 0.22)"
+    : "1px dashed rgba(232, 216, 199, 0.16)",
+  px: 1,
+  py: 0.5,
+  color: interactive ? "var(--sp-ivory)" : "text.secondary",
+});
+
 export default function ClaimCoveragePanel({
   coverage,
   drafts,
   onJumpToDraft,
+  onGenerateOrphan,
+  generatingClaimId = null,
+  generateDisabled = false,
 }: Props) {
   if (coverage.summary.total === 0) return null;
 
@@ -36,60 +56,73 @@ export default function ClaimCoveragePanel({
         borderRadius: 2,
         border: "1px solid rgba(232, 216, 199, 0.18)",
         bgcolor: "rgba(18, 7, 15, 0.35)",
-        px: 1.75,
-        py: 1.5,
+        px: 1.5,
+        pt: 1,
+        pb: 1,
       }}
     >
-      <Typography
-        variant="subtitle2"
-        sx={{
-          m: 0,
-          mb: 0.75,
-          fontWeight: 600,
-          letterSpacing: "0.02em",
-          color: "var(--sp-ivory)",
-        }}
-      >
-        Claim coverage
-      </Typography>
-      <Typography
-        variant="caption"
-        sx={{ display: "block", mb: 1, color: "rgba(232, 216, 199, 0.72)" }}
-      >
-        {linked} linked · {orphan} orphan · {total} claims
-      </Typography>
       <Stack
-        spacing={0.75}
-        sx={{ maxHeight: 180, overflow: "auto", pr: 0.5 }}
+        direction="row"
+        alignItems="baseline"
+        justifyContent="space-between"
+        spacing={1}
+        sx={{ mb: 0.75 }}
+      >
+        <Typography
+          variant="subtitle2"
+          sx={{
+            m: 0,
+            fontWeight: 600,
+            letterSpacing: "0.02em",
+            color: "var(--sp-ivory)",
+            lineHeight: 1.3,
+          }}
+        >
+          Claim coverage
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            m: 0,
+            color: "rgba(232, 216, 199, 0.72)",
+            whiteSpace: "nowrap",
+            lineHeight: 1.3,
+          }}
+        >
+          {linked} linked · {orphan} orphan · {total} claims
+        </Typography>
+      </Stack>
+      <Stack
+        spacing={0.5}
+        sx={{
+          maxHeight: "min(18vh, 7.5rem)",
+          overflow: "auto",
+          pr: 0.25,
+        }}
       >
         {coverage.claims.map((row) => {
           const isOrphan = row.card_id == null;
-          const canJump =
-            !isOrphan &&
-            row.card_id != null &&
-            draftIds.has(row.card_id) &&
-            onJumpToDraft != null;
+          const cardId = row.card_id;
+          const interactive =
+            cardId != null && draftIds.has(cardId) && onJumpToDraft != null;
           const label = claimLabel(row);
-          if (canJump && row.card_id) {
-            const cardId = row.card_id;
+          const rowBusy = generatingClaimId === row.id;
+          const body = (
+            <Typography
+              variant="body2"
+              sx={{ lineHeight: 1.3, flex: 1, minWidth: 0 }}
+            >
+              {label}
+            </Typography>
+          );
+          if (interactive && cardId) {
             return (
               <ButtonBase
                 key={row.id}
                 onClick={() => onJumpToDraft(cardId)}
-                sx={{
-                  display: "block",
-                  width: "100%",
-                  textAlign: "left",
-                  borderRadius: 1,
-                  border: "1px solid rgba(232, 216, 199, 0.22)",
-                  px: 1,
-                  py: 0.75,
-                  color: "var(--sp-ivory)",
-                }}
+                sx={rowSx(true)}
               >
-                <Typography variant="body2" sx={{ lineHeight: 1.35 }}>
-                  {label}
-                </Typography>
+                {body}
               </ButtonBase>
             );
           }
@@ -97,21 +130,32 @@ export default function ClaimCoveragePanel({
             <Box
               key={row.id}
               sx={{
-                borderRadius: 1,
-                border: "1px dashed rgba(232, 216, 199, 0.16)",
-                px: 1,
-                py: 0.75,
+                ...rowSx(false),
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
               }}
             >
-              <Typography
-                variant="body2"
-                sx={{
-                  lineHeight: 1.35,
-                  color: "text.secondary",
-                }}
-              >
-                {label}
-              </Typography>
+              {body}
+              {isOrphan && onGenerateOrphan ? (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  disabled={generateDisabled || generatingClaimId != null}
+                  onClick={() => onGenerateOrphan(row.id)}
+                  sx={{
+                    flexShrink: 0,
+                    textTransform: "none",
+                    borderColor: "rgba(232, 216, 199, 0.35)",
+                    color: "var(--sp-ivory)",
+                    py: 0.25,
+                    px: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  {rowBusy ? "…" : "Generate"}
+                </Button>
+              ) : null}
             </Box>
           );
         })}

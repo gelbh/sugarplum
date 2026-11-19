@@ -18,7 +18,11 @@ import {
   EditLifecycleDialog,
   RecentlyDeletedDialog,
 } from "../atlas/AtlasMutateDialogs";
-import { apiAtlasSource, resetEntry } from "../atlas/apiSource";
+import {
+  apiAtlasSource,
+  listAtlasEntries,
+  resetEntry,
+} from "../atlas/apiSource";
 import "../atlas/atlasMotion.css";
 import Cabinet from "../atlas/Cabinet";
 import CompareView from "../atlas/CompareView";
@@ -125,17 +129,28 @@ export default function AtlasPage({
     if (loaded && route.kind === "cabinet") staggered.current = true;
   }, [loaded, route.kind]);
 
-  const reloadEntries = useCallback(async () => {
-    const entries = await source.list(atlasId);
-    setLoaded((prev) => (prev ? { ...prev, entries } : prev));
+  const loadApiEntries = useCallback(async (): Promise<AtlasEntryView[]> => {
+    if (source !== apiAtlasSource) return source.list(atlasId);
+    let body = await listAtlasEntries(atlasId);
+    // Background Focus extract (PDF) may take several seconds; poll a few times.
+    for (let i = 0; i < 6 && body.focusRefreshPending; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      body = await listAtlasEntries(atlasId);
+    }
+    return body.entries;
   }, [source, atlasId]);
+
+  const reloadEntries = useCallback(async () => {
+    const entries = await loadApiEntries();
+    setLoaded((prev) => (prev ? { ...prev, entries } : prev));
+  }, [loadApiEntries]);
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
       try {
-        const entries = await source.list(atlasId);
+        const entries = await loadApiEntries();
         if (cancelled) return;
         setLoaded({
           entries,
@@ -155,7 +170,7 @@ export default function AtlasPage({
     return () => {
       cancelled = true;
     };
-  }, [source, atlasId, user]);
+  }, [loadApiEntries, user]);
 
   const home = atlasHref(atlasId);
   const crumb =

@@ -5,9 +5,14 @@ export const HOME_TAGLINE =
   "Spaced-repetition study with AI-assisted flashcard drafts.";
 
 export const HOME_PURPOSE = [
-  "Sugarplum helps you learn with spaced repetition. Upload or paste study materials, generate flashcard drafts with AI (Workers AI or your own API keys), then review cards on a schedule.",
-  "Sign in with email or optionally with Google. When you use Google Sign-In, we use it only to identify your Sugarplum account (verified email and a stable Google subject id). We do not use Google data for advertising.",
+  "Turn your notes into flashcards, then review on a schedule.",
+  "Optional Google Sign-In uses your verified email only to identify your account. We do not use Google data for advertising.",
 ].join("\n\n");
+
+/** Demo Q/A on the public foyer preview card (not live study data). */
+export const HOME_DEMO_FRONT = "What is spaced repetition?";
+export const HOME_DEMO_BACK =
+  "Reviewing just before you forget, so memory sticks with less time.";
 
 export function homePlainText(): string {
   return [HOME_BRAND, HOME_TAGLINE, HOME_PURPOSE].join("\n\n");
