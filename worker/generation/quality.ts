@@ -325,10 +325,7 @@ function isCompoundFront(front: string): boolean {
   return COMPOUND_FRONT_RE.test(front);
 }
 
-/**
- * Hygiene reason tags for essay/compound (and related Layer-1) issues.
- * Empty = passes these screens (may still fail other Layer-1 rules).
- */
+/** Empty means these screens pass (other Layer-1 rules may still fail). */
 export function hygieneReasonsForDraft(draft: CardDraft): string[] {
   if (draft.type === "occlusion") return [];
   const front = draft.front.trim();

@@ -94,7 +94,6 @@ export function mergeClaimInto(
   return merged;
 }
 
-/** Union-find clusters; keep earliest index as root; fold via mergeClaimInto. */
 function clusterClaims(
   claims: StoredClaim[],
   shouldUnite: (i: number, j: number) => boolean,
@@ -188,10 +187,7 @@ async function mergeSemantic(
   );
 }
 
-/**
- * Hybrid claim dedupe: exact → fuzzy → optional semantic (fail-open).
- * Keeps the first claim id in each cluster; unions pages; prefers longer span.
- */
+/** Exact → fuzzy → optional semantic (fail-open). First id in each cluster wins. */
 export async function mergeClaimsForJob(
   claims: StoredClaim[],
   embedTexts?: EmbedTextsFn | null,

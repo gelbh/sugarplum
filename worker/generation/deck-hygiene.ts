@@ -32,7 +32,6 @@ function frontPreview(front: unknown): string {
   }
 }
 
-/** Flag accepted cards that fail essay/compound (and related) Layer-1 screens. */
 export function flagAcceptedCardsForHygiene(
   rows: HygieneCardRow[],
 ): HygieneFlaggedCard[] {

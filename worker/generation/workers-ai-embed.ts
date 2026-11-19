@@ -1,7 +1,6 @@
 import type { Env } from "../env";
 import type { EmbedTextsFn } from "./claim-dedupe";
 
-/** Small English embedding model for in-job claim paraphrase merge. */
 export const WORKERS_AI_EMBED_MODEL = "@cf/baai/bge-small-en-v1.5" as const;
 
 type EmbedResponse = {
