@@ -35,6 +35,12 @@ import {
   usage30dCutoffIso,
   frontPreviewFromJson,
 } from "./queries";
+import {
+  ADMIN_OVERVIEW_CACHE_KEY,
+  ADMIN_OVERVIEW_CACHE_TTL_SECONDS,
+  cacheGetJson,
+  cachePutJson,
+} from "../cache/kvJson";
 
 export type {
   AdminUserListItem,
@@ -42,16 +48,32 @@ export type {
   AdminUserDetail,
 } from "./types";
 
+type AdminOverviewJson = {
+  userCount: number;
+  createdLast7d: number;
+  tokens30d: number;
+  freeJobs30d: number;
+  byoJobs30d: number;
+};
+
 export const adminRoutes = new Hono<AppEnv>();
 
 adminRoutes.get("/overview", async (c) => {
   await requireAdmin(c);
+
+  const cached = await cacheGetJson<AdminOverviewJson>(
+    c.env.CACHE,
+    ADMIN_OVERVIEW_CACHE_KEY,
+  );
+  if (cached) return c.json(cached);
+
   const cutoff7 = createdLast7dCutoffIso();
   const cutoff30 = usage30dCutoffIso();
   // No unbounded SUM(usage_events): all-time token totals live on user detail.
   const row = await getDb(c.env)
     .prepare(
-      `SELECT
+      `-- sugarplum:admin-overview
+       SELECT
         (SELECT COUNT(*) FROM users WHERE sandbox_of IS NULL) AS user_count,
         (SELECT COUNT(*) FROM users WHERE sandbox_of IS NULL AND created_at >= ?) AS created_last_7d,
         (SELECT COALESCE(SUM(COALESCE(tokens_total, 0)), 0) FROM usage_events
@@ -71,13 +93,20 @@ adminRoutes.get("/overview", async (c) => {
       free_jobs_30d: number;
       byo_jobs_30d: number;
     }>();
-  return c.json({
+  const body: AdminOverviewJson = {
     userCount: row?.user_count ?? 0,
     createdLast7d: row?.created_last_7d ?? 0,
     tokens30d: row?.tokens_30d ?? 0,
     freeJobs30d: row?.free_jobs_30d ?? 0,
     byoJobs30d: row?.byo_jobs_30d ?? 0,
-  });
+  };
+  await cachePutJson(
+    c.env.CACHE,
+    ADMIN_OVERVIEW_CACHE_KEY,
+    body,
+    ADMIN_OVERVIEW_CACHE_TTL_SECONDS,
+  );
+  return c.json(body);
 });
 
 adminRoutes.get("/users", async (c) => {

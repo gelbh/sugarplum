@@ -3,6 +3,8 @@ export interface Env {
   DB: D1Database;
   MATERIALS: R2Bucket;
   SESSIONS: KVNamespace;
+  /** Soft-stale JSON cache (admin overview); never use for /study/due. */
+  CACHE: KVNamespace;
   /** Static assets binding (client build output). */
   ASSETS: Fetcher;
   /** Workers AI binding for free-generation path (optional at type level for tests). */
