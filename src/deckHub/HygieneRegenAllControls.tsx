@@ -57,7 +57,6 @@ export type HygieneRegenAllApi = {
   dialog: ReactNode;
 };
 
-/** Confirm + sequential regen-all for hygiene rows; panel keeps list/row actions. */
 export function useHygieneRegenAll(args: {
   cards: DeckHygieneCard[];
   disabled: boolean;
