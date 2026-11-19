@@ -23,7 +23,7 @@ import {
   extractClozeAnswers,
   parseClozeDiyFields,
   revealClozeFront,
-} from "../lib/clozeFormat";
+} from "../study/clozeFormat";
 import { CARD_TYPE_ICONS } from "../lib/cardTypeIcons";
 import {
   backAnswer,
@@ -45,7 +45,7 @@ import {
   withMcqOptionRemoved,
   withMcqOptionText,
 } from "../lib/mcqDraftEdit";
-import ClozePrompt from "./ClozePrompt";
+import ClozePrompt from "../study/ClozePrompt";
 import OcclusionRegionEditor from "./OcclusionRegionEditor";
 import { SelectEnumItem, renderSelectEnumValue } from "./SelectEnumItem";
 

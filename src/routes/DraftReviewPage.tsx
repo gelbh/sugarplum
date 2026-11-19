@@ -16,7 +16,7 @@ import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded";
 import HighlightOffRoundedIcon from "@mui/icons-material/HighlightOffRounded";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
-import ReviewCard from "../components/ReviewCard";
+import ReviewCard from "../study/ReviewCard";
 import {
   asRegenType,
   cardHasRegenSource,

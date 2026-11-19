@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import StudyNotesDialog from "../components/StudyNotesDialog";
+import StudyNotesDialog from "./StudyNotesDialog";
 import {
   provenanceExcerptText,
   provenancePages,

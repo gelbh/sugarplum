@@ -10,9 +10,9 @@ import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
 import type { StudyRating } from "../api/client";
-import { gradeColorVars } from "../study/gradeColors";
-import { GRADE_LABELS, gradeLabelMultiline } from "../study/gradeLabels";
-import { GRADE_BINDINGS } from "../study/studyKeys";
+import { gradeColorVars } from "./gradeColors";
+import { GRADE_LABELS, gradeLabelMultiline } from "./gradeLabels";
+import { GRADE_BINDINGS } from "./studyKeys";
 import { CARD_COLUMN_SX, FACE_SANS } from "./studyFaceSx";
 
 const GRADE_ICONS: Record<StudyRating, SvgIconComponent> = {

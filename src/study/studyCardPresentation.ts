@@ -1,4 +1,4 @@
-import type { OcclusionStudyFace } from "../components/CardFace";
+import type { OcclusionStudyFace } from "./CardFace";
 import type { CardDraftView } from "../api/client";
 import { backAnswer, isOcclusionFront } from "../lib/draftCardModel";
 import {

@@ -2,7 +2,7 @@
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { CardFaceMcqBody } from "../../src/components/cardFaceMcq";
+import { CardFaceMcqBody } from "../../src/study/cardFaceMcq";
 import { shuffledMcqOptions } from "../../src/study/mcqStudy";
 
 (

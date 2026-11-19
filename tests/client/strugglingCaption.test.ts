@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatStrugglingCaption } from "../../src/components/StrugglingList";
+import { formatStrugglingCaption } from "../../src/study/StrugglingList";
 import { GRADE_LABELS } from "../../src/study/gradeLabels";
 
 describe("formatStrugglingCaption", () => {

@@ -25,7 +25,7 @@ import {
 } from "@embedpdf/react/selection";
 import type { OpenInput } from "@embedpdf/react/runtime";
 import Button from "@mui/material/Button";
-import { getEmbedPdfEngine } from "../lib/embedPdfEngine";
+import { getEmbedPdfEngine } from "./embedPdfEngine";
 import { normalizeExcerptText } from "./excerptPages";
 import { normalizeProvenancePages } from "./notesProvenanceWrite";
 import { shouldReportStagePage, stageJumpKey } from "./notesStagePageSync";

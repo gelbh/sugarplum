@@ -12,7 +12,7 @@ import {
   type StrugglingRow,
 } from "../api/client";
 import { isGuest } from "../guest/session";
-import { GRADE_LABELS } from "../study/gradeLabels";
+import { GRADE_LABELS } from "./gradeLabels";
 
 export function formatStrugglingCaption(row: {
   again_14d: number;

@@ -1,5 +1,5 @@
 import type { CardDraftView } from "../api/client";
-import { assertSingleCloze } from "../lib/clozeFormat";
+import { assertSingleCloze } from "../study/clozeFormat";
 import {
   mergeProvenancePagesIntoJson,
   normalizeProvenancePages,
