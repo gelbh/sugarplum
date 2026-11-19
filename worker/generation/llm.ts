@@ -234,13 +234,26 @@ export function mockLlmAdapter(): LlmAdapter {
       const s = system.toLowerCase();
       // Claim extract: return grounded claims so the text pipeline can write cards.
       if (s.includes("extract") && s.includes("claim")) {
-        const start = user.indexOf("--- MATERIAL ---");
+        const materialMarker = user.includes("--- UNCOVERED LINES ---")
+          ? "--- UNCOVERED LINES ---"
+          : "--- MATERIAL ---";
+        const start = user.indexOf(materialMarker);
         const end = user.indexOf("--- END ---");
         const material =
           start >= 0 && end > start
-            ? user.slice(start + "--- MATERIAL ---".length, end).trim()
+            ? user.slice(start + materialMarker.length, end).trim()
             : user.trim();
-        const span = material.slice(0, Math.min(80, material.length));
+        // Cover ≥50% of the first study line so claim-span gap extract stays quiet.
+        const firstLine =
+          material
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .find((line) => line.length >= 8) ?? material;
+        const minCover = Math.max(8, Math.ceil(firstLine.length * 0.5));
+        const span = firstLine.slice(
+          0,
+          Math.min(firstLine.length, Math.max(minCover, Math.min(80, firstLine.length))),
+        );
         if (!span) {
           return { text: JSON.stringify({ claims: [] }), usage: null };
         }

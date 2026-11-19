@@ -420,19 +420,21 @@ deckRoutes.post("/:id/cards", async (c) => {
   const mediaKeys = mediaR2KeysJson
     ? (JSON.parse(mediaR2KeysJson) as string[])
     : null;
-  let mcqBack: string | undefined;
-  let mcqOptions: string[] | null = null;
+  let fpBack: unknown;
+  let fpOptions: string[] | null = null;
   if (type === "mcq") {
     const decoded = JSON.parse(backJson) as { answer?: string; options?: string[] };
-    mcqBack = decoded.answer;
-    mcqOptions = decoded.options ?? null;
+    fpBack = decoded.answer;
+    fpOptions = decoded.options ?? null;
+  } else if (type === "image_label" || type === "diagram") {
+    fpBack = JSON.parse(backJson) as unknown;
   }
   const contentFp = await cardContentFingerprint({
     type,
     front: frontForFp,
     mediaR2Keys: mediaKeys,
-    back: mcqBack,
-    options: mcqOptions,
+    back: fpBack,
+    options: fpOptions,
   });
 
   const existing = await db
