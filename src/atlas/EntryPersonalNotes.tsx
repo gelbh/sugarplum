@@ -4,9 +4,11 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { NOTE_MAX_CHARS } from "../../worker/atlas/notes";
 import { deleteEntryNote, putEntryNote } from "./apiSource";
 import type { AtlasEntryView } from "./types";
+
+/** Keep in sync with worker/atlas/notes.ts NOTE_MAX_CHARS. */
+const NOTE_MAX_CHARS = 8000;
 
 type Props = {
   atlasId: string;
