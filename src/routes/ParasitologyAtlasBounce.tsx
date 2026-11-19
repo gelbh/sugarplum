@@ -6,10 +6,15 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { ApiError } from "../api/client";
-import { ensureAtlas } from "../atlas/apiSource";
+import {
+  VIEW_AS_ATLAS_EMPTY,
+  atlasOpenErrorMessage,
+} from "../atlas/atlasOpenCopy";
+import { ensureAtlas, findParasiteAtlas } from "../atlas/apiSource";
 import { atlasHref, atlasHubHref } from "../atlas/paths";
 import { isGuest } from "../guest/session";
 import { navigate, navigateReplace } from "../shared/nav/navigate";
+import { useSession } from "../session/SessionContext";
 
 export default function ParasitologyAtlasBounce({
   onBack,
@@ -18,6 +23,7 @@ export default function ParasitologyAtlasBounce({
 } = {}) {
   const [error, setError] = useState<string | null>(null);
   const guest = isGuest();
+  const { user } = useSession();
 
   const goBack = () => {
     if (onBack) {
@@ -32,6 +38,16 @@ export default function ParasitologyAtlasBounce({
     let cancelled = false;
     (async () => {
       try {
+        if (user?.impersonation) {
+          const existing = await findParasiteAtlas();
+          if (cancelled) return;
+          if (!existing) {
+            setError(VIEW_AS_ATLAS_EMPTY);
+            return;
+          }
+          navigateReplace(atlasHref(existing.id));
+          return;
+        }
         const meta = await ensureAtlas();
         if (!cancelled) navigateReplace(atlasHref(meta.id));
       } catch (err) {
@@ -40,15 +56,13 @@ export default function ParasitologyAtlasBounce({
           window.location.assign("/login");
           return;
         }
-        setError(
-          err instanceof ApiError ? err.message : "Could not open the Atlas",
-        );
+        setError(atlasOpenErrorMessage(err));
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [guest]);
+  }, [guest, user?.impersonation]);
 
   if (guest) {
     return (
@@ -61,8 +75,9 @@ export default function ParasitologyAtlasBounce({
             sx={{
               color: "text.secondary",
               mt: 1,
-              mb: 2
-            }}>
+              mb: 2,
+            }}
+          >
             Sign in to open your Parasitology Atlas.
           </Typography>
           <Button variant="contained" href="/login">
@@ -88,9 +103,11 @@ export default function ParasitologyAtlasBounce({
 
   return (
     <Box sx={{ px: 2, py: 4 }}>
-      <Typography sx={{
-        color: "text.secondary"
-      }}>
+      <Typography
+        sx={{
+          color: "text.secondary",
+        }}
+      >
         Opening Parasitology Atlas…
       </Typography>
     </Box>

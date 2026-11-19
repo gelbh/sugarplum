@@ -23,13 +23,22 @@ function entryPath(atlasId: string, entryId: string, suffix = ""): string {
   );
 }
 
+const PARASITE_TEMPLATE_KEY = "parasite";
+
 export function listAtlases() {
   return api<{ atlases: AtlasMeta[] }>(atlasCollectionPath()).then(
     (body) => body.atlases,
   );
 }
 
-export function ensureAtlas() {
+export async function findParasiteAtlas(): Promise<AtlasMeta | null> {
+  const atlases = await listAtlases();
+  return atlases.find((a) => a.templateKey === PARASITE_TEMPLATE_KEY) ?? null;
+}
+
+export async function ensureAtlas() {
+  const existing = await findParasiteAtlas();
+  if (existing) return existing;
   return api<AtlasMeta>(atlasCollectionPath(), { method: "POST" });
 }
 
