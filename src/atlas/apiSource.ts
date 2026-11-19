@@ -47,11 +47,18 @@ export function createAtlas() {
   return ensureAtlas();
 }
 
+export type AtlasEntriesList = {
+  entries: AtlasEntryView[];
+  focusRefreshPending?: boolean;
+};
+
+export function listAtlasEntries(atlasId: string): Promise<AtlasEntriesList> {
+  return api<AtlasEntriesList>(atlasPath(atlasId, "/entries"));
+}
+
 export const apiAtlasSource: AtlasSource = {
   async list(atlasId) {
-    const body = await api<{ entries: AtlasEntryView[] }>(
-      atlasPath(atlasId, "/entries"),
-    );
+    const body = await listAtlasEntries(atlasId);
     return body.entries;
   },
 };
