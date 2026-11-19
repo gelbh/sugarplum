@@ -2725,6 +2725,48 @@ export function createTestEnv(opts?: {
             }));
           return { results: rows as T[] };
         }
+        if (
+          normalized.includes("FROM study_claims sc") &&
+          normalized.includes("LEFT JOIN cards c ON c.claim_id = sc.id") &&
+          normalized.includes("WHERE sc.job_id =")
+        ) {
+          const jobId = bound[0] as string;
+          const claims = [...studyClaims.values()]
+            .filter((sc) => sc.job_id === jobId)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at));
+          const rows = claims.flatMap((sc) => {
+            const linked = [...cards.values()].filter(
+              (card) => card.claim_id === sc.id,
+            );
+            if (linked.length === 0) {
+              return [
+                {
+                  id: sc.id,
+                  subject: sc.subject,
+                  predicate: sc.predicate,
+                  object: sc.object,
+                  source_span: sc.source_span,
+                  pages_json: sc.pages_json,
+                  card_id: null,
+                  card_status: null,
+                  card_created_at: null,
+                },
+              ];
+            }
+            return linked.map((card) => ({
+              id: sc.id,
+              subject: sc.subject,
+              predicate: sc.predicate,
+              object: sc.object,
+              source_span: sc.source_span,
+              pages_json: sc.pages_json,
+              card_id: card.id,
+              card_status: card.status,
+              card_created_at: card.created_at,
+            }));
+          });
+          return { results: rows as T[] };
+        }
         return { results: [] };
       },
       async run(): Promise<D1Result> {
