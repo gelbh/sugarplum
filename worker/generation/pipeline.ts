@@ -1,7 +1,13 @@
 import {
+  CLAIM_GAP_EXTRACT_MAX,
+  runClaimGapExtract,
+} from "./claim-gap-extract";
+import {
   extractClaimsForChunk,
+  extractClaimsForGapLines,
   writeCardsFromClaims,
 } from "./claim-stages";
+import { buildClaimSpanCoverage } from "./claim-span-coverage";
 import { CRITIQUE_SYSTEM_PROMPT, critiqueUserPrompt } from "./critique-prompts";
 import {
   appendExtraUserSuffix,
@@ -67,6 +73,10 @@ export type GenerationPipelineResult = {
   drafts: CardDraft[];
   /** All extracted claims for the job (incl. orphans with no card). */
   claims: StoredClaim[];
+  /** Sum of gap re-extract passes across chunks. */
+  claim_gap_extract_passes: number;
+  /** Residual uncovered study lines after gap extract (job material). */
+  claim_span_gaps: string[];
 };
 
 /**
@@ -333,7 +343,14 @@ export async function runGenerationPipeline(
     onProgress,
     onChunkDrafts,
   } = input;
-  if (!text.trim()) return { drafts: [], claims: [] };
+  if (!text.trim()) {
+    return {
+      drafts: [],
+      claims: [],
+      claim_gap_extract_passes: 0,
+      claim_span_gaps: [],
+    };
+  }
 
   const extractSuffix = buildExtraUserSuffix({ topicHints });
   const writeSuffix = buildExtraUserSuffix({ avoidPatterns });
@@ -344,6 +361,7 @@ export async function runGenerationPipeline(
   const total = chunks.length;
   const out: CardDraft[] = [];
   const storedClaims: StoredClaim[] = [];
+  let claimGapExtractPasses = 0;
 
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i]!;
@@ -377,10 +395,31 @@ export async function runGenerationPipeline(
       provider,
       extraUserSuffix: extractSuffix,
     });
-    const minted: StoredClaim[] = claims.map((claim) => ({
+    let minted: StoredClaim[] = claims.map((claim) => ({
       ...claim,
       id: crypto.randomUUID(),
     }));
+
+    const gapResult = await runClaimGapExtract({
+      material: chunk,
+      claims: minted,
+      maxPasses: CLAIM_GAP_EXTRACT_MAX,
+      extractOnce: async (uncoveredLines) => {
+        const raw = await extractClaimsForGapLines(uncoveredLines, chunk, {
+          llm,
+          apiKey,
+          provider,
+          extraUserSuffix: extractSuffix,
+        });
+        return raw.map((claim) => ({
+          ...claim,
+          id: crypto.randomUUID(),
+        }));
+      },
+    });
+    minted = gapResult.claims;
+    claimGapExtractPasses += gapResult.passes;
+
     const merged = await mergeClaimsForJob(
       [...storedClaims, ...minted],
       embedTexts,
@@ -487,5 +526,11 @@ export async function runGenerationPipeline(
     await safeOnChunkDrafts(onChunkDrafts, batch);
   }
 
-  return { drafts: out, claims: storedClaims };
+  const claimSpan = buildClaimSpanCoverage(text, storedClaims);
+  return {
+    drafts: out,
+    claims: storedClaims,
+    claim_gap_extract_passes: claimGapExtractPasses,
+    claim_span_gaps: claimSpan.gaps,
+  };
 }

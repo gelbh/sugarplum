@@ -62,6 +62,7 @@ export default function DraftReviewPage() {
   const [claimCoverage, setClaimCoverage] = useState<ClaimCoverage | null>(
     null,
   );
+  const [claimSpanGaps, setClaimSpanGaps] = useState<string[]>([]);
   const [crumbs, setCrumbs] = useState<StageCrumb[]>([
     { label: "Library", href: "/library" },
   ]);
@@ -103,6 +104,7 @@ export default function DraftReviewPage() {
     setReady,
     setDirty,
     setClaimCoverage,
+    setClaimSpanGaps,
   });
 
   const current = drafts[0] ?? null;
@@ -329,11 +331,12 @@ export default function DraftReviewPage() {
           {!current &&
           jobStatus === "needs_review" &&
           claimCoverage &&
-          claimCoverage.summary.total > 0 ? (
+          (claimCoverage.summary.total > 0 || claimSpanGaps.length > 0) ? (
             <Box sx={{ width: "100%", mb: 2 }}>
               <ClaimCoveragePanel
                 coverage={claimCoverage}
                 drafts={drafts}
+                claimSpanGaps={claimSpanGaps}
                 onJumpToDraft={jumpToDraft}
                 onGenerateOrphan={(claimId) => {
                   void onGenerateOrphan(claimId);
@@ -543,10 +546,12 @@ export default function DraftReviewPage() {
               >
                 {jobStatus === "needs_review" &&
                 claimCoverage &&
-                claimCoverage.summary.total > 0 ? (
+                (claimCoverage.summary.total > 0 ||
+                  claimSpanGaps.length > 0) ? (
                   <ClaimCoveragePanel
                     coverage={claimCoverage}
                     drafts={drafts}
+                    claimSpanGaps={claimSpanGaps}
                     onJumpToDraft={jumpToDraft}
                     onGenerateOrphan={(claimId) => {
                       void onGenerateOrphan(claimId);

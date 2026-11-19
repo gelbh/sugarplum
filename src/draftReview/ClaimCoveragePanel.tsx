@@ -7,9 +7,13 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { CardDraftView, ClaimCoverage } from "../api/client";
 
+const CLAIM_SPAN_GAP_DISPLAY_CAP = 10;
+
 type Props = {
   coverage: ClaimCoverage;
   drafts: CardDraftView[];
+  /** Residual unclaimed note lines from coverage_json.claim_span.gaps. */
+  claimSpanGaps?: string[];
   onJumpToDraft?: (cardId: string) => void;
   onGenerateOrphan?: (claimId: string) => void;
   onFillAllOrphans?: () => void;
@@ -40,6 +44,7 @@ const rowSx = (interactive: boolean) => ({
 export default function ClaimCoveragePanel({
   coverage,
   drafts,
+  claimSpanGaps = [],
   onJumpToDraft,
   onGenerateOrphan,
   onFillAllOrphans,
@@ -48,6 +53,8 @@ export default function ClaimCoveragePanel({
   generateDisabled = false,
 }: Props) {
   const { linked, orphan, total } = coverage.summary;
+  const shownGaps = claimSpanGaps.slice(0, CLAIM_SPAN_GAP_DISPLAY_CAP);
+  const moreGaps = Math.max(0, claimSpanGaps.length - shownGaps.length);
 
   const [baselineOrphan, setBaselineOrphan] = useState<number | null>(null);
   useEffect(() => {
@@ -58,7 +65,7 @@ export default function ClaimCoveragePanel({
     setBaselineOrphan((prev) => prev ?? Math.max(orphan, 1));
   }, [fillAllBusy, orphan]);
 
-  if (total === 0) return null;
+  if (total === 0 && claimSpanGaps.length === 0) return null;
 
   const draftIds = new Set(drafts.map((d) => d.id));
   const orphanBusy =
@@ -246,6 +253,46 @@ export default function ClaimCoveragePanel({
           );
         })}
       </Stack>
+      {claimSpanGaps.length > 0 ? (
+        <Box sx={{ mt: 1, pt: 1, borderTop: "1px solid rgba(232, 216, 199, 0.14)" }}>
+          <Typography
+            variant="caption"
+            sx={{
+              m: 0,
+              mb: 0.5,
+              display: "block",
+              color: "rgba(232, 216, 199, 0.72)",
+              lineHeight: 1.3,
+            }}
+          >
+            Unclaimed note lines ({claimSpanGaps.length})
+          </Typography>
+          <Stack spacing={0.35}>
+            {shownGaps.map((line) => (
+              <Typography
+                key={line}
+                variant="body2"
+                sx={{
+                  m: 0,
+                  color: "text.secondary",
+                  lineHeight: 1.3,
+                  fontSize: "0.8rem",
+                }}
+              >
+                {line}
+              </Typography>
+            ))}
+            {moreGaps > 0 ? (
+              <Typography
+                variant="caption"
+                sx={{ m: 0, color: "rgba(232, 216, 199, 0.55)" }}
+              >
+                +{moreGaps} more
+              </Typography>
+            ) : null}
+          </Stack>
+        </Box>
+      ) : null}
     </Box>
   );
 }
