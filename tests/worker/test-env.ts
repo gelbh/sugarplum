@@ -1240,6 +1240,34 @@ export function createTestEnv(opts?: {
           return row as T;
         }
         if (
+          normalized.includes("FROM cards") &&
+          normalized.includes("WHERE claim_id =") &&
+          !normalized.includes("LEFT JOIN")
+        ) {
+          const claimId = bound[0] as string;
+          for (const card of cards.values()) {
+            if (card.claim_id === claimId) {
+              return (
+                normalized.includes("SELECT id") &&
+                !normalized.includes("deck_id")
+                  ? { id: card.id }
+                  : card
+              ) as T;
+            }
+          }
+          return null;
+        }
+        if (
+          normalized.startsWith("SELECT") &&
+          normalized.includes("FROM cards") &&
+          normalized.includes("WHERE id =") &&
+          !normalized.includes("INNER JOIN") &&
+          !normalized.includes("LEFT JOIN")
+        ) {
+          const card = cards.get(bound[0] as string);
+          return card ? (card as T) : null;
+        }
+        if (
           normalized.includes("FROM cards c") &&
           normalized.includes("INNER JOIN decks d") &&
           normalized.includes("c.id =") &&
@@ -1263,6 +1291,16 @@ export function createTestEnv(opts?: {
           if (!material) return null;
           const deck = decks.get(material.deck_id);
           if (!deck || deck.user_id !== bound[1]) return null;
+          if (
+            normalized.includes("j.status") &&
+            normalized.includes("m.deck_id")
+          ) {
+            return {
+              id: job.id,
+              status: job.status,
+              deck_id: material.deck_id,
+            } as T;
+          }
           return { id: job.id } as T;
         }
         if (

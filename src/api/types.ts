@@ -376,6 +376,7 @@ export type CardDraftView = {
   created_at: string;
   updated_at: string;
   due?: string;
+  claim_id?: string | null;
 };
 
 export type JourneyStatus = {
