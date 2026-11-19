@@ -49,6 +49,7 @@ import {
   parseUploadUrlRequest,
   requireR2UploadCredentials,
 } from "./upload-request";
+import { flagAcceptedCardsForHygiene } from "../generation/deck-hygiene";
 
 const DECK_UPLOAD_KINDS = new Set(["pdf", "pptx", "image"] as const);
 
@@ -225,6 +226,33 @@ deckRoutes.get("/:id/claim-coverage", async (c) => {
     }>();
 
   return c.json(buildClaimCoverage(results ?? []));
+});
+
+deckRoutes.get("/:id/hygiene", async (c) => {
+  const userId = await requireUser(c);
+  const deckId = c.req.param("id");
+  const db = getDb(c.env);
+  await requireOwnedDeck(db, deckId, userId);
+
+  const { results } = await db
+    .prepare(
+      `SELECT id, type, front_json, back_json, provenance_json, media_r2_keys_json
+       FROM cards
+       WHERE deck_id = ? AND status = 'accepted'
+       ORDER BY created_at ASC`.replace(/\s+/g, " "),
+    )
+    .bind(deckId)
+    .all<{
+      id: string;
+      type: string;
+      front_json: string;
+      back_json: string;
+      provenance_json: string | null;
+      media_r2_keys_json: string | null;
+    }>();
+
+  const cards = flagAcceptedCardsForHygiene(results ?? []);
+  return c.json({ cards, summary: { flagged: cards.length } });
 });
 
 deckRoutes.get("/:id/composition", async (c) => {

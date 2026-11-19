@@ -261,17 +261,79 @@ async function cloneGenerationJobs(
   await runBatches(db, stmts);
 }
 
+async function cloneStudyClaims(
+  db: D1Database,
+  sourceUserId: string,
+  deckMap: IdMap,
+  jobMap: IdMap,
+  claimMap: IdMap,
+): Promise<void> {
+  const { results } = await db
+    .prepare(
+      `SELECT sc.id, sc.job_id, sc.deck_id, sc.subject, sc.predicate, sc.source_span,
+              sc.object, sc.qualifiers_json, sc.pages_json, sc.created_at
+       FROM study_claims sc
+       INNER JOIN decks d ON d.id = sc.deck_id
+       WHERE d.user_id = ?
+       ORDER BY sc.created_at ASC`.replace(/\s+/g, " "),
+    )
+    .bind(sourceUserId)
+    .all<{
+      id: string;
+      job_id: string;
+      deck_id: string;
+      subject: string;
+      predicate: string;
+      source_span: string;
+      object: string | null;
+      qualifiers_json: string | null;
+      pages_json: string | null;
+      created_at: string;
+    }>();
+  const stmts: D1PreparedStatement[] = [];
+  for (const row of results ?? []) {
+    const deckId = deckMap.get(row.deck_id);
+    const jobId = jobMap.get(row.job_id);
+    if (!deckId || !jobId) continue;
+    const id = mapId(claimMap, row.id);
+    stmts.push(
+      db
+        .prepare(
+          `INSERT INTO study_claims (
+            id, job_id, deck_id, subject, predicate, source_span,
+            object, qualifiers_json, pages_json, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .bind(
+          id,
+          jobId,
+          deckId,
+          row.subject,
+          row.predicate,
+          row.source_span,
+          row.object,
+          row.qualifiers_json,
+          row.pages_json,
+          row.created_at,
+        ),
+    );
+  }
+  await runBatches(db, stmts);
+}
+
 async function cloneCards(
   db: D1Database,
   sourceUserId: string,
   deckMap: IdMap,
   jobMap: IdMap,
   cardMap: IdMap,
+  claimMap: IdMap,
 ): Promise<void> {
   const { results } = await db
     .prepare(
       `SELECT c.id, c.deck_id, c.job_id, c.type, c.front_json, c.back_json,
-              c.media_r2_keys_json, c.provenance_json, c.status, c.created_at, c.updated_at
+              c.media_r2_keys_json, c.provenance_json, c.status, c.created_at, c.updated_at,
+              c.claim_id
        FROM cards c
        INNER JOIN decks d ON d.id = c.deck_id
        WHERE d.user_id = ?
@@ -290,6 +352,7 @@ async function cloneCards(
       status: string;
       created_at: string;
       updated_at: string;
+      claim_id: string | null;
     }>();
   const stmts: D1PreparedStatement[] = [];
   for (const row of results ?? []) {
@@ -301,8 +364,9 @@ async function cloneCards(
         .prepare(
           `INSERT INTO cards (
             id, deck_id, job_id, type, front_json, back_json,
-            media_r2_keys_json, provenance_json, status, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            media_r2_keys_json, provenance_json, status, created_at, updated_at,
+            claim_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .bind(
           id,
@@ -316,6 +380,7 @@ async function cloneCards(
           row.status,
           row.created_at,
           row.updated_at,
+          remapOrNull(claimMap, row.claim_id),
         ),
     );
   }
@@ -1003,6 +1068,7 @@ async function cloneCalendarLinks(
 /**
  * Clone learner-owned D1 rows from sourceUserId into sandboxUserId.
  * Skips user_secrets, usage_events, export_jobs, free_gen_usage, calendar_connections.
+ * Remaps study_claims and cards.claim_id into the sandbox.
  * Keeps material/card R2 keys pointing at source objects (read-through).
  */
 export async function cloneUserGraph(
@@ -1030,13 +1096,15 @@ export async function cloneUserGraph(
   const deckMap: IdMap = new Map();
   const materialMap: IdMap = new Map();
   const jobMap: IdMap = new Map();
+  const claimMap: IdMap = new Map();
   const cardMap: IdMap = new Map();
 
   await cloneSubjects(db, sourceUserId, sandboxUserId, subjectMap);
   await cloneDecks(db, sourceUserId, sandboxUserId, subjectMap, deckMap);
   await cloneMaterials(db, sourceUserId, deckMap, materialMap);
   await cloneGenerationJobs(db, sourceUserId, materialMap, jobMap);
-  await cloneCards(db, sourceUserId, deckMap, jobMap, cardMap);
+  await cloneStudyClaims(db, sourceUserId, deckMap, jobMap, claimMap);
+  await cloneCards(db, sourceUserId, deckMap, jobMap, cardMap, claimMap);
   await cloneSchedules(db, sourceUserId, cardMap);
   await cloneReviewLogs(db, sourceUserId, cardMap);
   await cloneStudyPrefs(db, sourceUserId, sandboxUserId);

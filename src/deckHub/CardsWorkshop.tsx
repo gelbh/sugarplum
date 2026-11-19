@@ -413,18 +413,24 @@ export default function CardsWorkshop({
                       borderRadius: 2,
                       border: "1px solid",
                       borderColor: checked
-                        ? "rgba(209, 163, 226, 0.42)"
-                        : "rgba(232, 216, 199, 0.12)",
+                        ? "rgba(209, 163, 226, 0.48)"
+                        : "rgba(232, 216, 199, 0.16)",
                       bgcolor: checked
-                        ? "rgba(91, 44, 111, 0.22)"
-                        : "rgba(18, 7, 15, 0.28)",
+                        ? "rgba(91, 44, 111, 0.28)"
+                        : "rgba(18, 7, 15, 0.32)",
                       overflow: "hidden",
                       transition:
-                        "background-color 140ms ease, border-color 140ms ease",
+                        "background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease",
+                      boxShadow: checked
+                        ? "0 10px 28px rgba(0, 0, 0, 0.28)"
+                        : "0 6px 18px rgba(0, 0, 0, 0.18)",
                       "&:hover": {
                         borderColor: checked
-                          ? "rgba(209, 163, 226, 0.55)"
-                          : "rgba(232, 216, 199, 0.22)",
+                          ? "rgba(209, 163, 226, 0.62)"
+                          : "rgba(232, 216, 199, 0.28)",
+                        bgcolor: checked
+                          ? "rgba(91, 44, 111, 0.34)"
+                          : "rgba(91, 44, 111, 0.16)",
                         "& .sp-card-tile-actions": { opacity: 1 },
                       },
                     }}
@@ -441,30 +447,48 @@ export default function CardsWorkshop({
                       sx={{
                         ...SELECT_CHECKBOX_SX,
                         position: "absolute",
-                        top: 8,
-                        left: 8,
+                        top: 12,
+                        left: 12,
                         zIndex: 2,
                       }}
                     />
                     <Box
                       sx={{
                         width: "100%",
-                        aspectRatio: "var(--sp-card-aspect)",
-                        p: 1,
-                        pt: 4.5,
+                        p: 1.25,
                         minHeight: 0,
                         // Let wheel/trackpad scroll the workshop, not nested faces.
                         overscrollBehavior: "auto",
+                        overflow: "hidden",
                       }}
                     >
-                      <DiyCardPreview card={card} variant="tile" />
+                      <Box
+                        sx={{
+                          width: "100%",
+                          aspectRatio: "var(--sp-card-aspect)",
+                          minHeight: 0,
+                          overflow: "hidden",
+                          borderRadius: 2,
+                          // Isolate 3D flip paint so rotateY stays inside the slot.
+                          isolation: "isolate",
+                          contain: "paint",
+                        }}
+                      >
+                        <DiyCardPreview card={card} variant="tile" />
+                      </Box>
                     </Box>
                     <Stack
                       direction="row"
                       alignItems="center"
                       justifyContent="space-between"
                       spacing={0.5}
-                      sx={{ px: 1, pb: 0.85 }}
+                      sx={{
+                        px: 1,
+                        py: 0.75,
+                        borderTop: "1px solid",
+                        borderColor: "rgba(232, 216, 199, 0.1)",
+                        bgcolor: "rgba(18, 7, 15, 0.22)",
+                      }}
                     >
                       <Box
                         component="span"
@@ -474,13 +498,13 @@ export default function CardsWorkshop({
                           py: 0.15,
                           borderRadius: 999,
                           border: "1px solid",
-                          borderColor: "rgba(232, 216, 199, 0.18)",
-                          bgcolor: "rgba(18, 7, 15, 0.35)",
+                          borderColor: "rgba(209, 163, 226, 0.28)",
+                          bgcolor: "rgba(91, 44, 111, 0.28)",
                           typography: "caption",
                           fontSize: "0.6875rem",
                           letterSpacing: "0.06em",
                           textTransform: "uppercase",
-                          color: "rgba(232, 216, 199, 0.62)",
+                          color: "rgba(232, 216, 199, 0.82)",
                         }}
                       >
                         {cardTypeLabel(card.type)}
@@ -489,8 +513,14 @@ export default function CardsWorkshop({
                         className="sp-card-tile-actions"
                         direction="row"
                         sx={{
-                          opacity: { xs: 1, sm: checked ? 1 : 0.55 },
-                          transition: "opacity 140ms ease",
+                          opacity: 1,
+                          "& .MuiIconButton-root": {
+                            color: "rgba(232, 216, 199, 0.78)",
+                            "&:hover": {
+                              color: "primary.light",
+                              bgcolor: "rgba(91, 44, 111, 0.32)",
+                            },
+                          },
                         }}
                       >
                         <CardRowActions

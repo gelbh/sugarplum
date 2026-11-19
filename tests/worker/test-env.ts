@@ -1832,6 +1832,23 @@ export function createTestEnv(opts?: {
           return { results: rows as T[] };
         }
         if (
+          normalized.includes("FROM study_claims sc") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("d.user_id =") &&
+          normalized.includes("ORDER BY sc.created_at ASC")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...studyClaims.values()]
+            .map((claim) => {
+              const deck = decks.get(claim.deck_id);
+              if (!deck || deck.user_id !== userId) return null;
+              return { ...claim };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at));
+          return { results: rows as T[] };
+        }
+        if (
           normalized.includes("SELECT c.id, c.deck_id, c.job_id, c.type") &&
           normalized.includes("c.front_json") &&
           normalized.includes("FROM cards c") &&
@@ -1856,6 +1873,7 @@ export function createTestEnv(opts?: {
                 status: card.status,
                 created_at: card.created_at,
                 updated_at: card.updated_at,
+                claim_id: card.claim_id ?? null,
               };
             })
             .filter((row): row is NonNullable<typeof row> => row != null)
@@ -2225,6 +2243,29 @@ export function createTestEnv(opts?: {
                 last_review: schedule?.last_review ?? null,
               };
             });
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("SELECT id, type, front_json, back_json") &&
+          normalized.includes("FROM cards") &&
+          normalized.includes("WHERE deck_id =") &&
+          normalized.includes("status = 'accepted'") &&
+          normalized.includes("ORDER BY created_at ASC")
+        ) {
+          const deckId = bound[0] as string;
+          const rows = [...cards.values()]
+            .filter(
+              (card) => card.deck_id === deckId && card.status === "accepted",
+            )
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .map((card) => ({
+              id: card.id,
+              type: card.type,
+              front_json: card.front_json,
+              back_json: card.back_json,
+              provenance_json: card.provenance_json,
+              media_r2_keys_json: card.media_r2_keys_json,
+            }));
           return { results: rows as T[] };
         }
         if (

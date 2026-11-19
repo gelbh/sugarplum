@@ -10,6 +10,10 @@ import {
 } from "./feedback-hints";
 import type { StoredClaim } from "./claims";
 import {
+  type EmbedTextsFn,
+  mergeClaimsForJob,
+} from "./claim-dedupe";
+import {
   salvageCompleteJsonObjects,
   unwrapLlmJsonText,
 } from "./llm-json";
@@ -48,6 +52,11 @@ export type RunGenerationPipelineInput = {
   avoidPatterns?: string[];
   /** Card fronts already in the deck, plus fronts produced earlier in this run. */
   avoidFronts?: string[];
+  /**
+   * Optional embedding for semantic claim merge (Workers AI). Fail-open inside
+   * mergeClaimsForJob when null/errors.
+   */
+  embedTexts?: EmbedTextsFn | null;
   /** Best-effort; throws from the callback must not abort the pipeline. */
   onProgress?: (event: PipelineProgressEvent) => void | Promise<void>;
   /** Fired after each chunk's critique (or generate fallback). Best-effort. */
@@ -320,6 +329,7 @@ export async function runGenerationPipeline(
     topicHints,
     avoidPatterns,
     avoidFronts,
+    embedTexts,
     onProgress,
     onChunkDrafts,
   } = input;
@@ -371,7 +381,14 @@ export async function runGenerationPipeline(
       ...claim,
       id: crypto.randomUUID(),
     }));
-    storedClaims.push(...minted);
+    const merged = await mergeClaimsForJob(
+      [...storedClaims, ...minted],
+      embedTexts,
+    );
+    storedClaims.length = 0;
+    storedClaims.push(...merged);
+    const survivorIds = new Set(merged.map((c) => c.id));
+    const novelForWrite = minted.filter((m) => survivorIds.has(m.id));
 
     const coveredSuffix = coveredFrontsPromptSuffix(coveredFronts);
     const writeExtra = [writeSuffix, coveredSuffix].filter(Boolean).join("\n\n");
@@ -379,7 +396,7 @@ export async function runGenerationPipeline(
       .filter(Boolean)
       .join("\n\n");
 
-    if (minted.length === 0) {
+    if (novelForWrite.length === 0) {
       // Keep critique half-steps aligned with total even when extract is empty.
       await report(
         "generate",
@@ -411,7 +428,7 @@ export async function runGenerationPipeline(
 
     // Strip minted ids from the LLM payload; join happens post-write via excerpt.
     const generated = await writeCardsFromClaims(
-      minted.map(({ id: _id, ...claim }) => claim),
+      novelForWrite.map(({ id: _id, ...claim }) => claim),
       {
         llm,
         apiKey,

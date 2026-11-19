@@ -6,23 +6,33 @@ import { OVERLINE_SX } from "./studyFaceSx";
 export function FaceOverline({
   label,
   trailing,
+  dense = false,
 }: {
   label: string;
   trailing?: ReactNode;
+  dense?: boolean;
 }) {
   return (
     <Box
       sx={{
-        mb: 2,
+        mb: dense ? 0.75 : 2,
         flexShrink: 0,
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
+        justifyContent: trailing ? "space-between" : "center",
         gap: 1,
         width: "100%",
       }}
     >
-      <Typography component="div" sx={OVERLINE_SX}>
+      <Typography
+        component="div"
+        sx={{
+          ...OVERLINE_SX,
+          ...(dense
+            ? { fontSize: "0.625rem", letterSpacing: "0.18em", opacity: 0.5 }
+            : null),
+        }}
+      >
         {label}
       </Typography>
       {trailing ?? null}

@@ -128,6 +128,7 @@ export function FlipCardPlate({
   plateSx,
   faceSx,
   overlineTrailing,
+  dense = false,
 }: {
   revealed: boolean;
   front: ReactNode;
@@ -136,20 +137,28 @@ export function FlipCardPlate({
   plateSx?: Record<string, unknown>;
   faceSx?: Record<string, unknown>;
   overlineTrailing?: ReactNode;
+  dense?: boolean;
 }) {
-  return (
-    <StudyCardPlate
-      perspective="1000px"
-      onPlateClick={onPlateClick}
-      plateSx={{
+  // Clip on a non-transformed host so rotateY cannot paint past the frame.
+  const flipInner = (
+    <Box
+      onClick={onPlateClick}
+      sx={{
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        minWidth: 0,
+        minHeight: 0,
+        borderRadius: dense ? 2 : undefined,
         transformStyle: "preserve-3d",
         transition: "transform 0.45s ease",
         transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
+        cursor: onPlateClick ? "pointer" : undefined,
         ...plateSx,
         "@media (prefers-reduced-motion: reduce)": {
           transform: "none",
           transition: "none",
-          minHeight: 280,
+          minHeight: dense ? 0 : 280,
           maxHeight: "100%",
         },
       }}
@@ -159,9 +168,13 @@ export function FlipCardPlate({
         aria-hidden={revealed}
         inert={revealed || undefined}
         className="sp-playing-card"
-        sx={{ ...faceMotionSx(false, !revealed), ...faceSx }}
+        sx={{ ...faceMotionSx(false, !revealed, dense), ...faceSx }}
       >
-        <FaceOverline label="Front" trailing={overlineTrailing} />
+        <FaceOverline
+          label="Front"
+          trailing={overlineTrailing}
+          dense={dense}
+        />
         {front}
       </Paper>
 
@@ -170,11 +183,35 @@ export function FlipCardPlate({
         aria-hidden={!revealed}
         inert={!revealed || undefined}
         className="sp-playing-card"
-        sx={{ ...faceMotionSx(true, revealed), ...faceSx }}
+        sx={{ ...faceMotionSx(true, revealed, dense), ...faceSx }}
       >
-        <FaceOverline label="Back" trailing={overlineTrailing} />
+        <FaceOverline label="Back" trailing={overlineTrailing} dense={dense} />
         {back}
       </Paper>
+    </Box>
+  );
+
+  if (dense) {
+    return (
+      <Box
+        sx={{
+          width: "100%",
+          height: "100%",
+          minWidth: 0,
+          minHeight: 0,
+          perspective: "900px",
+          overflow: "hidden",
+          borderRadius: 2,
+        }}
+      >
+        {flipInner}
+      </Box>
+    );
+  }
+
+  return (
+    <StudyCardPlate perspective="1000px" plateSx={{ overflow: "hidden" }}>
+      {flipInner}
     </StudyCardPlate>
   );
 }
