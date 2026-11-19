@@ -15,7 +15,7 @@ import {
   uploadPdfWithFigureCrops,
   type FigureExtractMode,
 } from "../api/client";
-import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
+import { MAX_CLIENT_FIGURES } from "./figureGeometry";
 import {
   createFreePathImageNotice,
   freePathImageHelperText,
@@ -23,21 +23,21 @@ import {
   shouldOfferLearningObjectives,
   uploadSubmitDisabled,
   uploadSubmitLabel,
-} from "../lib/learningObjectivesOffer";
+} from "./learningObjectivesOffer";
 import {
   batchAllReused,
   storedUploadNotice,
-} from "../lib/storedUploadNotice";
+} from "./storedUploadNotice";
 import {
   MAX_FILE_BYTES,
   MAX_IMAGE_BYTES,
   MAX_SPLIT_SOURCE_BYTES,
   fileTooLargeMessage,
   splitSourceTooLargeMessage,
-} from "../lib/materialUploadLimits";
-import { runConsentedPdfCompressUpload } from "../lib/runConsentedPdfCompressUpload";
-import { runConsentedPdfSplitUpload } from "../lib/runConsentedPdfSplitUpload";
-import { runConsentedPptxSplitUpload } from "../lib/runConsentedPptxSplitUpload";
+} from "./materialUploadLimits";
+import { runConsentedPdfCompressUpload } from "./runConsentedPdfCompressUpload";
+import { runConsentedPdfSplitUpload } from "./runConsentedPdfSplitUpload";
+import { runConsentedPptxSplitUpload } from "./runConsentedPptxSplitUpload";
 import type { SourceRole } from "../lib/sourceRole";
 import {
   ALLOWED_UPLOAD_MIMES,

@@ -10,11 +10,11 @@ import {
   shouldOfferLearningObjectives,
   uploadSubmitDisabled,
   uploadSubmitLabel,
-} from "../../src/lib/learningObjectivesOffer";
+} from "../../src/materials/learningObjectivesOffer";
 import {
   batchAllReused,
   storedUploadNotice,
-} from "../../src/lib/storedUploadNotice";
+} from "../../src/materials/storedUploadNotice";
 
 describe("learningObjectivesOffer", () => {
   it("recognizes jpeg png webp only", () => {

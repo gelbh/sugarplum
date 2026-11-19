@@ -28,7 +28,7 @@ import {
 } from "../lib/draftCardModel";
 import { FaceOverline, FlipCardPlate, StudyCardPlate } from "./CardFace";
 import ClozePrompt from "./ClozePrompt";
-import OcclusionRegionEditor from "../components/OcclusionRegionEditor";
+import OcclusionRegionEditor from "../deckHub/OcclusionRegionEditor";
 import {
   FACE_ANSWER_TEXT_SX,
   FACE_BODY_SX,

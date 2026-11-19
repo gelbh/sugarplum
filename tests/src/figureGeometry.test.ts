@@ -9,7 +9,7 @@ import {
   canvasSourceScale,
   clampBoxToPage,
   filterFigureBoxes,
-} from "../../src/lib/figureGeometry";
+} from "../../src/materials/figureGeometry";
 
 function box(partial: Partial<PageBox> & Pick<PageBox, "score" | "label">): PageBox {
   return {

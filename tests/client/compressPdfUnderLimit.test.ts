@@ -1,6 +1,6 @@
 import { PDFDocument } from "pdf-lib";
 import { describe, expect, it } from "vitest";
-import { compressPdfUnderLimit } from "../../src/lib/compressPdfUnderLimit";
+import { compressPdfUnderLimit } from "../../src/materials/compressPdfUnderLimit";
 
 async function tinyPdf(): Promise<Uint8Array> {
   const doc = await PDFDocument.create();

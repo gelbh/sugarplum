@@ -5,7 +5,7 @@ import {
   fileSizeCapMb,
   fileTooLargeMessage,
   splitSourceTooLargeMessage,
-} from "../../src/lib/materialUploadLimits";
+} from "../../src/materials/materialUploadLimits";
 
 describe("materialUploadLimits", () => {
   it("exposes 50MB cap", () => {

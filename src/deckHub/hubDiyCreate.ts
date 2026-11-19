@@ -1,6 +1,6 @@
 import type { CardDraftView, CardType, HubCreateCardBody } from "../api/client";
 import { hasSingleClozeBlank } from "../study/clozeFormat";
-import { backAnswer, isOcclusionFront } from "./draftCardModel";
+import { backAnswer, isOcclusionFront } from "../lib/draftCardModel";
 
 const GUEST_HUB_DIY_TYPES: CardType[] = ["qa", "cloze", "mcq"];
 const ACCOUNT_IMAGE_DIY_TYPES: CardType[] = ["occlusion", "image_label"];

@@ -15,10 +15,10 @@ import {
   type CardDraftView,
   type CardType,
 } from "../api/client";
-import type { DraftEditorChange } from "../components/DraftCardEditor";
+import type { DraftEditorChange } from "./DraftCardEditor";
 import { isOcclusionFront, starterOcclusionFront } from "../lib/draftCardModel";
-import { hubDiyTypes, validateHubCreateCard } from "../lib/hubDiyCreate";
-import { MAX_IMAGE_BYTES } from "../lib/pdfPageRender";
+import { hubDiyTypes, validateHubCreateCard } from "./hubDiyCreate";
+import { MAX_IMAGE_BYTES } from "./pdfPageRender";
 
 const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 

@@ -1,6 +1,6 @@
 import { PDFDocument } from "pdf-lib";
 import { describe, expect, it } from "vitest";
-import { splitPdfUnderLimit } from "../../src/lib/splitPdfUnderLimit";
+import { splitPdfUnderLimit } from "../../src/materials/splitPdfUnderLimit";
 
 async function pdfWithPages(n: number): Promise<Uint8Array> {
   const doc = await PDFDocument.create();

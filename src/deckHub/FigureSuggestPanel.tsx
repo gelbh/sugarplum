@@ -18,11 +18,11 @@ import {
   MAX_PAGES_TO_SCAN,
   clampBoxToPage,
   type PageBox,
-} from "../lib/figureGeometry";
+} from "../materials/figureGeometry";
 import {
   ensureLayoutSession,
   detectFigureBoxesOnCanvas,
-} from "../lib/layoutOnnx";
+} from "./layoutOnnx";
 import {
   listPdfPages,
   openPdfDocument,
@@ -30,7 +30,7 @@ import {
   type EmbedPdfDocument,
   type EmbedPdfPageLayout,
 } from "../study/embedPdfEngine";
-import { cropCanvasToPngFile } from "../lib/pdfPageRender";
+import { cropCanvasToPngFile } from "./pdfPageRender";
 
 export type FigureSuggestPanelProps = {
   pdfFile: File;

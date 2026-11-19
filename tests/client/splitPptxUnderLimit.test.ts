@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 import { describe, expect, it } from "vitest";
-import { splitPptxUnderLimit } from "../../src/lib/splitPptxUnderLimit";
+import { splitPptxUnderLimit } from "../../src/materials/splitPptxUnderLimit";
 
 type SlideSpec = {
   /** Opaque media bytes embedded and referenced by this slide only. */

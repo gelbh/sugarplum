@@ -23,7 +23,7 @@ import {
   withMcqOptionRemoved,
   withMcqOptionText,
   type McqDraft,
-} from "../lib/mcqDraftEdit";
+} from "../deckHub/mcqDraftEdit";
 import { FaceOverline, StudyCardPlate } from "./CardFace";
 import {
   FACE_BODY_SX,

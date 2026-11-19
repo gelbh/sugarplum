@@ -19,8 +19,8 @@ import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import DialogEyebrow from "../shared/ui/DialogEyebrow";
 import AddMaterialWorkshop from "../deckHub/AddMaterialWorkshop";
-import CompositionSpark from "../components/CompositionSpark";
-import CoverPickerDialog from "../components/CoverPickerDialog";
+import CompositionSpark from "../materials/CompositionSpark";
+import CoverPickerDialog from "../deckHub/CoverPickerDialog";
 import { useShellBackOverride } from "../app/shell/ShellBackOverride";
 import CardsWorkshop from "../deckHub/CardsWorkshop";
 import ClaimCoverageFilmstrip, {
@@ -59,9 +59,9 @@ import {
   type Subject,
   type SubjectKnowledge,
 } from "../api/client";
-import DraftCardEditor from "../components/DraftCardEditor";
+import DraftCardEditor from "../deckHub/DraftCardEditor";
 import { isGuest } from "../guest/session";
-import { collectDeckImageKeys, hubDiyTypes } from "../lib/hubDiyCreate";
+import { collectDeckImageKeys, hubDiyTypes } from "../deckHub/hubDiyCreate";
 import { ANKI_EXPORT_BUSY_LABEL } from "../export/runAnkiExport";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { shouldAutoFocusText } from "../shared/lib/autoFocusText";

@@ -3,7 +3,7 @@ import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Stepper from "@mui/material/Stepper";
 import type { JourneyView } from "../journey/types";
-import { stepperSx } from "./stepperSx";
+import { stepperSx } from "../materials/stepperSx";
 
 type Props = {
   view: JourneyView;
