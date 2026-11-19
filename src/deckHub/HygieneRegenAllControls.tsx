@@ -155,7 +155,7 @@ export function useHygieneRegenAll(args: {
       }}
       fullWidth
       maxWidth="xs"
-      PaperProps={{ sx: DIALOG_PAPER_SX }}
+      slotProps={{ paper: { sx: DIALOG_PAPER_SX } }}
     >
       <Box
         sx={{
