@@ -35,10 +35,11 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("admin impersonation", () => {
+describe("admin view-as impersonation", () => {
   it("start then exit keeps cookie id and restores actor", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearner(env);
+    const usersBefore = env.getUsers().length;
 
     const start = await app.request(
       "/api/admin/users/u-alice/impersonate",
@@ -50,7 +51,6 @@ describe("admin impersonation", () => {
       ok: boolean;
       impersonation: {
         sourceUserId: string;
-        sandboxUserId: string;
         sourceEmail: string;
         startedAt: number;
       };
@@ -58,18 +58,17 @@ describe("admin impersonation", () => {
     expect(startBody.ok).toBe(true);
     expect(startBody.impersonation.sourceUserId).toBe("u-alice");
     expect(startBody.impersonation.sourceEmail).toBe("alice@example.com");
-    expect(startBody.impersonation.sandboxUserId).toMatch(
-      /^[0-9a-f-]{36}$/i,
-    );
+    expect(env.getUsers().length).toBe(usersBefore);
+    expect(
+      env.getUsers().filter((u) => u.sandbox_of === "u-alice"),
+    ).toHaveLength(0);
 
     const rawWhile = await env.SESSIONS.get("s-admin");
     expect(rawWhile).toBeTruthy();
     const whileRec = parseSessionRecord(rawWhile!);
-    expect(whileRec?.userId).toBe(startBody.impersonation.sandboxUserId);
+    expect(whileRec?.userId).toBe("u-alice");
     expect(whileRec?.actorUserId).toBe("admin-u");
-    expect(whileRec?.impersonation?.sandboxUserId).toBe(
-      startBody.impersonation.sandboxUserId,
-    );
+    expect(whileRec?.impersonation?.sourceUserId).toBe("u-alice");
 
     const exit = await app.request(
       "/api/admin/impersonation/exit",
@@ -116,7 +115,9 @@ describe("admin impersonation", () => {
     };
     expect(imp.sourceUserId).toBe("u-alice");
     expect(imp.sourceEmail).toBe("alice@example.com");
-    expect(imp.expiresAt).toBe(imp.startedAt + IMPERSONATION_TTL_SECONDS * 1000);
+    expect(imp.expiresAt).toBe(
+      imp.startedAt + IMPERSONATION_TTL_SECONDS * 1000,
+    );
   });
 
   it("400 when impersonating allowlisted admin", async () => {
@@ -227,7 +228,7 @@ describe("admin impersonation", () => {
     });
   });
 
-  it("does not create user_secrets on sandbox", async () => {
+  it("does not create sandbox users or secrets rows on start", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearner(env);
     env.seedUserSecret({
@@ -239,41 +240,28 @@ describe("admin impersonation", () => {
       updated_at: "2026-01-01T00:00:00.000Z",
     });
 
-    const start = await app.request(
+    await app.request(
       "/api/admin/users/u-alice/impersonate",
       { method: "POST", headers: adminHeaders },
       env,
     );
-    const body = (await start.json()) as {
-      impersonation: { sandboxUserId: string };
-    };
-    const secrets = env.getUserSecrets();
-    expect(
-      secrets.some((s) => s.user_id === body.impersonation.sandboxUserId),
-    ).toBe(false);
-    expect(secrets.some((s) => s.user_id === "u-alice")).toBe(true);
+    expect(env.getUsers().filter((u) => u.sandbox_of != null)).toHaveLength(0);
+    expect(env.getUserSecrets().some((s) => s.user_id === "u-alice")).toBe(
+      true,
+    );
   });
 
-  it("TTL expiry restores actor and deletes sandbox", async () => {
+  it("TTL expiry restores actor without deleting users", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearner(env);
-    env.seedUser({
-      id: "sandbox-expired",
-      email: "sandbox+expired@sandbox.invalid",
-      password_hash: null,
-      oauth_subject: null,
-      created_at: "2026-11-01T00:00:00.000Z",
-      sandbox_of: "u-alice",
-    });
-    const startedAt =
-      Date.now() - (IMPERSONATION_TTL_SECONDS + 60) * 1000;
+    const usersBefore = env.getUsers().length;
+    const startedAt = Date.now() - (IMPERSONATION_TTL_SECONDS + 60) * 1000;
     env.seedSessionRecord("s-admin", {
-      userId: "sandbox-expired",
+      userId: "u-alice",
       expiresAt: Date.now() + 60_000,
       actorUserId: "admin-u",
       impersonation: {
         sourceUserId: "u-alice",
-        sandboxUserId: "sandbox-expired",
         sourceEmail: "alice@example.com",
         startedAt,
       },
@@ -292,6 +280,8 @@ describe("admin impersonation", () => {
       is_admin: true,
     });
     expect(body.impersonation).toBeUndefined();
+    expect(env.getUsers().length).toBe(usersBefore);
+    expect(env.getUsers().some((u) => u.id === "u-alice")).toBe(true);
 
     const raw = await env.SESSIONS.get("s-admin");
     const rec = parseSessionRecord(raw!);
@@ -330,14 +320,11 @@ describe("admin impersonation", () => {
   it("GET /api/admin/users succeeds for actor during impersonation", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearner(env);
-    const start = await app.request(
+    await app.request(
       "/api/admin/users/u-alice/impersonate",
       { method: "POST", headers: adminHeaders },
       env,
     );
-    const startBody = (await start.json()) as {
-      impersonation: { sandboxUserId: string };
-    };
     const res = await app.request(
       "/api/admin/users",
       { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
@@ -346,23 +333,16 @@ describe("admin impersonation", () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as { users: { id: string }[] };
     expect(body.users.some((u) => u.id === "u-alice")).toBe(true);
-    expect(
-      body.users.some((u) => u.id === startBody.impersonation.sandboxUserId),
-    ).toBe(false);
   });
 
-  it("logout deletes sandbox user", async () => {
+  it("logout clears session and leaves source user intact", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearner(env);
-    const start = await app.request(
+    await app.request(
       "/api/admin/users/u-alice/impersonate",
       { method: "POST", headers: adminHeaders },
       env,
     );
-    const startBody = (await start.json()) as {
-      impersonation: { sandboxUserId: string };
-    };
-    const sandboxId = startBody.impersonation.sandboxUserId;
 
     const logout = await app.request(
       "/api/auth/logout",
@@ -370,7 +350,137 @@ describe("admin impersonation", () => {
       env,
     );
     expect(logout.status).toBe(200);
-    expect(env.getUsers().some((u) => u.id === sandboxId)).toBe(false);
+    expect(env.getUsers().some((u) => u.id === "u-alice")).toBe(true);
     expect(await env.SESSIONS.get("s-admin")).toBeNull();
+  });
+
+  it("403 GET OAuth/calendar connect and fsrs-optimize during view-as", async () => {
+    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
+    seedAdminAndLearner(env);
+    await app.request(
+      "/api/admin/users/u-alice/impersonate",
+      { method: "POST", headers: adminHeaders },
+      env,
+    );
+    const cookie = { cookie: `${SESSION_COOKIE}=s-admin` };
+    const connect = await app.request(
+      "/api/calendar/connect",
+      { headers: cookie },
+      env,
+    );
+    expect(connect.status).toBe(403);
+    const link = await app.request(
+      "/api/auth/google/start?intent=link",
+      { headers: cookie },
+      env,
+    );
+    expect(link.status).toBe(403);
+    const fsrs = await app.request(
+      "/api/settings/study/fsrs-optimize",
+      { headers: cookie },
+      env,
+    );
+    expect(fsrs.status).toBe(403);
+  });
+
+  it("403 admin wipe during view-as (Exit and logout only)", async () => {
+    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
+    seedAdminAndLearner(env);
+    await app.request(
+      "/api/admin/users/u-alice/impersonate",
+      { method: "POST", headers: adminHeaders },
+      env,
+    );
+    const wipe = await app.request(
+      "/api/admin/users/u-alice/wipe",
+      {
+        method: "POST",
+        headers: adminHeaders,
+        body: JSON.stringify({ confirmEmail: "alice@example.com" }),
+      },
+      env,
+    );
+    expect(wipe.status).toBe(403);
+    expect(await wipe.json()).toMatchObject({
+      message: "Read-only while viewing as user",
+    });
+  });
+
+  it("expired view-as TTL restores actor before RO middleware", async () => {
+    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
+    seedAdminAndLearner(env);
+    const startedAt = Date.now() - (IMPERSONATION_TTL_SECONDS + 60) * 1000;
+    env.seedSessionRecord("s-admin", {
+      userId: "u-alice",
+      expiresAt: Date.now() + 60_000,
+      actorUserId: "admin-u",
+      impersonation: {
+        sourceUserId: "u-alice",
+        sourceEmail: "alice@example.com",
+        startedAt,
+      },
+    });
+
+    const put = await app.request(
+      "/api/settings/llm",
+      {
+        method: "PUT",
+        headers: adminHeaders,
+        body: JSON.stringify({ provider: "openai", apiKey: "sk-test" }),
+      },
+      env,
+    );
+    expect(put.status).not.toBe(403);
+    const raw = await env.SESSIONS.get("s-admin");
+    const rec = parseSessionRecord(raw!);
+    expect(rec?.userId).toBe("admin-u");
+    expect(rec?.impersonation).toBeUndefined();
+  });
+
+  it("allows browsing a disabled source user", async () => {
+    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
+    seedAdminAndLearner(env);
+    env.seedUser({
+      id: "u-frozen",
+      email: "frozen@example.com",
+      password_hash: null,
+      oauth_subject: "google-frozen",
+      created_at: "2026-01-01T00:00:00.000Z",
+      disabled_at: "2026-11-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-frozen",
+      user_id: "u-frozen",
+      title: "Frozen deck",
+      subject_hint: null,
+      subject_id: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const start = await app.request(
+      "/api/admin/users/u-frozen/impersonate",
+      { method: "POST", headers: adminHeaders },
+      env,
+    );
+    expect(start.status).toBe(200);
+
+    const me = await app.request(
+      "/api/auth/me",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(me.status).toBe(200);
+    expect(await me.json()).toMatchObject({
+      id: "u-frozen",
+      email: "frozen@example.com",
+      is_admin: true,
+    });
+
+    const decks = await app.request(
+      "/api/decks",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(decks.status).toBe(200);
   });
 });

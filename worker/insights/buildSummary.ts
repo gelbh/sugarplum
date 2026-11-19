@@ -26,6 +26,8 @@ export type InsightsSummaryOpts = {
   tzOffsetMinutes: number;
   localDay?: string | null;
   rangeDays?: InsightsRangePreset;
+  /** View-as: do not INSERT gamification rows for the source user. */
+  readOnly?: boolean;
 };
 
 type ReviewRow = {
@@ -135,13 +137,7 @@ export async function buildInsightsSummary(
     todayKey,
   );
   const gradeCounts = buildGradeCounts(
-    ratingsInLocalWindow(
-      logs,
-      now,
-      tzOffsetMinutes,
-      gradeDays,
-      todayKey,
-    ),
+    ratingsInLocalWindow(logs, now, tzOffsetMinutes, gradeDays, todayKey),
   );
   const reviewedToday =
     reviewsPerDay.find((d) => d.day === todayKey)?.count ?? 0;
@@ -221,7 +217,7 @@ export async function buildInsightsSummary(
     gradeDays,
   });
 
-  await ensureUserGamification(db, userId);
+  if (!opts.readOnly) await ensureUserGamification(db, userId);
   const gamRow = await db
     .prepare(
       `SELECT streak_current, streak_best, streak_day, xp_total, level,

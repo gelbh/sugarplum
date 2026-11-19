@@ -18,10 +18,7 @@ import {
 import { loadParasiteDataset } from "./datasets/parasites";
 import { normalizeParasiteName } from "./names";
 import { emptyParasiteFields, type ParasiteFields } from "./templates/parasite";
-import {
-  applySandboxKeyPrefix,
-  sandboxWriteUserId,
-} from "../admin/sandbox-r2";
+import { applySandboxKeyPrefix, sandboxWriteUserId } from "../admin/sandbox-r2";
 import { createR2PutUrl } from "../materials/r2-presign";
 import { sha256Hex } from "../materials/content-hash";
 import { requireOwnedDeck } from "../materials/routes";
@@ -87,6 +84,7 @@ atlasItemRoutes.get("/entries", async (c) => {
   const rows = await loadEntryRows(db, atlas.id);
   const overlays = await toOverlayRows(db, atlas.id, rows);
   const merged = overlayAtlas(loadParasiteDataset().entries, overlays);
+  const skipMutatingRefresh = Boolean(c.get("viewingAs"));
   const { entries, focusRefreshPending } = await listEntriesWithFocus(
     db,
     c.env,
@@ -94,7 +92,8 @@ atlasItemRoutes.get("/entries", async (c) => {
       atlasId: atlas.id,
       userId,
       entries: merged,
-      schedule: scheduleFocusRefresh(c),
+      schedule: skipMutatingRefresh ? undefined : scheduleFocusRefresh(c),
+      skipMutatingRefresh,
     },
   );
   return c.json({ entries, focusRefreshPending });

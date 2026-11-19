@@ -21,6 +21,7 @@ insightsRoutes.get("/summary", async (c) => {
     tzOffsetMinutes,
     localDay,
     rangeDays,
+    readOnly: Boolean(c.get("viewingAs")),
   });
   return c.json(summary);
 });

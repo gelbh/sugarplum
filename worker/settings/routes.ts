@@ -54,7 +54,9 @@ export type LlmSettingsResponse = LlmSettingsConfigured | LlmSettingsMissing;
 function requireWrapKey(env: Env): string {
   const key = env.SECRETS_WRAP_KEY;
   if (!key) {
-    throw new HTTPException(500, { message: "Secrets wrap key not configured" });
+    throw new HTTPException(500, {
+      message: "Secrets wrap key not configured",
+    });
   }
   return key;
 }
@@ -202,7 +204,9 @@ settingsRoutes.put("/study", async (c) => {
 
 settingsRoutes.get("/study/fsrs-optimize", async (c) => {
   const userId = await requireUser(c);
-  const status = await getFsrsOptimizeStatus(getDb(c.env), userId);
+  const status = await getFsrsOptimizeStatus(getDb(c.env), userId, new Date(), {
+    skipCutover: Boolean(c.get("viewingAs")),
+  });
   return c.json(status);
 });
 
@@ -266,7 +270,9 @@ settingsRoutes.post("/study/fsrs-optimize/run", async (c) => {
   const db = getDb(c.env);
   const prefs = await loadStudyPrefs(db, userId);
   const reviewCount = await countUserReviews(db, userId);
-  if (!isOptimizeDue(reviewCount, prefs.fsrsLastOptimizedAt ?? null, new Date())) {
+  if (
+    !isOptimizeDue(reviewCount, prefs.fsrsLastOptimizedAt ?? null, new Date())
+  ) {
     throw new HTTPException(400, { message: "Not eligible to optimize" });
   }
   await setOptimizePending(db, userId, true);

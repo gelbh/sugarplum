@@ -341,9 +341,17 @@ export async function listEntriesWithFocus(
      * Omit in tests / make-cards to await a consistent map.
      */
     schedule?: (promise: Promise<unknown>) => void;
+    /** Read-only view-as: enrich only; never lease or refresh Focus. */
+    skipMutatingRefresh?: boolean;
   },
 ): Promise<ListEntriesWithFocusResult> {
   let focus = await loadFocusMap(db, opts.atlasId);
+  if (opts.skipMutatingRefresh) {
+    return {
+      entries: enrichEntriesWithFocus(opts.entries, focus),
+      focusRefreshPending: false,
+    };
+  }
   const missing = opts.entries.some((e) => !focus.has(focusEntryKey(e)));
   const materialRows = await loadAtlasMaterialRows(db, opts.atlasId);
   const readyCount = materialRows.length;
@@ -356,8 +364,7 @@ export async function listEntriesWithFocus(
   const fingerprintStale =
     !refreshInFlight && storedFingerprint !== currentFingerprint;
   const emptyPackStale = focus.size > 0 && readyCount === 0;
-  const needsPackScan =
-    (missing && readyCount > 0) || fingerprintStale;
+  const needsPackScan = (missing && readyCount > 0) || fingerprintStale;
 
   // Empty-pack clear is cheap (D1 only). Pack scans extract PDFs and must not
   // block GET when a schedule hook is available.

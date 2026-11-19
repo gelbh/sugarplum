@@ -10,12 +10,7 @@ import {
   type SessionRecord,
 } from "../auth/session";
 import { getDb } from "../db/client";
-import {
-  CloneLimitExceededError,
-  cloneUserGraph,
-} from "./clone-user";
 import { requireAdmin } from "./requireAdmin";
-import { deleteSandboxR2Prefix } from "./sandbox-r2";
 import { refuseAllowlistedTarget } from "./wipe";
 import type { AdminUserRow } from "./types";
 
@@ -24,18 +19,9 @@ type AdminContext = Context<{ Bindings: Env; Variables: AuthVariables }>;
 const SOURCE_USER_SQL =
   "SELECT id, email, oauth_subject, created_at, disabled_at, sandbox_of FROM users WHERE id = ?";
 
-function newSandboxUserId(): string {
-  return crypto.randomUUID();
-}
-
-function sandboxEmail(sourceUserId: string, sandboxUserId: string): string {
-  return `sandbox+${sourceUserId.slice(0, 8)}-${sandboxUserId.slice(0, 8)}@sandbox.invalid`;
-}
-
 function logImpersonationStarted(meta: {
   actorUserId: string;
   sourceUserId: string;
-  sandboxUserId: string;
   startedAt: number;
 }) {
   console.log(
@@ -43,7 +29,6 @@ function logImpersonationStarted(meta: {
       event: "admin.impersonation_started",
       actorUserId: meta.actorUserId,
       sourceUserId: meta.sourceUserId,
-      sandboxUserId: meta.sandboxUserId,
       startedAt: meta.startedAt,
     }),
   );
@@ -52,7 +37,6 @@ function logImpersonationStarted(meta: {
 function logImpersonationStopped(meta: {
   actorUserId: string;
   sourceUserId: string;
-  sandboxUserId: string;
   startedAt: number;
 }) {
   console.log(
@@ -60,43 +44,24 @@ function logImpersonationStopped(meta: {
       event: "admin.impersonation_stopped",
       actorUserId: meta.actorUserId,
       sourceUserId: meta.sourceUserId,
-      sandboxUserId: meta.sandboxUserId,
       startedAt: meta.startedAt,
       durationMs: Date.now() - meta.startedAt,
     }),
   );
 }
 
-/** Delete sandbox user only (no R2 collector, no session rewrite). For logout. */
-export async function abandonImpersonationSandbox(
-  c: AdminContext,
-  record: SessionRecord,
-): Promise<void> {
+/** Clear view-as metadata for logout (session delete follows). No D1/R2 teardown. */
+export async function abandonViewAs(record: SessionRecord): Promise<void> {
   if (!record.impersonation || !record.actorUserId) return;
-  const { sandboxUserId, sourceUserId, startedAt } = record.impersonation;
-  if (record.userId !== sandboxUserId) return;
-  try {
-    await deleteSandboxR2Prefix(c.env.MATERIALS, sandboxUserId);
-  } catch {
-    /* best-effort */
-  }
-  try {
-    await getDb(c.env)
-      .prepare("DELETE FROM users WHERE id = ? AND sandbox_of IS NOT NULL")
-      .bind(sandboxUserId)
-      .run();
-  } catch {
-    /* best-effort */
-  }
+  const { sourceUserId, startedAt } = record.impersonation;
   logImpersonationStopped({
     actorUserId: record.actorUserId,
     sourceUserId,
-    sandboxUserId,
     startedAt,
   });
 }
 
-/** Delete sandbox user (no R2 collector) and restore actor on the same session. */
+/** Restore actor on the same session. No D1/R2 teardown. */
 export async function teardownImpersonationSession(
   c: AdminContext,
   sessionId: string,
@@ -104,31 +69,8 @@ export async function teardownImpersonationSession(
 ): Promise<SessionRecord> {
   if (!record.impersonation || !record.actorUserId) return record;
 
-  const { sandboxUserId, sourceUserId, startedAt } = record.impersonation;
+  const { sourceUserId, startedAt } = record.impersonation;
   const actorUserId = record.actorUserId;
-  if (record.userId !== sandboxUserId) {
-    const next: SessionRecord = {
-      userId: actorUserId,
-      expiresAt: record.expiresAt,
-    };
-    await writeSessionRecord(c, sessionId, next);
-    return next;
-  }
-
-  try {
-    await deleteSandboxR2Prefix(c.env.MATERIALS, sandboxUserId);
-  } catch {
-    /* best-effort; still tear down D1 + restore actor */
-  }
-  try {
-    await getDb(c.env)
-      .prepare("DELETE FROM users WHERE id = ? AND sandbox_of IS NOT NULL")
-      .bind(sandboxUserId)
-      .run();
-  } catch {
-    /* best-effort; still restore actor */
-  }
-
   const next: SessionRecord = {
     userId: actorUserId,
     expiresAt: record.expiresAt,
@@ -137,7 +79,6 @@ export async function teardownImpersonationSession(
   logImpersonationStopped({
     actorUserId,
     sourceUserId,
-    sandboxUserId,
     startedAt,
   });
   return next;
@@ -151,6 +92,32 @@ export async function assertNotImpersonating(c: AdminContext): Promise<void> {
       message: "Unavailable during impersonation",
     });
   }
+}
+
+/** 403 for view-as (prefer `viewingAs` after requireUser; else fresh KV). */
+export async function rejectIfViewingAs(c: AdminContext): Promise<void> {
+  if (c.get("viewingAs")) {
+    throw new HTTPException(403, {
+      message: "Read-only while viewing as user",
+    });
+  }
+  const { readSessionRecordFresh } = await import("../auth/session");
+  const session = await readSessionRecordFresh(c);
+  if (session?.record.impersonation) {
+    throw new HTTPException(403, {
+      message: "Read-only while viewing as user",
+    });
+  }
+}
+
+/** GET paths that mutate identity / schedules / OAuth while view-as. */
+export function isViewAsBlockedGetPath(path: string): boolean {
+  return (
+    path.startsWith("/api/auth/google") ||
+    path === "/api/calendar/connect" ||
+    path === "/api/calendar/callback" ||
+    path === "/api/settings/study/fsrs-optimize"
+  );
 }
 
 export async function startImpersonation(
@@ -176,81 +143,29 @@ export async function startImpersonation(
     .first<AdminUserRow>();
   if (!source) throw new HTTPException(404, { message: "User not found" });
   if (source.sandbox_of != null) {
-    throw new HTTPException(400, { message: "Cannot impersonate sandbox user" });
+    throw new HTTPException(400, {
+      message: "Cannot impersonate sandbox user",
+    });
   }
   refuseAllowlistedTarget(source.email, c.env.ADMIN_EMAILS);
 
-  const sandboxUserId = newSandboxUserId();
   const startedAt = Date.now();
-  const email = sandboxEmail(sourceUserId, sandboxUserId);
-  const createdAt = new Date().toISOString();
-
-  await db
-    .prepare(
-      "INSERT INTO users (id, email, password_hash, oauth_subject, created_at, sandbox_of) VALUES (?, ?, ?, ?, ?, ?)",
-    )
-    .bind(sandboxUserId, email, null, null, createdAt, sourceUserId)
-    .run();
-
-  try {
-    await cloneUserGraph(db, c.env, sourceUserId, sandboxUserId);
-  } catch (err) {
-    try {
-      await deleteSandboxR2Prefix(c.env.MATERIALS, sandboxUserId);
-    } catch {
-      /* compensating R2 wipe best-effort */
-    }
-    try {
-      await db
-        .prepare("DELETE FROM users WHERE id = ? AND sandbox_of IS NOT NULL")
-        .bind(sandboxUserId)
-        .run();
-    } catch {
-      /* compensating delete best-effort */
-    }
-    if (err instanceof CloneLimitExceededError) {
-      throw new HTTPException(413, {
-        message: "User library too large to clone for impersonation",
-      });
-    }
-    throw err;
-  }
-
   const meta: ImpersonationMeta = {
     sourceUserId,
-    sandboxUserId,
     sourceEmail: source.email,
     startedAt,
   };
 
   const next: SessionRecord = {
-    userId: sandboxUserId,
+    userId: sourceUserId,
     expiresAt: session.record.expiresAt,
     actorUserId: actor.userId,
     impersonation: meta,
   };
-  try {
-    await writeSessionRecord(c, session.id, next);
-  } catch (err) {
-    try {
-      await deleteSandboxR2Prefix(c.env.MATERIALS, sandboxUserId);
-    } catch {
-      /* compensating R2 wipe best-effort */
-    }
-    try {
-      await db
-        .prepare("DELETE FROM users WHERE id = ? AND sandbox_of IS NOT NULL")
-        .bind(sandboxUserId)
-        .run();
-    } catch {
-      /* compensating delete best-effort */
-    }
-    throw err;
-  }
+  await writeSessionRecord(c, session.id, next);
   logImpersonationStarted({
     actorUserId: actor.userId,
     sourceUserId,
-    sandboxUserId,
     startedAt,
   });
   return meta;
