@@ -245,11 +245,20 @@ jobRoutes.get("/:id/claim-coverage", async (c) => {
 
   const { results } = await db
     .prepare(
-      `SELECT sc.id, sc.job_id, sc.subject, sc.predicate, sc.object, sc.source_span,
-              sc.pages_json, c.id AS card_id, c.status AS card_status,
-              c.created_at AS card_created_at
+      `SELECT sc.id, sc.job_id, sc.subject, sc.predicate, sc.object,
+              (
+                SELECT c.id FROM cards c
+                WHERE c.claim_id = sc.id
+                ORDER BY c.created_at ASC, c.id ASC
+                LIMIT 1
+              ) AS card_id,
+              (
+                SELECT c.status FROM cards c
+                WHERE c.claim_id = sc.id
+                ORDER BY c.created_at ASC, c.id ASC
+                LIMIT 1
+              ) AS card_status
        FROM study_claims sc
-       LEFT JOIN cards c ON c.claim_id = sc.id
        WHERE sc.job_id = ?
        ORDER BY sc.created_at ASC`,
     )
@@ -260,11 +269,8 @@ jobRoutes.get("/:id/claim-coverage", async (c) => {
       subject: string;
       predicate: string;
       object: string | null;
-      source_span: string;
-      pages_json: string | null;
       card_id: string | null;
       card_status: string | null;
-      card_created_at: string | null;
     }>();
 
   return c.json(buildClaimCoverage(results ?? []));
