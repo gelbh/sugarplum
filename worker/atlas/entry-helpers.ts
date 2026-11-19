@@ -11,6 +11,7 @@ import {
   syncDiagnosticOwnership,
 } from "./lifecycleDiagnostic";
 import {
+  parasiteFieldsPatchSchema,
   parasiteFieldsSchema,
   type ParasiteFields,
 } from "./templates/parasite";
@@ -141,7 +142,7 @@ export function parseFieldsPatch(
   raw: unknown,
 ): Partial<ParasiteFields> | undefined {
   if (raw === undefined) return undefined;
-  const parsed = parasiteFieldsSchema.partial().safeParse(raw);
+  const parsed = parasiteFieldsPatchSchema.safeParse(raw);
   if (!parsed.success) {
     throw new HTTPException(400, { message: "Invalid fields" });
   }

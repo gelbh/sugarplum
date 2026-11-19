@@ -8,6 +8,7 @@ import {
 } from "../generation/usage";
 import { requireAdmin } from "./requireAdmin";
 import { runProvenanceBackfill } from "./provenance-backfill";
+import { runHealWipedFields } from "../atlas/heal-wiped-fields";
 import type { AppEnv, AdminUserDetail, AdminUserListItem } from "./types";
 import {
   collectUserR2Keys,
@@ -142,6 +143,38 @@ adminRoutes.post("/provenance/backfill", async (c) => {
       ? record.limit
       : undefined;
   const result = await runProvenanceBackfill(c.env, { dry_run, limit });
+  return c.json(result);
+});
+
+adminRoutes.post("/atlas/heal-wiped-fields", async (c) => {
+  await requireAdmin(c);
+  const raw = await c.req.text();
+  let body: unknown = {};
+  if (raw.trim()) {
+    try {
+      body = JSON.parse(raw) as unknown;
+    } catch {
+      throw new HTTPException(400, { message: "Invalid JSON body" });
+    }
+  }
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  const record = body as {
+    dry_run?: unknown;
+    userId?: unknown;
+    atlasId?: unknown;
+  };
+  const dry_run = record.dry_run !== false;
+  const userId =
+    typeof record.userId === "string" ? record.userId : undefined;
+  const atlasId =
+    typeof record.atlasId === "string" ? record.atlasId : undefined;
+  const result = await runHealWipedFields(getDb(c.env), {
+    dry_run,
+    userId,
+    atlasId,
+  });
   return c.json(result);
 });
 

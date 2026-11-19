@@ -171,6 +171,14 @@ export function atlasFirst<T>(
   }
 
   if (
+    normalized.includes("FROM atlas_entries WHERE id =") &&
+    !normalized.includes("atlas_id =")
+  ) {
+    const id = bound[0] as string;
+    return (state.entries.get(id) as T) ?? null;
+  }
+
+  if (
     normalized.includes("FROM atlas_entries WHERE atlas_id =") &&
     normalized.includes("AND id =")
   ) {
@@ -211,6 +219,52 @@ export function atlasAll<T>(
     const rows = [...state.atlases.values()]
       .filter((row) => row.user_id === userId)
       .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    return { results: rows as T[] };
+  }
+
+  if (
+    normalized.includes("FROM atlas_entries e") &&
+    normalized.includes("JOIN atlases a") &&
+    normalized.includes("a.user_id =") &&
+    normalized.includes("origin_key IS NOT NULL")
+  ) {
+    const userId = bound[0] as string;
+    const atlasIds = new Set(
+      [...state.atlases.values()]
+        .filter((a) => a.user_id === userId)
+        .map((a) => a.id),
+    );
+    const rows = [...state.entries.values()].filter(
+      (e) =>
+        atlasIds.has(e.atlas_id) &&
+        e.deleted_at == null &&
+        e.origin_key != null,
+    );
+    return { results: rows as T[] };
+  }
+
+  if (
+    normalized.includes("FROM atlas_entries") &&
+    normalized.includes("deleted_at IS NULL") &&
+    normalized.includes("origin_key IS NOT NULL") &&
+    !normalized.includes("atlas_id =") &&
+    !normalized.includes("a.user_id")
+  ) {
+    const rows = [...state.entries.values()].filter(
+      (e) => e.deleted_at == null && e.origin_key != null,
+    );
+    return { results: rows as T[] };
+  }
+
+  if (
+    normalized.includes("FROM atlas_entries WHERE atlas_id =") &&
+    normalized.includes("deleted_at IS NULL") &&
+    normalized.includes("origin_key IS NOT NULL")
+  ) {
+    const atlasId = bound[0] as string;
+    const rows = entriesForAtlas(state, atlasId).filter(
+      (e) => e.deleted_at == null && e.origin_key != null,
+    );
     return { results: rows as T[] };
   }
 
@@ -361,6 +415,30 @@ export function atlasRun(
       origin_version,
       edited_at,
       deleted_at,
+    });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+
+  if (
+    normalized.startsWith("UPDATE atlas_entries") &&
+    normalized.includes("SET fields_json =") &&
+    normalized.includes("updated_at =") &&
+    !normalized.includes("common_name")
+  ) {
+    const [fields_json, updated_at, id, atlas_id] = bound as [
+      string,
+      string,
+      string,
+      string,
+    ];
+    const row = state.entries.get(id);
+    if (!row || row.atlas_id !== atlas_id) {
+      return { success: true, meta: { changes: 0 } } as D1Result;
+    }
+    state.entries.set(id, {
+      ...row,
+      fields_json,
+      updated_at,
     });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
