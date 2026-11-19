@@ -1,13 +1,13 @@
 import type { FormEvent } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
-import PdfCompressConsent from "../components/PdfCompressConsent";
-import PdfSplitConsent from "../components/PdfSplitConsent";
-import PptxSplitConsent from "../components/PptxSplitConsent";
+import PdfCompressConsent from "../materials/PdfCompressConsent";
+import PdfSplitConsent from "../materials/PdfSplitConsent";
+import PptxSplitConsent from "../materials/PptxSplitConsent";
 import { CreateFlowNotice } from "../library/CreateFlowNotice";
-import { fileSizeCapMb } from "../lib/materialUploadLimits";
+import { fileSizeCapMb } from "../materials/materialUploadLimits";
 import type { CardDraftView, CardType } from "../api/client";
-import type { DraftEditorChange } from "../components/DraftCardEditor";
+import type { DraftEditorChange } from "./DraftCardEditor";
 import AddMaterialDiyPanel from "./AddMaterialDiyPanel";
 import AddMaterialMethodChooser, {
   METHOD_META,

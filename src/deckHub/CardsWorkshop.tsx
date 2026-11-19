@@ -17,7 +17,7 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import ViewListOutlinedIcon from "@mui/icons-material/ViewListOutlined";
-import EmptyNext from "../components/EmptyNext";
+import EmptyNext from "./EmptyNext";
 import type { CardDraftView } from "../api/client";
 import { cardFrontPreview } from "../lib/draftCardModel";
 import DiyCardPreview from "./DiyCardPreview";

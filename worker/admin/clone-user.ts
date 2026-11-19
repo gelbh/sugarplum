@@ -1018,6 +1018,32 @@ async function cloneAtlases(
     await runBatches(db, focusStmts);
     // Leave focus_pack_fingerprint null so the first Atlas GET heals stale
     // copied tiers without PDF extract on the impersonate request path.
+
+    const { results: noteRows } = await db
+      .prepare(
+        "SELECT atlas_id, entry_key, body, updated_at FROM atlas_entry_notes WHERE atlas_id = ?",
+      )
+      .bind(atlas.id)
+      .all<{
+        atlas_id: string;
+        entry_key: string;
+        body: string;
+        updated_at: string;
+      }>();
+    const noteStmts: D1PreparedStatement[] = [];
+    for (const note of noteRows ?? []) {
+      const entryKey = entryMap.get(note.entry_key) ?? note.entry_key;
+      noteStmts.push(
+        db
+          .prepare(
+            `INSERT INTO atlas_entry_notes (
+               atlas_id, entry_key, body, updated_at
+             ) VALUES (?, ?, ?, ?)`.replace(/\s+/g, " "),
+          )
+          .bind(atlasId, entryKey, note.body, note.updated_at),
+      );
+    }
+    await runBatches(db, noteStmts);
   }
 }
 

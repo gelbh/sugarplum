@@ -1,4 +1,4 @@
-import { canvasSourceScale } from "./figureGeometry";
+import { canvasSourceScale } from "../materials/figureGeometry";
 
 /** Match server generate/figure crop limit (worker/materials/limits.ts). */
 export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;

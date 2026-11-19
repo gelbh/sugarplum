@@ -6,7 +6,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, it } from "vitest";
 import CompositionSpark, {
   COMPOSITION_SEGMENT_COLORS,
-} from "../../src/components/CompositionSpark";
+} from "../../src/materials/CompositionSpark";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;

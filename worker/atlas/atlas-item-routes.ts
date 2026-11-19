@@ -10,6 +10,13 @@ import {
   setFocusOverride,
 } from "./focus";
 import {
+  deleteEntryNote,
+  enrichAtlasEntriesWithNotes,
+  normalizeNoteBody,
+  noteEntryKey,
+  upsertEntryNote,
+} from "./notes";
+import {
   hasLearnerRefsOrImages,
   loadEntryRows,
   toOverlayRows,
@@ -59,6 +66,14 @@ const DEFAULT_R2_BUCKET = "sugarplum-materials";
 
 export const atlasItemRoutes = new Hono<AppEnv>();
 
+async function entryViewsWithNotes(
+  db: D1Database,
+  atlasId: string,
+  entries: Awaited<ReturnType<typeof enrichEntriesWithFocus>>,
+) {
+  return enrichAtlasEntriesWithNotes(db, atlasId, entries);
+}
+
 function scheduleFocusRefresh(
   c: Context<AppEnv>,
 ): ((promise: Promise<unknown>) => void) | undefined {
@@ -96,14 +111,19 @@ atlasItemRoutes.get("/entries", async (c) => {
       skipMutatingRefresh,
     },
   );
-  return c.json({ entries, focusRefreshPending });
+  const withNotes = await enrichAtlasEntriesWithNotes(db, atlas.id, entries);
+  return c.json({ entries: withNotes, focusRefreshPending });
 });
 
 atlasItemRoutes.get("/deleted", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const rows = await loadEntryRows(db, atlas.id);
   const overlays = await toOverlayRows(db, atlas.id, rows);
-  const entries = deletedEntryViews(rows, overlays, datasetByKey());
+  const entries = await enrichAtlasEntriesWithNotes(
+    db,
+    atlas.id,
+    deletedEntryViews(rows, overlays, datasetByKey()),
+  );
   return c.json({ entries });
 });
 
@@ -267,10 +287,13 @@ atlasItemRoutes.post("/entries", async (c) => {
   await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
   const overlays = await toOverlayRows(db, atlas.id, [row]);
   const focus = await loadFocusMap(db, atlas.id);
-  const view = enrichEntriesWithFocus(
+  const focused = enrichEntriesWithFocus(
     overlayAtlas(loadParasiteDataset().entries, overlays),
     focus,
-  ).find((e) => e.id === row.id);
+  );
+  const view = (await entryViewsWithNotes(db, atlas.id, focused)).find(
+    (e) => e.id === row.id,
+  );
   if (!view)
     throw new HTTPException(500, { message: "Failed to create entry" });
   return c.json(view, 201);
@@ -345,9 +368,13 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   }
   const overlays = await toOverlayRows(db, atlas.id, [row]);
   const focus = await loadFocusMap(db, atlas.id);
-  const views = enrichEntriesWithFocus(
-    overlayAtlas(loadParasiteDataset().entries, overlays),
-    focus,
+  const views = await entryViewsWithNotes(
+    db,
+    atlas.id,
+    enrichEntriesWithFocus(
+      overlayAtlas(loadParasiteDataset().entries, overlays),
+      focus,
+    ),
   );
   const view = views.find((v) => v.id === row.id) ?? views[0];
   return c.json(view);
@@ -386,9 +413,87 @@ atlasItemRoutes.patch("/entries/:entryId/focus", async (c) => {
   const rows = await loadEntryRows(db, atlas.id);
   const overlays = await toOverlayRows(db, atlas.id, rows);
   const focus = await loadFocusMap(db, atlas.id);
-  const entries = enrichEntriesWithFocus(
-    overlayAtlas(loadParasiteDataset().entries, overlays),
-    focus,
+  const entries = await entryViewsWithNotes(
+    db,
+    atlas.id,
+    enrichEntriesWithFocus(
+      overlayAtlas(loadParasiteDataset().entries, overlays),
+      focus,
+    ),
+  );
+  const view = entries.find((e) => focusEntryKey(e) === entryKey);
+  if (!view) throw new HTTPException(404, { message: "Entry not found" });
+  return c.json(view);
+});
+
+atlasItemRoutes.put("/entries/:entryId/note", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
+  const entryId = requireParam(c, "entryId");
+  let body: { body?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  if (!("body" in body)) {
+    throw new HTTPException(400, { message: "body required" });
+  }
+  const normalized = normalizeNoteBody(body.body);
+
+  const resolved = await resolveEntry(db, atlas.id, entryId);
+  if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
+  if (resolved.kind === "row" && resolved.row.deleted_at) {
+    throw new HTTPException(409, { message: "Entry is deleted" });
+  }
+
+  const entryKey = noteEntryKey(resolved);
+  if (normalized === "clear") {
+    await deleteEntryNote(db, atlas.id, entryKey);
+  } else {
+    await upsertEntryNote(db, atlas.id, entryKey, normalized.body, nowIso());
+  }
+
+  const rows = await loadEntryRows(db, atlas.id);
+  const overlays = await toOverlayRows(db, atlas.id, rows);
+  const focus = await loadFocusMap(db, atlas.id);
+  const entries = await entryViewsWithNotes(
+    db,
+    atlas.id,
+    enrichEntriesWithFocus(
+      overlayAtlas(loadParasiteDataset().entries, overlays),
+      focus,
+    ),
+  );
+  const view = entries.find((e) => focusEntryKey(e) === entryKey);
+  if (!view) throw new HTTPException(404, { message: "Entry not found" });
+  return c.json(view);
+});
+
+atlasItemRoutes.delete("/entries/:entryId/note", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
+  const entryId = requireParam(c, "entryId");
+  const resolved = await resolveEntry(db, atlas.id, entryId);
+  if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
+  if (resolved.kind === "row" && resolved.row.deleted_at) {
+    throw new HTTPException(409, { message: "Entry is deleted" });
+  }
+
+  const entryKey = noteEntryKey(resolved);
+  await deleteEntryNote(db, atlas.id, entryKey);
+
+  const rows = await loadEntryRows(db, atlas.id);
+  const overlays = await toOverlayRows(db, atlas.id, rows);
+  const focus = await loadFocusMap(db, atlas.id);
+  const entries = await entryViewsWithNotes(
+    db,
+    atlas.id,
+    enrichEntriesWithFocus(
+      overlayAtlas(loadParasiteDataset().entries, overlays),
+      focus,
+    ),
   );
   const view = entries.find((e) => focusEntryKey(e) === entryKey);
   if (!view) throw new HTTPException(404, { message: "Entry not found" });
@@ -493,6 +598,7 @@ atlasItemRoutes.delete("/entries/:entryId", async (c) => {
         "Dataset entries cannot be permanently deleted; restore them instead",
     });
   }
+  await deleteEntryNote(db, atlas.id, row.id);
   await db
     .prepare(`DELETE FROM atlas_entries WHERE id = ? AND atlas_id = ?`)
     .bind(row.id, atlas.id)

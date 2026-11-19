@@ -14,7 +14,7 @@ import {
   type Subject,
 } from "../api/client";
 import { cardPatchBody } from "../cards/cardPatchBody";
-import type { DraftEditorChange } from "../components/DraftCardEditor";
+import type { DraftEditorChange } from "./DraftCardEditor";
 
 type Args = {
   deckId: string;

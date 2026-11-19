@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 import { describe, expect, it, vi } from "vitest";
-import { runConsentedPptxSplitUpload } from "../../src/lib/runConsentedPptxSplitUpload";
+import { runConsentedPptxSplitUpload } from "../../src/materials/runConsentedPptxSplitUpload";
 
 async function tinyPptx(slideCount: number): Promise<File> {
   const zip = new JSZip();
@@ -128,7 +128,7 @@ describe("runConsentedPptxSplitUpload", () => {
     const oneBuf = await oneZip.generateAsync({ type: "arraybuffer" });
     const oneFile = new File([oneBuf], "one.pptx");
     const { splitPptxUnderLimit } = await import(
-      "../../src/lib/splitPptxUnderLimit"
+      "../../src/materials/splitPptxUnderLimit"
     );
     const oneSplit = await splitPptxUnderLimit(oneFile, 50 * 1024 * 1024);
     expect(oneSplit.ok).toBe(true);

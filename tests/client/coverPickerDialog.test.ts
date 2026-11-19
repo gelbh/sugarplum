@@ -10,7 +10,7 @@ import {
   setCover,
   uploadCoverFile,
 } from "../../src/api/client";
-import CoverPickerDialog from "../../src/components/CoverPickerDialog";
+import CoverPickerDialog from "../../src/deckHub/CoverPickerDialog";
 
 vi.mock("../../src/api/client", () => {
   class ApiError extends Error {

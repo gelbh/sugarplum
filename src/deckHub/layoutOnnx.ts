@@ -1,4 +1,4 @@
-import { type PageBox, filterFigureBoxes } from "./figureGeometry";
+import { type PageBox, filterFigureBoxes } from "../materials/figureGeometry";
 
 export type LayoutLoadResult =
   | { ok: true }

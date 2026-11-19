@@ -3,7 +3,7 @@ import {
   MAX_IMAGE_BYTES,
   assertWithinImageByteLimit,
   cssRectToSourceRect,
-} from "../../src/lib/pdfPageRender";
+} from "../../src/deckHub/pdfPageRender";
 
 describe("cssRectToSourceRect", () => {
   it("maps CSS rect through canvasSourceScale factor", () => {

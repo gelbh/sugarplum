@@ -5,7 +5,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
-import { fileSizeCapMb } from "../lib/materialUploadLimits";
+import { fileSizeCapMb } from "./materialUploadLimits";
 
 export type PdfSplitConsentProps = {
   open: boolean;

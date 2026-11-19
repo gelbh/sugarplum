@@ -22,7 +22,7 @@ import {
   canGenerateMoreFromMaterial,
   isFigureMaterial,
   materialDisplayName,
-} from "../materials/materialActions";
+} from "./materialActions";
 import {
   SOURCE_ROLES,
   SOURCE_ROLE_LABELS,
@@ -33,7 +33,7 @@ import { navigate } from "../shared/nav/navigate";
 import {
   SelectEnumItem,
   renderSelectEnumValue,
-} from "./SelectEnumItem";
+} from "../components/SelectEnumItem";
 
 export type MaterialRowProps = {
   material: MaterialListItem;
