@@ -37,6 +37,29 @@ export function generateCardFromClaim(
   );
 }
 
+export type FillOrphanClaimsResult = {
+  attempted: number;
+  filled: number;
+  skipped: number;
+  remaining: number;
+  cards: CardDraftView[];
+};
+
+/** Batch-fill orphan claims for a job (soft-fail; server caps per request). */
+export function generateCardsFromOrphanClaims(
+  jobId: string,
+  body?: { type?: RegenCardType },
+) {
+  if (isGuest()) guestUnsupported("generate cards from claims");
+  return api<FillOrphanClaimsResult>(
+    `/api/jobs/${jobId}/claims/fill-orphans`,
+    {
+      method: "POST",
+      json: body ?? {},
+    },
+  );
+}
+
 /** Wipe all job cards (including accepted), reset to queued, and requeue generation. */
 export function regenJob(jobId: string, topicHints: string[] = []) {
   if (isGuest()) guestUnsupported("regenerate cards");

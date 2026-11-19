@@ -74,6 +74,7 @@ export default function DraftReviewPage() {
   const [generatingClaimId, setGeneratingClaimId] = useState<string | null>(
     null,
   );
+  const [fillAllBusy, setFillAllBusy] = useState(false);
   /** When false, drop jobId from useJobProgress so the same id can remount and poll again after regen. */
   const [progressGate, setProgressGate] = useState(true);
   const { user } = useSession();
@@ -156,8 +157,13 @@ export default function DraftReviewPage() {
     setNotice,
   });
 
-  const { onRegenThisCard, onRegen, onDismissFailed, onGenerateOrphan } =
-    createDraftReviewRegen({
+  const {
+    onRegenThisCard,
+    onRegen,
+    onDismissFailed,
+    onGenerateOrphan,
+    onFillAllOrphans,
+  } = createDraftReviewRegen({
       jobId,
       current,
       begin,
@@ -174,7 +180,9 @@ export default function DraftReviewPage() {
       setProgressGate,
       setClaimCoverage,
       setGeneratingClaimId,
+      setFillAllBusy,
       generatingClaimId,
+      fillAllBusy,
       cardRegenBusy,
       busy,
     });
@@ -311,9 +319,17 @@ export default function DraftReviewPage() {
                 onGenerateOrphan={(claimId) => {
                   void onGenerateOrphan(claimId);
                 }}
+                onFillAllOrphans={() => {
+                  void onFillAllOrphans();
+                }}
                 generatingClaimId={generatingClaimId}
+                fillAllBusy={fillAllBusy}
                 generateDisabled={
-                  busy || cardRegenBusy || dirty || generatingClaimId != null
+                  busy ||
+                  cardRegenBusy ||
+                  dirty ||
+                  generatingClaimId != null ||
+                  fillAllBusy
                 }
               />
             </Box>
@@ -508,12 +524,17 @@ export default function DraftReviewPage() {
                     onGenerateOrphan={(claimId) => {
                       void onGenerateOrphan(claimId);
                     }}
+                    onFillAllOrphans={() => {
+                      void onFillAllOrphans();
+                    }}
                     generatingClaimId={generatingClaimId}
+                    fillAllBusy={fillAllBusy}
                     generateDisabled={
                       busy ||
                       cardRegenBusy ||
                       dirty ||
-                      generatingClaimId != null
+                      generatingClaimId != null ||
+                      fillAllBusy
                     }
                   />
                 ) : null}

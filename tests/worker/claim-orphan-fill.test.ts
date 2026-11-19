@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   AUTO_ORPHAN_FILL_CAP,
+  FILL_ALL_REQUEST_CAP,
+  fillOrphanClaims,
   runClaimOrphanFillPhase,
 } from "../../worker/generation/claim-orphan-fill";
 import { FREE_GEN_DAILY_CAP, consumeFreeGenSlot } from "../../worker/generation/quota";
@@ -425,5 +427,89 @@ describe("runClaimOrphanFillPhase", () => {
     const summary = await runClaimOrphanFillPhase(env, msg);
     expect(summary).toEqual({ attempted: 0, filled: 0, skipped: 0 });
     expect(env.getCards()).toHaveLength(0);
+  });
+});
+
+describe("fillOrphanClaims", () => {
+  it("keeps AUTO_ORPHAN_FILL_CAP at 5 and FILL_ALL_REQUEST_CAP at 8", () => {
+    expect(AUTO_ORPHAN_FILL_CAP).toBe(5);
+    expect(FILL_ALL_REQUEST_CAP).toBe(8);
+  });
+
+  it("caps at FILL_ALL_REQUEST_CAP and reports remaining", async () => {
+    const env = createTestEnv();
+    seedOwnerNeedsReview(env);
+    const bySpan: Record<string, string> = {};
+    const totalOrphans = FILL_ALL_REQUEST_CAP + 4;
+    for (let i = 0; i < totalOrphans; i += 1) {
+      const span = `Fact ${i} about topic`;
+      seedOrphan(env, {
+        id: `cl-${i}`,
+        subject: `S${i}`,
+        span,
+        createdAt: `2026-01-01T01:${String(i).padStart(2, "0")}:00.000Z`,
+      });
+      bySpan[span] = qaJson(
+        `What is fact ${i} about the topic?`,
+        `Answer ${i}`,
+        span,
+      );
+    }
+    stubWriteOnlyBySpan(env, bySpan);
+
+    const result = await fillOrphanClaims({
+      env,
+      userId: "user-a",
+      jobId: "job-a",
+      cap: FILL_ALL_REQUEST_CAP,
+    });
+    expect(result.attempted).toBe(FILL_ALL_REQUEST_CAP);
+    expect(result.filled).toBe(FILL_ALL_REQUEST_CAP);
+    expect(result.cards).toHaveLength(FILL_ALL_REQUEST_CAP);
+    expect(result.remaining).toBe(4);
+    expect(env.getCards().filter((c) => c.claim_id != null)).toHaveLength(
+      FILL_ALL_REQUEST_CAP,
+    );
+  });
+
+  it("returns zeros when job is not needs_review", async () => {
+    const env = createTestEnv();
+    seedOwnerNeedsReview(env);
+    env.seedGenerationJob({
+      id: "job-a",
+      material_id: "mat-a",
+      status: "running",
+      error: null,
+      coverage_json: null,
+      created_at: "2026-01-01T01:00:00.000Z",
+      finished_at: null,
+    });
+    seedOrphan(env, {
+      id: "cl-1",
+      subject: "IgA",
+      span: "IgA protects mucosa",
+      createdAt: "2026-01-01T01:02:00.000Z",
+    });
+    stubWriteOnlyBySpan(env, {
+      "IgA protects mucosa": qaJson(
+        "What does IgA protect?",
+        "Mucosa",
+        "IgA protects mucosa",
+      ),
+    });
+
+    const result = await fillOrphanClaims({
+      env,
+      userId: "user-a",
+      jobId: "job-a",
+      cap: FILL_ALL_REQUEST_CAP,
+    });
+    expect(result).toEqual({
+      attempted: 0,
+      filled: 0,
+      skipped: 0,
+      remaining: 0,
+      cards: [],
+    });
   });
 });

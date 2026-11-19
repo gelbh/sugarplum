@@ -19,6 +19,10 @@ import {
   fillDraftFromClaim,
   parseClaimFillType,
 } from "./claim-fill";
+import {
+  FILL_ALL_REQUEST_CAP,
+  fillOrphanClaims,
+} from "./claim-orphan-fill";
 import { ClaimAwareRegenError } from "./card-regen";
 import { WorkersAiCapacityError } from "./workers-ai";
 
@@ -274,6 +278,53 @@ jobRoutes.get("/:id/claim-coverage", async (c) => {
     }>();
 
   return c.json(buildClaimCoverage(results ?? []));
+});
+
+/** Batch-fill orphan study_claims (soft-fail; cap FILL_ALL_REQUEST_CAP per request). */
+jobRoutes.post("/:id/claims/fill-orphans", async (c) => {
+  const userId = await requireUser(c);
+  const jobId = c.req.param("id");
+  const raw = await c.req.text();
+  const body = parseOptionalJsonBody(raw) ?? {};
+
+  let type: ReturnType<typeof parseClaimFillType>;
+  try {
+    type = parseClaimFillType(body);
+  } catch (err) {
+    if (err instanceof ClaimFillBadRequestError) {
+      throw new HTTPException(400, { message: err.message });
+    }
+    throw err;
+  }
+
+  const owned = await getDb(c.env)
+    .prepare(
+      `SELECT j.id, j.status
+       FROM generation_jobs j
+       INNER JOIN materials m ON m.id = j.material_id
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE j.id = ? AND d.user_id = ?`,
+    )
+    .bind(jobId, userId)
+    .first<{ id: string; status: string }>();
+  if (!owned) {
+    throw new HTTPException(404, { message: "Job not found" });
+  }
+  if (owned.status !== "needs_review") {
+    throw new HTTPException(409, {
+      message:
+        "Cards can only be generated from claims while the job needs review",
+    });
+  }
+
+  const result = await fillOrphanClaims({
+    env: c.env,
+    userId,
+    jobId,
+    cap: FILL_ALL_REQUEST_CAP,
+    type,
+  });
+  return c.json(result);
 });
 
 /** Generate one draft from an orphan study_claims row (write + Layer-1; no extract). */

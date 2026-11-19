@@ -10,7 +10,9 @@ type Props = {
   drafts: CardDraftView[];
   onJumpToDraft?: (cardId: string) => void;
   onGenerateOrphan?: (claimId: string) => void;
+  onFillAllOrphans?: () => void;
   generatingClaimId?: string | null;
+  fillAllBusy?: boolean;
   generateDisabled?: boolean;
 };
 
@@ -38,13 +40,17 @@ export default function ClaimCoveragePanel({
   drafts,
   onJumpToDraft,
   onGenerateOrphan,
+  onFillAllOrphans,
   generatingClaimId = null,
+  fillAllBusy = false,
   generateDisabled = false,
 }: Props) {
   if (coverage.summary.total === 0) return null;
 
   const draftIds = new Set(drafts.map((d) => d.id));
   const { linked, orphan, total } = coverage.summary;
+  const orphanBusy =
+    generateDisabled || generatingClaimId != null || fillAllBusy;
 
   return (
     <Box
@@ -80,17 +86,39 @@ export default function ClaimCoveragePanel({
         >
           Claim coverage
         </Typography>
-        <Typography
-          variant="caption"
-          sx={{
-            m: 0,
-            color: "rgba(232, 216, 199, 0.72)",
-            whiteSpace: "nowrap",
-            lineHeight: 1.3,
-          }}
-        >
-          {linked} linked · {orphan} orphan · {total} claims
-        </Typography>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          {orphan > 0 && onFillAllOrphans ? (
+            <Button
+              size="small"
+              variant="outlined"
+              disabled={orphanBusy}
+              onClick={() => onFillAllOrphans()}
+              sx={{
+                flexShrink: 0,
+                textTransform: "none",
+                borderColor: "rgba(232, 216, 199, 0.35)",
+                color: "var(--sp-ivory)",
+                py: 0.25,
+                px: 1,
+                minWidth: 0,
+                lineHeight: 1.3,
+              }}
+            >
+              {fillAllBusy ? "…" : `Fill all (${orphan})`}
+            </Button>
+          ) : null}
+          <Typography
+            variant="caption"
+            sx={{
+              m: 0,
+              color: "rgba(232, 216, 199, 0.72)",
+              whiteSpace: "nowrap",
+              lineHeight: 1.3,
+            }}
+          >
+            {linked} linked · {orphan} orphan · {total} claims
+          </Typography>
+        </Stack>
       </Stack>
       <Stack
         spacing={0.5}
@@ -141,7 +169,7 @@ export default function ClaimCoveragePanel({
                 <Button
                   size="small"
                   variant="outlined"
-                  disabled={generateDisabled || generatingClaimId != null}
+                  disabled={orphanBusy}
                   onClick={() => onGenerateOrphan(row.id)}
                   sx={{
                     flexShrink: 0,
