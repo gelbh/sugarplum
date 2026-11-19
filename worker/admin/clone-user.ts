@@ -333,7 +333,7 @@ async function cloneCards(
     .prepare(
       `SELECT c.id, c.deck_id, c.job_id, c.type, c.front_json, c.back_json,
               c.media_r2_keys_json, c.provenance_json, c.status, c.created_at, c.updated_at,
-              c.claim_id
+              c.claim_id, c.content_fp
        FROM cards c
        INNER JOIN decks d ON d.id = c.deck_id
        WHERE d.user_id = ?
@@ -353,6 +353,7 @@ async function cloneCards(
       created_at: string;
       updated_at: string;
       claim_id: string | null;
+      content_fp: string | null;
     }>();
   const stmts: D1PreparedStatement[] = [];
   for (const row of results ?? []) {
@@ -365,8 +366,8 @@ async function cloneCards(
           `INSERT INTO cards (
             id, deck_id, job_id, type, front_json, back_json,
             media_r2_keys_json, provenance_json, status, created_at, updated_at,
-            claim_id
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            claim_id, content_fp
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .bind(
           id,
@@ -381,6 +382,7 @@ async function cloneCards(
           row.created_at,
           row.updated_at,
           remapOrNull(claimMap, row.claim_id),
+          row.content_fp,
         ),
     );
   }
