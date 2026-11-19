@@ -76,14 +76,13 @@ export default function AddMaterialPastePanel({
         <Stack
           direction="row"
           spacing={1.5}
-          justifyContent="space-between"
-          alignItems="center"
           sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
             pt: 2,
             borderTop: "1px solid",
-            borderColor: "rgba(232, 216, 199, 0.12)",
-          }}
-        >
+            borderColor: "rgba(232, 216, 199, 0.12)"
+          }}>
           <Button
             onClick={onBack}
             disabled={materialBusy || createBusy}

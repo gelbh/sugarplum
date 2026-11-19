@@ -305,10 +305,11 @@ export default function DiyCardPreview({
       {isTile ? null : (
         <Stack
           direction="row"
-          alignItems="center"
-          justifyContent="space-between"
           spacing={1}
-        >
+          sx={{
+            alignItems: "center",
+            justifyContent: "space-between"
+          }}>
           <Typography
             component="p"
             sx={{
@@ -379,7 +380,9 @@ export default function DiyCardPreview({
               textAlign: "center",
             }}
           >
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               Appears as you write
             </Typography>
           </Box>
@@ -596,9 +599,10 @@ export default function DiyCardPreview({
       {isTile ? null : (
         <Typography
           variant="caption"
-          color="text.secondary"
-          sx={{ textAlign: "center" }}
-        >
+          sx={{
+            color: "text.secondary",
+            textAlign: "center"
+          }}>
           {card.type === "mcq"
             ? "As it appears in study"
             : "Tap the card, or focus a field to flip"}

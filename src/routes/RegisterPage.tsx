@@ -71,9 +71,11 @@ export default function RegisterPage() {
       </Typography>
       <Typography
         variant="body2"
-        color="text.secondary"
-        sx={{ mb: 3, textAlign: "center" }}
-      >
+        sx={{
+          color: "text.secondary",
+          mb: 3,
+          textAlign: "center"
+        }}>
         Start building spaced-repetition decks.
       </Typography>
       <Box component="form" onSubmit={onSubmit} noValidate>
@@ -115,13 +117,20 @@ export default function RegisterPage() {
           </Button>
           <Divider>or</Divider>
           <GoogleSignInButton />
-          <Typography variant="body2" textAlign="center">
+          <Typography variant="body2" sx={{
+            textAlign: "center"
+          }}>
             Already have an account?{" "}
             <Link href="/login" underline="hover">
               Sign in
             </Link>
           </Typography>
-          <Typography variant="body2" textAlign="center" color="text.secondary">
+          <Typography
+            variant="body2"
+            sx={{
+              textAlign: "center",
+              color: "text.secondary"
+            }}>
             <Link href="/privacy" underline="hover">
               Privacy
             </Link>

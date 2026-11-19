@@ -168,9 +168,10 @@ export default function Cabinet({
     <Stack spacing={2}>
       <Stack
         direction={{ xs: "column", md: "row" }}
-        alignItems={{ md: "flex-end" }}
-        gap={2}
-      >
+        sx={{
+          alignItems: { md: "flex-end" },
+          gap: 2
+        }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
             variant="h4"
@@ -181,16 +182,24 @@ export default function Cabinet({
           </Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
             aria-live="polite"
-            sx={{ mt: 0.5, fontVariantNumeric: "tabular-nums" }}
-          >
+            sx={{
+              color: "text.secondary",
+              mt: 0.5,
+              fontVariantNumeric: "tabular-nums"
+            }}>
             {narrowed
               ? `${visible.length} of ${plural(entries.length)}`
               : plural(entries.length)}
           </Typography>
         </Box>
-        <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+        <Stack
+          direction="row"
+          sx={{
+            gap: 1,
+            alignItems: "center",
+            flexWrap: "wrap"
+          }}>
           <TextField
             type="search"
             size="small"
@@ -335,7 +344,12 @@ export default function Cabinet({
       </Box>
 
       {visible.length === 0 ? (
-        <Stack alignItems="flex-start" spacing={1} sx={{ py: 4 }}>
+        <Stack
+          spacing={1}
+          sx={{
+            alignItems: "flex-start",
+            py: 4
+          }}>
           <Typography sx={{ fontWeight: 600 }}>
             No parasites match these filters
           </Typography>
@@ -362,10 +376,11 @@ export default function Cabinet({
             >
               <Stack
                 direction="row"
-                alignItems="baseline"
-                gap={1.25}
-                sx={{ mb: 1.25 }}
-              >
+                sx={{
+                  alignItems: "baseline",
+                  gap: 1.25,
+                  mb: 1.25
+                }}>
                 <Typography
                   id={`atlas-row-${section.id}`}
                   component="h2"
@@ -373,7 +388,9 @@ export default function Cabinet({
                 >
                   {section.title}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   {section.subtitle}
                 </Typography>
               </Stack>

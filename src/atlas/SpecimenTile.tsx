@@ -81,7 +81,9 @@ function FocusBadge({
         <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
           {TIER_LABELS[entry.tier]}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           {entry.reason ?? "No Focus reason"}
         </Typography>
         {entry.focusMaterialIds.length > 0 ? (
@@ -213,20 +215,25 @@ export default function SpecimenTile({
             {titles.scientific ? (
               <Typography
                 variant="body2"
-                color="text.secondary"
                 noWrap
-                sx={{ fontSize: "0.75rem", mt: 0.15, fontStyle: "italic" }}
-              >
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "0.75rem",
+                  mt: 0.15,
+                  fontStyle: "italic"
+                }}>
                 {titles.scientific}
               </Typography>
             ) : null}
             {definitive ? (
               <Typography
                 variant="body2"
-                color="text.secondary"
                 noWrap
-                sx={{ fontSize: "0.8rem", mt: 0.25 }}
-              >
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "0.8rem",
+                  mt: 0.25
+                }}>
                 {definitive}
               </Typography>
             ) : null}
@@ -295,7 +302,14 @@ export default function SpecimenTile({
         >
           <CloseIcon fontSize="small" />
         </IconButton>
-        <Stack direction="row" alignItems="center" gap={1} sx={{ pr: 4 }} flexWrap="wrap">
+        <Stack
+          direction="row"
+          sx={{
+            alignItems: "center",
+            gap: 1,
+            flexWrap: "wrap",
+            pr: 4
+          }}>
           <Typography
             id={titleId}
             component="h3"
@@ -313,7 +327,12 @@ export default function SpecimenTile({
           ) : null}
         </Stack>
         {titles.scientific ? (
-          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              fontStyle: "italic"
+            }}>
             {titles.scientific}
           </Typography>
         ) : null}
@@ -339,7 +358,12 @@ export default function SpecimenTile({
               </Box>
             ))}
         </Box>
-        <Stack direction="row" gap={1} flexWrap="wrap">
+        <Stack
+          direction="row"
+          sx={{
+            gap: 1,
+            flexWrap: "wrap"
+          }}>
           <Button variant="contained" size="small" onClick={onOpen}>
             Open lifecycle
           </Button>

@@ -44,13 +44,23 @@ export default function PdfSplitConsent({
           each under {maxMb}MB? Each part starts generation after upload.
         </DialogContentText>
         {figuresWillSkip ? (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 2
+            }}>
             Attached figure crops apply only if this PDF fits in one part.
             Multi-part splits skip figure crops.
           </Typography>
         ) : null}
         {progressLabel ? (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 2
+            }}>
             {progressLabel}
           </Typography>
         ) : null}

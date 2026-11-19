@@ -1165,7 +1165,9 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
               boxShadow: 1,
             }}
           >
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{
+              color: "text.secondary"
+            }}>
               Loading models {progress.loaded}/{progress.total}
             </Typography>
             <LinearProgress

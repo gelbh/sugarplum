@@ -51,7 +51,9 @@ export function TermsContent() {
     <LegalSections
       sections={termsSections}
       footer={
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           This page is operator-written and is not legal advice.
         </Typography>
       }

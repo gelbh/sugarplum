@@ -53,13 +53,17 @@ export default function FutureDueChart({ series }: Props) {
 
       {total === 0 ? (
         <Box role="img" aria-label={aria}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             No cards due in the next 14 days.
           </Typography>
         </Box>
       ) : (
         <Stack spacing={1.75}>
-          <Stack direction="row" spacing={2.5} useFlexGap flexWrap="wrap">
+          <Stack direction="row" spacing={2.5} useFlexGap sx={{
+            flexWrap: "wrap"
+          }}>
             <InsightsAliceStat
               value={total}
               label="due ahead"

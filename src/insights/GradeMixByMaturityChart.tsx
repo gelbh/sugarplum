@@ -78,7 +78,9 @@ export default function GradeMixByMaturityChart({
       </Typography>
       {total === 0 ? (
         <Box role="img" aria-label={aria}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             No young, mature, or learning grades in this window yet.
           </Typography>
         </Box>
@@ -89,10 +91,12 @@ export default function GradeMixByMaturityChart({
             aria-label={aria}
             direction="row"
             spacing={{ xs: 1.5, sm: 2.5 }}
-            alignItems="flex-end"
-            justifyContent="space-between"
-            sx={{ px: { sm: 1 }, minHeight: 148 }}
-          >
+            sx={{
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              px: { sm: 1 },
+              minHeight: 148
+            }}>
             {GROUPS.map(({ key, label, tip }) => {
               const counts = byMaturity[key];
               const groupSum = groupTotal(counts);
@@ -108,9 +112,11 @@ export default function GradeMixByMaturityChart({
                 <Stack
                   key={key}
                   spacing={0.75}
-                  alignItems="center"
-                  sx={{ flex: 1, minWidth: 0 }}
-                >
+                  sx={{
+                    alignItems: "center",
+                    flex: 1,
+                    minWidth: 0
+                  }}>
                   <Typography
                     component="span"
                     sx={{
@@ -158,10 +164,12 @@ export default function GradeMixByMaturityChart({
                   </Tooltip>
                   <Typography
                     variant="caption"
-                    color="text.secondary"
                     title={tip}
-                    sx={{ textAlign: "center", lineHeight: 1.2 }}
-                  >
+                    sx={{
+                      color: "text.secondary",
+                      textAlign: "center",
+                      lineHeight: 1.2
+                    }}>
                     {label}
                   </Typography>
                 </Stack>
@@ -173,9 +181,10 @@ export default function GradeMixByMaturityChart({
             direction="row"
             spacing={2.25}
             useFlexGap
-            flexWrap="wrap"
-            alignItems="baseline"
-          >
+            sx={{
+              flexWrap: "wrap",
+              alignItems: "baseline"
+            }}>
             {gradeTotals.map(({ key, rating, count }) => (
               <Tooltip
                 key={key}
@@ -185,9 +194,10 @@ export default function GradeMixByMaturityChart({
                 <Stack
                   direction="row"
                   spacing={0.75}
-                  alignItems="baseline"
-                  sx={{ cursor: "default" }}
-                >
+                  sx={{
+                    alignItems: "baseline",
+                    cursor: "default"
+                  }}>
                   <Box
                     aria-hidden
                     sx={{
@@ -211,7 +221,9 @@ export default function GradeMixByMaturityChart({
                   >
                     {count}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{
+                    color: "text.secondary"
+                  }}>
                     {GRADE_LABELS[rating]}
                   </Typography>
                 </Stack>
@@ -219,7 +231,9 @@ export default function GradeMixByMaturityChart({
             ))}
           </Stack>
 
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             Split across maturity for the last {gradeDays} days
           </Typography>
         </Stack>

@@ -108,19 +108,23 @@ export function ReviewMcqFace({
               <Stack
                 key={rowKeys.current[index]}
                 direction="row"
-                alignItems="center"
                 spacing={0.5}
+                sx={{
+                  alignItems: "center"
+                }}
               >
                 <Radio
                   size="small"
                   checked={draft.correctIndex === index}
                   disabled={disabled}
                   onChange={() => emit(withMcqCorrect(draft, index))}
-                  inputProps={{ "aria-label": `Correct choice ${index + 1}` }}
                   sx={{
                     color: "inherit",
                     "&.Mui-checked": { color: "var(--sp-plum)" },
                     "&&.Mui-disabled.Mui-checked": { color: "var(--sp-plum)" },
+                  }}
+                  slotProps={{
+                    input: { "aria-label": `Correct choice ${index + 1}` }
                   }}
                 />
                 {draft.correctIndex === index ? (

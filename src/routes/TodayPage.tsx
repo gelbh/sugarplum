@@ -194,7 +194,9 @@ export default function TodayPage() {
   if (!ready) {
     return (
       <Container maxWidth="sm" sx={{ py: 6 }}>
-        <Stack spacing={2} alignItems="center">
+        <Stack spacing={2} sx={{
+          alignItems: "center"
+        }}>
           <Skeleton variant="text" width={120} height={72} />
           <Skeleton variant="text" width={160} />
           <Skeleton
@@ -225,7 +227,12 @@ export default function TodayPage() {
         justifyContent: { sm: "center" },
       }}
     >
-      <Stack spacing={3} alignItems="center" textAlign="center">
+      <Stack
+        spacing={3}
+        sx={{
+          alignItems: "center",
+          textAlign: "center"
+        }}>
         <Box sx={{ width: "100%", maxWidth: 420 }}>
           <Typography
             component="p"
@@ -306,9 +313,11 @@ export default function TodayPage() {
         <Stack
           direction="column"
           spacing={1.5}
-          alignItems="stretch"
-          sx={{ width: "100%", maxWidth: 360 }}
-        >
+          sx={{
+            alignItems: "stretch",
+            width: "100%",
+            maxWidth: 360
+          }}>
           {dueCount > 0 ? (
             <Button
               variant="contained"
@@ -327,7 +336,9 @@ export default function TodayPage() {
               Start study
             </Button>
           ) : (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               {showJourneyNext
                 ? "Next step to your first review:"
                 : "Nothing due. Enjoy the break, or add material when you are ready."}

@@ -223,7 +223,9 @@ export default function CreateMaterialStepper({
                   multiline
                   minRows={6}
                 />
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{
+                  color: "text.secondary"
+                }}>
                   File upload is available after you sign in.
                 </Typography>
                 <Button
@@ -332,7 +334,9 @@ export default function CreateMaterialStepper({
                         crops={upload.figureFiles}
                         onCropsChange={upload.setFigureFiles}
                       />
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" sx={{
+                        color: "text.secondary"
+                      }}>
                         Optional: Suggest or drag-crop figures on-device. Accept
                         appends up to {MAX_CLIENT_FIGURES} PNG crops.
                       </Typography>
@@ -351,14 +355,18 @@ export default function CreateMaterialStepper({
                         <ToggleButton value="accurate">Accurate</ToggleButton>
                       </ToggleButtonGroup>
                       {upload.figureExtractMode === "accurate" ? (
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" sx={{
+                          color: "text.secondary"
+                        }}>
                           Better automatic figures; may take several minutes
                           while the extractor starts.
                         </Typography>
                       ) : null}
                     </Stack>
                   ) : null}
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{
+                    color: "text.secondary"
+                  }}>
                     PDF/PPTX max 50MB; images max 8MB.
                     {upload.submitLabel === "Continue"
                       ? " Free-path images open occlusion from the deck hub (or add a BYO key for auto vision)."
@@ -367,7 +375,9 @@ export default function CreateMaterialStepper({
                   {upload.offerLearningObjectives ? alsoCoverField : null}
                   {!upload.offerLearningObjectives &&
                   upload.freePathImageHelper ? (
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" sx={{
+                      color: "text.secondary"
+                    }}>
                       {upload.freePathImageHelper}
                     </Typography>
                   ) : null}

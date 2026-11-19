@@ -150,7 +150,9 @@ export function UnlockToastProvider({ children }: { children: ReactNode }) {
               locked={!ripe}
               glow={ripe}
             />
-            <Box minWidth={0}>
+            <Box sx={{
+              minWidth: 0
+            }}>
               <Typography
                 variant="caption"
                 sx={{ color: skin.kicker, display: "block", mb: 0.25 }}

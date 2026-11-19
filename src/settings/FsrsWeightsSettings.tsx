@@ -78,7 +78,12 @@ export default function FsrsWeightsSettings() {
       >
         Personal FSRS weights
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+          mb: 1.5
+        }}>
         Sugarplum retrains FSRS-7 weights from your review history when you have
         at least {FSRS_MIN_REVIEWS} reviews. Auto-retrain waits about a month
         after the last train or reset; Run now works whenever you meet the
@@ -101,7 +106,9 @@ export default function FsrsWeightsSettings() {
           ? formatFsrsStatusLine(status, busy)
           : "Loading optimize status…"}
       </Typography>
-      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+      <Stack direction="row" spacing={1} useFlexGap sx={{
+        flexWrap: "wrap"
+      }}>
         <Button
           size="small"
           variant="outlined"

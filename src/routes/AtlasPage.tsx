@@ -93,7 +93,11 @@ function Notice({
       >
         {title}
       </Typography>
-      <Typography color="text.secondary" sx={{ mt: 1 }}>
+      <Typography
+        sx={{
+          color: "text.secondary",
+          mt: 1
+        }}>
         {message}
       </Typography>
       {children}
@@ -201,7 +205,9 @@ export default function AtlasPage({
   if (error) {
     body = <Alert severity="error">{error}</Alert>;
   } else if (!loaded) {
-    body = <Typography color="text.secondary">Loading Atlas…</Typography>;
+    body = <Typography sx={{
+      color: "text.secondary"
+    }}>Loading Atlas…</Typography>;
   } else if (route.kind === "cabinet") {
     body = (
       <>

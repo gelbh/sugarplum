@@ -132,7 +132,9 @@ export default function AddMaterialDiyPanel({
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
                   spacing={1}
-                  alignItems={{ sm: "center" }}
+                  sx={{
+                    alignItems: { sm: "center" }
+                  }}
                 >
                   {deckImageKeys.length > 0 ? (
                     <FormControl fullWidth size="small">
@@ -156,10 +158,12 @@ export default function AddMaterialDiyPanel({
                   ) : (
                     <Typography
                       variant="body2"
-                      color="text.secondary"
-                      sx={{ flex: 1, minWidth: 0 }}
                       noWrap
-                    >
+                      sx={{
+                        color: "text.secondary",
+                        flex: 1,
+                        minWidth: 0
+                      }}>
                       {createImageKey.split("/").pop() ?? createImageKey}
                     </Typography>
                   )}
@@ -206,7 +210,9 @@ export default function AddMaterialDiyPanel({
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                 Add an image
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 JPEG, PNG, or WebP up to 8MB
               </Typography>
               <Stack
@@ -297,15 +303,14 @@ export default function AddMaterialDiyPanel({
       <Stack
         direction="row"
         spacing={1.5}
-        justifyContent="space-between"
-        alignItems="center"
         sx={{
+          justifyContent: "space-between",
+          alignItems: "center",
           mt: 3,
           pt: 2,
           borderTop: "1px solid",
-          borderColor: "rgba(232, 216, 199, 0.12)",
-        }}
-      >
+          borderColor: "rgba(232, 216, 199, 0.12)"
+        }}>
         <Button onClick={onBack} disabled={createBusy} sx={FOOTER_BTN_SX}>
           Back
         </Button>

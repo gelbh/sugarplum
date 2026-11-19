@@ -198,13 +198,17 @@ export function LibraryShelf({
                               size="small"
                               checked={selectedDeckIdSet.has(deck.id)}
                               onChange={() => toggleDeckSelected(deck.id)}
-                              inputProps={{
-                                "aria-label": `Select deck ${deck.title}`,
+                              slotProps={{
+                                input: {
+                                  "aria-label": `Select deck ${deck.title}`,
+                                }
                               }}
                             />
                             <Typography
                               variant="caption"
-                              color="text.secondary"
+                              sx={{
+                                color: "text.secondary"
+                              }}
                             >
                               {deck.title}
                             </Typography>
@@ -237,9 +241,11 @@ export function LibraryShelf({
         <Box sx={{ mt: 2 }}>
           <Typography
             variant="caption"
-            color="text.secondary"
-            sx={{ display: "block", mb: 0.5 }}
-          >
+            sx={{
+              color: "text.secondary",
+              display: "block",
+              mb: 0.5
+            }}>
             Decks without a subject
           </Typography>
           <Stack
@@ -262,8 +268,10 @@ export function LibraryShelf({
                   size="small"
                   checked={selectedDeckIdSet.has(deck.id)}
                   onChange={() => toggleDeckSelected(deck.id)}
-                  inputProps={{
-                    "aria-label": `Select deck ${deck.title}`,
+                  slotProps={{
+                    input: {
+                      "aria-label": `Select deck ${deck.title}`,
+                    }
                   }}
                 />
                 <Typography variant="body2">{deck.title}</Typography>

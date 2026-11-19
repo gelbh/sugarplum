@@ -13,7 +13,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
 import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
@@ -156,13 +156,16 @@ export default function MaterialsWorkshop({
     <Stack spacing={1.75} sx={{ minHeight: 0 }}>
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
         useFlexGap
-        flexWrap="wrap"
-        gap={1.25}
-      >
-        <Stack direction="row" alignItems="center" spacing={1.25} useFlexGap>
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 1.25
+        }}>
+        <Stack direction="row" spacing={1.25} useFlexGap sx={{
+          alignItems: "center"
+        }}>
           <Button
             variant="contained"
             size="small"
@@ -222,7 +225,9 @@ export default function MaterialsWorkshop({
       {materials.length === 0 ? (
         guest ? (
           <Box sx={{ ...SURFACE, px: 2.25, py: 2.5 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               Sign in to upload and browse study files for this deck.
             </Typography>
           </Box>
@@ -310,14 +315,13 @@ export default function MaterialsWorkshop({
                 <Stack
                   className="sp-material-tile-actions"
                   direction="row"
-                  justifyContent="flex-end"
                   sx={{
+                    justifyContent: "flex-end",
                     px: 0.5,
                     pb: 0.5,
                     opacity: { xs: 1, sm: 0.55 },
-                    transition: "opacity 140ms ease",
-                  }}
-                >
+                    transition: "opacity 140ms ease"
+                  }}>
                   <FileActions
                     material={material}
                     title={title}
@@ -414,9 +418,10 @@ export default function MaterialsWorkshop({
                     direction="row"
                     spacing={0.75}
                     useFlexGap
-                    flexWrap="wrap"
-                    sx={{ mt: 0.55 }}
-                  >
+                    sx={{
+                      flexWrap: "wrap",
+                      mt: 0.55
+                    }}>
                     <Box
                       component="span"
                       sx={{
@@ -541,7 +546,7 @@ function FileActions({
             onClick={() => onDelete(material)}
             sx={ROW_ACTION}
           >
-            <DeleteOutlineIcon fontSize="small" />
+            <DeleteOutlinedIcon fontSize="small" />
           </IconButton>
         </span>
       </Tooltip>
@@ -649,14 +654,16 @@ function MaterialPreviewDialog({
       onClose={onClose}
       fullWidth
       maxWidth={material?.kind === "pdf" ? "lg" : "md"}
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
-          bgcolor: "#12070f",
-          backgroundImage: "none",
-          border: "1px solid rgba(232, 216, 199, 0.14)",
-          minHeight: material?.kind === "pdf" ? "70vh" : undefined,
-        },
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 2,
+            bgcolor: "#12070f",
+            backgroundImage: "none",
+            border: "1px solid rgba(232, 216, 199, 0.14)",
+            minHeight: material?.kind === "pdf" ? "70vh" : undefined,
+          },
+        }
       }}
     >
       <DialogTitle
@@ -735,7 +742,9 @@ function MaterialPreviewDialog({
           </Box>
         ) : material ? (
           <Stack spacing={1.25} sx={{ py: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               {material.kind === "pptx"
                 ? "PowerPoint files open via download. Preview is not available in the browser."
                 : "This file cannot be previewed here."}

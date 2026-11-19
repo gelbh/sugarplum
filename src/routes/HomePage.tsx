@@ -31,8 +31,15 @@ export default function HomePage() {
       }}
     >
       <Container maxWidth="sm">
-        <Stack spacing={3} alignItems="center" textAlign="center">
-          <Stack direction="row" spacing={1.5} alignItems="center">
+        <Stack
+          spacing={3}
+          sx={{
+            alignItems: "center",
+            textAlign: "center"
+          }}>
+          <Stack direction="row" spacing={1.5} sx={{
+            alignItems: "center"
+          }}>
             <Box
               component="img"
               src="/logo.png"
@@ -57,14 +64,13 @@ export default function HomePage() {
           <Typography
             variant="h6"
             component="p"
-            color="text.secondary"
             sx={{
+              color: "text.secondary",
               m: 0,
               fontFamily: "inherit",
               fontWeight: 400,
-              maxWidth: "36rem",
-            }}
-          >
+              maxWidth: "36rem"
+            }}>
             {HOME_TAGLINE}
           </Typography>
 
@@ -73,14 +79,13 @@ export default function HomePage() {
           <Typography
             variant="body2"
             component="p"
-            color="text.secondary"
             sx={{
+              color: "text.secondary",
               whiteSpace: "pre-wrap",
               m: 0,
               maxWidth: "36rem",
-              textAlign: "center",
-            }}
-          >
+              textAlign: "center"
+            }}>
             {HOME_PURPOSE}
           </Typography>
 
@@ -102,10 +107,11 @@ export default function HomePage() {
             <Stack
               direction="row"
               spacing={2}
-              flexWrap="wrap"
               useFlexGap
-              justifyContent="center"
-            >
+              sx={{
+                flexWrap: "wrap",
+                justifyContent: "center"
+              }}>
               <Link href="/privacy" underline="hover" color="primary">
                 Privacy
               </Link>

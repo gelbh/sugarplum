@@ -40,16 +40,22 @@ export default function InfoPanel({ structure }: Props) {
         {structure.label}
       </Typography>
       {summary ? (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           {summary}
         </Typography>
       ) : (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           No summary yet for this structure.
         </Typography>
       )}
       {synonyms.length > 0 ? (
-        <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+        <Stack direction="row" spacing={0.5} useFlexGap sx={{
+          flexWrap: "wrap"
+        }}>
           {synonyms.map((name) => (
             <Chip key={name} label={name} size="small" variant="outlined" />
           ))}

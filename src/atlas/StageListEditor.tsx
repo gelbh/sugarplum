@@ -88,7 +88,11 @@ export default function StageListEditor({
   return (
     <Stack spacing={1.5}>
       {stages.length === 0 ? (
-        <Typography color="text.secondary" sx={{ fontSize: "0.9rem" }}>
+        <Typography
+          sx={{
+            color: "text.secondary",
+            fontSize: "0.9rem"
+          }}>
           No stages yet. Add one to start the cycle.
         </Typography>
       ) : null}
@@ -104,7 +108,9 @@ export default function StageListEditor({
             gap: 1,
           }}
         >
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1} sx={{
+            alignItems: "center"
+          }}>
             <Typography
               sx={{
                 fontWeight: 700,

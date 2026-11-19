@@ -57,9 +57,11 @@ function QuietStat({
     <Box sx={{ minWidth: 0 }}>
       <Typography
         variant="body2"
-        color="text.secondary"
-        sx={{ display: "block", fontWeight: 500 }}
-      >
+        sx={{
+          color: "text.secondary",
+          display: "block",
+          fontWeight: 500
+        }}>
         {tip ? <MetricTip title={tip}>{label}</MetricTip> : label}
       </Typography>
       <Typography
@@ -80,9 +82,11 @@ function QuietStat({
       {detail ? (
         <Typography
           variant="caption"
-          color="text.secondary"
-          sx={{ display: "block", mt: 0.35 }}
-        >
+          sx={{
+            color: "text.secondary",
+            display: "block",
+            mt: 0.35
+          }}>
           {detail}
         </Typography>
       ) : null}
@@ -135,7 +139,9 @@ export default function VerdictHero({
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={{ xs: 3, md: 0 }}
-          alignItems={{ md: "center" }}
+          sx={{
+            alignItems: { md: "center" }
+          }}
         >
           <Box
             sx={{
@@ -173,9 +179,12 @@ export default function VerdictHero({
             </Typography>
             <Typography
               variant="body2"
-              color="text.secondary"
-              sx={{ display: "block", mt: 1.25, maxWidth: 42 * 8 }}
-            >
+              sx={{
+                color: "text.secondary",
+                display: "block",
+                mt: 1.25,
+                maxWidth: 42 * 8
+              }}>
               Average chance you remember accepted cards right now.
             </Typography>
           </Box>
@@ -217,10 +226,11 @@ export default function VerdictHero({
                 direction="row"
                 spacing={1}
                 useFlexGap
-                flexWrap="wrap"
-                alignItems="center"
-                sx={{ mt: 1 }}
-              >
+                sx={{
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  mt: 1
+                }}>
                 {status ? (
                   <Chip
                     size="small"
@@ -245,7 +255,9 @@ export default function VerdictHero({
                 ) : null}
               </Stack>
             </Box>
-            <Stack direction="row" spacing={3.5} useFlexGap flexWrap="wrap">
+            <Stack direction="row" spacing={3.5} useFlexGap sx={{
+              flexWrap: "wrap"
+            }}>
               <QuietStat
                 value={String(dueToday)}
                 label="Due today"
@@ -277,9 +289,10 @@ export default function VerdictHero({
           direction="row"
           spacing={{ xs: 2, sm: 2.75 }}
           useFlexGap
-          flexWrap="wrap"
-          alignItems="center"
-        >
+          sx={{
+            flexWrap: "wrap",
+            alignItems: "center"
+          }}>
           <InsightsAliceStat
             size="sm"
             value={etkDisplay == null ? "—" : `~${etkDisplay}`}

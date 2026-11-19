@@ -97,9 +97,12 @@ export function StepHeader({
       </Typography>
       <Typography
         variant="body2"
-        color="text.secondary"
-        sx={{ mt: 1, maxWidth: "40ch", lineHeight: 1.5 }}
-      >
+        sx={{
+          color: "text.secondary",
+          mt: 1,
+          maxWidth: "40ch",
+          lineHeight: 1.5
+        }}>
         {blurb}
       </Typography>
     </Box>
@@ -184,7 +187,9 @@ export default function AddMaterialMethodChooser({
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   {meta.label}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   {meta.blurb}
                 </Typography>
               </ButtonBase>
@@ -193,14 +198,13 @@ export default function AddMaterialMethodChooser({
         </Box>
         <Stack
           direction="row"
-          justifyContent="flex-start"
-          alignItems="center"
           sx={{
+            justifyContent: "flex-start",
+            alignItems: "center",
             pt: 2,
             borderTop: "1px solid",
-            borderColor: "rgba(232, 216, 199, 0.12)",
-          }}
-        >
+            borderColor: "rgba(232, 216, 199, 0.12)"
+          }}>
           <Button onClick={onCancel} sx={FOOTER_BTN_SX}>
             Back
           </Button>

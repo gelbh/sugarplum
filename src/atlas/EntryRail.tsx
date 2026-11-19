@@ -111,7 +111,12 @@ export default function EntryRail({
         sx={{ mt: 1, overflowY: "auto", minHeight: 0, flex: 1, pr: 0.5 }}
       >
         {rows.length === 0 ? (
-          <Typography color="text.secondary" sx={{ fontSize: "0.86rem", p: 1 }}>
+          <Typography
+            sx={{
+              color: "text.secondary",
+              fontSize: "0.86rem",
+              p: 1
+            }}>
             No parasites match
           </Typography>
         ) : null}
@@ -119,9 +124,13 @@ export default function EntryRail({
           <Box key={row.heading} sx={{ mt: 1.5 }}>
             <Typography
               component="h2"
-              color="text.secondary"
-              sx={{ fontSize: "0.76rem", fontWeight: 600, px: 0.75, mb: 0.5 }}
-            >
+              sx={{
+                color: "text.secondary",
+                fontSize: "0.76rem",
+                fontWeight: 600,
+                px: 0.75,
+                mb: 0.5
+              }}>
               {row.heading}
             </Typography>
             {row.entries.map((e) => (
@@ -231,9 +240,12 @@ function RailItem({
         {titles.scientific ? (
           <Typography
             noWrap
-            color="text.secondary"
-            sx={{ fontSize: "0.76rem", lineHeight: 1.3, fontStyle: "italic" }}
-          >
+            sx={{
+              color: "text.secondary",
+              fontSize: "0.76rem",
+              lineHeight: 1.3,
+              fontStyle: "italic"
+            }}>
             {titles.scientific}
           </Typography>
         ) : null}

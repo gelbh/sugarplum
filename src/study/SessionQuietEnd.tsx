@@ -13,7 +13,9 @@ export type SessionQuietEndProps = {
 
 export default function SessionQuietEnd(props: SessionQuietEndProps) {
   return (
-    <Stack spacing={1.5} alignItems="stretch">
+    <Stack spacing={1.5} sx={{
+      alignItems: "stretch"
+    }}>
       <Typography variant="body1" sx={{ textAlign: "center" }}>
         No cards left for now.
       </Typography>

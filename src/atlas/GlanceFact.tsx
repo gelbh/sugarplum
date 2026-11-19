@@ -301,9 +301,12 @@ export function GlanceFact({
       <div>
         <Typography
           component="dt"
-          color="text.secondary"
-          sx={{ fontSize: "0.88rem", fontWeight: 600, lineHeight: 1.3 }}
-        >
+          sx={{
+            color: "text.secondary",
+            fontSize: "0.88rem",
+            fontWeight: 600,
+            lineHeight: 1.3
+          }}>
           {row.label}
           {row.citeField ? (
             <CiteSup

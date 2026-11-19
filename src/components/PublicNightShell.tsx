@@ -31,14 +31,17 @@ export default function PublicNightShell({
       }}
     >
       <Container maxWidth={maxWidth}>
-        <Stack spacing={3} alignItems="center">
+        <Stack spacing={3} sx={{
+          alignItems: "center"
+        }}>
           <Stack
             direction="row"
             spacing={1.5}
-            alignItems="center"
             component="header"
-            sx={{ textAlign: "center" }}
-          >
+            sx={{
+              alignItems: "center",
+              textAlign: "center"
+            }}>
             <Box
               component="img"
               src="/logo.png"

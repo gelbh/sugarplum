@@ -44,7 +44,9 @@ function NeutralPending({
           gap: 2,
         }}
       >
-        <Typography color="text.secondary">
+        <Typography sx={{
+          color: "text.secondary"
+        }}>
           {message ?? "Loading…"}
         </Typography>
         {onRetry ? (

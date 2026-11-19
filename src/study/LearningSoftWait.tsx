@@ -12,7 +12,9 @@ export type LearningSoftWaitProps = {
 
 export default function LearningSoftWait(props: LearningSoftWaitProps) {
   return (
-    <Stack spacing={1.5} alignItems="stretch">
+    <Stack spacing={1.5} sx={{
+      alignItems: "stretch"
+    }}>
       <Typography variant="body1" sx={{ textAlign: "center" }}>
         Next learning card in{" "}
         {props.nextDueAt ? formatLearningEta(props.nextDueAt) : "a moment"}.

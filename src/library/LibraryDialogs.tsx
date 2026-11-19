@@ -84,12 +84,14 @@ export function LibraryDialogs({
         onClose={() => !dialogBusy && setTitleDialog(null)}
         fullWidth
         maxWidth="xs"
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            overflow: "hidden",
-            bgcolor: "background.paper",
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 2,
+              overflow: "hidden",
+              bgcolor: "background.paper",
+            },
+          }
         }}
       >
         <Box component="form" onSubmit={onTitleDialogSubmit} noValidate>
@@ -119,9 +121,11 @@ export function LibraryDialogs({
             </DialogTitle>
             <Typography
               variant="body2"
-              color="text.secondary"
-              sx={{ mt: 1, maxWidth: "36ch" }}
-            >
+              sx={{
+                color: "text.secondary",
+                mt: 1,
+                maxWidth: "36ch"
+              }}>
               Shown on the Library cover and in menus.
             </Typography>
           </Box>
@@ -140,10 +144,11 @@ export function LibraryDialogs({
               onChange={(ev) => setTitleValue(ev.target.value)}
               required
               fullWidth
-              inputProps={{ maxLength: 80, "aria-label": "Subject name" }}
               helperText={`${titleValue.trim().length}/80`}
-              FormHelperTextProps={{ sx: { textAlign: "right", mx: 0 } }}
-            />
+              slotProps={{
+                htmlInput: { maxLength: 80, "aria-label": "Subject name" },
+                formHelperText: { sx: { textAlign: "right", mx: 0 } }
+              }} />
           </DialogContent>
           <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
             <Button
@@ -170,12 +175,14 @@ export function LibraryDialogs({
         onClose={() => !deleteSubjectBusy && setDeleteSubjectTarget(null)}
         fullWidth
         maxWidth="xs"
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            overflow: "hidden",
-            bgcolor: "background.paper",
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 2,
+              overflow: "hidden",
+              bgcolor: "background.paper",
+            },
+          }
         }}
       >
         <Box

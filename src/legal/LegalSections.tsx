@@ -80,9 +80,12 @@ export function LegalSections({
           <Typography
             variant="body1"
             component="p"
-            color="text.secondary"
-            sx={{ whiteSpace: "pre-wrap", maxWidth: "68ch", lineHeight: 1.65 }}
-          >
+            sx={{
+              color: "text.secondary",
+              whiteSpace: "pre-wrap",
+              maxWidth: "68ch",
+              lineHeight: 1.65
+            }}>
             {linkifyLegalBody(s.body)}
           </Typography>
         </Box>

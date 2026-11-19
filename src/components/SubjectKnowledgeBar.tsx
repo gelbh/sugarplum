@@ -33,9 +33,10 @@ const LEGEND: {
 export default function SubjectKnowledgeBar({ knowledge }: Props) {
   if (knowledge.total === 0) {
     return (
-      <Typography variant="body2" color="text.secondary">
-        No accepted cards yet
-      </Typography>
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>No accepted cards yet
+              </Typography>
     );
   }
 
@@ -57,11 +58,12 @@ export default function SubjectKnowledgeBar({ knowledge }: Props) {
       />
       <Stack
         direction="row"
-        flexWrap="wrap"
         useFlexGap
-        gap={1.25}
-        sx={{ rowGap: 0.5 }}
-      >
+        sx={{
+          flexWrap: "wrap",
+          gap: 1.25,
+          rowGap: 0.5
+        }}>
         {LEGEND.map(({ key, label, color }) => {
           const count = knowledge[key];
           if (count <= 0) return null;
@@ -69,10 +71,11 @@ export default function SubjectKnowledgeBar({ knowledge }: Props) {
             <Stack
               key={key}
               direction="row"
-              alignItems="center"
               spacing={0.5}
-              sx={{ minWidth: 0 }}
-            >
+              sx={{
+                alignItems: "center",
+                minWidth: 0
+              }}>
               <Box
                 aria-hidden
                 sx={{
@@ -100,10 +103,11 @@ export default function SubjectKnowledgeBar({ knowledge }: Props) {
       <Stack
         direction="row"
         spacing={2.5}
-        flexWrap="wrap"
         useFlexGap
-        sx={{ pt: 0.25 }}
-      >
+        sx={{
+          flexWrap: "wrap",
+          pt: 0.25
+        }}>
         <Box>
           <Typography
             component="p"

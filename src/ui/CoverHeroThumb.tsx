@@ -29,9 +29,11 @@ export default function CoverHeroThumb({
   return (
     <Stack
       spacing={0.75}
-      alignItems="stretch"
-      sx={{ flexShrink: 0, width: { xs: 104, sm: 132 } }}
-    >
+      sx={{
+        alignItems: "stretch",
+        flexShrink: 0,
+        width: { xs: 104, sm: 132 }
+      }}>
       <Box
         component={interactive ? ButtonBase : "div"}
         {...(interactive

@@ -151,7 +151,12 @@ function Hero({
     return (
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Typography sx={{ fontWeight: 600 }}>Not in the Atlas</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+            mt: 0.5
+          }}>
           Nothing matches “{missingId}”. Pick a parasite above.
         </Typography>
       </Paper>
@@ -178,9 +183,10 @@ function Hero({
         {titles.scientific ? (
           <Typography
             variant="body2"
-            color="text.secondary"
-            sx={{ fontStyle: "italic" }}
-          >
+            sx={{
+              color: "text.secondary",
+              fontStyle: "italic"
+            }}>
             {titles.scientific}
           </Typography>
         ) : null}
@@ -223,24 +229,25 @@ export default function CompareView({
       <Box sx={{ ...COLUMNS, rowGap: 1.5 }}>
         <Stack
           direction={{ xs: "row", md: "column" }}
-          alignItems={{ xs: "flex-end", md: "flex-start" }}
-          justifyContent={{ xs: "space-between", md: "flex-start" }}
-          gap={1.5}
           sx={{
+            alignItems: { xs: "flex-end", md: "flex-start" },
+            justifyContent: { xs: "space-between", md: "flex-start" },
+            gap: 1.5,
             gridColumn: { xs: "1 / -1", md: "auto" },
-            gridRow: { md: "span 2" },
-          }}
-        >
+            gridRow: { md: "span 2" }
+          }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
               Compare
             </Typography>
             <Typography
               variant="body2"
-              color="text.secondary"
               aria-live="polite"
-              sx={{ mt: 0.5, fontVariantNumeric: "tabular-nums" }}
-            >
+              sx={{
+                color: "text.secondary",
+                mt: 0.5,
+                fontVariantNumeric: "tabular-nums"
+              }}>
               {rows
                 ? differCount === 0
                   ? "No rows differ"

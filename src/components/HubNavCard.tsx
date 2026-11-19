@@ -53,7 +53,9 @@ export default function HubNavCard({
         },
       }}
     >
-      <Stack direction="row" spacing={1.5} alignItems="center">
+      <Stack direction="row" spacing={1.5} sx={{
+        alignItems: "center"
+      }}>
         <Box
           sx={{
             color: "primary.main",
@@ -73,9 +75,10 @@ export default function HubNavCard({
           </Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
-            sx={{ mt: isList ? 0.5 : 0.75 }}
-          >
+            sx={{
+              color: "text.secondary",
+              mt: isList ? 0.5 : 0.75
+            }}>
             {blurb}
           </Typography>
         </Box>

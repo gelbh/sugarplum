@@ -63,7 +63,9 @@ export default function ReviewsPerDayChart({
       </Typography>
 
       {reviewsInWindow != null || reviewedToday != null || total > 0 ? (
-        <Stack direction="row" spacing={2.5} useFlexGap flexWrap="wrap">
+        <Stack direction="row" spacing={2.5} useFlexGap sx={{
+          flexWrap: "wrap"
+        }}>
           {reviewsInWindow != null && reviewsDays != null ? (
             <InsightsAliceStat
               value={reviewsInWindow}
@@ -91,7 +93,9 @@ export default function ReviewsPerDayChart({
 
       {total === 0 ? (
         <Box role="img" aria-label={aria}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             No reviews in this window yet. Finish a study session to start the
             series.
           </Typography>

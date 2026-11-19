@@ -172,10 +172,11 @@ function ClozeDiyFields({
         >
           <Typography
             variant="caption"
-            color="text.secondary"
-            display="block"
-            sx={{ mb: 1 }}
-          >
+            sx={{
+              color: "text.secondary",
+              display: "block",
+              mb: 1
+            }}>
             How it will look when you study
           </Typography>
           <Typography
@@ -188,11 +189,14 @@ function ClozeDiyFields({
           {clozeAnswers.length > 0 ? (
             <Stack
               direction="row"
-              alignItems="center"
               spacing={1}
-              flexWrap="wrap"
-            >
-              <Typography variant="caption" color="text.secondary">
+              sx={{
+                alignItems: "center",
+                flexWrap: "wrap"
+              }}>
+              <Typography variant="caption" sx={{
+                color: "text.secondary"
+              }}>
                 Answer:
               </Typography>
               {clozeAnswers.map((answer) => (
@@ -226,7 +230,9 @@ function ClozeDiyFields({
             key={`cloze-blank-${index}`}
             direction="row"
             spacing={1}
-            alignItems="flex-start"
+            sx={{
+              alignItems: "flex-start"
+            }}
           >
             <TextField
               label={blanks.length === 1 ? "Blank" : `Blank ${index + 1}`}
@@ -506,7 +512,9 @@ export default function DraftCardEditor({
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={1.5}
-          alignItems={{ sm: "flex-start" }}
+          sx={{
+            alignItems: { sm: "flex-start" }
+          }}
         >
           <FormControl
             fullWidth
@@ -607,9 +615,11 @@ export default function DraftCardEditor({
           <Stack spacing={1}>
             <Typography
               variant="caption"
-              color="text.secondary"
-              sx={{ letterSpacing: "0.06em", textTransform: "uppercase" }}
-            >
+              sx={{
+                color: "text.secondary",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase"
+              }}>
               Choices
             </Typography>
             <RadioGroup
@@ -622,22 +632,23 @@ export default function DraftCardEditor({
                     key={index}
                     direction="row"
                     spacing={0.75}
-                    alignItems="center"
                     sx={{
+                      alignItems: "center",
                       px: 1,
                       py: 0.75,
                       borderRadius: 1.5,
                       border: "1px solid",
+
                       borderColor:
                         mcqDraft.correctIndex === index
                           ? "rgba(167, 139, 250, 0.45)"
                           : "rgba(232, 216, 199, 0.12)",
+
                       bgcolor:
                         mcqDraft.correctIndex === index
                           ? "rgba(91, 44, 111, 0.18)"
-                          : "rgba(18, 7, 15, 0.22)",
-                    }}
-                  >
+                          : "rgba(18, 7, 15, 0.22)"
+                    }}>
                     <FormControlLabel
                       value={String(index)}
                       sx={{
@@ -653,8 +664,10 @@ export default function DraftCardEditor({
                         <Radio
                           size="small"
                           disabled={disabled}
-                          inputProps={{
-                            "aria-label": `Correct choice ${index + 1}`,
+                          slotProps={{
+                            input: {
+                              "aria-label": `Correct choice ${index + 1}`,
+                            }
                           }}
                         />
                       }
@@ -700,7 +713,9 @@ export default function DraftCardEditor({
             >
               Add choice
             </Button>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{
+              color: "text.secondary"
+            }}>
               Mark one correct answer ({MCQ_MIN}–{MCQ_MAX} choices).
             </Typography>
           </Stack>

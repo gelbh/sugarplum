@@ -46,7 +46,9 @@ export default function GradeMixChart({ counts, gradeDays = 14 }: Props) {
       </Typography>
       {total === 0 ? (
         <Box role="img" aria-label={aria}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             No grades in this window yet. Grade cards in Study to see the mix.
           </Typography>
         </Box>
@@ -67,18 +69,18 @@ export default function GradeMixChart({ counts, gradeDays = 14 }: Props) {
                   <Stack
                     direction="row"
                     spacing={1.5}
-                    alignItems="center"
-                    sx={{ cursor: "default" }}
-                  >
+                    sx={{
+                      alignItems: "center",
+                      cursor: "default"
+                    }}>
                     <Typography
                       variant="body2"
-                      color="text.secondary"
                       sx={{
+                        color: "text.secondary",
                         width: { xs: 108, sm: 120 },
                         flexShrink: 0,
-                        lineHeight: 1.2,
-                      }}
-                    >
+                        lineHeight: 1.2
+                      }}>
                       {GRADE_LABELS[rating]}
                     </Typography>
                     <Box
@@ -123,7 +125,9 @@ export default function GradeMixChart({ counts, gradeDays = 14 }: Props) {
             })}
           </Stack>
 
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             <Box
               component="span"
               sx={{

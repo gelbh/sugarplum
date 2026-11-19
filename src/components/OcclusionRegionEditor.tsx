@@ -10,7 +10,7 @@ import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import { alpha } from "@mui/material/styles";
 import {
@@ -415,7 +415,9 @@ export default function OcclusionRegionEditor({
           <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
             Image required
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             Upload or pick a deck image, then drag boxes over labels.
           </Typography>
         </Box>
@@ -443,9 +445,10 @@ export default function OcclusionRegionEditor({
 
           <Typography
             variant="body2"
-            color="text.secondary"
-            sx={{ maxWidth: "42ch" }}
-          >
+            sx={{
+              color: "text.secondary",
+              maxWidth: "42ch"
+            }}>
             Hide one region per card. Add a box or use Suggest, then drag to
             move and corner to resize.
           </Typography>
@@ -462,9 +465,10 @@ export default function OcclusionRegionEditor({
           <Stack
             direction="row"
             spacing={1}
-            alignItems="center"
-            flexWrap="wrap"
-          >
+            sx={{
+              alignItems: "center",
+              flexWrap: "wrap"
+            }}>
             <Button
               variant="contained"
               size="small"
@@ -488,11 +492,15 @@ export default function OcclusionRegionEditor({
               </Button>
             ) : null}
             {suggestBusy ? (
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{
+                color: "text.secondary"
+              }}>
                 First OCR run may take a moment.
               </Typography>
             ) : front.regions.length >= MAX_REGIONS ? (
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{
+                color: "text.secondary"
+              }}>
                 At most {MAX_REGIONS} regions per card.
               </Typography>
             ) : null}
@@ -531,10 +539,11 @@ export default function OcclusionRegionEditor({
             <Stack spacing={1.5}>
               <Stack
                 direction="row"
-                alignItems="baseline"
-                justifyContent="space-between"
                 spacing={1}
-              >
+                sx={{
+                  alignItems: "baseline",
+                  justifyContent: "space-between"
+                }}>
                 <Typography
                   component="h3"
                   sx={{
@@ -610,7 +619,9 @@ export default function OcclusionRegionEditor({
                             },
                       })}
                     >
-                      <Stack direction="row" spacing={1} alignItems="center">
+                      <Stack direction="row" spacing={1} sx={{
+                        alignItems: "center"
+                      }}>
                         <Box
                           aria-hidden
                           sx={(theme) => ({
@@ -663,7 +674,7 @@ export default function OcclusionRegionEditor({
                               "&:hover": { color: "error.light" },
                             }}
                           >
-                            <DeleteOutlineIcon fontSize="small" />
+                            <DeleteOutlinedIcon fontSize="small" />
                           </IconButton>
                         ) : null}
                       </Stack>

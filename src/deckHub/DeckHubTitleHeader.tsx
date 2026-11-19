@@ -5,7 +5,7 @@ import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
@@ -64,9 +64,10 @@ export default function DeckHubTitleHeader({
       <Stack
         direction="row"
         spacing={{ xs: 2, sm: 2.5 }}
-        alignItems="flex-start"
-        sx={{ minWidth: 0 }}
-      >
+        sx={{
+          alignItems: "flex-start",
+          minWidth: 0
+        }}>
         <CoverHeroThumb
           src={coverSrc}
           placeholderColor={emptyColor}
@@ -88,10 +89,11 @@ export default function DeckHubTitleHeader({
         <Box sx={{ minWidth: 0, flex: 1, pt: { xs: 0.25, sm: 0.5 } }}>
           <Stack
             direction="row"
-            alignItems="flex-start"
-            justifyContent="space-between"
             spacing={1}
-          >
+            sx={{
+              alignItems: "flex-start",
+              justifyContent: "space-between"
+            }}>
             <Box sx={{ minWidth: 0, flex: 1 }}>
               <Typography
                 component="p"
@@ -124,9 +126,10 @@ export default function DeckHubTitleHeader({
               {metaLine ? (
                 <Typography
                   variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 0.75 }}
-                >
+                  sx={{
+                    color: "text.secondary",
+                    mt: 0.75
+                  }}>
                   {metaLine}
                 </Typography>
               ) : null}
@@ -134,9 +137,10 @@ export default function DeckHubTitleHeader({
             <Stack
               direction="row"
               spacing={0.25}
-              flexShrink={0}
-              sx={{ mt: -0.25 }}
-            >
+              sx={{
+                flexShrink: 0,
+                mt: -0.25
+              }}>
               <Tooltip title="Rename deck">
                 <IconButton
                   size="small"
@@ -170,7 +174,7 @@ export default function DeckHubTitleHeader({
                   onClick={onDelete}
                   sx={{ color: "text.secondary" }}
                 >
-                  <DeleteOutlineIcon fontSize="small" />
+                  <DeleteOutlinedIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
               {!guest && (!exportDisabled || exportBusy) ? (

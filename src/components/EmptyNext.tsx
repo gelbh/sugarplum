@@ -23,14 +23,21 @@ export default function EmptyNext({
   return (
     <Stack
       spacing={1}
-      alignItems="center"
-      textAlign="center"
-      sx={{ py: 4, px: 2 }}
-    >
+      sx={{
+        alignItems: "center",
+        textAlign: "center",
+        py: 4,
+        px: 2
+      }}>
       <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
         {title}
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 420 }}>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+          maxWidth: 420
+        }}>
         {body}
       </Typography>
       <Button

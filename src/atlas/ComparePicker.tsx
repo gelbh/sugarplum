@@ -77,7 +77,9 @@ export default function ComparePicker({
         Compare parasites
       </DialogTitle>
       <Box sx={{ px: 3, pb: 1.5 }}>
-        <Typography variant="body2" color="text.secondary" aria-live="polite">
+        <Typography variant="body2" aria-live="polite" sx={{
+          color: "text.secondary"
+        }}>
           {first ? (
             <>Step 2 of 2: compare {entryTitles(first).primary} with</>
           ) : (
@@ -111,7 +113,12 @@ export default function ComparePicker({
         sx={{ p: 0, height: { sm: 420 }, bgcolor: "background.paper" }}
       >
         {rows.length === 0 ? (
-          <Typography color="text.secondary" sx={{ px: 3, py: 2 }}>
+          <Typography
+            sx={{
+              color: "text.secondary",
+              px: 3,
+              py: 2
+            }}>
             No parasites match
           </Typography>
         ) : (
@@ -139,9 +146,11 @@ export default function ComparePicker({
                           <Typography
                             component="span"
                             variant="body2"
-                            color="text.secondary"
-                            sx={{ ml: 1, fontStyle: "italic" }}
-                          >
+                            sx={{
+                              color: "text.secondary",
+                              ml: 1,
+                              fontStyle: "italic"
+                            }}>
                             {titles.scientific}
                           </Typography>
                         ) : null}

@@ -40,12 +40,16 @@ export default function StudyReadySheet({
 
   return (
     <Stack spacing={2}>
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>
         Ready when you are. Start study opens the existing session for this
         deck.
       </Typography>
       {error ? <Alert severity="error">{error}</Alert> : null}
-      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+      <Stack direction="row" spacing={1} useFlexGap sx={{
+        flexWrap: "wrap"
+      }}>
         {due !== null ? (
           <Chip label={`${due} due`} color={due > 0 ? "primary" : "default"} />
         ) : null}

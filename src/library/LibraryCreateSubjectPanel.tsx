@@ -99,9 +99,12 @@ export function LibraryCreateSubjectPanel({
             </Typography>
             <Typography
               variant="body2"
-              color="text.secondary"
-              sx={{ mt: 1, maxWidth: "40ch", lineHeight: 1.5 }}
-            >
+              sx={{
+                color: "text.secondary",
+                mt: 1,
+                maxWidth: "40ch",
+                lineHeight: 1.5
+              }}>
               {resolvedBlurb}
             </Typography>
           </Box>
@@ -116,18 +119,22 @@ export function LibraryCreateSubjectPanel({
             required
             fullWidth
             error={Boolean(error)}
-            inputProps={{ maxLength: 80, "aria-label": fieldLabel }}
             helperText={error ?? `${titleValue.trim().length}/80`}
-            FormHelperTextProps={{
-              sx: {
-                textAlign: error ? "left" : "right",
-                mx: 0,
-                mt: 0.75,
-              },
-            }}
-          />
+            slotProps={{
+              htmlInput: { maxLength: 80, "aria-label": fieldLabel },
 
-          <Stack direction="row" spacing={1} justifyContent="flex-end">
+              formHelperText: {
+                sx: {
+                  textAlign: error ? "left" : "right",
+                  mx: 0,
+                  mt: 0.75,
+                },
+              }
+            }} />
+
+          <Stack direction="row" spacing={1} sx={{
+            justifyContent: "flex-end"
+          }}>
             <Button
               onClick={onCancel}
               disabled={busy}

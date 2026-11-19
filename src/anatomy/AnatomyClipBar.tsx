@@ -31,24 +31,25 @@ export default function AnatomyClipBar({
   return (
     <Stack
       direction="row"
-      alignItems="center"
-      flexWrap="wrap"
       useFlexGap
       spacing={0.75}
       sx={{
+        alignItems: "center",
+        flexWrap: "wrap",
         flexShrink: 0,
         px: embedded ? 0 : 1,
         py: embedded ? 0 : 0.5,
+
         ...(embedded
           ? {}
-          : { borderBottom: 1, borderColor: "divider" }),
-      }}
-    >
+          : { borderBottom: 1, borderColor: "divider" })
+      }}>
       <Typography
         variant="caption"
-        color="text.secondary"
-        sx={{ userSelect: "none" }}
-      >
+        sx={{
+          color: "text.secondary",
+          userSelect: "none"
+        }}>
         Clips
       </Typography>
       {clips.map((clip) => (

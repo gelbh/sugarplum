@@ -314,7 +314,6 @@ export default function BoardTile({
           indeterminate={select.indeterminate}
           disabled={select.disabled}
           onChange={select.onChange}
-          inputProps={{ "aria-label": select.inputLabel }}
           sx={{
             position: "absolute",
             top: 4,
@@ -322,6 +321,9 @@ export default function BoardTile({
             zIndex: 3,
             bgcolor: "rgba(0,0,0,0.35)",
             borderRadius: 1,
+          }}
+          slotProps={{
+            input: { "aria-label": select.inputLabel }
           }}
         />
       ) : null}

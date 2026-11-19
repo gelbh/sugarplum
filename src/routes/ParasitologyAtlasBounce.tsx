@@ -57,7 +57,12 @@ export default function ParasitologyAtlasBounce({
           <Typography component="h1" variant="h5" sx={{ fontWeight: 600 }}>
             Parasitology Atlas
           </Typography>
-          <Typography color="text.secondary" sx={{ mt: 1, mb: 2 }}>
+          <Typography
+            sx={{
+              color: "text.secondary",
+              mt: 1,
+              mb: 2
+            }}>
             Sign in to open your Parasitology Atlas.
           </Typography>
           <Button variant="contained" href="/login">
@@ -83,7 +88,9 @@ export default function ParasitologyAtlasBounce({
 
   return (
     <Box sx={{ px: 2, py: 4 }}>
-      <Typography color="text.secondary">
+      <Typography sx={{
+        color: "text.secondary"
+      }}>
         Opening Parasitology Atlas…
       </Typography>
     </Box>

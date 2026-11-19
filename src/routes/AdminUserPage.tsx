@@ -226,7 +226,9 @@ export default function AdminUserPage({ userId }: Props) {
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 5 } }}>
       {!ready ? (
-        <Typography color="text.secondary">Loading user…</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>Loading user…</Typography>
       ) : (
         <Stack spacing={3}>
           <Box>
@@ -247,7 +249,9 @@ export default function AdminUserPage({ userId }: Props) {
             >
               {detail?.email ?? "User"}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               {RETENTION_NOTE}
             </Typography>
           </Box>
@@ -259,7 +263,9 @@ export default function AdminUserPage({ userId }: Props) {
 
           {detail ? (
             <>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Stack direction="row" spacing={1} useFlexGap sx={{
+                flexWrap: "wrap"
+              }}>
                 <Button
                   variant="contained"
                   disabled={actionBusy || detail.id === user?.id}
@@ -305,16 +311,24 @@ export default function AdminUserPage({ userId }: Props) {
                 <Typography variant="h6" component="h2">
                   Profile
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   Id: {detail.id}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   Created: {formatCreated(detail.created_at)}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   Google linked: {detail.google_linked ? "Yes" : "No"}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   Disabled:{" "}
                   {detail.disabled_at
                     ? formatCreated(detail.disabled_at)
@@ -322,7 +336,9 @@ export default function AdminUserPage({ userId }: Props) {
                 </Typography>
               </Stack>
 
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Stack direction="row" spacing={1} useFlexGap sx={{
+                flexWrap: "wrap"
+              }}>
                 <Chip
                   label={`Decks: ${detail.counts.decks}`}
                   variant="outlined"
@@ -367,7 +383,9 @@ export default function AdminUserPage({ userId }: Props) {
                 ) : null}
               </Stack>
 
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 Export JSON still has full card and material text.
               </Typography>
 
@@ -376,7 +394,9 @@ export default function AdminUserPage({ userId }: Props) {
                   <Typography variant="h6" component="h2">
                     Study prefs
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Intro budget: {detail.studyPrefs.intro_budget}; review:{" "}
                     {detail.studyPrefs.review_budget}; r_floor:{" "}
                     {detail.studyPrefs.r_floor}
@@ -389,7 +409,9 @@ export default function AdminUserPage({ userId }: Props) {
                   <Typography variant="h6" component="h2">
                     Subjects
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>
                     {detail.subjects.map((s) => s.title).join(", ")}
                   </Typography>
                 </Stack>
@@ -400,7 +422,9 @@ export default function AdminUserPage({ userId }: Props) {
                   <Typography variant="h6" component="h2">
                     Decks
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>
                     {detail.decks.map((d) => d.title).join(", ")}
                   </Typography>
                 </Stack>
@@ -485,9 +509,10 @@ export default function AdminUserPage({ userId }: Props) {
                           <TableCell colSpan={5} align="center">
                             <Typography
                               variant="body2"
-                              color="text.secondary"
-                              sx={{ py: 2 }}
-                            >
+                              sx={{
+                                color: "text.secondary",
+                                py: 2
+                              }}>
                               No generation jobs.
                             </Typography>
                           </TableCell>
@@ -530,9 +555,10 @@ export default function AdminUserPage({ userId }: Props) {
                           <TableCell colSpan={2} align="center">
                             <Typography
                               variant="body2"
-                              color="text.secondary"
-                              sx={{ py: 2 }}
-                            >
+                              sx={{
+                                color: "text.secondary",
+                                py: 2
+                              }}>
                               No study day rows.
                             </Typography>
                           </TableCell>

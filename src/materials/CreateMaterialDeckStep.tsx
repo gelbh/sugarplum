@@ -133,7 +133,9 @@ export function CreateMaterialDeckStep({
               />
             ) : null}
             {subjectDeckChips.length > 0 ? (
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Stack direction="row" spacing={1} useFlexGap sx={{
+                flexWrap: "wrap"
+              }}>
                 {subjectDeckChips.map((chip) => (
                   <Button
                     key={chip}

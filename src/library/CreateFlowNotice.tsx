@@ -4,9 +4,9 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import ErrorOutlinedIcon from "@mui/icons-material/ErrorOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import HighlightOffOutlinedIcon from "@mui/icons-material/HighlightOffOutlined";
 import UndoRoundedIcon from "@mui/icons-material/UndoRounded";
 
@@ -26,7 +26,7 @@ const FADE_MS = 260;
 
 const TONE = {
   error: {
-    Icon: ErrorOutlineIcon,
+    Icon: ErrorOutlinedIcon,
     border: "rgba(229, 115, 115, 0.45)",
     bg: "rgba(91, 28, 36, 0.35)",
     icon: "error.light",
@@ -48,7 +48,7 @@ const TONE = {
     stageGlow: "0 10px 28px rgba(8, 2, 10, 0.32)",
   },
   success: {
-    Icon: CheckCircleOutlineIcon,
+    Icon: CheckCircleOutlinedIcon,
     border: "rgba(209, 163, 226, 0.32)",
     bg: "rgba(91, 44, 111, 0.28)",
     icon: "primary.light",

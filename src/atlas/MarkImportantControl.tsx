@@ -39,7 +39,9 @@ export default function MarkImportantControl({
   }
 
   return (
-    <Stack spacing={0.5} alignItems="flex-start">
+    <Stack spacing={0.5} sx={{
+      alignItems: "flex-start"
+    }}>
       {pinnedKey ? (
         <Button
           size={size}

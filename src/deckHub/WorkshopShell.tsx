@@ -46,16 +46,15 @@ export default function WorkshopShell({
     >
       <Stack
         direction="row"
-        alignItems="flex-start"
         spacing={1}
         sx={{
+          alignItems: "flex-start",
           flexShrink: 0,
           pb: 1.75,
           mb: 0.25,
           borderBottom: 1,
-          borderColor: "rgba(232, 216, 199, 0.14)",
-        }}
-      >
+          borderColor: "rgba(232, 216, 199, 0.14)"
+        }}>
         <IconButton
           edge="start"
           aria-label={closeMode ? "Close workshop" : "Back"}
@@ -104,9 +103,12 @@ export default function WorkshopShell({
           {subtitle ? (
             <Typography
               variant="body2"
-              color="text.secondary"
-              sx={{ mt: 0.75, maxWidth: "42ch", lineHeight: 1.5 }}
-            >
+              sx={{
+                color: "text.secondary",
+                mt: 0.75,
+                maxWidth: "42ch",
+                lineHeight: 1.5
+              }}>
               {subtitle}
             </Typography>
           ) : null}
