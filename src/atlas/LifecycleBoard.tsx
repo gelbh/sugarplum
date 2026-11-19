@@ -74,8 +74,27 @@ function SelectedStagePanel({
           flexWrap: "wrap",
         }}
       >
-        <Typography aria-live="polite" sx={atlasStageTitleSx}>
+        <Typography
+          aria-live="polite"
+          sx={{ ...atlasStageTitleSx, position: "relative" }}
+        >
           {termLabel(stage.name)}
+          <Box
+            component="span"
+            sx={{
+              position: "absolute",
+              width: 1,
+              height: 1,
+              padding: 0,
+              margin: -1,
+              overflow: "hidden",
+              clip: "rect(0, 0, 0, 0)",
+              whiteSpace: "nowrap",
+              border: 0,
+            }}
+          >
+            {` ${index + 1} of ${total}`}
+          </Box>
         </Typography>
         <Box
           sx={{
@@ -87,6 +106,7 @@ function SelectedStagePanel({
           }}
         >
           <Typography
+            aria-hidden
             color="text.secondary"
             sx={{
               fontSize: "0.78rem",

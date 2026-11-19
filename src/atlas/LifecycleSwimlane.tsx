@@ -31,7 +31,6 @@ type Props = {
   compactStepLabel?: boolean;
   /** Stage detail under the board; owns transport. Timeline stays below. */
   afterBoard?: (ctx: LifecycleDetailCtx) => ReactNode;
-  afterControls?: (ctx: LifecycleSwimCtx) => ReactNode;
 };
 
 function Transport({
@@ -89,7 +88,6 @@ export default function LifecycleSwimlane({
   fields,
   compactStepLabel = false,
   afterBoard,
-  afterControls,
 }: Props) {
   const {
     model,
@@ -253,6 +251,8 @@ export default function LifecycleSwimlane({
                 onSelect={() => {
                   setPlaying(false);
                   setIndex(i);
+                  // Cells are ButtonBase; refocus the board so Space still toggles play.
+                  rootRef.current?.focus();
                 }}
               />
             ))}
@@ -299,8 +299,6 @@ export default function LifecycleSwimlane({
       {ax ? (
         <Timeline axis={ax} ppp={model.ppp} windows={model.windows} />
       ) : null}
-
-      {afterControls?.(ctx)}
     </Box>
   );
 }

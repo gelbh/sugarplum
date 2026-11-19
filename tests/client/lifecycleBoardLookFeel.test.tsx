@@ -55,7 +55,7 @@ describe("LifecycleBoard look-and-feel", () => {
     const live = document.querySelector('[aria-live="polite"]');
     expect(live?.textContent ?? "").not.toMatch(/Step \d+ of \d+/);
     expect(live?.textContent ?? "").not.toMatch(/Now,/);
-    expect(live?.textContent?.trim().length).toBeGreaterThan(0);
+    expect(live?.textContent ?? "").toMatch(/\d+ of \d+/);
     expect(document.body.textContent ?? "").toMatch(/\d+ \/ \d+/);
     expect(
       document.querySelector(
