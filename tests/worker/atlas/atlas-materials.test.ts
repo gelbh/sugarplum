@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import JSZip from "jszip";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
@@ -205,6 +205,73 @@ describe("atlas course pack materials API", () => {
     ).toMatchObject({
       tier: "key",
     });
+  });
+
+  it("complete PDF without ocrPages Keys when extract finds page text", async () => {
+    const extractMod = await import("../../../worker/materials/extract-pdf");
+    const spy = vi
+      .spyOn(extractMod, "extractPdfPages")
+      .mockResolvedValue({
+        pages: [{ page: 1, text: "Fasciola hepatica tutorial intro" }],
+        totalPages: 1,
+        pageStart: 1,
+        pageEnd: 1,
+      });
+    try {
+      const env = createTestEnv();
+      seedOwner(env);
+      const atlas = await createAtlas(env);
+
+      const upload = await app.request(
+        `/api/atlas/${atlas.id}/materials/upload-url`,
+        {
+          method: "POST",
+          headers: authHeaders(true),
+          body: JSON.stringify({
+            filename: "AB2_tutorial_01.pdf",
+            contentType: "application/pdf",
+            size: 12,
+            source_role: "tutorial",
+          }),
+        },
+        env,
+      );
+      expect(upload.status).toBe(200);
+      const { materialId, r2Key } = (await upload.json()) as {
+        materialId: string;
+        r2Key: string;
+      };
+      env.seedR2(r2Key, "%PDF-fake");
+
+      const complete = await app.request(
+        `/api/atlas/materials/${materialId}/complete`,
+        { method: "POST", headers: authHeaders() },
+        env,
+      );
+      expect(complete.status).toBe(200);
+      expect(await complete.json()).toMatchObject({
+        id: materialId,
+        status: "ready",
+        jobId: null,
+      });
+      expect(env.getGenerationJobs()).toHaveLength(0);
+      expect(spy).toHaveBeenCalled();
+
+      const list = await app.request(
+        `/api/atlas/${atlas.id}/entries`,
+        { headers: authHeaders() },
+        env,
+      );
+      const body = (await list.json()) as { entries: AtlasEntryView[] };
+      expect(
+        body.entries.find((e) => e.id === "fasciola-hepatica"),
+      ).toMatchObject({
+        tier: "key",
+        reason: expect.stringMatching(/tutorial/i),
+      });
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it("delete pack material drops Focus contribution on refresh", async () => {

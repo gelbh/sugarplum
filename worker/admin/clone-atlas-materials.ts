@@ -87,13 +87,10 @@ export async function cloneAtlasMaterials(
       try {
         const sidecar = await readAtlasOcrSidecar(env, sourceAtlasId, row.id);
         if (sidecar?.pages.length) {
-          await writeAtlasOcrSidecar(
-            env,
-            destAtlasId,
-            materialId,
-            sidecar.pages,
-            sidecar.unstudiedPages ?? [],
-          );
+          await writeAtlasOcrSidecar(env, destAtlasId, materialId, sidecar.pages, {
+            unstudiedPages: sidecar.unstudiedPages ?? [],
+            sourceContentHash: sidecar.sourceContentHash,
+          });
         }
       } catch {
         /* best-effort OCR clone */

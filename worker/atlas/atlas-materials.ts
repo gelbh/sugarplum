@@ -1,7 +1,14 @@
 import type { Env } from "../env";
 import { isSourceRole, type SourceRole } from "../../src/lib/sourceRole";
 import { type FocusMaterial } from "../../src/atlas/focusScan";
-import { readAtlasOcrSidecar } from "../materials/ocr-sidecar";
+import { extractPdfPages } from "../materials/extract-pdf";
+import {
+  applyOcrSidecar,
+  focusSidecarCacheHit,
+  OCR_PAGE_CHAR_CAP,
+  readAtlasOcrSidecar,
+  writeAtlasOcrSidecar,
+} from "../materials/ocr-sidecar";
 import { persistAtlasPptxSidecarFromBytes } from "./pptx-sidecar";
 
 export type AtlasMaterialScanRow = {
@@ -12,6 +19,7 @@ export type AtlasMaterialScanRow = {
   filename: string | null;
   source_role: string;
   status: string;
+  content_hash: string | null;
 };
 
 const READY_STATUS = "ready";
@@ -23,7 +31,8 @@ export async function loadAtlasMaterialRows(
 ): Promise<AtlasMaterialScanRow[]> {
   const { results } = await db
     .prepare(
-      `SELECT id, atlas_id, kind, r2_key, filename, source_role, status
+      `SELECT id, atlas_id, kind, r2_key, filename, source_role, status,
+              content_hash
        FROM atlas_materials
        WHERE atlas_id = ?`,
     )
@@ -67,6 +76,55 @@ async function loadPptxPages(
   return pages;
 }
 
+/** Exported for tests: PDF Focus corpus = native extract + OCR fill + hash cache. */
+export async function loadAtlasPdfFocusPages(
+  env: Env,
+  row: AtlasMaterialScanRow,
+): Promise<FocusMaterial["pages"]> {
+  const sidecar = await readAtlasOcrSidecar(env, row.atlas_id, row.id);
+  if (focusSidecarCacheHit(sidecar, row.content_hash)) {
+    return sidecar!.pages.map((p) => ({ page: p.page, text: p.text }));
+  }
+
+  if (!row.r2_key) {
+    return sidecar?.pages.length
+      ? sidecar.pages.map((p) => ({ page: p.page, text: p.text }))
+      : [];
+  }
+
+  try {
+    const obj = await env.MATERIALS.get(row.r2_key);
+    if (!obj) {
+      return sidecar?.pages.length
+        ? sidecar.pages.map((p) => ({ page: p.page, text: p.text }))
+        : [];
+    }
+    const window = await extractPdfPages(await obj.arrayBuffer());
+    const native = window.pages.map((p) => ({
+      page: p.page,
+      // Match parseStoredOcrPages cap so Focus cache round-trips.
+      text: p.text.trim().slice(0, OCR_PAGE_CHAR_CAP),
+    }));
+    const merged = applyOcrSidecar(native, sidecar);
+    if (row.content_hash && merged.some((p) => p.text.trim())) {
+      try {
+        await writeAtlasOcrSidecar(env, row.atlas_id, row.id, merged, {
+          sourceContentHash: row.content_hash,
+          unstudiedPages: sidecar?.unstudiedPages,
+        });
+      } catch (err) {
+        console.warn("atlas Focus sidecar write failed", err);
+      }
+    }
+    return merged;
+  } catch (err) {
+    console.warn("atlas PDF Focus extract failed", err);
+    return sidecar?.pages.length
+      ? sidecar.pages.map((p) => ({ page: p.page, text: p.text }))
+      : [];
+  }
+}
+
 async function toFocusMaterial(
   env: Env,
   row: AtlasMaterialScanRow,
@@ -85,12 +143,7 @@ async function toFocusMaterial(
       /* filename-only fallback */
     }
   } else if (row.kind === "pdf") {
-    const sidecar = await readAtlasOcrSidecar(env, row.atlas_id, row.id);
-    if (sidecar?.pages.length) {
-      for (const p of sidecar.pages) {
-        pages.push({ page: p.page, text: p.text });
-      }
-    }
+    pages = await loadAtlasPdfFocusPages(env, row);
   } else if (row.kind === "pptx") {
     pages = await loadPptxPages(env, row);
   }
