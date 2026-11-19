@@ -252,6 +252,17 @@ describe("atlas user-owned routes", () => {
     expect(patch.status).toBe(200);
     const edited = (await patch.json()) as AtlasEntryView;
     expect(edited.fields.definitiveHosts).toEqual(["sheep", "cattle"]);
+    const dataset = loadParasiteDataset().entries.find(
+      (e) => e.key === "fasciola-hepatica",
+    )!;
+    expect(edited.fields.lifecycleStages.length).toBeGreaterThan(0);
+    expect(edited.fields.lifecycleStages).toEqual(
+      dataset.fields.lifecycleStages,
+    );
+    expect(edited.fields.majorOrgan).toBe(dataset.fields.majorOrgan);
+    expect(edited.fields.diagnosticTests).toEqual(
+      dataset.fields.diagnosticTests,
+    );
 
     const reset = await app.request(
       `/api/atlas/${atlasId}/entries/${edited.id}/reset`,
@@ -269,6 +280,43 @@ describe("atlas user-owned routes", () => {
     const view = body.entries.find((e) => e.id === "fasciola-hepatica");
     expect(view?.commonName).not.toBe("Temp edit");
     expect(view?.editedAt).toBeNull();
+  });
+
+  it("PATCHing lifecycleStages preserves sibling hosts", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const { id: atlasId } = await createAtlas(env);
+    const dataset = loadParasiteDataset().entries.find(
+      (e) => e.key === "fasciola-hepatica",
+    )!;
+
+    const patch = await app.request(
+      `/api/atlas/${atlasId}/entries/fasciola-hepatica`,
+      {
+        method: "PATCH",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          fields: {
+            lifecycleStages: [
+              {
+                name: "egg",
+                location: "faeces",
+                diagnostic: true,
+              },
+            ],
+            diagnosticStage: "egg",
+          },
+        }),
+      },
+      env,
+    );
+    expect(patch.status).toBe(200);
+    const edited = (await patch.json()) as AtlasEntryView;
+    expect(edited.fields.lifecycleStages).toHaveLength(1);
+    expect(edited.fields.definitiveHosts).toEqual(
+      dataset.fields.definitiveHosts,
+    );
+    expect(edited.fields.majorOrgan).toBe(dataset.fields.majorOrgan);
   });
 
   it("refuses permanent delete of a soft-deleted dataset overlay", async () => {

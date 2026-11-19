@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { parseFieldsPatch } from "../../../worker/atlas/entry-helpers";
 import {
   emptyParasiteFields,
   PARASITE_FIELD_KEYS,
+  parasiteFieldsPatchSchema,
   parasiteFieldsSchema,
 } from "../../../worker/atlas/templates/parasite";
 
@@ -113,5 +115,21 @@ describe("parasite template", () => {
 
   it("rejects empty strings instead of storing them", () => {
     expect(() => parasiteFieldsSchema.parse({ family: "  " })).toThrow();
+  });
+
+  it("patch schema keys match PARASITE_FIELD_KEYS", () => {
+    expect(Object.keys(parasiteFieldsPatchSchema.shape)).toEqual(
+      PARASITE_FIELD_KEYS,
+    );
+  });
+
+  it("sparse patch parse keeps only provided keys", () => {
+    const patch = parseFieldsPatch({ definitiveHosts: ["sheep"] });
+    expect(patch).toEqual({ definitiveHosts: ["sheep"] });
+    expect(Object.keys(patch!)).toEqual(["definitiveHosts"]);
+  });
+
+  it("rejects unknown field keys on patch", () => {
+    expect(() => parseFieldsPatch({ notAField: 1 })).toThrow();
   });
 });

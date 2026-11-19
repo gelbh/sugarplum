@@ -15,11 +15,17 @@ export const PARASITE_GROUPS = [
 export const ZOONOTIC_VALUES = ["yes", "no", "potential"] as const;
 
 const text = z.string().trim().min(1);
-const optionalText = text.nullable().default(null);
-const textList = z.array(text).default([]);
-const week = z.number().min(0).nullable().default(null);
-const regionList = z.array(z.enum(DISTRIBUTION_REGION_TERM_KEYS)).default([]);
-const climateList = z.array(z.enum(CLIMATE_BAND_TERM_KEYS)).default([]);
+/** Nullable text without a default (shared by full + patch schemas). */
+const nullableText = text.nullable();
+const optionalText = nullableText.default(null);
+const textListCore = z.array(text);
+const textList = textListCore.default([]);
+const weekCore = z.number().min(0).nullable();
+const week = weekCore.default(null);
+const regionListCore = z.array(z.enum(DISTRIBUTION_REGION_TERM_KEYS));
+const regionList = regionListCore.default([]);
+const climateListCore = z.array(z.enum(CLIMATE_BAND_TERM_KEYS));
+const climateList = climateListCore.default([]);
 
 export const diagnosticTestSchema = z
   .object({
@@ -86,6 +92,36 @@ export const parasiteFieldsSchema = z.object({
   diagnosticStage: optionalText,
   diagnosticTests: z.array(diagnosticTestSchema).default([]),
 });
+
+/**
+ * Sparse PATCH body: same keys, no `.default()`s so missing keys stay absent.
+ * Keep keys in sync with parasiteFieldsSchema (parity test).
+ */
+export const parasiteFieldsPatchSchema = z
+  .object({
+    phylum: nullableText.optional(),
+    order: nullableText.optional(),
+    family: nullableText.optional(),
+    group: z.enum(PARASITE_GROUPS).nullable().optional(),
+    definitiveHosts: textListCore.optional(),
+    intermediateHosts: textListCore.optional(),
+    paratenicHosts: textListCore.optional(),
+    vectorRole: nullableText.optional(),
+    majorOrgan: nullableText.optional(),
+    onHostStages: textListCore.optional(),
+    distribution: nullableText.optional(),
+    distributionWorldwide: z.boolean().optional(),
+    distributionRegions: regionListCore.optional(),
+    climateBands: climateListCore.optional(),
+    zoonotic: z.enum(ZOONOTIC_VALUES).nullable().optional(),
+    significance: nullableText.optional(),
+    lifecycleType: z.enum(["direct", "indirect"]).nullable().optional(),
+    pppDays: pppDaysSchema.nullable().optional(),
+    lifecycleStages: z.array(lifecycleStageSchema).optional(),
+    diagnosticStage: nullableText.optional(),
+    diagnosticTests: z.array(diagnosticTestSchema).optional(),
+  })
+  .strict();
 
 export type ParasiteFields = z.output<typeof parasiteFieldsSchema>;
 export type ParasiteFieldKey = keyof ParasiteFields;
