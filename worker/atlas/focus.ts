@@ -297,6 +297,14 @@ export async function refreshFocusBestEffort(
   }
 }
 
+export type ListEntriesWithFocusResult = {
+  entries: AtlasEntryView[];
+  /** True when Focus refresh was scheduled off the request path (PDF extract). */
+  focusRefreshPending: boolean;
+};
+
+const FOCUS_REFRESH_LEASE = "refreshing:";
+
 export async function listEntriesWithFocus(
   db: D1Database,
   env: Env,
@@ -304,8 +312,14 @@ export async function listEntriesWithFocus(
     atlasId: string;
     userId: string;
     entries: AtlasEntryView[];
+    /**
+     * When set (Workers `waitUntil`), expensive pack rescans run in the
+     * background so GET /entries stays under the Worker wall-clock limit.
+     * Omit in tests / make-cards to await a consistent map.
+     */
+    schedule?: (promise: Promise<unknown>) => void;
   },
-): Promise<AtlasEntryView[]> {
+): Promise<ListEntriesWithFocusResult> {
   let focus = await loadFocusMap(db, opts.atlasId);
   const missing = opts.entries.some((e) => !focus.has(focusEntryKey(e)));
   const materialRows = await loadAtlasMaterialRows(db, opts.atlasId);
@@ -315,19 +329,72 @@ export async function listEntriesWithFocus(
     db,
     opts.atlasId,
   );
-  const fingerprintStale = storedFingerprint !== currentFingerprint;
-  // Pack-only Focus: empty pack must clear stale deck-era automatic rows.
-  // Incomplete maps still scan when the pack has ready materials. Pack
-  // fingerprint mismatch (incl. NULL after migrate) heals complete stale maps.
-  if (
-    (missing && readyCount > 0) ||
-    (focus.size > 0 && readyCount === 0) ||
-    fingerprintStale
-  ) {
+  const refreshInFlight =
+    storedFingerprint?.startsWith(FOCUS_REFRESH_LEASE) === true;
+  const fingerprintStale =
+    !refreshInFlight && storedFingerprint !== currentFingerprint;
+  const emptyPackStale = focus.size > 0 && readyCount === 0;
+  const needsPackScan =
+    (missing && readyCount > 0) || fingerprintStale;
+
+  // Empty-pack clear is cheap (D1 only). Pack scans extract PDFs and must not
+  // block GET when a schedule hook is available.
+  if (emptyPackStale) {
+    await refreshFocusBestEffort(db, env, { atlasId: opts.atlasId });
+    focus = await loadFocusMap(db, opts.atlasId);
+    return {
+      entries: enrichEntriesWithFocus(opts.entries, focus),
+      focusRefreshPending: false,
+    };
+  }
+
+  if (refreshInFlight) {
+    return {
+      entries: enrichEntriesWithFocus(opts.entries, focus),
+      focusRefreshPending: true,
+    };
+  }
+
+  if (needsPackScan) {
+    if (opts.schedule) {
+      await saveFocusPackFingerprint(
+        db,
+        opts.atlasId,
+        `${FOCUS_REFRESH_LEASE}${currentFingerprint}`,
+      );
+      opts.schedule(
+        (async () => {
+          try {
+            await refreshAtlasFocus(db, env, { atlasId: opts.atlasId });
+          } catch (err) {
+            console.warn("atlas focus refresh failed", err);
+            try {
+              // Clear lease so a later GET can retry.
+              await db
+                .prepare(
+                  "UPDATE atlases SET focus_pack_fingerprint = NULL WHERE id = ?",
+                )
+                .bind(opts.atlasId)
+                .run();
+            } catch {
+              /* lease clear best-effort */
+            }
+          }
+        })(),
+      );
+      return {
+        entries: enrichEntriesWithFocus(opts.entries, focus),
+        focusRefreshPending: true,
+      };
+    }
     await refreshFocusBestEffort(db, env, { atlasId: opts.atlasId });
     focus = await loadFocusMap(db, opts.atlasId);
   }
-  return enrichEntriesWithFocus(opts.entries, focus);
+
+  return {
+    entries: enrichEntriesWithFocus(opts.entries, focus),
+    focusRefreshPending: false,
+  };
 }
 
 export async function setFocusOverride(

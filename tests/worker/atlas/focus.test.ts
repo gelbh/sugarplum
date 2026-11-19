@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   enrichEntriesWithFocus,
+  listEntriesWithFocus,
   refreshAtlasFocus,
   setFocusOverride,
 } from "../../../worker/atlas/focus";
+import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites";
+import { overlayAtlas } from "../../../worker/atlas/merge";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
 import { createTestEnv } from "../test-env";
@@ -542,6 +545,94 @@ describe("atlas focus empty materials and lazy GET", () => {
     expect(
       body.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
     ).toBeNull();
+  });
+
+  it("schedules pack Focus refresh when schedule is provided", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+
+    const paste = await pasteAtlasPack(env, atlasId, {
+      text: "Fasciola hepatica named late in the handout.",
+      filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
+      source_role: "tutorial",
+    });
+    expect(paste.status).toBe(201);
+
+    const warm = await app.request(
+      `/api/atlas/${atlasId}/entries`,
+      { headers: authHeaders() },
+      env,
+    );
+    expect(warm.status).toBe(200);
+
+    await env.DB.prepare(
+      `INSERT OR REPLACE INTO atlas_entry_focus (
+         atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        atlasId,
+        "fasciola-hepatica",
+        "standard",
+        "Standard",
+        "[]",
+        null,
+        "2026-01-01T00:00:00.000Z",
+      )
+      .run();
+    await env.DB.prepare(
+      "UPDATE atlases SET focus_pack_fingerprint = ? WHERE id = ?",
+    )
+      .bind(null, atlasId)
+      .run();
+
+    const merged = overlayAtlas(loadParasiteDataset().entries, []);
+    let scheduled: Promise<unknown> | null = null;
+    const first = await listEntriesWithFocus(env.DB, env, {
+      atlasId,
+      userId: "user-a",
+      entries: merged,
+      schedule: (p) => {
+        scheduled = p;
+      },
+    });
+    expect(first.focusRefreshPending).toBe(true);
+    expect(
+      first.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
+    ).toBe("standard");
+    const lease = await env.DB.prepare(
+      "SELECT focus_pack_fingerprint FROM atlases WHERE id = ?",
+    )
+      .bind(atlasId)
+      .first<{ focus_pack_fingerprint: string | null }>();
+    expect(lease?.focus_pack_fingerprint).toMatch(/^refreshing:/);
+    expect(scheduled).not.toBeNull();
+
+    const mid = await listEntriesWithFocus(env.DB, env, {
+      atlasId,
+      userId: "user-a",
+      entries: merged,
+      schedule: () => {
+        throw new Error("must not schedule again while leased");
+      },
+    });
+    expect(mid.focusRefreshPending).toBe(true);
+
+    await scheduled!;
+
+    const second = await listEntriesWithFocus(env.DB, env, {
+      atlasId,
+      userId: "user-a",
+      entries: merged,
+    });
+    expect(second.focusRefreshPending).toBe(false);
+    expect(
+      second.entries.find((e) => e.id === "fasciola-hepatica"),
+    ).toMatchObject({
+      tier: "key",
+      reason: expect.stringMatching(/tutorial/i),
+    });
   });
 
   it("rescans complete Focus map when pack fingerprint is missing or stale", async () => {
