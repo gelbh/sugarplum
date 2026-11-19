@@ -10,7 +10,10 @@ import {
   parseCardsPayload,
   withCompactTruncationRetry,
 } from "./llm-json";
-import { workersAiJsonSchemaResponseFormat } from "./cards-json-schema";
+import {
+  responseFormatForJsonShape,
+  type CompleteJsonShape,
+} from "./cards-json-schema";
 import { appendExtraUserSuffix } from "./feedback-hints";
 import {
   GENERATE_COMPACT_SYSTEM_PROMPT,
@@ -184,7 +187,12 @@ export function createWorkersAiAdapter(
     throw new Error("Workers AI binding (env.AI) is not configured");
   }
 
-  async function runChat(system: string, user: string): Promise<AiRunContent> {
+  async function runChat(
+    system: string,
+    user: string,
+    jsonShape: CompleteJsonShape = "cards",
+  ): Promise<AiRunContent> {
+    const preferredFormat = responseFormatForJsonShape(jsonShape);
     const base = {
       messages: [
         { role: "system" as const, content: system },
@@ -199,9 +207,7 @@ export function createWorkersAiAdapter(
     async function tryRun(withJsonMode: boolean): Promise<unknown | null> {
       const inputs = {
         ...base,
-        ...(withJsonMode
-          ? { response_format: workersAiJsonSchemaResponseFormat() }
-          : {}),
+        ...(withJsonMode ? { response_format: preferredFormat } : {}),
       };
       const gateway = {
         gateway: {
@@ -244,7 +250,11 @@ export function createWorkersAiAdapter(
 
   async function complete(input: CompleteInput) {
     // apiKey ignored: Workers AI uses the binding, not BYO secrets.
-    const run = await runChat(input.system, input.user);
+    const run = await runChat(
+      input.system,
+      input.user,
+      input.jsonShape ?? "cards",
+    );
     const usage = {
       prompt_tokens: run.promptTokens,
       completion_tokens: run.completionTokens,
@@ -255,9 +265,11 @@ export function createWorkersAiAdapter(
     } catch {
       // best-effort
     }
-    if (run.finishReason === "length") {
-      throw new Error(
-        "Workers AI response truncated (hit token limit). Try a shorter source or fewer facts.",
+    if (run.finishReason === "length" && run.content.length > 0) {
+      // Match isTruncationParseError so claim/write compact retry can fire.
+      throw withAiDiagnostics(
+        new Error("LLM response truncated mid-JSON"),
+        run,
       );
     }
     return { text: run.content, usage };

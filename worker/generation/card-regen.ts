@@ -47,11 +47,12 @@ type TextRegenDraft = {
   provenance: CardDraft["provenance"];
 };
 
-const REGEN_ONE_SYSTEM_PROMPT = `You regenerate a single spaced-repetition flashcard from study material.
+export const REGEN_ONE_SYSTEM_PROMPT = `You regenerate a single spaced-repetition flashcard from study material.
 
 Rules:
 - Produce exactly one card of the requested type.
 - One atomic fact; keep front/back under ~25 words; provenance.excerpt under ~12 words.
+- No compound stems: do not ask "and what/which/how/why", do not use versus-paired multi-fact questions.
 - Only create a card clearly grounded in the source excerpt.
 - Cloze front must use exactly one Anki-style blank: {{c1::answer}}. Never multiple blanks.
 - Cloze Extra (back) is optional: use "" when unused.

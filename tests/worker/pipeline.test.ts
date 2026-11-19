@@ -21,46 +21,114 @@ function validDraft(
   });
 }
 
+function materialFromUser(user: string): string {
+  const start = user.indexOf("--- MATERIAL ---");
+  const end = user.indexOf("--- END ---");
+  if (start >= 0 && end > start) {
+    return user.slice(start + "--- MATERIAL ---".length, end).trim();
+  }
+  return user.trim();
+}
+
+function defaultClaim(material: string) {
+  const span = material.slice(0, Math.min(60, material.length)) || "excerpt";
+  return {
+    subject: "Topic",
+    predicate: "is stated in the material",
+    source_span: span,
+    pages: [1] as number[],
+  };
+}
+
+function defaultWriteDraft(material: string): CardDraft {
+  return validDraft({
+    front: "What produces ATP?",
+    back: "mitochondria",
+    provenance: {
+      pages: [1],
+      excerpt: material.slice(0, 80) || "excerpt",
+    },
+  });
+}
+
+/**
+ * Stub LLM for the claim pipeline: sniff system prompt for extract / write / critique.
+ * `generateDrafts` must never be required for the text path.
+ */
 function mockPipelineLlm(opts: {
-  generate?: (text: string) => Promise<CardDraft[]>;
-  complete?: (args: {
+  claimsForMaterial?: (material: string) => ReturnType<typeof defaultClaim>[];
+  writeDrafts?: (material: string, user: string) => CardDraft[];
+  critique?: (args: {
     system: string;
     user: string;
-  }) => Promise<string>;
+  }) => string | { text: string; usage?: null };
 }): PipelineLlm {
   return {
-    generateDrafts: vi.fn(async ({ text }) => {
-      if (opts.generate) return opts.generate(text);
-      return [
-        validDraft({
-          front: "What produces ATP?",
-          back: "mitochondria",
-          provenance: {
-            pages: [1],
-            excerpt: text.slice(0, 80) || "excerpt",
-          },
-        }),
-      ];
+    generateDrafts: vi.fn(async () => {
+      throw new Error("generateDrafts must not be called for text claim path");
     }),
     complete: vi.fn(async (args) => {
-      if (opts.complete) {
-        const out = await opts.complete(args);
-        return typeof out === "string" ? { text: out, usage: null } : out;
+      const { system, user } = args;
+      const s = system.toLowerCase();
+      if (s.includes("extract") && s.includes("claim")) {
+        const material = materialFromUser(user);
+        const claims = opts.claimsForMaterial
+          ? opts.claimsForMaterial(material)
+          : [defaultClaim(material)];
+        return { text: JSON.stringify({ claims }), usage: null };
       }
-      // Default: keep whatever cards appear after CANDIDATES in the user prompt
-      return {
-        text: JSON.stringify({
-          cards: [
-            validDraft({
-              front: "What produces ATP?",
-              back: "mitochondria",
-            }),
-          ],
-        }),
-        usage: null,
-      };
+      if (s.includes("critique")) {
+        if (opts.critique) {
+          const out = await opts.critique(args);
+          return typeof out === "string" ? { text: out, usage: null } : out;
+        }
+        return {
+          text: JSON.stringify({
+            cards: [
+              validDraft({
+                front: "What produces ATP?",
+                back: "mitochondria",
+              }),
+            ],
+          }),
+          usage: null,
+        };
+      }
+      // Card-from-claim write (or unknown): produce drafts.
+      const material = materialFromUser(user);
+      const drafts = opts.writeDrafts
+        ? opts.writeDrafts(material, user)
+        : [defaultWriteDraft(material || "excerpt")];
+      return { text: JSON.stringify({ cards: drafts }), usage: null };
     }),
   };
+}
+
+function extractMaterials(llm: PipelineLlm): string[] {
+  return vi
+    .mocked(llm.complete)
+    .mock.calls.map((c) => c[0] as { system: string; user: string })
+    .filter(
+      (c) =>
+        c.system.toLowerCase().includes("extract") &&
+        c.system.toLowerCase().includes("claim"),
+    )
+    .map((c) => materialFromUser(c.user));
+}
+
+function writeUsers(llm: PipelineLlm): string[] {
+  return vi
+    .mocked(llm.complete)
+    .mock.calls.map((c) => c[0] as { system: string; user: string })
+    .filter((c) => {
+      const s = c.system.toLowerCase();
+      return (
+        (s.includes("flashcard") || s.includes("study claim")) &&
+        !s.includes("critique") &&
+        !(s.includes("extract") && s.includes("claim"))
+      );
+    })
+    .map((c) => c.user);
 }
 
 describe("runGenerationPipeline", () => {
@@ -85,28 +153,7 @@ describe("runGenerationPipeline", () => {
   });
 
   it("chunks long text under the hard cap and processes sequentially", async () => {
-    const seenChunks: string[] = [];
-    const llm = mockPipelineLlm({
-      generate: async (text) => {
-        seenChunks.push(text);
-        return [
-          validDraft({
-            front: `Q for chunk ${seenChunks.length}?`,
-            back: "A",
-            provenance: { pages: [1], excerpt: text.slice(0, 40) },
-          }),
-        ];
-      },
-      complete: async () =>
-        JSON.stringify({
-          cards: [
-            validDraft({
-              front: "kept",
-              back: "yes",
-            }),
-          ],
-        }),
-    });
+    const llm = mockPipelineLlm({});
 
     // Prefer paragraph breaks: two ~3.5k blocks → two chunks under 6k.
     const block = "x".repeat(3500);
@@ -120,11 +167,12 @@ describe("runGenerationPipeline", () => {
       provider: "mock",
     });
 
+    const seenChunks = extractMaterials(llm);
     expect(seenChunks.length).toBeGreaterThanOrEqual(2);
     for (const chunk of seenChunks) {
       expect(chunk.length).toBeLessThanOrEqual(CHUNK_CHAR_LIMIT);
     }
-    expect(llm.generateDrafts).toHaveBeenCalledTimes(seenChunks.length);
+    expect(llm.generateDrafts).not.toHaveBeenCalled();
     expect(drafts.length).toBeGreaterThan(0);
   });
 
@@ -136,24 +184,7 @@ describe("runGenerationPipeline", () => {
       label: string;
       halfStepsDone: number;
     }> = [];
-    const llm = mockPipelineLlm({
-      generate: async (text) => [
-        validDraft({
-          front: `Q?`,
-          back: "A",
-          provenance: { pages: [1], excerpt: text.slice(0, 40) },
-        }),
-      ],
-      complete: async () =>
-        JSON.stringify({
-          cards: [
-            validDraft({
-              front: "kept",
-              back: "yes",
-            }),
-          ],
-        }),
-    });
+    const llm = mockPipelineLlm({});
 
     const block = "x".repeat(3500);
     const text = `${block}\n\n${block}`;
@@ -194,11 +225,10 @@ describe("runGenerationPipeline", () => {
     expect(events[4]!.label).toContain("chunk 2/2");
   });
 
-  it("advances critique half-steps when generate returns empty", async () => {
+  it("advances critique half-steps when extract returns empty", async () => {
     const events: Array<{ stage: string; halfStepsDone: number }> = [];
     const llm = mockPipelineLlm({
-      generate: async () => [],
-      complete: async () => JSON.stringify({ cards: [] }),
+      claimsForMaterial: () => [],
     });
 
     await runGenerationPipeline({
@@ -217,21 +247,13 @@ describe("runGenerationPipeline", () => {
       ["critique", 1],
       ["critique", 2],
     ]);
-    expect(llm.complete).not.toHaveBeenCalled();
+    // Extract complete only; no write/critique.
+    expect(llm.complete).toHaveBeenCalledTimes(1);
+    expect(llm.generateDrafts).not.toHaveBeenCalled();
   });
 
-  it("caps generateDrafts calls at MAX_PIPELINE_CHUNKS", async () => {
-    const llm = mockPipelineLlm({
-      generate: async () => [
-        validDraft({ front: "Q?", back: "A", provenance: { pages: [1], excerpt: "e" } }),
-      ],
-      complete: async () =>
-        JSON.stringify({
-          cards: [
-            validDraft({ front: "Q?", back: "A", provenance: { pages: [1], excerpt: "e" } }),
-          ],
-        }),
-    });
+  it("caps extract complete calls at MAX_PIPELINE_CHUNKS", async () => {
+    const llm = mockPipelineLlm({});
 
     // 6 paragraph blocks → would be 6 chunks without the cap.
     const block = "y".repeat(CHUNK_CHAR_LIMIT - 10);
@@ -244,20 +266,22 @@ describe("runGenerationPipeline", () => {
       provider: "mock",
     });
 
-    expect(llm.generateDrafts).toHaveBeenCalledTimes(MAX_PIPELINE_CHUNKS);
-    expect(llm.complete).toHaveBeenCalledTimes(MAX_PIPELINE_CHUNKS);
+    expect(extractMaterials(llm)).toHaveLength(MAX_PIPELINE_CHUNKS);
+    // extract + write + critique per chunk
+    expect(llm.complete).toHaveBeenCalledTimes(MAX_PIPELINE_CHUNKS * 3);
+    expect(llm.generateDrafts).not.toHaveBeenCalled();
   });
 
   it("tells later chunks which fronts are already covered", async () => {
     const llm = mockPipelineLlm({
-      generate: async () => [
+      writeDrafts: () => [
         validDraft({
           front: "What produces ATP?",
           back: "mitochondria",
           provenance: { pages: [1], excerpt: "e" },
         }),
       ],
-      complete: async () =>
+      critique: async () =>
         JSON.stringify({
           cards: [
             validDraft({
@@ -277,12 +301,12 @@ describe("runGenerationPipeline", () => {
       provider: "mock",
       avoidFronts: ["Existing host of Eimeria tenella?"],
     });
-    const calls = vi.mocked(llm.generateDrafts).mock.calls;
-    expect(calls[0]?.[0].extraUserSuffix).toContain("Eimeria tenella");
-    expect(calls[1]?.[0].extraUserSuffix).toContain("What produces ATP?");
+    const users = writeUsers(llm);
+    expect(users[0]).toContain("Eimeria tenella");
+    expect(users[1]).toContain("What produces ATP?");
   });
 
-  it("runs generate then critique and returns critique survivors", async () => {
+  it("runs extract then write then critique and returns critique survivors", async () => {
     const generated = validDraft({
       front: "What produces ATP?",
       back: "mitochondria",
@@ -293,8 +317,8 @@ describe("runGenerationPipeline", () => {
     });
 
     const llm = mockPipelineLlm({
-      generate: async () => [generated],
-      complete: async ({ system, user }) => {
+      writeDrafts: () => [generated],
+      critique: async ({ system, user }) => {
         expect(system.toLowerCase()).toMatch(/critique|keep|drop|rewrite/);
         expect(user).toContain("What produces ATP?");
         return JSON.stringify({ cards: [rewritten] });
@@ -308,8 +332,8 @@ describe("runGenerationPipeline", () => {
       provider: "mock",
     });
 
-    expect(llm.generateDrafts).toHaveBeenCalledTimes(1);
-    expect(llm.complete).toHaveBeenCalledTimes(1);
+    expect(llm.generateDrafts).not.toHaveBeenCalled();
+    expect(llm.complete).toHaveBeenCalledTimes(3);
     expect(drafts).toEqual([rewritten]);
   });
 
@@ -332,8 +356,8 @@ describe("runGenerationPipeline", () => {
     });
 
     const llm = mockPipelineLlm({
-      generate: async () => [grounded, ungrounded],
-      complete: async () =>
+      writeDrafts: () => [grounded, ungrounded],
+      critique: async () =>
         // Critique keeps only the grounded card
         JSON.stringify({ cards: [grounded] }),
     });
@@ -349,15 +373,15 @@ describe("runGenerationPipeline", () => {
     expect(drafts.some((d) => d.front.includes("Mars"))).toBe(false);
   });
 
-  it("falls back to schema-valid generate drafts when critique is unparseable after retry", async () => {
+  it("falls back to schema-valid write drafts when critique is unparseable after retry", async () => {
     const generated = validDraft({
       front: "What produces ATP?",
       back: "mitochondria",
     });
 
     const llm = mockPipelineLlm({
-      generate: async () => [generated],
-      complete: async () => "NOT JSON {{{",
+      writeDrafts: () => [generated],
+      critique: async () => "NOT JSON {{{",
     });
 
     const drafts = await runGenerationPipeline({
@@ -367,8 +391,8 @@ describe("runGenerationPipeline", () => {
       provider: "mock",
     });
 
-    // 1 initial + 1 retry
-    expect(llm.complete).toHaveBeenCalledTimes(2);
+    // extract + write + critique initial + critique retry
+    expect(llm.complete).toHaveBeenCalledTimes(4);
     expect(drafts).toEqual([generated]);
   });
 
@@ -387,8 +411,8 @@ describe("runGenerationPipeline", () => {
       ',{"type":"qa","front":"What is the capital of';
 
     const llm = mockPipelineLlm({
-      generate: async () => [generated],
-      complete: async () => truncated,
+      writeDrafts: () => [generated],
+      critique: async () => truncated,
     });
 
     const drafts = await runGenerationPipeline({
@@ -398,19 +422,20 @@ describe("runGenerationPipeline", () => {
       provider: "mock",
     });
 
-    expect(llm.complete).toHaveBeenCalledTimes(1);
+    // extract + write + one critique (salvage succeeds)
+    expect(llm.complete).toHaveBeenCalledTimes(3);
     expect(drafts).toEqual([survivor]);
   });
 
-  it("falls back to generate drafts when critique returns empty after retry", async () => {
+  it("falls back to write drafts when critique returns empty after retry", async () => {
     const generated = validDraft({
       front: "What produces ATP?",
       back: "mitochondria",
     });
 
     const llm = mockPipelineLlm({
-      generate: async () => [generated],
-      complete: async () => JSON.stringify({ cards: [] }),
+      writeDrafts: () => [generated],
+      critique: async () => JSON.stringify({ cards: [] }),
     });
 
     const drafts = await runGenerationPipeline({
@@ -420,7 +445,8 @@ describe("runGenerationPipeline", () => {
       provider: "mock",
     });
 
-    expect(llm.complete).toHaveBeenCalledTimes(2);
+    // extract + write + critique + critique retry
+    expect(llm.complete).toHaveBeenCalledTimes(4);
     expect(drafts).toEqual([generated]);
   });
 });
@@ -465,7 +491,7 @@ describe("critiqueDraftsAgainstSource", () => {
 
     const llm = mockPipelineLlm({
       // Keep matched; empty would fall back to the whole bucket.
-      complete: async () => JSON.stringify({ cards: [matched] }),
+      critique: async () => JSON.stringify({ cards: [matched] }),
     });
     const survivors = await critiqueDraftsAgainstSource({
       sourceText,
@@ -503,7 +529,7 @@ describe("critiqueDraftsAgainstSource", () => {
     });
 
     const dropLlm = mockPipelineLlm({
-      complete: async () => JSON.stringify({ cards: [kept] }),
+      critique: async () => JSON.stringify({ cards: [kept] }),
     });
     const survivors = await critiqueDraftsAgainstSource({
       sourceText: "mitochondria: powerhouse of the cell\nOverview: general summary of chapter",
@@ -516,7 +542,7 @@ describe("critiqueDraftsAgainstSource", () => {
     expect(dropLlm.complete).toHaveBeenCalledTimes(1);
 
     const failLlm = mockPipelineLlm({
-      complete: async () => "NOT JSON {{{",
+      critique: async () => "NOT JSON {{{",
     });
     const fallback = await critiqueDraftsAgainstSource({
       sourceText: "mitochondria: powerhouse of the cell",

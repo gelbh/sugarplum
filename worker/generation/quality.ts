@@ -5,6 +5,18 @@ const MIN_GLOSSARY_FRONT = 3;
 const MAX_FRONT = 240;
 const MIN_BACK = 2;
 const MAX_BACK = 400;
+/** Soft SRS cap: essay-length answers are not recallable. */
+const MAX_BACK_WORDS = 25;
+
+/** Compound question stems (multi-fact / compare dumps). */
+const COMPOUND_FRONT_RE =
+  /\b(and what|and which|and how|and why|versus|vs\.?)\b/i;
+
+/** Single-word adverb debris mistaken for a glossary term. */
+const ADVERB_DEBRIS_FRONT_RE = /^[a-z][a-z-]*ly$/;
+
+/** Slide chrome / LO lists used as card fronts. */
+const CHROME_FRONT_RE = /^(learning objectives?|signal\s+\d+)\b/i;
 
 /** Table/slide header tokens: drop even when short glossary-shaped. */
 const TABLE_HEADER_FRONT_RE =
@@ -305,8 +317,29 @@ function isInvalidMcq(draft: CardDraft): boolean {
   }
 }
 
+function isEssayBack(back: string): boolean {
+  return wordCount(back) > MAX_BACK_WORDS;
+}
+
+function isCompoundFront(front: string): boolean {
+  return COMPOUND_FRONT_RE.test(front);
+}
+
+function isAdverbDebrisFront(front: string): boolean {
+  if (front.includes("?")) return false;
+  return ADVERB_DEBRIS_FRONT_RE.test(front.trim());
+}
+
+function isChromeFront(front: string): boolean {
+  return CHROME_FRONT_RE.test(front.trim());
+}
+
 function shouldDrop(draft: CardDraft, front: string, back: string): boolean {
   if (draft.type === "mcq" && isInvalidMcq(draft)) return true;
+  if (isEssayBack(back)) return true;
+  if (isCompoundFront(front)) return true;
+  if (isAdverbDebrisFront(front)) return true;
+  if (isChromeFront(front)) return true;
   if (isIncompleteBack(front, back)) return true;
   if (hasBrokenPunctuation(back)) return true;
   // Table-column suffixes only on non-questions (avoid "What is the host?").

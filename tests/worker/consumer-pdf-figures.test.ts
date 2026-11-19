@@ -52,6 +52,12 @@ function seedPdf(env: ReturnType<typeof createTestEnv>, withFigure = false) {
 }
 
 function visionLlm() {
+  const textDraft = {
+    type: "qa" as const,
+    front: "What does the text explain?",
+    back: "The source material.",
+    provenance: { pages: [1], excerpt: "text" },
+  };
   const generateDrafts = vi.fn(
     async ({ image }: { image?: unknown; text?: string }) =>
       image
@@ -63,21 +69,41 @@ function visionLlm() {
               provenance: { pages: [1], excerpt: "Figure p.1#0" },
             },
           ]
-        : [
-            {
-              type: "qa" as const,
-              front: "What does the text explain?",
-              back: "The source material.",
-              provenance: { pages: [1], excerpt: "text" },
-            },
-          ],
+        : [textDraft],
   );
   return {
     generateDrafts,
-    complete: vi.fn(async () => ({
-      text: JSON.stringify({ cards: [] }),
-      usage: null,
-    })),
+    complete: vi.fn(async ({ system, user }) => {
+      const s = system.toLowerCase();
+      if (s.includes("extract") && s.includes("claim")) {
+        const start = user.indexOf("--- MATERIAL ---");
+        const end = user.indexOf("--- END ---");
+        const material =
+          start >= 0 && end > start
+            ? user.slice(start + "--- MATERIAL ---".length, end).trim()
+            : user.trim();
+        const span = material.slice(0, Math.min(80, material.length));
+        return {
+          text: JSON.stringify({
+            claims: span
+              ? [
+                  {
+                    subject: "Text",
+                    predicate: "explains the source material",
+                    source_span: span,
+                    pages: [1],
+                  },
+                ]
+              : [],
+          }),
+          usage: null,
+        };
+      }
+      return {
+        text: JSON.stringify({ cards: [textDraft] }),
+        usage: null,
+      };
+    }),
   } satisfies LlmAdapter;
 }
 
