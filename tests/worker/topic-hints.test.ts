@@ -357,7 +357,7 @@ describe("topicHints consumer injection", () => {
     vi.unstubAllGlobals();
   });
 
-  it("passes job topic hints into generateDrafts", async () => {
+  it("passes job topic hints into claim extract", async () => {
     const env = createTestEnv();
     seedPasteOwner(env);
     env.seedMaterial({
@@ -391,13 +391,15 @@ describe("topicHints consumer injection", () => {
       { llm },
     );
 
-    expect(llm.generateDrafts).toHaveBeenCalled();
-    const calls = vi.mocked(llm.generateDrafts).mock.calls;
-    expect(
-      calls.some(([input]) =>
-        (input.extraUserSuffix ?? "").toLowerCase().includes("cranial nerves"),
-      ),
-    ).toBe(true);
+    expect(llm.generateDrafts).not.toHaveBeenCalled();
+    const extractUsers = vi
+      .mocked(llm.complete)
+      .mock.calls.filter((c) => {
+        const s = (c[0] as { system: string }).system.toLowerCase();
+        return s.includes("extract") && s.includes("claim");
+      })
+      .map((c) => (c[0] as { user: string }).user.toLowerCase());
+    expect(extractUsers.some((u) => u.includes("cranial nerves"))).toBe(true);
   });
 
   it("merges this run's topic hints ahead of job hints", async () => {
@@ -439,12 +441,16 @@ describe("topicHints consumer injection", () => {
       { llm },
     );
 
-    const suffixes = vi
-      .mocked(llm.generateDrafts)
-      .mock.calls.map(([input]) => (input.extraUserSuffix ?? "").toLowerCase());
+    const extractUsers = vi
+      .mocked(llm.complete)
+      .mock.calls.filter((c) => {
+        const s = (c[0] as { system: string }).system.toLowerCase();
+        return s.includes("extract") && s.includes("claim");
+      })
+      .map((c) => (c[0] as { user: string }).user.toLowerCase());
     expect(
-      suffixes.some((s) =>
-        s.includes("- nuclei of the head\n- cranial nerves"),
+      extractUsers.some((u) =>
+        u.includes("- nuclei of the head\n- cranial nerves"),
       ),
     ).toBe(true);
     const job = env.getGenerationJobs().find((j) => j.id === jobId)!;
@@ -511,7 +517,7 @@ describe("avoidPatterns prompt wiring", () => {
     vi.unstubAllGlobals();
   });
 
-  it("passes job avoid patterns into generateDrafts", async () => {
+  it("passes job avoid patterns into write/critique", async () => {
     const env = createTestEnv();
     seedPasteOwner(env);
     env.seedMaterial({
@@ -549,13 +555,20 @@ describe("avoidPatterns prompt wiring", () => {
       { llm },
     );
 
-    expect(llm.generateDrafts).toHaveBeenCalled();
-    const calls = vi.mocked(llm.generateDrafts).mock.calls;
+    expect(llm.generateDrafts).not.toHaveBeenCalled();
+    const writeOrCritiqueUsers = vi
+      .mocked(llm.complete)
+      .mock.calls.filter((c) => {
+        const s = (c[0] as { system: string }).system.toLowerCase();
+        return (
+          s.includes("critique") ||
+          (s.includes("flashcard") && !s.includes("extract"))
+        );
+      })
+      .map((c) => (c[0] as { user: string }).user.toLowerCase());
     expect(
-      calls.some(([input]) =>
-        (input.extraUserSuffix ?? "")
-          .toLowerCase()
-          .includes("rejected stem about cn iii"),
+      writeOrCritiqueUsers.some((u) =>
+        u.includes("rejected stem about cn iii"),
       ),
     ).toBe(true);
   });

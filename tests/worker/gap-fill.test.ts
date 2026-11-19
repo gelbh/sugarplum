@@ -78,21 +78,6 @@ function spyLlm(base: LlmAdapter = mockLlmAdapter()): LlmAdapter & {
   };
 }
 
-function critiqueEchoCandidates() {
-  return async ({ user }: { user: string }) => {
-    const marker = "Candidate cards (JSON):\n";
-    const start = user.indexOf(marker);
-    if (start < 0) throw new Error("critique prompt missing candidates");
-    const jsonStart = start + marker.length;
-    const end = user.indexOf("\n\nReturn only", jsonStart);
-    const raw = end >= 0 ? user.slice(jsonStart, end) : user.slice(jsonStart);
-    return {
-      text: JSON.stringify({ cards: JSON.parse(raw) }),
-      usage: null,
-    };
-  };
-}
-
 const COVERED_LINE =
   "Mitochondria are the powerhouse of the cell and this covered line stays in the excerpt.";
 const GAP_LINE = "Uncovered gap line about the twelfth cranial nerve only.";
@@ -108,25 +93,74 @@ function qaDraft(front: string, back: string, excerpt: string): CardDraft {
   ])[0]!;
 }
 
-function gappyLlm(secondThrows = false) {
+function isClaimExtract(system: string): boolean {
+  const s = system.toLowerCase();
+  return s.includes("extract") && s.includes("claim");
+}
+
+function extractPassCount(llm: { complete: ReturnType<typeof vi.fn> }): number {
+  return llm.complete.mock.calls.filter((c) =>
+    isClaimExtract((c[0] as { system: string }).system),
+  ).length;
+}
+
+function extractUsers(llm: { complete: ReturnType<typeof vi.fn> }): string[] {
+  return llm.complete.mock.calls
+    .filter((c) => isClaimExtract((c[0] as { system: string }).system))
+    .map((c) => (c[0] as { user: string }).user);
+}
+
+/** Text-path stub: one claim+card per extract pass; pass 2 covers the gap line. */
+function gappyLlm(
+  secondThrows = false,
+  onSecondExtract?: () => void,
+): LlmAdapter & {
+  generateDrafts: ReturnType<typeof vi.fn>;
+  complete: ReturnType<typeof vi.fn>;
+} {
   const llm = spyLlm();
-  llm.complete.mockImplementation(critiqueEchoCandidates());
-  let calls = 0;
   llm.generateDrafts.mockImplementation(async () => {
-    calls += 1;
-    if (calls === 1) {
-      return [
-        qaDraft(
-          "What is the powerhouse of the cell?",
-          "Mitochondria.",
-          COVERED_LINE,
-        ),
-      ];
+    throw new Error("generateDrafts must not be called for text claim path");
+  });
+  let extractPass = 0;
+  llm.complete.mockImplementation(async ({ system }) => {
+    const s = system.toLowerCase();
+    if (isClaimExtract(system)) {
+      extractPass += 1;
+      if (extractPass > 1) onSecondExtract?.();
+      if (extractPass > 1 && secondThrows) {
+        throw new Error("gap-fill model failed");
+      }
+      const span = extractPass === 1 ? COVERED_LINE : GAP_LINE;
+      return {
+        text: JSON.stringify({
+          claims: [
+            {
+              subject: extractPass === 1 ? "Mitochondria" : "Twelfth cranial nerve",
+              predicate:
+                extractPass === 1
+                  ? "are the powerhouse of the cell"
+                  : "is the hypoglossal",
+              source_span: span,
+              pages: [1],
+            },
+          ],
+        }),
+        usage: null,
+      };
     }
-    if (secondThrows) throw new Error("gap-fill model failed");
-    return [
-      qaDraft("Which cranial nerve is twelve?", "Hypoglossal.", GAP_LINE),
-    ];
+    const draft =
+      extractPass <= 1
+        ? qaDraft(
+            "What is the powerhouse of the cell?",
+            "Mitochondria.",
+            COVERED_LINE,
+          )
+        : qaDraft("Which cranial nerve is twelve?", "Hypoglossal.", GAP_LINE);
+    if (s.includes("critique") || s.includes("flashcard") || s.includes("claim")) {
+      return { text: JSON.stringify({ cards: [draft] }), usage: null };
+    }
+    return { text: JSON.stringify({ cards: [draft] }), usage: null };
   });
   return llm;
 }
@@ -140,34 +174,16 @@ describe("processGenerateJob gap-fill", () => {
     const msg = await seedPasteJob(env, gappyText);
     expect(env.getQueueMessages().at(-1)).toMatchObject({ autoFollowup: true });
 
-    const llm = gappyLlm();
     let followupStage = "";
-    let calls = 0;
-    llm.generateDrafts.mockImplementation(async () => {
-      calls += 1;
-      if (calls > 1) {
-        const job = env.getGenerationJobs().find((row) => row.id === msg.jobId);
-        const progress = JSON.parse(job!.progress_json!) as {
-          stage: string;
-          free_gen_slots?: number;
-        };
-        followupStage = progress.stage;
-        expect(progress.free_gen_slots).toBe(2);
-      }
-      if (calls === 1) {
-        return [
-          qaDraft(
-            "What is the powerhouse of the cell?",
-            "Mitochondria.",
-            COVERED_LINE,
-          ),
-        ];
-      }
-      return [
-        qaDraft("Which cranial nerve is twelve?", "Hypoglossal.", GAP_LINE),
-      ];
+    const llm = gappyLlm(false, () => {
+      const job = env.getGenerationJobs().find((row) => row.id === msg.jobId);
+      const progress = JSON.parse(job!.progress_json!) as {
+        stage: string;
+        free_gen_slots?: number;
+      };
+      followupStage = progress.stage;
+      expect(progress.free_gen_slots).toBe(2);
     });
-    llm.complete.mockImplementation(critiqueEchoCandidates());
 
     const result = await processGenerateJob(
       env,
@@ -176,16 +192,12 @@ describe("processGenerateJob gap-fill", () => {
     );
 
     expect(result).toBe("done");
-    expect(llm.generateDrafts).toHaveBeenCalledTimes(2);
+    expect(llm.generateDrafts).not.toHaveBeenCalled();
+    expect(extractPassCount(llm)).toBe(2);
     expect(followupStage).toBe("persist");
-    const second = llm.generateDrafts.mock.calls[1]?.[0] as {
-      extraUserSuffix?: string;
-    };
-    expect(second.extraUserSuffix).toContain(GAP_LINE);
-    expect(
-      (llm.generateDrafts.mock.calls[0]?.[0] as { extraUserSuffix?: string })
-        .extraUserSuffix ?? "",
-    ).not.toContain(GAP_LINE);
+    const users = extractUsers(llm);
+    expect(users[1]).toContain(`- ${GAP_LINE}`);
+    expect(users[0]).not.toContain(`- ${GAP_LINE}`);
     const fronts = env.getCards().map((card) => JSON.parse(card.front_json));
     expect(fronts).toEqual([
       "What is the powerhouse of the cell?",
@@ -210,7 +222,7 @@ describe("processGenerateJob gap-fill", () => {
     const omitted = await seedPasteJob(env, gappyText);
     const llm = gappyLlm();
     await processGenerateJob(env, omitted, { llm });
-    expect(llm.generateDrafts).toHaveBeenCalledOnce();
+    expect(extractPassCount(llm)).toBe(1);
 
     const envFalse = createTestEnv();
     await seedOwner(envFalse, false);
@@ -221,7 +233,7 @@ describe("processGenerateJob gap-fill", () => {
       { ...flagged, autoFollowup: false },
       { llm: llmFalse },
     );
-    expect(llmFalse.generateDrafts).toHaveBeenCalledOnce();
+    expect(extractPassCount(llmFalse)).toBe(1);
 
     const envCovered = createTestEnv();
     await seedOwner(envCovered, false);
@@ -232,7 +244,7 @@ describe("processGenerateJob gap-fill", () => {
       { ...covered, autoFollowup: true },
       { llm: llmCovered },
     );
-    expect(llmCovered.generateDrafts).toHaveBeenCalledOnce();
+    expect(extractPassCount(llmCovered)).toBe(1);
     expect((await getFreeGenUsage(envCovered, "user-a")).used).toBe(1);
   });
 
@@ -251,7 +263,7 @@ describe("processGenerateJob gap-fill", () => {
     );
 
     expect(result).toBe("done");
-    expect(llm.generateDrafts).toHaveBeenCalledOnce();
+    expect(extractPassCount(llm)).toBe(1);
     expect(env.getCards()).toHaveLength(1);
     expect(
       env.getGenerationJobs().find((row) => row.id === msg.jobId)?.status,
@@ -273,7 +285,7 @@ describe("processGenerateJob gap-fill", () => {
     );
 
     expect(result).toBe("done");
-    expect(llm.generateDrafts).toHaveBeenCalledTimes(2);
+    expect(extractPassCount(llm)).toBe(2);
     expect(env.getCards()).toHaveLength(1);
     expect(
       env.getGenerationJobs().find((row) => row.id === msg.jobId)?.status,
@@ -315,7 +327,7 @@ describe("processGenerateJob gap-fill", () => {
     );
 
     expect(result).toBe("done");
-    expect(llm.generateDrafts).toHaveBeenCalledTimes(2);
+    expect(extractPassCount(llm)).toBe(2);
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(2);
     const progress = JSON.parse(
       env.getGenerationJobs().find((row) => row.id === msg.jobId)!
