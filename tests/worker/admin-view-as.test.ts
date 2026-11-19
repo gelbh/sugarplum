@@ -265,4 +265,49 @@ describe("cloneUserGraph (legacy helper)", () => {
       env.getDecks().filter((d) => d.user_id === "sandbox-tmp"),
     ).toHaveLength(0);
   });
+
+  it("clones atlas_entry_notes with remapped entry_key", async () => {
+    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
+    seedAdminAndLearnerWithLibrary(env);
+    env.seedUser({
+      id: "sandbox-tmp",
+      email: "sandbox+tmp@sandbox.invalid",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: NOW,
+      sandbox_of: "u-alice",
+    });
+    env.seedAtlas({
+      id: "atlas-alice",
+      user_id: "u-alice",
+      template_key: "parasite",
+      created_at: NOW,
+    });
+    await env.DB.prepare(
+      `INSERT INTO atlas_entry_notes (atlas_id, entry_key, body, updated_at)
+       VALUES (?, ?, ?, ?)`,
+    )
+      .bind("atlas-alice", "fasciola-hepatica", "Remember miracidium", NOW)
+      .run();
+
+    const db = getDb(env);
+    await cloneUserGraph(db, env, "u-alice", "sandbox-tmp", {
+      maxCards: 10_000,
+    });
+
+    const sandboxAtlas = env
+      .getAtlases()
+      .find((a) => a.user_id === "sandbox-tmp");
+    expect(sandboxAtlas).toBeTruthy();
+    const { results } = await env.DB.prepare(
+      `SELECT entry_key, body FROM atlas_entry_notes WHERE atlas_id = ?`,
+    )
+      .bind(sandboxAtlas!.id)
+      .all<{ entry_key: string; body: string }>();
+    expect(results).toHaveLength(1);
+    expect(results![0]).toMatchObject({
+      entry_key: "fasciola-hepatica",
+      body: "Remember miracidium",
+    });
+  });
 });

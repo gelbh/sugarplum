@@ -19,6 +19,7 @@ function entry(partial: Partial<AtlasEntryView> & Pick<AtlasEntryView, "id">): A
     refs: partial.refs ?? [],
     images: partial.images ?? [],
     editedAt: null,
+    personalNote: null,
     tier: null,
     reason: null,
     override: null,

@@ -59,6 +59,7 @@ function entry(overrides: Partial<AtlasEntryView> = {}): AtlasEntryView {
     refs: [],
     images: [],
     editedAt: null,
+    personalNote: null,
     tier: null,
     reason: null,
     override: null,

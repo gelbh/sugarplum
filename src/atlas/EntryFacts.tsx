@@ -10,6 +10,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import AtlasImage from "./AtlasImage";
+import EntryPersonalNotes from "./EntryPersonalNotes";
 import { FIELD_LABELS, type EntryRefs } from "./entryFields";
 import {
   entryLead,
@@ -39,6 +40,8 @@ type Props = {
   onEdit?: () => void;
   onReset?: () => void;
   onMakeCards?: () => void;
+  atlasId?: string;
+  onNoteUpdated?: (entry: AtlasEntryView) => void;
 };
 
 const IMAGE_ROLE_LABELS: Record<
@@ -63,6 +66,8 @@ export default function EntryFacts({
   onEdit,
   onReset,
   onMakeCards,
+  atlasId,
+  onNoteUpdated,
 }: Props) {
   const lead = entryLead(entry.fields.significance);
   const sections = glanceSections(entry.fields);
@@ -202,6 +207,14 @@ export default function EntryFacts({
             <GlanceFact row={fullSig} refs={refs} onCite={onCite} />
           </Box>
         </Box>
+      ) : null}
+      {atlasId && onNoteUpdated ? (
+        <EntryPersonalNotes
+          atlasId={atlasId}
+          entryId={entry.id}
+          personalNote={entry.personalNote}
+          onUpdated={onNoteUpdated}
+        />
       ) : null}
       {gallery.length > 0 ? (
         <Box
