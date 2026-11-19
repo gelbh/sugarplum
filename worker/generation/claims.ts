@@ -141,3 +141,39 @@ export function filterClaimsAgainstChunk(
     return normalizedChunk.includes(span);
   });
 }
+
+function spansOverlap(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  return a === b || a.includes(b) || b.includes(a);
+}
+
+/**
+ * Pick one claim for single-card regen: excerpt match, then front overlap, else first.
+ */
+export function pickClaimForRegen(
+  claims: StudyClaim[],
+  opts: { excerpt?: string; previousFront?: string } = {},
+): StudyClaim | null {
+  if (claims.length === 0) return null;
+
+  const excerpt = opts.excerpt ? normalizeWs(opts.excerpt) : "";
+  if (excerpt) {
+    const byExcerpt = claims.find((claim) =>
+      spansOverlap(normalizeWs(claim.source_span), excerpt),
+    );
+    if (byExcerpt) return byExcerpt;
+  }
+
+  const front = opts.previousFront ? normalizeWs(opts.previousFront) : "";
+  if (front) {
+    const frontLower = front.toLowerCase();
+    const byFront = claims.find((claim) => {
+      const subject = normalizeWs(claim.subject).toLowerCase();
+      if (subject.length >= 3 && frontLower.includes(subject)) return true;
+      return spansOverlap(normalizeWs(claim.source_span), front);
+    });
+    if (byFront) return byFront;
+  }
+
+  return claims[0] ?? null;
+}

@@ -4,31 +4,40 @@ import { decryptSecret } from "../crypto/secrets";
 import { extractPptxText } from "../materials/extract-pptx";
 import { pdfTextOrOcrSidecar, readOcrSidecar } from "../materials/ocr-sidecar";
 import {
+  addUsage,
+  extractClaimsForChunk,
+  writeOneCardFromClaim,
+  type TypedRegenDraft,
+} from "./claim-stages";
+import { pickClaimForRegen } from "./claims";
+import {
   BYO_PROVIDERS_PHRASE,
   createLlmAdapter,
   parseLlmProvider,
   type LlmAdapter,
   type LlmTokenUsage,
 } from "./llm";
-import {
-  isTruncationParseError,
-  parseCardsPayload,
-} from "./llm-json";
 import { CHUNK_CHAR_LIMIT } from "./pipeline";
+import { filterDraftsByQuality } from "./quality";
 import { consumeFreeGenSlot } from "./quota";
-import { createWorkersAiAdapter, WorkersAiCapacityError } from "./workers-ai";
 import {
-  appendExtraUserSuffix,
-  buildExtraUserSuffix,
-} from "./feedback-hints";
+  createWorkersAiAdapter,
+  WorkersAiCapacityError,
+} from "./workers-ai";
+import { buildExtraUserSuffix } from "./feedback-hints";
 import {
   parseProvenanceJson,
   provenanceExcerptText,
 } from "../../src/study/regenSource";
-import {
-  assertValidMcqOptions,
-  type CardDraft,
-} from "./schema";
+import type { CardDraft } from "./schema";
+
+/** Sync regen failed without updating the card (HTTP 422). */
+export class ClaimAwareRegenError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ClaimAwareRegenError";
+  }
+}
 
 export const REGEN_CARD_TYPES = ["qa", "cloze", "mcq"] as const;
 export type RegenCardType = (typeof REGEN_CARD_TYPES)[number];
@@ -39,129 +48,113 @@ export function capRegenSourceText(text: string): string {
   return text.slice(0, CHUNK_CHAR_LIMIT);
 }
 
-type TextRegenDraft = {
-  type: RegenCardType;
-  front: string;
-  back: string;
-  options?: string[];
-  provenance: CardDraft["provenance"];
-};
-
-export const REGEN_ONE_SYSTEM_PROMPT = `You regenerate a single spaced-repetition flashcard from study material.
-
-Rules:
-- Produce exactly one card of the requested type.
-- One atomic fact; keep front/back under ~25 words; provenance.excerpt under ~12 words.
-- No compound stems: do not ask "and what/which/how/why", do not use versus-paired multi-fact questions.
-- Only create a card clearly grounded in the source excerpt.
-- Cloze front must use exactly one Anki-style blank: {{c1::answer}}. Never multiple blanks.
-- Cloze Extra (back) is optional: use "" when unused.
-- For type "mcq": front is a single-fact question; back is the correct option (must appear in options); options is a unique array of 3–5 strings including back. Every distractor must be entailed by the cited excerpt.
-- Respond with JSON only: {"cards":[{ "type": "qa"|"cloze"|"mcq", "front": string, "back": string, "options"?: string[], "provenance": { "pages": number[], "excerpt": string } }]}
-- Do not wrap the array in markdown fences. Finish every string and close all braces.`;
-
-export function regenerateOneUserPrompt(args: {
-  text: string;
-  type: RegenCardType;
-  existingFront?: string;
-  studyStruggle?: { again_14d: number; lapses: number };
+/**
+ * Prefer provenance excerpt as extract corpus; else capped material.
+ * Claim-aware regen must not prefer full material when an excerpt exists.
+ */
+export function resolveRegenCorpus(args: {
+  excerpt: string;
+  materialText: string;
 }): string {
-  const prior = args.existingFront?.trim()
-    ? `\nPrevious front (adapt or replace): ${args.existingFront.trim()}\n`
-    : "";
-  const base = `Produce exactly one flashcard of type "${args.type}" from this material.${prior}
---- MATERIAL ---
-${args.text}
---- END ---
-
-Respond with JSON only as {"cards":[...]} containing exactly one card of type "${args.type}".`;
-  return appendExtraUserSuffix(
-    base,
-    buildExtraUserSuffix({ studyStruggle: args.studyStruggle }),
-  );
+  const excerpt = args.excerpt.trim();
+  if (excerpt.length > 0) return capRegenSourceText(excerpt);
+  return capRegenSourceText(args.materialText);
 }
 
-function parseRegenDraft(raw: string, type: RegenCardType): TextRegenDraft {
-  const drafts = parseCardsPayload(raw);
-  const hit = drafts.find((d) => d.type === type && typeof d.front === "string");
-  if (!hit || typeof hit.front !== "string" || typeof hit.back !== "string") {
-    throw new Error(`LLM did not return a ${type} card`);
-  }
-  const draft: TextRegenDraft = {
-    type,
-    front: hit.front,
-    back: hit.back,
-    provenance: hit.provenance,
-  };
-  return hit.type === "mcq"
-    ? { ...draft, ...assertValidMcqOptions(hit.back, hit.options) }
-    : draft;
-}
-
-function addUsage(
-  a: LlmTokenUsage | null | undefined,
-  b: LlmTokenUsage | null | undefined,
-): LlmTokenUsage | null {
-  if (!a) return b ?? null;
-  if (!b) return a;
-  const sum = (x?: number | null, y?: number | null) =>
-    x == null && y == null ? null : (x ?? 0) + (y ?? 0);
-  return {
-    prompt_tokens: sum(a.prompt_tokens, b.prompt_tokens),
-    completion_tokens: sum(a.completion_tokens, b.completion_tokens),
-    total_tokens: sum(a.total_tokens, b.total_tokens),
-  };
-}
-
-/** Narrow sync generate for one card of a requested type. */
-export async function generateOneCard(args: {
-  text: string;
+/**
+ * Claim-aware single-card regen: excerpt-first extract → pick → typed write → Layer-1.
+ * Throws ClaimAwareRegenError when no claim or quality fails after one reask.
+ */
+export async function regenerateClaimAwareCard(args: {
+  excerpt: string;
+  materialText: string;
   type: RegenCardType;
   existingFront?: string;
   studyStruggle?: { again_14d: number; lapses: number };
   llm: LlmAdapter;
   apiKey: string;
   provider: string;
-}): Promise<{ draft: TextRegenDraft; usage?: LlmTokenUsage | null }> {
-  const user = regenerateOneUserPrompt({
-    text: args.text,
-    type: args.type,
-    existingFront: args.existingFront,
+}): Promise<{ draft: TypedRegenDraft; usage: LlmTokenUsage | null }> {
+  const corpus = resolveRegenCorpus({
+    excerpt: args.excerpt,
+    materialText: args.materialText,
+  });
+  if (!corpus.trim()) {
+    throw new ClaimAwareRegenError(
+      "No source text available for this card. Edit manually or regenerate from material with text.",
+    );
+  }
+
+  const struggleSuffix = buildExtraUserSuffix({
     studyStruggle: args.studyStruggle,
   });
-  const ask = (suffix = "") =>
-    args.llm.complete({
-      system: REGEN_ONE_SYSTEM_PROMPT,
-      user: user + suffix,
-      apiKey: args.apiKey,
-      provider: args.provider,
-    });
 
-  const first = await ask();
-  try {
-    return {
-      draft: parseRegenDraft(first.text, args.type),
-      usage: first.usage,
-    };
-  } catch (err) {
-    if (isTruncationParseError(err)) throw err;
-    const message = err instanceof Error ? err.message : String(err);
-    const reaskSuffix = `\n\nYour previous reply was rejected: ${message}. Respond with JSON only containing exactly one "${args.type}" card.`;
-    let second: Awaited<ReturnType<typeof ask>>;
-    try {
-      second = await ask(reaskSuffix);
-    } catch (reaskErr) {
-      // Tokens were spent on the first call, so the caller must not refund.
-      if (reaskErr instanceof WorkersAiCapacityError) {
-        throw new Error(reaskErr.message);
+  let usage: LlmTokenUsage | null = null;
+  let completedCalls = 0;
+  const trackingLlm: LlmAdapter = {
+    complete: async (input) => {
+      try {
+        const result = await args.llm.complete(input);
+        completedCalls += 1;
+        usage = addUsage(usage, result.usage);
+        return result;
+      } catch (err) {
+        // Prior successful calls already spent the free slot; do not refund.
+        if (err instanceof WorkersAiCapacityError && completedCalls > 0) {
+          throw new Error(err.message);
+        }
+        throw err;
       }
-      throw reaskErr;
-    }
-    return {
-      draft: parseRegenDraft(second.text, args.type),
-      usage: addUsage(first.usage, second.usage),
-    };
+    },
+    generateDrafts: (input) => args.llm.generateDrafts(input),
+  };
+  const stageArgs = {
+    llm: trackingLlm,
+    apiKey: args.apiKey,
+    provider: args.provider,
+    extraUserSuffix: struggleSuffix,
+  };
+
+  const claims = await extractClaimsForChunk(corpus, stageArgs);
+  const claim = pickClaimForRegen(claims, {
+    excerpt: args.excerpt,
+    previousFront: args.existingFront,
+  });
+  if (!claim) {
+    throw new ClaimAwareRegenError(
+      "Could not extract an atomic claim from the source. Edit the card manually or try different material.",
+    );
   }
+
+  let written = await writeOneCardFromClaim(claim, args.type, stageArgs);
+  let ok =
+    filterDraftsByQuality([written.draft as CardDraft]).length === 1
+      ? written.draft
+      : null;
+
+  if (!ok) {
+    const qualityHint =
+      "Previous card failed quality gates (too long, compound, or essay). Write a shorter single-fact card.";
+    const qualitySuffix = [struggleSuffix, qualityHint]
+      .filter(Boolean)
+      .join("\n\n");
+    written = await writeOneCardFromClaim(claim, args.type, {
+      ...stageArgs,
+      extraUserSuffix: qualitySuffix,
+    });
+    ok =
+      filterDraftsByQuality([written.draft as CardDraft]).length === 1
+        ? written.draft
+        : null;
+  }
+
+  if (!ok) {
+    throw new ClaimAwareRegenError(
+      "Regenerated card failed quality gates. Edit manually or try again.",
+    );
+  }
+
+  return { draft: ok, usage };
 }
 
 type MaterialLite = {
