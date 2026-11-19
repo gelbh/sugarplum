@@ -118,7 +118,7 @@ function makeEmit(
   ): ProgressPatch {
     const percent =
       halfStepsDone !== undefined &&
-      (stage === "generate" || stage === "critique")
+      (stage === "claims" || stage === "generate" || stage === "critique")
         ? computePipelineBandPercent(halfStepsDone, total, stages)
         : computePercent(stage, current, total, stages);
 
