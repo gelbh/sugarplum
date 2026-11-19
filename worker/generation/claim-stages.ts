@@ -11,8 +11,10 @@ import {
 import {
   CLAIM_EXTRACT_COMPACT_SYSTEM_PROMPT,
   CLAIM_EXTRACT_SYSTEM_PROMPT,
+  CLAIM_GAP_EXTRACT_SYSTEM_PROMPT,
   claimExtractCompactUserPrompt,
   claimExtractUserPrompt,
+  claimGapExtractUserPrompt,
 } from "./claim-prompts";
 import {
   filterClaimsAgainstChunk,
@@ -108,6 +110,44 @@ export async function extractClaimsForChunk(
           ),
           chunk,
         ),
+    );
+  } catch (err) {
+    if (isTruncationParseError(err)) return [];
+    throw err;
+  }
+}
+
+/**
+ * Gap-pass extract for uncovered lines. Ground-filter against the full chunk
+ * (not only the gap list) so spans still resolve in context.
+ */
+export async function extractClaimsForGapLines(
+  uncoveredLines: string[],
+  groundingChunk: string,
+  args: ClaimStageLlm & { extraUserSuffix?: string },
+): Promise<StudyClaim[]> {
+  if (uncoveredLines.length === 0) return [];
+  const { llm, apiKey, provider, extraUserSuffix } = args;
+  const completeOnce = (system: string, user: string) =>
+    llm.complete({
+      system,
+      user: appendExtraUserSuffix(user, extraUserSuffix ?? ""),
+      apiKey,
+      provider,
+      jsonShape: "claims",
+    });
+
+  try {
+    return filterClaimsAgainstChunk(
+      parseClaimsPayload(
+        (
+          await completeOnce(
+            CLAIM_GAP_EXTRACT_SYSTEM_PROMPT,
+            claimGapExtractUserPrompt(uncoveredLines),
+          )
+        ).text,
+      ),
+      groundingChunk,
     );
   } catch (err) {
     if (isTruncationParseError(err)) return [];

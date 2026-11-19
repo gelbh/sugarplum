@@ -146,8 +146,18 @@ describe("runGenerationPipeline", () => {
       apiKey: "k",
       provider: "mock",
     });
-    expect(empty).toEqual({ drafts: [], claims: [] });
-    expect(ws).toEqual({ drafts: [], claims: [] });
+    expect(empty).toEqual({
+      drafts: [],
+      claims: [],
+      claim_gap_extract_passes: 0,
+      claim_span_gaps: [],
+    });
+    expect(ws).toEqual({
+      drafts: [],
+      claims: [],
+      claim_gap_extract_passes: 0,
+      claim_span_gaps: [],
+    });
     expect(llm.generateDrafts).not.toHaveBeenCalled();
     expect(llm.complete).not.toHaveBeenCalled();
   });
@@ -247,13 +257,14 @@ describe("runGenerationPipeline", () => {
       ["critique", 1],
       ["critique", 2],
     ]);
-    // Extract complete only; no write/critique.
-    expect(llm.complete).toHaveBeenCalledTimes(1);
+    // Main extract + one claim gap pass; no write/critique.
+    expect(llm.complete).toHaveBeenCalledTimes(2);
     expect(llm.generateDrafts).not.toHaveBeenCalled();
   });
 
   it("caps extract complete calls at MAX_PIPELINE_CHUNKS", async () => {
     // Distinct claim text per chunk so fuzzy/exact dedupe does not skip write.
+    // source_span uses the full material line so claim-span ledger needs no gap pass.
     const llm = mockPipelineLlm({
       claimsForMaterial: (material) => {
         const tag = material.match(/unique-(\d+)/)?.[1] ?? "0";
@@ -262,7 +273,7 @@ describe("runGenerationPipeline", () => {
             subject: `Mitochondria${tag}`,
             predicate: `produces energy form ${tag}`,
             object: `ATP${tag}`,
-            source_span: material.slice(0, 60),
+            source_span: material.trim(),
             pages: [1],
           },
         ];
@@ -283,7 +294,7 @@ describe("runGenerationPipeline", () => {
     });
 
     expect(extractMaterials(llm)).toHaveLength(MAX_PIPELINE_CHUNKS);
-    // extract + write + critique per chunk
+    // extract + write + critique per chunk (no gap pass when spans cover lines)
     expect(llm.complete).toHaveBeenCalledTimes(MAX_PIPELINE_CHUNKS * 3);
     expect(llm.generateDrafts).not.toHaveBeenCalled();
   });

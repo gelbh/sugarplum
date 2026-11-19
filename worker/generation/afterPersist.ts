@@ -4,6 +4,7 @@ import type { GenerateQueueMessage } from "./enqueue";
 import { appendGapFillDrafts } from "./gap-fill";
 import { getExtractSidecar } from "./extractSidecar";
 import { buildCoverageLedger } from "./coverage";
+import { buildClaimSpanCoverage } from "./claim-span-coverage";
 import { parseAtlasJobProvenance } from "../atlas/makeCardsSource";
 import { afterRunningJobTerminal } from "./jobTerminal";
 import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
@@ -85,10 +86,37 @@ async function finalizeAfterPersist(
   let coverageJson: string | null = null;
   try {
     const ledger = buildCoverageLedger(args.coverageMaterial, drafts);
+    let claim_span:
+      | {
+          covered_units: string[];
+          gaps: string[];
+          claim_count: number;
+          gap_extract_passes: number | null;
+        }
+      | undefined;
+    try {
+      const { results: claimRows } = await db
+        .prepare(
+          "SELECT source_span FROM study_claims WHERE job_id = ?",
+        )
+        .bind(args.jobId)
+        .all<{ source_span: string }>();
+      const spanLedger = buildClaimSpanCoverage(
+        args.coverageMaterial,
+        claimRows ?? [],
+      );
+      claim_span = {
+        ...spanLedger,
+        gap_extract_passes: null,
+      };
+    } catch (err) {
+      console.error("claim span coverage failed", args.jobId, err);
+    }
+    const body = claim_span ? { ...ledger, claim_span } : ledger;
     coverageJson = JSON.stringify(
       args.windowResume
-        ? { ...ledger, window_resume: args.windowResume }
-        : ledger,
+        ? { ...body, window_resume: args.windowResume }
+        : body,
     );
   } catch (err) {
     console.error("coverage ledger failed; soft-finalizing", args.jobId, err);

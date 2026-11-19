@@ -19,6 +19,7 @@ import {
 } from "../journey/emptyJobDraftCtas";
 import type { StageCrumb } from "../shared/ui/StageBreadcrumbs";
 import { friendlyJobError } from "./friendlyJobError";
+import { parseClaimSpanGaps } from "./parseClaimSpanGaps";
 
 type Args = {
   jobId: string | null;
@@ -34,6 +35,7 @@ type Args = {
   setReady: Dispatch<SetStateAction<boolean>>;
   setDirty: Dispatch<SetStateAction<boolean>>;
   setClaimCoverage: Dispatch<SetStateAction<ClaimCoverage | null>>;
+  setClaimSpanGaps: Dispatch<SetStateAction<string[]>>;
 };
 
 export function useDraftReviewLoad({
@@ -50,6 +52,7 @@ export function useDraftReviewLoad({
   setReady,
   setDirty,
   setClaimCoverage,
+  setClaimSpanGaps,
 }: Args) {
   const load = useCallback(
     async (id: string) => {
@@ -61,6 +64,7 @@ export function useDraftReviewLoad({
       setDrafts(list);
       setJobStatus(job.status);
       setClaimCoverage(coverage);
+      setClaimSpanGaps(parseClaimSpanGaps(job.coverage_json));
       if (job.error) setError(friendlyJobError(job.error));
       setDirty(false);
       const next: StageCrumb[] = [{ label: "Library", href: "/library" }];
@@ -79,7 +83,15 @@ export function useDraftReviewLoad({
       setCrumbs(next);
       return list;
     },
-    [setClaimCoverage, setCrumbs, setDirty, setDrafts, setError, setJobStatus],
+    [
+      setClaimCoverage,
+      setClaimSpanGaps,
+      setCrumbs,
+      setDirty,
+      setDrafts,
+      setError,
+      setJobStatus,
+    ],
   );
 
   const refreshJourney = useCallback(
