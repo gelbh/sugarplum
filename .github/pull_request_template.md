@@ -1,3 +1,5 @@
+<!-- Title: Conventional Commits header only, e.g. feat(atlas): … / fix: … / ci: …. No ticket prefix. -->
+
 ## What and why
 <!-- Problem and why this change fixes it. Link issue or spec if one exists. -->
 
