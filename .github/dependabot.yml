@@ -12,17 +12,13 @@ updates:
         update-types:
           - minor
           - patch
-      npm-majors:
-        patterns:
-          - "*"
-        update-types:
-          - major
       npm-security:
         applies-to: security-updates
         patterns:
           - "*"
     cooldown:
       default-days: 7
+      semver-major-days: 30
 
   - package-ecosystem: github-actions
     directory: "/"
