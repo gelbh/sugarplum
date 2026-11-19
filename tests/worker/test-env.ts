@@ -1429,7 +1429,9 @@ export function createTestEnv(opts?: {
         if (
           normalized.includes("SELECT rl.card_id AS card_id") &&
           normalized.includes("FROM review_logs rl") &&
-          normalized.includes("WHERE d.user_id =")
+          normalized.includes("WHERE d.user_id =") &&
+          // Due/struggling outer queries also embed this subquery; skip those.
+          !normalized.includes("FROM cards c")
         ) {
           const userId = bound[0] as string;
           const since =
@@ -2458,18 +2460,37 @@ export function createTestEnv(opts?: {
           normalized.includes("c.status =") &&
           normalized.includes("s.due <=")
         ) {
-          // With again_14d subquery: [since, userId, status, now, ...scope]
-          // Legacy: [userId, status, now, ...scope]
+          // Scoped again join: [userId, since, userId, status, now, ...scope]
+          // Legacy correlated: [since, userId, status, now, ...scope]
+          // No again: [userId, status, now, ...scope]
+          const hasScopedAgain = normalized.includes("d2.user_id");
           const hasAgain14d =
             normalized.includes("again_14d") ||
-            (normalized.includes("FROM review_logs rl") &&
+            (normalized.includes("FROM review_logs") &&
               normalized.includes("rating = 1"));
-          const bindOffset = hasAgain14d ? 1 : 0;
-          const since = hasAgain14d ? (bound[0] as string) : null;
-          const userId = bound[bindOffset] as string;
-          const status = bound[bindOffset + 1] as string;
-          const now = bound[bindOffset + 2] as string;
-          const scopeBound = bound[bindOffset + 3] as string | undefined;
+          let since: string | null = null;
+          let userId: string;
+          let status: string;
+          let now: string;
+          let scopeBound: string | undefined;
+          if (hasScopedAgain) {
+            userId = bound[0] as string;
+            since = bound[1] as string;
+            status = bound[3] as string;
+            now = bound[4] as string;
+            scopeBound = bound[5] as string | undefined;
+          } else if (hasAgain14d) {
+            since = bound[0] as string;
+            userId = bound[1] as string;
+            status = bound[2] as string;
+            now = bound[3] as string;
+            scopeBound = bound[4] as string | undefined;
+          } else {
+            userId = bound[0] as string;
+            status = bound[1] as string;
+            now = bound[2] as string;
+            scopeBound = bound[3] as string | undefined;
+          }
           const filterDeckId = normalized.includes("c.deck_id =")
             ? scopeBound
             : null;
@@ -2522,17 +2543,18 @@ export function createTestEnv(opts?: {
         if (
           normalized.includes("FROM cards c") &&
           normalized.includes("INNER JOIN card_schedules s") &&
-          normalized.includes("FROM review_logs rl") &&
-          normalized.includes("c.status =")
+          (normalized.includes("again_14d") ||
+            normalized.includes("FROM review_logs")) &&
+          normalized.includes("hard_14d") &&
+          normalized.includes("c.status =") &&
+          !normalized.includes("s.due <=")
         ) {
-          const since = bound[0] as string;
-          // New query binds since twice (again + hard), then userId, status.
-          // Legacy query bound since, userId, status once.
-          const hasHard =
-            normalized.includes("rating = 2") ||
-            normalized.includes("hard_14d");
-          const userId = (hasHard ? bound[2] : bound[1]) as string;
-          const status = (hasHard ? bound[3] : bound[2]) as string;
+          // Scoped: [userId, since, userId, since, userId, status]
+          // Legacy correlated: [since, since, userId, status] or [since, userId, status]
+          const hasScoped = normalized.includes("d2.user_id");
+          const since = (hasScoped ? bound[1] : bound[0]) as string;
+          const userId = (hasScoped ? bound[4] : bound[2]) as string;
+          const status = (hasScoped ? bound[5] : bound[3]) as string;
           const filterSurvivors =
             normalized.includes("lapses >= 2") ||
             normalized.includes("again_14d >= 2");

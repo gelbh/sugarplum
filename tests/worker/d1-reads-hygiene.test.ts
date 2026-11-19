@@ -7,6 +7,7 @@ describe("dueQueue SQL hygiene", () => {
     expect(src).not.toMatch(
       /SELECT COUNT\(\*\) FROM review_logs rl\s+WHERE rl\.card_id = c\.id/s,
     );
+    expect(src).toMatch(/d2\.user_id/);
   });
 });
 

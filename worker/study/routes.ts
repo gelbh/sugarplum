@@ -203,20 +203,24 @@ studyRoutes.get("/struggling", async (c) => {
        INNER JOIN card_schedules s ON s.card_id = c.id
        INNER JOIN decks d ON d.id = c.deck_id
        LEFT JOIN (
-         SELECT card_id, COUNT(*) AS again_14d
-         FROM review_logs
-         WHERE rating = 1 AND reviewed_at >= ?
-         GROUP BY card_id
+         SELECT rl.card_id AS card_id, COUNT(*) AS again_14d
+         FROM review_logs rl
+         INNER JOIN cards c2 ON c2.id = rl.card_id
+         INNER JOIN decks d2 ON d2.id = c2.deck_id
+         WHERE d2.user_id = ? AND rl.rating = 1 AND rl.reviewed_at >= ?
+         GROUP BY rl.card_id
        ) ag ON ag.card_id = c.id
        LEFT JOIN (
-         SELECT card_id, COUNT(*) AS hard_14d
-         FROM review_logs
-         WHERE rating = 2 AND reviewed_at >= ?
-         GROUP BY card_id
+         SELECT rl.card_id AS card_id, COUNT(*) AS hard_14d
+         FROM review_logs rl
+         INNER JOIN cards c2 ON c2.id = rl.card_id
+         INNER JOIN decks d2 ON d2.id = c2.deck_id
+         WHERE d2.user_id = ? AND rl.rating = 2 AND rl.reviewed_at >= ?
+         GROUP BY rl.card_id
        ) hd ON hd.card_id = c.id
        WHERE d.user_id = ? AND c.status = ?`,
     )
-    .bind(since, since, userId, "accepted")
+    .bind(userId, since, userId, since, userId, "accepted")
     .all<StrugglingSqlRow>();
 
   const candidates = (results ?? []).map((row) => {

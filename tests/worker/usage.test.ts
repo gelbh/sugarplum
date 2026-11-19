@@ -152,7 +152,7 @@ describe("GET /api/admin/overview usage", () => {
     );
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({
-      tokensAllTime: 100,
+      tokens30d: 100,
       freeJobs30d: 1,
     });
   });
