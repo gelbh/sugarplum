@@ -3,7 +3,7 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { navigate } from "../nav/navigate";
+import { navigate } from "../shared/nav/navigate";
 
 export type StudyReadySummary = {
   due: number;

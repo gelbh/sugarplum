@@ -12,7 +12,7 @@ import {
 
 const navigateReplace = vi.fn();
 
-vi.mock("../../src/nav/navigate", () => ({
+vi.mock("../../src/shared/nav/navigate", () => ({
   navigateReplace: (...args: unknown[]) => navigateReplace(...args),
 }));
 

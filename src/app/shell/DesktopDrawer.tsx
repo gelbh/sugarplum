@@ -7,8 +7,8 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import { navigateReplace } from "../../nav/navigate";
-import type { ShellGenerationStatus } from "../../shell/resolveShellGenerationStatus";
+import { navigateReplace } from "../../shared/nav/navigate";
+import type { ShellGenerationStatus } from "./resolveShellGenerationStatus";
 import GenerationStatusStrip from "./GenerationStatusStrip";
 import {
   DRAWER_WIDTH,

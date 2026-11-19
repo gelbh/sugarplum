@@ -3,7 +3,7 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { MouseEvent } from "react";
-import { isPlainClick, navigate } from "../nav/navigate";
+import { isPlainClick, navigate } from "../shared/nav/navigate";
 import type { DueDeckRemainder, DueDeckRow } from "./dueBreakdown";
 
 export type TodayDueBreakdownProps = {

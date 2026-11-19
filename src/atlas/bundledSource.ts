@@ -1,4 +1,4 @@
-import { loadParasiteDataset } from "../../worker/atlas/datasets/parasites";
+import { loadParasiteDataset } from "../../worker/atlas/datasets/parasites/index";
 import { toEntryView } from "../../worker/atlas/merge";
 import type { AtlasEntryView, AtlasSource } from "./types";
 

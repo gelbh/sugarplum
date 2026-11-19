@@ -5,7 +5,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import CoverHeroThumb from "../../src/ui/CoverHeroThumb";
+import CoverHeroThumb from "../../src/shared/ui/CoverHeroThumb";
 import { theme } from "../../src/theme";
 
 (

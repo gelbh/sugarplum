@@ -4,9 +4,9 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import InitColorSchemeScript from "@mui/material/InitColorSchemeScript";
 import { registerSW } from "virtual:pwa-register";
-import App from "./App.tsx";
-import { theme } from "./theme.ts";
-import { syncAtlasPreviewParam } from "./atlas/preview.ts";
+import App from "./app/App";
+import { theme } from "./theme";
+import { syncAtlasPreviewParam } from "./atlas/preview";
 import "./styles/brand.css";
 
 // https://vite-pwa-org.netlify.app/guide/auto-update

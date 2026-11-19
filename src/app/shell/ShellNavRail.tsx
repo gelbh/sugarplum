@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
-import { navigateReplace } from "../../nav/navigate";
-import type { ShellGenerationStatus } from "../../shell/resolveShellGenerationStatus";
+import { navigateReplace } from "../../shared/nav/navigate";
+import type { ShellGenerationStatus } from "./resolveShellGenerationStatus";
 import GenerationStatusStrip from "./GenerationStatusStrip";
 import {
   RAIL_WIDTH,

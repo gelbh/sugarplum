@@ -9,7 +9,7 @@ import {
   shellBackHref,
   subscribeLocation,
   subscribePath,
-} from "../../src/nav/navigate";
+} from "../../src/shared/nav/navigate";
 
 describe("navigate", () => {
   it("pushState updates path subscribers", () => {

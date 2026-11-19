@@ -6,7 +6,7 @@ import {
   restoreWhenReady,
   saveOffset,
   savedOffset,
-} from "../../src/nav/scrollRestore";
+} from "../../src/shared/nav/scrollRestore";
 
 function memoryStorage(initial?: string) {
   let value = initial ?? null;

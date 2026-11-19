@@ -9,7 +9,7 @@ import { ApiError } from "../api/client";
 import { ensureAtlas } from "../atlas/apiSource";
 import { atlasHref, atlasHubHref } from "../atlas/paths";
 import { isGuest } from "../guest/session";
-import { navigate, navigateReplace } from "../nav/navigate";
+import { navigate, navigateReplace } from "../shared/nav/navigate";
 
 export default function ParasitologyAtlasBounce({
   onBack,

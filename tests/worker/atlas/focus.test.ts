@@ -6,7 +6,7 @@ import {
   refreshAtlasFocus,
   setFocusOverride,
 } from "../../../worker/atlas/focus";
-import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites";
+import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites/index";
 import { overlayAtlas } from "../../../worker/atlas/merge";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";

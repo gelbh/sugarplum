@@ -9,47 +9,47 @@ import {
   type ReactNode,
 } from "react";
 import Box from "@mui/material/Box";
-import AppShell from "./components/AppShell";
-import BareScroll from "./components/BareScroll";
-import GradeButtons from "./components/GradeButtons";
-import DraftReviewPage from "./routes/DraftReviewPage";
-import HomePage from "./routes/HomePage";
-import LibraryPage from "./routes/LibraryPage";
-import SubjectPage from "./routes/SubjectPage";
-import DeckHubPage from "./routes/DeckHubPage";
-import LoginPage from "./routes/LoginPage";
-import RegisterPage from "./routes/RegisterPage";
-import PrivacyPage from "./routes/PrivacyPage";
-import TermsPage from "./routes/TermsPage";
-import DataDeletionPage from "./routes/DataDeletionPage";
-import SettingsPage from "./routes/SettingsPage";
-import StudyPage from "./routes/StudyPage";
-import TodayPage from "./routes/TodayPage";
-import AdminPage from "./routes/AdminPage";
-import AdminUserPage from "./routes/AdminUserPage";
-import { navigateReplace, subscribeLocation } from "./nav/navigate";
-import { UnlockToastProvider } from "./achievements/UnlockToastProvider";
-import AchievementsPage from "./routes/AchievementsPage";
-import { StudyChromeProvider } from "./study/StudyChromeContext";
-import RouteSuspenseFallback from "./progress/RouteSuspenseFallback";
-import { isAtlasToAtlas, matchAtlasPath } from "./atlas/paths";
+import AppShell from "./AppShell";
+import BareScroll from "./BareScroll";
+import GradeButtons from "../components/GradeButtons";
+import DraftReviewPage from "../routes/DraftReviewPage";
+import HomePage from "../routes/HomePage";
+import LibraryPage from "../routes/LibraryPage";
+import SubjectPage from "../routes/SubjectPage";
+import DeckHubPage from "../routes/DeckHubPage";
+import LoginPage from "../routes/LoginPage";
+import RegisterPage from "../routes/RegisterPage";
+import PrivacyPage from "../routes/PrivacyPage";
+import TermsPage from "../routes/TermsPage";
+import DataDeletionPage from "../routes/DataDeletionPage";
+import SettingsPage from "../routes/SettingsPage";
+import StudyPage from "../routes/StudyPage";
+import TodayPage from "../routes/TodayPage";
+import AdminPage from "../routes/AdminPage";
+import AdminUserPage from "../routes/AdminUserPage";
+import { navigateReplace, subscribeLocation } from "../shared/nav/navigate";
+import { UnlockToastProvider } from "../achievements/UnlockToastProvider";
+import AchievementsPage from "../routes/AchievementsPage";
+import { StudyChromeProvider } from "../study/StudyChromeContext";
+import RouteSuspenseFallback from "../progress/RouteSuspenseFallback";
+import { isAtlasToAtlas, matchAtlasPath } from "../atlas/paths";
 import {
   anatomySceneHref,
   canonicalAnatomySceneId,
   matchAnatomyPath,
   regionsFromSearch,
-} from "./anatomy/paths";
-import AtlasHub from "./routes/AtlasHub";
-import ParasitologyAtlasBounce from "./routes/ParasitologyAtlasBounce";
-import AnatomyViewerGate from "./anatomy/AnatomyViewerGate";
-import AnatomyHub from "./routes/AnatomyHub";
-import SessionBootstrap from "./session/SessionBootstrap";
+} from "../anatomy/paths";
+import AtlasHub from "../routes/AtlasHub";
+import ParasitologyAtlasBounce from "../routes/ParasitologyAtlasBounce";
+import AnatomyViewerGate from "../anatomy/AnatomyViewerGate";
+import AnatomyHub from "../routes/AnatomyHub";
+import SessionBootstrap from "../session/SessionBootstrap";
 
 // Keeps the dataset and its schemas out of the main chunk.
-const AtlasPage = lazy(() => import("./routes/AtlasPage"));
-const AnatomyViewerPage = lazy(() => import("./routes/AnatomyViewerPage"));
+const AtlasPage = lazy(() => import("../routes/AtlasPage"));
+const AnatomyViewerPage = lazy(() => import("../routes/AnatomyViewerPage"));
 // Recharts lives under Insights; keep it off other routes.
-const InsightsPage = lazy(() => import("./routes/InsightsPage"));
+const InsightsPage = lazy(() => import("../routes/InsightsPage"));
 
 const SUBJECT_PATH = /^\/library\/subjects\/([^/]+)\/?$/;
 const DECK_PATH = /^\/library\/decks\/([^/]+)\/?$/;

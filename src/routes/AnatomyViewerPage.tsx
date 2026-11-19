@@ -65,7 +65,7 @@ import {
   anatomyClipChrome,
   anatomyViewerMobile,
 } from "../anatomy/viewerLayout";
-import { isPlainClick, navigate } from "../nav/navigate";
+import { isPlainClick, navigate } from "../shared/nav/navigate";
 
 type Props = { sceneId: string; initialRegions?: string[] };
 

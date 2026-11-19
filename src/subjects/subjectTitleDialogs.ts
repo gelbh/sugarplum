@@ -7,7 +7,7 @@ import {
   type Deck,
   type Subject,
 } from "../api/client";
-import { navigate } from "../nav/navigate";
+import { navigate } from "../shared/nav/navigate";
 import type { CoverTarget, TitleDialog } from "./subjectTypes";
 
 export type SubjectTitleDialogsCtx = {

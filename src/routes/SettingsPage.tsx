@@ -25,7 +25,7 @@ import {
   type StudyPrefs,
 } from "../api/client";
 import MagnificCredits from "../achievements/MagnificCredits";
-import { navigate } from "../nav/navigate";
+import { navigate } from "../shared/nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { useSession } from "../session/SessionContext";
 import { freeGenFaqBody, freeGenIntroBlurb } from "../settings/freeGenFaq";

@@ -17,7 +17,7 @@ import {
   emptyJobDraftCtas,
   type EmptyJobDraftCtas,
 } from "../journey/emptyJobDraftCtas";
-import type { StageCrumb } from "../ui/StageBreadcrumbs";
+import type { StageCrumb } from "../shared/ui/StageBreadcrumbs";
 import { friendlyJobError } from "./friendlyJobError";
 
 type Args = {
