@@ -8,6 +8,7 @@ import {
   assertSingleCloze,
   assertValidMcqOptions,
 } from "../generation/schema";
+import { cardContentFingerprint } from "../cards/contentFingerprint";
 import { encodeStoredBack } from "../cards/routes";
 import { foldDeckTitle } from "./titleKey";
 
@@ -310,6 +311,22 @@ guestRoutes.post("/import", async (c) => {
     );
   }
 
+  const seenFpByDeck = new Map<string, Set<string>>();
+  for (const deckId of new Set(clientToServerDeck.values())) {
+    const { results } = await db
+      .prepare(
+        `SELECT content_fp FROM cards
+         WHERE deck_id = ? AND claim_id IS NULL AND content_fp IS NOT NULL
+           AND status IN ('draft', 'accepted')`,
+      )
+      .bind(deckId)
+      .all<{ content_fp: string }>();
+    seenFpByDeck.set(
+      deckId,
+      new Set((results ?? []).map((r) => r.content_fp).filter(Boolean)),
+    );
+  }
+  let insertedCards = 0;
   for (const card of cards) {
     const deckId = clientToServerDeck.get(card.clientDeckId);
     if (!deckId) {
@@ -324,6 +341,22 @@ guestRoutes.post("/import", async (c) => {
       options = mcq.options;
     }
 
+    const contentFp = await cardContentFingerprint({
+      type: card.type,
+      front: card.front,
+      mediaR2Keys: null,
+      back: card.type === "mcq" ? back : undefined,
+      options: card.type === "mcq" ? options : null,
+    });
+    let seen = seenFpByDeck.get(deckId);
+    if (!seen) {
+      seen = new Set();
+      seenFpByDeck.set(deckId, seen);
+    }
+    if (seen.has(contentFp)) continue;
+    seen.add(contentFp);
+    insertedCards += 1;
+
     const cardId = crypto.randomUUID();
     const schedule = scheduleColumnsFromCard(newCard());
     const provenance = JSON.stringify({
@@ -337,8 +370,9 @@ guestRoutes.post("/import", async (c) => {
         .prepare(
           `INSERT INTO cards (
             id, deck_id, job_id, type, front_json, back_json,
-            media_r2_keys_json, provenance_json, status, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            media_r2_keys_json, provenance_json, status, created_at, updated_at,
+            claim_id, content_fp
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .bind(
           cardId,
@@ -352,6 +386,8 @@ guestRoutes.post("/import", async (c) => {
           "accepted",
           now,
           now,
+          null,
+          contentFp,
         ),
     );
     statements.push(
@@ -382,5 +418,5 @@ guestRoutes.post("/import", async (c) => {
     await db.batch(statements);
   }
 
-  return c.json({ deckCount: decks.length, cardCount: cards.length });
+  return c.json({ deckCount: decks.length, cardCount: insertedCards });
 });

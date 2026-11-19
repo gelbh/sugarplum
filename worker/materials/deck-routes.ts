@@ -19,6 +19,7 @@ import {
   sha256Hex,
 } from "./content-hash";
 import { assertSingleCloze, assertValidMcqOptions } from "../generation/schema";
+import { cardContentFingerprint } from "../cards/contentFingerprint";
 import { encodeStoredBack, serializeCard, type CardRow } from "../cards/routes";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 import { composeSubjectKnowledge } from "../../src/study/subjectKnowledge";
@@ -415,48 +416,106 @@ deckRoutes.post("/:id/cards", async (c) => {
     backJson = encodeStoredBack(type, back, options);
   }
 
-  await db.batch([
-    db
-      .prepare(
-        `INSERT INTO cards (
-          id, deck_id, job_id, type, front_json, back_json,
-          media_r2_keys_json, provenance_json, status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .bind(
-        id,
-        deckId,
-        null,
-        type,
-        frontJson,
-        backJson,
-        mediaR2KeysJson,
-        null,
-        "accepted",
-        now,
-        now,
-      ),
-    db
-      .prepare(
-        `INSERT INTO card_schedules (
-           card_id, due, stability, difficulty, elapsed_days, scheduled_days,
-           learning_steps, reps, lapses, state, last_review
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .bind(
-        id,
-        schedule.due,
-        schedule.stability,
-        schedule.difficulty,
-        schedule.elapsed_days,
-        schedule.scheduled_days,
-        schedule.learning_steps,
-        schedule.reps,
-        schedule.lapses,
-        schedule.state,
-        schedule.last_review,
-      ),
-  ]);
+  const frontForFp = JSON.parse(frontJson) as unknown;
+  const mediaKeys = mediaR2KeysJson
+    ? (JSON.parse(mediaR2KeysJson) as string[])
+    : null;
+  let mcqBack: string | undefined;
+  let mcqOptions: string[] | null = null;
+  if (type === "mcq") {
+    const decoded = JSON.parse(backJson) as { answer?: string; options?: string[] };
+    mcqBack = decoded.answer;
+    mcqOptions = decoded.options ?? null;
+  }
+  const contentFp = await cardContentFingerprint({
+    type,
+    front: frontForFp,
+    mediaR2Keys: mediaKeys,
+    back: mcqBack,
+    options: mcqOptions,
+  });
+
+  const existing = await db
+    .prepare(
+      `SELECT id, deck_id, job_id, type, front_json, back_json,
+              media_r2_keys_json, provenance_json, status, created_at, updated_at,
+              claim_id
+       FROM cards
+       WHERE deck_id = ? AND claim_id IS NULL AND content_fp = ?
+         AND status IN ('draft', 'accepted')
+       LIMIT 1`,
+    )
+    .bind(deckId, contentFp)
+    .first<CardRow>();
+  if (existing) {
+    return c.json(serializeCard(existing), 200);
+  }
+
+  try {
+    await db.batch([
+      db
+        .prepare(
+          `INSERT INTO cards (
+            id, deck_id, job_id, type, front_json, back_json,
+            media_r2_keys_json, provenance_json, status, created_at, updated_at,
+            claim_id, content_fp
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .bind(
+          id,
+          deckId,
+          null,
+          type,
+          frontJson,
+          backJson,
+          mediaR2KeysJson,
+          null,
+          "accepted",
+          now,
+          now,
+          null,
+          contentFp,
+        ),
+      db
+        .prepare(
+          `INSERT INTO card_schedules (
+             card_id, due, stability, difficulty, elapsed_days, scheduled_days,
+             learning_steps, reps, lapses, state, last_review
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .bind(
+          id,
+          schedule.due,
+          schedule.stability,
+          schedule.difficulty,
+          schedule.elapsed_days,
+          schedule.scheduled_days,
+          schedule.learning_steps,
+          schedule.reps,
+          schedule.lapses,
+          schedule.state,
+          schedule.last_review,
+        ),
+    ]);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (/UNIQUE|unique|constraint/i.test(message)) {
+      const raced = await db
+        .prepare(
+          `SELECT id, deck_id, job_id, type, front_json, back_json,
+                  media_r2_keys_json, provenance_json, status, created_at, updated_at,
+                  claim_id
+           FROM cards
+           WHERE deck_id = ? AND claim_id IS NULL AND content_fp = ?
+             AND status IN ('draft', 'accepted')
+           LIMIT 1`,
+        )
+        .bind(deckId, contentFp)
+        .first<CardRow>();
+      if (raced) return c.json(serializeCard(raced), 200);
+    }
+    throw err;
+  }
 
   if (deck.subject_id != null) {
     await refreshKnowledgeSummaryForOwnedCard(db, userId, id);
@@ -475,6 +534,7 @@ deckRoutes.post("/:id/cards", async (c) => {
       status: "accepted",
       created_at: now,
       updated_at: now,
+      claim_id: null,
     }),
     201,
   );

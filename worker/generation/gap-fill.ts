@@ -16,6 +16,7 @@ import {
   matchClaimIdForDraft,
   type StoredClaim,
 } from "./claims";
+import { cardContentFingerprint } from "../cards/contentFingerprint";
 import { assertValidMcqOptions, type CardDraft } from "./schema";
 import { filterNovelDrafts } from "./study-windows";
 import { mergeTopicHints, MAX_TOPIC_HINT_CHARS } from "./topic-hints";
@@ -125,40 +126,51 @@ export async function insertDraftCards(
       "claimId" in draft && draft.claimId != null && draft.claimId !== ""
         ? draft.claimId
         : null;
-    const backJson =
+    const mcq =
       draft.type === "mcq"
-        ? (() => {
-            const mcq = assertValidMcqOptions(draft.back, draft.options);
-            return JSON.stringify({
-              answer: mcq.back,
-              options: mcq.options,
-            });
-          })()
-        : JSON.stringify(draft.back);
-    await db
-      .prepare(
-        `INSERT INTO cards (
-          id, deck_id, job_id, type, front_json, back_json,
-          media_r2_keys_json, provenance_json, status, created_at, updated_at,
-          claim_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .bind(
-        id,
-        args.deckId,
-        args.jobId,
-        draft.type,
-        JSON.stringify(draft.front),
-        backJson,
-        mediaJson,
-        JSON.stringify(draft.provenance),
-        "draft",
-        now,
-        now,
-        claimId,
-      )
-      .run();
-    ids.push(id);
+        ? assertValidMcqOptions(draft.back, draft.options)
+        : null;
+    const backJson = mcq
+      ? JSON.stringify({ answer: mcq.back, options: mcq.options })
+      : JSON.stringify(draft.back);
+    const contentFp = await cardContentFingerprint({
+      type: draft.type,
+      front: draft.front,
+      mediaR2Keys: draft.mediaR2Keys ?? null,
+      back: mcq ? mcq.back : draft.back,
+      options: mcq ? mcq.options : null,
+    });
+    try {
+      await db
+        .prepare(
+          `INSERT INTO cards (
+            id, deck_id, job_id, type, front_json, back_json,
+            media_r2_keys_json, provenance_json, status, created_at, updated_at,
+            claim_id, content_fp
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .bind(
+          id,
+          args.deckId,
+          args.jobId,
+          draft.type,
+          JSON.stringify(draft.front),
+          backJson,
+          mediaJson,
+          JSON.stringify(draft.provenance),
+          "draft",
+          now,
+          now,
+          claimId,
+          contentFp,
+        )
+        .run();
+      ids.push(id);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (/UNIQUE|unique|constraint/i.test(message)) continue;
+      throw err;
+    }
   }
   return ids;
 }

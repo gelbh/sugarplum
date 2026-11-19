@@ -186,6 +186,7 @@ export type CardRow = {
   created_at: string;
   updated_at: string;
   claim_id?: string | null;
+  content_fp?: string | null;
 };
 
 export type StudyClaimRow = {
@@ -1249,6 +1250,34 @@ export function createTestEnv(opts?: {
               return (
                 normalized.includes("SELECT id") &&
                 !normalized.includes("deck_id")
+                  ? { id: card.id }
+                  : card
+              ) as T;
+            }
+          }
+          return null;
+        }
+        if (
+          normalized.includes("FROM cards") &&
+          normalized.includes("content_fp =") &&
+          normalized.includes("deck_id =")
+        ) {
+          const [deckId, contentFp, excludeId] = bound as [
+            string,
+            string,
+            string | undefined,
+          ];
+          for (const card of cards.values()) {
+            if (
+              card.deck_id === deckId &&
+              card.claim_id == null &&
+              card.content_fp === contentFp &&
+              (card.status === "draft" || card.status === "accepted") &&
+              (excludeId == null || card.id !== excludeId)
+            ) {
+              return (
+                normalized.includes("SELECT id") &&
+                !normalized.includes("deck_id,")
                   ? { id: card.id }
                   : card
               ) as T;
@@ -2499,6 +2528,22 @@ export function createTestEnv(opts?: {
               (c) => c.deck_id === bound[0] && c.media_r2_keys_json != null,
             )
             .map((c) => ({ media_r2_keys_json: c.media_r2_keys_json }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("SELECT content_fp FROM cards") &&
+          normalized.includes("deck_id =")
+        ) {
+          const deckId = bound[0] as string;
+          const rows = [...cards.values()]
+            .filter(
+              (c) =>
+                c.deck_id === deckId &&
+                c.claim_id == null &&
+                c.content_fp != null &&
+                (c.status === "draft" || c.status === "accepted"),
+            )
+            .map((c) => ({ content_fp: c.content_fp }));
           return { results: rows as T[] };
         }
         if (
@@ -4492,6 +4537,7 @@ export function createTestEnv(opts?: {
             created_at,
             updated_at,
             claim_id,
+            content_fp,
           ] = bound as [
             string,
             string,
@@ -4505,7 +4551,31 @@ export function createTestEnv(opts?: {
             string,
             string,
             string | null | undefined,
+            string | null | undefined,
           ];
+          const nextClaimId = claim_id ?? null;
+          const nextFp = content_fp ?? null;
+          if (nextClaimId != null) {
+            for (const existing of cards.values()) {
+              if (existing.claim_id === nextClaimId) {
+                throw new Error("UNIQUE constraint failed: cards.claim_id");
+              }
+            }
+          } else if (
+            nextFp != null &&
+            (status === "draft" || status === "accepted")
+          ) {
+            for (const existing of cards.values()) {
+              if (
+                existing.deck_id === deck_id &&
+                existing.claim_id == null &&
+                existing.content_fp === nextFp &&
+                (existing.status === "draft" || existing.status === "accepted")
+              ) {
+                throw new Error("UNIQUE constraint failed: cards.content_fp");
+              }
+            }
+          }
           cards.set(id, {
             id,
             deck_id,
@@ -4518,8 +4588,62 @@ export function createTestEnv(opts?: {
             status,
             created_at,
             updated_at,
-            claim_id: claim_id ?? null,
+            claim_id: nextClaimId,
+            content_fp: nextFp,
           });
+        } else if (
+          normalized.startsWith(
+            "UPDATE cards SET type = ?, front_json = ?, back_json = ?, provenance_json = ?, media_r2_keys_json = NULL, content_fp = ?, updated_at = ?",
+          )
+        ) {
+          const [
+            type,
+            front_json,
+            back_json,
+            provenance_json,
+            content_fp,
+            updated_at,
+            id,
+          ] = bound as [string, string, string, string, string, string, string];
+          const row = cards.get(id);
+          if (row) {
+            cards.set(id, {
+              ...row,
+              type,
+              front_json,
+              back_json,
+              provenance_json,
+              media_r2_keys_json: null,
+              content_fp,
+              updated_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
+            "UPDATE cards SET type = ?, front_json = ?, back_json = ?, provenance_json = ?, content_fp = ?, updated_at = ?",
+          )
+        ) {
+          const [
+            type,
+            front_json,
+            back_json,
+            provenance_json,
+            content_fp,
+            updated_at,
+            id,
+          ] = bound as [string, string, string, string, string, string, string];
+          const row = cards.get(id);
+          if (row) {
+            cards.set(id, {
+              ...row,
+              type,
+              front_json,
+              back_json,
+              provenance_json,
+              content_fp,
+              updated_at,
+            });
+          }
         } else if (
           normalized.startsWith(
             "UPDATE cards SET type = ?, front_json = ?, back_json = ?, provenance_json = ?, media_r2_keys_json = NULL, updated_at = ?",
