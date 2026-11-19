@@ -17,6 +17,7 @@ import {
   regenCard,
   type DeckHygieneCard,
 } from "../api/client";
+import { useHygieneRegenAll } from "./HygieneRegenAllControls";
 import { PILL_BTN, ROW_ACTION } from "./workshopChrome";
 
 const VISIBLE_LIMIT = 5;
@@ -45,9 +46,9 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (opts?: { clearError?: boolean }) => {
     setLoading(true);
-    setError(null);
+    if (opts?.clearError !== false) setError(null);
     try {
       const res = await getDeckHygiene(deckId);
       setCards(res.cards);
@@ -64,8 +65,20 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
     void load();
   }, [load]);
 
-  if (loading && cards.length === 0) return null;
-  if (!error && cards.length === 0) return null;
+  const regenAll = useHygieneRegenAll({
+    cards,
+    disabled: busyId != null,
+    onCardRemoved: (cardId) => {
+      setCards((prev) => prev.filter((c) => c.id !== cardId));
+    },
+    reload: load,
+    onChanged,
+  });
+
+  const busy = regenAll.busy || busyId != null;
+
+  if (loading && cards.length === 0 && !regenAll.busy) return null;
+  if (!error && cards.length === 0 && !regenAll.busy) return null;
 
   const visible =
     showAll || cards.length <= VISIBLE_LIMIT
@@ -124,6 +137,29 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
             },
           }}
         />
+        <Box sx={{ flex: 1, minWidth: 8 }} />
+        <Button
+          size="small"
+          variant="text"
+          disabled={regenAll.triggerDisabled}
+          onClick={regenAll.openConfirm}
+          sx={{
+            ...PILL_BTN,
+            minWidth: 0,
+            px: 1.15,
+            py: 0.35,
+            fontSize: "0.75rem",
+            letterSpacing: "0.04em",
+            color: "rgba(232, 216, 199, 0.72)",
+            "&:hover": {
+              ...PILL_BTN["&:hover"],
+              color: "primary.light",
+              bgcolor: "rgba(91, 44, 111, 0.22)",
+            },
+          }}
+        >
+          Regen all flagged
+        </Button>
       </Stack>
       <Typography
         variant="caption"
@@ -137,6 +173,7 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
         Essay or compound accepted cards. Regenerate or archive only when you
         choose; schedules stay until then.
       </Typography>
+      {regenAll.status}
       {error ? (
         <Alert severity="error" sx={{ mb: 1 }}>
           {error}
@@ -145,7 +182,6 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
       <Stack spacing={0.85}>
         {visible.map((card) => {
           const regenType = asRegenType(card.type);
-          const busy = busyId === card.id;
           return (
             <Stack
               key={card.id}
@@ -339,6 +375,7 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
       {hiddenCount > 0 ? (
         <Button
           size="small"
+          disabled={busy}
           onClick={() => setShowAll(true)}
           sx={{
             ...PILL_BTN,
@@ -355,6 +392,7 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
           Show {hiddenCount} more
         </Button>
       ) : null}
+      {regenAll.dialog}
     </Box>
   );
 }
