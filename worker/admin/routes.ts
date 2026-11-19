@@ -170,6 +170,12 @@ adminRoutes.post("/atlas/heal-wiped-fields", async (c) => {
     typeof record.userId === "string" ? record.userId : undefined;
   const atlasId =
     typeof record.atlasId === "string" ? record.atlasId : undefined;
+  // Mutate requires a scope filter so dry_run:false cannot rewrite every overlay.
+  if (!dry_run && !userId && !atlasId) {
+    throw new HTTPException(400, {
+      message: "userId or atlasId required when dry_run is false",
+    });
+  }
   const result = await runHealWipedFields(getDb(c.env), {
     dry_run,
     userId,

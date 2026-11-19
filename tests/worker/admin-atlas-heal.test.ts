@@ -51,6 +51,24 @@ async function createAtlas(env: ReturnType<typeof createTestEnv>) {
 }
 
 describe("POST /api/admin/atlas/heal-wiped-fields", () => {
+  it("400 when dry_run:false without userId or atlasId", async () => {
+    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
+    seedAdmin(env);
+    const res = await app.request(
+      "/api/admin/atlas/heal-wiped-fields",
+      {
+        method: "POST",
+        headers: {
+          cookie: `${SESSION_COOKIE}=sess-admin`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ dry_run: false }),
+      },
+      env,
+    );
+    expect(res.status).toBe(400);
+  });
+
   it("403 for non-admin", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedLearnerWithAtlas(env);
