@@ -56,10 +56,7 @@ export function useDraftReviewLoad({
       const [list, job, coverage] = await Promise.all([
         listJobDrafts(id),
         getJob(id),
-        getJobClaimCoverage(id).catch((err) => {
-          if (err instanceof ApiError && err.status === 404) return null;
-          return null;
-        }),
+        getJobClaimCoverage(id).catch(() => null),
       ]);
       setDrafts(list);
       setJobStatus(job.status);

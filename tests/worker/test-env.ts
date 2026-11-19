@@ -4667,6 +4667,14 @@ export function createTestEnv(opts?: {
             cards.delete(id);
             schedules.delete(id);
           }
+        } else if (
+          normalized.startsWith("DELETE FROM study_claims WHERE job_id =")
+        ) {
+          const jobId = bound[0] as string;
+          for (const [id, claim] of [...studyClaims.entries()]) {
+            if (claim.job_id !== jobId) continue;
+            studyClaims.delete(id);
+          }
         } else if (normalized.startsWith("INSERT INTO review_logs")) {
           const [
             id,

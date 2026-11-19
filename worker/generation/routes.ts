@@ -452,6 +452,11 @@ jobRoutes.post("/:id/regen", async (c) => {
     )
     .run();
 
+  // Wipe claims with cards so coverage does not accumulate orphans across regens.
+  await db
+    .prepare("DELETE FROM study_claims WHERE job_id = ?")
+    .bind(jobId)
+    .run();
   await db.prepare("DELETE FROM cards WHERE job_id = ?").bind(jobId).run();
 
   try {

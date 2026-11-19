@@ -521,7 +521,11 @@ export async function runPass1Phase(
 
   try {
     if (reclaimed) {
-      // Same wipe as regen: mid-run death can leave drafts; reclaim must not duplicate.
+      // Same wipe as regen: mid-run death can leave drafts/claims; reclaim must not duplicate.
+      await db
+        .prepare("DELETE FROM study_claims WHERE job_id = ?")
+        .bind(jobId)
+        .run();
       await db.prepare("DELETE FROM cards WHERE job_id = ?").bind(jobId).run();
     }
 

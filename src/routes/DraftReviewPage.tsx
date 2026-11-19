@@ -104,6 +104,8 @@ export default function DraftReviewPage() {
   const current = drafts[0] ?? null;
 
   const jumpToDraft = (cardId: string) => {
+    if (dirty) return;
+    let moved = false;
     setDrafts((prev) => {
       const idx = prev.findIndex((d) => d.id === cardId);
       if (idx <= 0) return prev;
@@ -111,9 +113,10 @@ export default function DraftReviewPage() {
       const [card] = next.splice(idx, 1);
       if (!card) return prev;
       next.unshift(card);
+      moved = true;
       return next;
     });
-    setRegenNonce((n) => n + 1);
+    if (moved) setRegenNonce((n) => n + 1);
   };
 
   const { onEditorChange, onUndoDecision, onDecide } = createDraftReviewDecide({
