@@ -34,6 +34,7 @@ import {
   prepareFullScheduleUpdate,
   ratingToGrade,
 } from "./scheduleWrite";
+import { refreshKnowledgeSummaryForOwnedCard } from "../subjects/knowledgeSummary";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -437,6 +438,9 @@ studyRoutes.post("/review", async (c) => {
     reviewLogId,
     reviewedAt: new Date(reviewedAt),
   });
+
+  // Soft-stale R snapshot; race vs concurrent writes acceptable for v1.
+  await refreshKnowledgeSummaryForOwnedCard(db, userId, cardId, now);
 
   return c.json({ due: cols.due, state: cols.state, unlocks });
 });

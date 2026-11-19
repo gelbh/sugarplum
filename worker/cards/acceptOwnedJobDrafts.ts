@@ -5,6 +5,7 @@ import {
   partitionStoredDraftsByQuality,
   type StoredDraftFields,
 } from "../generation/storedDraftQuality";
+import { refreshKnowledgeSummariesForOwnedCards } from "../subjects/knowledgeSummary";
 
 export type AcceptDraftOutcome = "accepted" | "conflict" | "invalid";
 
@@ -132,6 +133,14 @@ export async function acceptOwnedJobDrafts(
           excludeJobId: jobId,
         })
       : 0;
+
+  if (acceptedCards.length > 0) {
+    await refreshKnowledgeSummariesForOwnedCards(
+      db,
+      userId,
+      acceptedCards.map((c) => c.cardId),
+    );
+  }
 
   return {
     accepted,

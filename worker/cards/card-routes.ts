@@ -16,6 +16,10 @@ import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 import { onCardAccepted } from "../gamification/onStudyEvent";
 import { parseOptionalJsonBody } from "../optional-json";
 import {
+  recomputeSubjectKnowledgeSummary,
+  refreshKnowledgeSummaryForOwnedCard,
+} from "../subjects/knowledgeSummary";
+import {
   acceptDraftCard,
   requireOwnedCard,
   undoReviewDecision,
@@ -140,6 +144,7 @@ cardRoutes.post("/:id/accept", async (c) => {
     cardId: row.id,
     cardType: row.type,
   });
+  await refreshKnowledgeSummaryForOwnedCard(db, userId, cardId);
   return c.json({
     ...serializeCard({ ...row, status: "accepted", updated_at: updatedAt }),
     unlocks,
@@ -417,6 +422,8 @@ cardRoutes.post("/:id/archive", async (c) => {
     });
   }
 
+  await refreshKnowledgeSummaryForOwnedCard(db, userId, cardId);
+
   return c.json(
     serializeCard({ ...row, status: "archived", updated_at: updatedAt }),
   );
@@ -432,6 +439,16 @@ cardRoutes.delete("/:id", async (c) => {
       message: "Only accepted cards can be deleted",
     });
   }
+  const subjectRow = await db
+    .prepare(
+      `-- sugarplum:subject-knowledge-card-subject
+       SELECT d.subject_id AS subject_id
+       FROM cards c
+       INNER JOIN decks d ON d.id = c.deck_id
+       WHERE c.id = ? AND d.user_id = ?`,
+    )
+    .bind(cardId, userId)
+    .first<{ subject_id: string | null }>();
   const result = await db
     .prepare("DELETE FROM cards WHERE id = ? AND status = ?")
     .bind(cardId, "accepted")
@@ -449,6 +466,13 @@ cardRoutes.delete("/:id", async (c) => {
     .prepare("DELETE FROM card_schedules WHERE card_id = ?")
     .bind(cardId)
     .run();
+  if (subjectRow?.subject_id != null) {
+    await recomputeSubjectKnowledgeSummary(
+      db,
+      userId,
+      subjectRow.subject_id,
+    );
+  }
   return c.body(null, 204);
 });
 
@@ -476,6 +500,8 @@ cardRoutes.post("/:id/restore", async (c) => {
       message: "Only archived cards can be restored",
     });
   }
+
+  await refreshKnowledgeSummaryForOwnedCard(db, userId, cardId);
 
   return c.json(
     serializeCard({ ...row, status: "accepted", updated_at: updatedAt }),

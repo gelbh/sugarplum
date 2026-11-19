@@ -340,6 +340,18 @@ export function createTestEnv(opts?: {
   const userStudyDay = new Map<string, UserStudyDayRow>();
   const cards = new Map<string, CardRow>();
   const schedules = new Map<string, ScheduleRow>();
+  type KnowledgeSummaryRow = {
+    subject_id: string;
+    user_id: string;
+    new_count: number;
+    learning_count: number;
+    young_count: number;
+    mature_count: number;
+    recall_card_count: number;
+    r_sum: number;
+    updated_at: string;
+  };
+  const knowledgeSummaries = new Map<string, KnowledgeSummaryRow>();
   const reviewLogs: ReviewLogRow[] = [];
   const sessions = new Map<string, string>();
   const exportJobs = new Map<string, ExportJobRow>();
@@ -1016,6 +1028,17 @@ export function createTestEnv(opts?: {
             return { exists: 1 } as T;
           }
           return null;
+        }
+        if (
+          normalized.includes("sugarplum:subject-knowledge-card-subject")
+        ) {
+          const cardId = bound[0] as string;
+          const userId = bound[1] as string;
+          const card = cards.get(cardId);
+          if (!card) return null;
+          const deck = decks.get(card.deck_id);
+          if (!deck || deck.user_id !== userId) return null;
+          return { subject_id: deck.subject_id ?? null } as T;
         }
         // COUNT(*) handlers
         if (
@@ -1977,6 +2000,47 @@ export function createTestEnv(opts?: {
           return { results: rows as T[] };
         }
         if (
+          normalized.includes("sugarplum:subject-knowledge-summaries-list")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...knowledgeSummaries.values()].filter(
+            (row) => row.user_id === userId,
+          );
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("sugarplum:subject-knowledge-summary-rows")
+        ) {
+          const userId = bound[0] as string;
+          const subjectId = bound[1] as string;
+          const rows = [...cards.values()]
+            .filter((card) => {
+              if (card.status !== "accepted") return false;
+              const deck = decks.get(card.deck_id);
+              return (
+                !!deck &&
+                deck.user_id === userId &&
+                deck.subject_id === subjectId
+              );
+            })
+            .map((card) => {
+              const schedule = schedules.get(card.id);
+              return {
+                state: schedule?.state ?? null,
+                scheduled_days: schedule?.scheduled_days ?? null,
+                due: schedule?.due ?? null,
+                stability: schedule?.stability ?? null,
+                difficulty: schedule?.difficulty ?? null,
+                elapsed_days: schedule?.elapsed_days ?? null,
+                learning_steps: schedule?.learning_steps ?? null,
+                reps: schedule?.reps ?? null,
+                lapses: schedule?.lapses ?? null,
+                last_review: schedule?.last_review ?? null,
+              };
+            });
+          return { results: rows as T[] };
+        }
+        if (
           normalized.includes("sugarplum:subject-composition-summaries-rows")
         ) {
           const userId = bound[0] as string;
@@ -2931,6 +2995,42 @@ export function createTestEnv(opts?: {
             string,
           ];
           subjects.set(id, { id, user_id, title, created_at });
+        } else if (
+          normalized.startsWith("INSERT INTO subject_knowledge_summaries")
+        ) {
+          const [
+            subject_id,
+            user_id,
+            new_count,
+            learning_count,
+            young_count,
+            mature_count,
+            recall_card_count,
+            r_sum,
+            updated_at,
+          ] = bound as [
+            string,
+            string,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            string,
+          ];
+          knowledgeSummaries.set(subject_id, {
+            subject_id,
+            user_id,
+            new_count,
+            learning_count,
+            young_count,
+            mature_count,
+            recall_card_count,
+            r_sum,
+            updated_at,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (
           normalized.startsWith(
             "INSERT INTO shelf_covers (user_id, owner_kind, owner_id, photo_id, image_url, photographer_name, photographer_url, photo_html_url, source, r2_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, owner_kind, owner_id) DO UPDATE SET",
