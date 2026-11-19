@@ -98,6 +98,10 @@ function isClaimExtract(system: string): boolean {
   return s.includes("extract") && s.includes("claim");
 }
 
+function isClaimGapExtract(system: string): boolean {
+  return isClaimExtract(system) && system.toLowerCase().includes("uncovered");
+}
+
 function extractPassCount(llm: { complete: ReturnType<typeof vi.fn> }): number {
   return llm.complete.mock.calls.filter((c) =>
     isClaimExtract((c[0] as { system: string }).system),
@@ -110,10 +114,23 @@ function extractUsers(llm: { complete: ReturnType<typeof vi.fn> }): string[] {
     .map((c) => (c[0] as { user: string }).user);
 }
 
-/** Text-path stub: one claim+card per extract pass; pass 2 covers the gap line. */
+const COVERED_DRAFT = () =>
+  qaDraft(
+    "What is the powerhouse of the cell?",
+    "Mitochondria.",
+    COVERED_LINE,
+  );
+const GAP_DRAFT = () =>
+  qaDraft("Which cranial nerve is twelve?", "Hypoglossal.", GAP_LINE);
+
+/**
+ * Pass-1 main extract covers COVERED_LINE; claim-gap extract covers GAP_LINE.
+ * Write emits one card per claim in the user payload. Draft autoFollowup is a
+ * no-op once both lines are claimed and carded.
+ */
 function gappyLlm(
-  secondThrows = false,
-  onSecondExtract?: () => void,
+  gapThrows = false,
+  onClaimGapExtract?: () => void,
 ): LlmAdapter & {
   generateDrafts: ReturnType<typeof vi.fn>;
   complete: ReturnType<typeof vi.fn>;
@@ -122,26 +139,20 @@ function gappyLlm(
   llm.generateDrafts.mockImplementation(async () => {
     throw new Error("generateDrafts must not be called for text claim path");
   });
-  let extractPass = 0;
-  llm.complete.mockImplementation(async ({ system }) => {
+  llm.complete.mockImplementation(async ({ system, user }) => {
     const s = system.toLowerCase();
-    if (isClaimExtract(system)) {
-      extractPass += 1;
-      if (extractPass > 1) onSecondExtract?.();
-      if (extractPass > 1 && secondThrows) {
-        throw new Error("gap-fill model failed");
+    if (isClaimGapExtract(system)) {
+      onClaimGapExtract?.();
+      if (gapThrows) {
+        throw new Error("claim gap extract failed");
       }
-      const span = extractPass === 1 ? COVERED_LINE : GAP_LINE;
       return {
         text: JSON.stringify({
           claims: [
             {
-              subject: extractPass === 1 ? "Mitochondria" : "Twelfth cranial nerve",
-              predicate:
-                extractPass === 1
-                  ? "are the powerhouse of the cell"
-                  : "is the hypoglossal",
-              source_span: span,
+              subject: "Twelfth cranial nerve",
+              predicate: "is the hypoglossal",
+              source_span: GAP_LINE,
               pages: [1],
             },
           ],
@@ -149,18 +160,51 @@ function gappyLlm(
         usage: null,
       };
     }
-    const draft =
-      extractPass <= 1
-        ? qaDraft(
-            "What is the powerhouse of the cell?",
-            "Mitochondria.",
-            COVERED_LINE,
-          )
-        : qaDraft("Which cranial nerve is twelve?", "Hypoglossal.", GAP_LINE);
-    if (s.includes("critique") || s.includes("flashcard") || s.includes("claim")) {
-      return { text: JSON.stringify({ cards: [draft] }), usage: null };
+    if (isClaimExtract(system)) {
+      return {
+        text: JSON.stringify({
+          claims: [
+            {
+              subject: "Mitochondria",
+              predicate: "are the powerhouse of the cell",
+              source_span: COVERED_LINE,
+              pages: [1],
+            },
+          ],
+        }),
+        usage: null,
+      };
     }
-    return { text: JSON.stringify({ cards: [draft] }), usage: null };
+    if (s.includes("critique")) {
+      // Match card fronts in the critique payload, not material lines.
+      const cards: CardDraft[] = [];
+      if (user.includes("What is the powerhouse of the cell?")) {
+        cards.push(COVERED_DRAFT());
+      }
+      if (user.includes("Which cranial nerve is twelve?")) {
+        cards.push(GAP_DRAFT());
+      }
+      return {
+        text: JSON.stringify({
+          cards: cards.length > 0 ? cards : [COVERED_DRAFT()],
+        }),
+        usage: null,
+      };
+    }
+    // Card-from-claim write: match claim payloads, not ambient material.
+    const cards: CardDraft[] = [];
+    if (user.includes(COVERED_LINE) || user.includes('"Mitochondria"')) {
+      cards.push(COVERED_DRAFT());
+    }
+    if (user.includes(GAP_LINE) || user.includes('"Twelfth cranial nerve"')) {
+      cards.push(GAP_DRAFT());
+    }
+    return {
+      text: JSON.stringify({
+        cards: cards.length > 0 ? cards : [COVERED_DRAFT()],
+      }),
+      usage: null,
+    };
   });
   return llm;
 }
@@ -168,21 +212,21 @@ function gappyLlm(
 describe("processGenerateJob gap-fill", () => {
   const gappyText = `${COVERED_LINE}\n${GAP_LINE}`;
 
-  it("appends one novel card when gaps remain and autoFollowup is set", async () => {
+  it("appends a claim-gap card in pass 1 without a second free slot", async () => {
     const env = createTestEnv();
     await seedOwner(env, false);
     const msg = await seedPasteJob(env, gappyText);
     expect(env.getQueueMessages().at(-1)).toMatchObject({ autoFollowup: true });
 
-    let followupStage = "";
+    let gapStage = "";
     const llm = gappyLlm(false, () => {
       const job = env.getGenerationJobs().find((row) => row.id === msg.jobId);
       const progress = JSON.parse(job!.progress_json!) as {
         stage: string;
         free_gen_slots?: number;
       };
-      followupStage = progress.stage;
-      expect(progress.free_gen_slots).toBe(2);
+      gapStage = progress.stage;
+      expect(progress.free_gen_slots).toBe(1);
     });
 
     const result = await processGenerateJob(
@@ -193,11 +237,13 @@ describe("processGenerateJob gap-fill", () => {
 
     expect(result).toBe("done");
     expect(llm.generateDrafts).not.toHaveBeenCalled();
+    // Main extract + claim-gap extract; draft autoFollowup is a no-op.
     expect(extractPassCount(llm)).toBe(2);
-    expect(followupStage).toBe("persist");
+    expect(gapStage).toBe("claims");
     const users = extractUsers(llm);
-    expect(users[1]).toContain(`- ${GAP_LINE}`);
-    expect(users[0]).not.toContain(`- ${GAP_LINE}`);
+    expect(users[0]).toContain(COVERED_LINE);
+    expect(users[1]).toContain(GAP_LINE);
+    expect(users[1]).not.toContain(COVERED_LINE);
     const fronts = env.getCards().map((card) => JSON.parse(card.front_json));
     expect(fronts).toEqual([
       "What is the powerhouse of the cell?",
@@ -212,17 +258,17 @@ describe("processGenerateJob gap-fill", () => {
     };
     expect(progress.stage).toBe("persist");
     expect(progress.percent).toBe(100);
-    expect(progress.free_gen_slots).toBe(2);
-    expect((await getFreeGenUsage(env, "user-a")).used).toBe(2);
+    expect(progress.free_gen_slots).toBe(1);
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
   });
 
-  it("does not follow up when autoFollowup is omitted or false, or when there are no gaps", async () => {
+  it("still claim-gap extracts when autoFollowup is omitted; skips when no claim gaps", async () => {
     const env = createTestEnv();
     await seedOwner(env, false);
     const omitted = await seedPasteJob(env, gappyText);
     const llm = gappyLlm();
     await processGenerateJob(env, omitted, { llm });
-    expect(extractPassCount(llm)).toBe(1);
+    expect(extractPassCount(llm)).toBe(2);
 
     const envFalse = createTestEnv();
     await seedOwner(envFalse, false);
@@ -233,7 +279,7 @@ describe("processGenerateJob gap-fill", () => {
       { ...flagged, autoFollowup: false },
       { llm: llmFalse },
     );
-    expect(extractPassCount(llmFalse)).toBe(1);
+    expect(extractPassCount(llmFalse)).toBe(2);
 
     const envCovered = createTestEnv();
     await seedOwner(envCovered, false);
@@ -248,7 +294,7 @@ describe("processGenerateJob gap-fill", () => {
     expect((await getFreeGenUsage(envCovered, "user-a")).used).toBe(1);
   });
 
-  it("keeps pass 1 when the free cap blocks the follow-up", async () => {
+  it("claim-gap fills in pass 1 even when the free cap would block draft follow-up", async () => {
     const env = createTestEnv();
     await seedOwner(env, false);
     for (let i = 0; i < FREE_GEN_DAILY_CAP - 1; i++) {
@@ -263,17 +309,22 @@ describe("processGenerateJob gap-fill", () => {
     );
 
     expect(result).toBe("done");
-    expect(extractPassCount(llm)).toBe(1);
-    expect(env.getCards()).toHaveLength(1);
+    expect(extractPassCount(llm)).toBe(2);
+    expect(env.getCards()).toHaveLength(2);
     expect(
       env.getGenerationJobs().find((row) => row.id === msg.jobId)?.status,
     ).toBe("needs_review");
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(
       FREE_GEN_DAILY_CAP,
     );
+    const progress = JSON.parse(
+      env.getGenerationJobs().find((row) => row.id === msg.jobId)!
+        .progress_json!,
+    ) as { free_gen_slots?: number };
+    expect(progress.free_gen_slots).toBe(1);
   });
 
-  it("keeps pass 1 when the follow-up model throws", async () => {
+  it("keeps pass 1 when claim-gap throws and draft follow-up also fails", async () => {
     const env = createTestEnv();
     await seedOwner(env, false);
     const msg = await seedPasteJob(env, gappyText);
@@ -285,7 +336,8 @@ describe("processGenerateJob gap-fill", () => {
     );
 
     expect(result).toBe("done");
-    expect(extractPassCount(llm)).toBe(2);
+    // Pass-1 main + failed claim-gap, then draft follow-up main + failed claim-gap.
+    expect(extractPassCount(llm)).toBe(4);
     expect(env.getCards()).toHaveLength(1);
     expect(
       env.getGenerationJobs().find((row) => row.id === msg.jobId)?.status,
@@ -293,7 +345,7 @@ describe("processGenerateJob gap-fill", () => {
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(2);
   });
 
-  it("does not take a third free slot when the follow-up was already charged", async () => {
+  it("does not take a third free slot when two slots were already charged", async () => {
     const env = createTestEnv();
     await seedOwner(env, false);
     const msg = await seedPasteJob(env, gappyText);
@@ -327,6 +379,7 @@ describe("processGenerateJob gap-fill", () => {
     );
 
     expect(result).toBe("done");
+    // Reclaim re-runs pass 1 (main + claim-gap); draft follow-up stays a no-op.
     expect(extractPassCount(llm)).toBe(2);
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(2);
     const progress = JSON.parse(
