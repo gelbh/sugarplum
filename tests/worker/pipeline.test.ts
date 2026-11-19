@@ -253,11 +253,27 @@ describe("runGenerationPipeline", () => {
   });
 
   it("caps extract complete calls at MAX_PIPELINE_CHUNKS", async () => {
-    const llm = mockPipelineLlm({});
+    // Distinct claim text per chunk so fuzzy/exact dedupe does not skip write.
+    const llm = mockPipelineLlm({
+      claimsForMaterial: (material) => {
+        const tag = material.match(/unique-(\d+)/)?.[1] ?? "0";
+        return [
+          {
+            subject: `Mitochondria${tag}`,
+            predicate: `produces energy form ${tag}`,
+            object: `ATP${tag}`,
+            source_span: material.slice(0, 60),
+            pages: [1],
+          },
+        ];
+      },
+    });
 
     // 6 paragraph blocks → would be 6 chunks without the cap.
-    const block = "y".repeat(CHUNK_CHAR_LIMIT - 10);
-    const text = Array.from({ length: 6 }, () => block).join("\n\n");
+    const text = Array.from({ length: 6 }, (_, i) => {
+      const pad = "y".repeat(CHUNK_CHAR_LIMIT - 20);
+      return `${pad} unique-${i}`;
+    }).join("\n\n");
 
     await runGenerationPipeline({
       text,
@@ -274,6 +290,18 @@ describe("runGenerationPipeline", () => {
 
   it("tells later chunks which fronts are already covered", async () => {
     const llm = mockPipelineLlm({
+      claimsForMaterial: (material) => {
+        const tag = material.includes("chunk-b") ? "beta" : "alpha";
+        return [
+          {
+            subject: `Organelle${tag}`,
+            predicate: `produces fuel ${tag}`,
+            object: `molecule${tag}`,
+            source_span: material.slice(0, 60),
+            pages: [1],
+          },
+        ];
+      },
       writeDrafts: () => [
         validDraft({
           front: "What produces ATP?",
@@ -292,8 +320,9 @@ describe("runGenerationPipeline", () => {
           ],
         }),
     });
-    const block = "y".repeat(CHUNK_CHAR_LIMIT - 10);
-    const text = `${block}\n\n${block}`;
+    const a = `${"a".repeat(CHUNK_CHAR_LIMIT - 20)} chunk-a`;
+    const b = `${"b".repeat(CHUNK_CHAR_LIMIT - 20)} chunk-b`;
+    const text = `${a}\n\n${b}`;
     await runGenerationPipeline({
       text,
       llm,
