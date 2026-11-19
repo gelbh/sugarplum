@@ -12,6 +12,10 @@ import {
 } from "./progress";
 import { consumeFreeGenSlot, isFreeGenCapError } from "./quota";
 import type { AtlasJobProvenance } from "../atlas/makeCardsSource";
+import {
+  matchClaimIdForDraft,
+  type StoredClaim,
+} from "./claims";
 import { assertValidMcqOptions, type CardDraft } from "./schema";
 import { filterNovelDrafts } from "./study-windows";
 import { mergeTopicHints, MAX_TOPIC_HINT_CHARS } from "./topic-hints";
@@ -20,10 +24,64 @@ function newId(): string {
   return crypto.randomUUID();
 }
 
-export function withAtlasProvenance(
-  drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>,
+export type DraftInsert = CardDraft & {
+  mediaR2Keys?: string[] | null;
+  claimId?: string | null;
+};
+
+/** Persist extracted claims for a job (orphans included). */
+export async function insertStudyClaims(
+  db: D1Database,
+  args: {
+    deckId: string;
+    jobId: string;
+    claims: StoredClaim[];
+  },
+): Promise<void> {
+  if (args.claims.length === 0) return;
+  const now = new Date().toISOString();
+  for (const claim of args.claims) {
+    await db
+      .prepare(
+        `INSERT INTO study_claims (
+          id, job_id, deck_id, subject, predicate, source_span,
+          object, qualifiers_json, pages_json, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        claim.id,
+        args.jobId,
+        args.deckId,
+        claim.subject,
+        claim.predicate,
+        claim.source_span,
+        claim.object ?? null,
+        claim.qualifiers ? JSON.stringify(claim.qualifiers) : null,
+        claim.pages ? JSON.stringify(claim.pages) : null,
+        now,
+      )
+      .run();
+  }
+}
+
+/** Attach claimId on drafts by provenance.excerpt ↔ source_span. */
+export function attachClaimIdsToDrafts(
+  drafts: CardDraft[],
+  claims: StoredClaim[],
+): DraftInsert[] {
+  if (claims.length === 0) {
+    return drafts.map((d) => ({ ...d, claimId: null }));
+  }
+  return drafts.map((draft) => ({
+    ...draft,
+    claimId: matchClaimIdForDraft(claims, draft.provenance.excerpt),
+  }));
+}
+
+export function withAtlasProvenance<T extends CardDraft & { mediaR2Keys?: string[] | null }>(
+  drafts: T[],
   atlas: AtlasJobProvenance | null,
-): Array<CardDraft & { mediaR2Keys?: string[] | null }> {
+): T[] {
   if (!atlas) return drafts;
   return drafts.map((draft) => ({
     ...draft,
@@ -42,10 +100,18 @@ export async function insertDraftCards(
   args: {
     deckId: string;
     jobId: string;
-    drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
+    drafts: DraftInsert[];
     atlasProvenance?: AtlasJobProvenance | null;
+    claims?: StoredClaim[];
   },
 ): Promise<void> {
+  if (args.claims && args.claims.length > 0) {
+    await insertStudyClaims(db, {
+      deckId: args.deckId,
+      jobId: args.jobId,
+      claims: args.claims,
+    });
+  }
   const now = new Date().toISOString();
   const drafts = withAtlasProvenance(args.drafts, args.atlasProvenance ?? null);
   for (const draft of drafts) {
@@ -54,6 +120,10 @@ export async function insertDraftCards(
         ? JSON.stringify(draft.mediaR2Keys)
         : null;
     const id = newId();
+    const claimId =
+      "claimId" in draft && draft.claimId != null && draft.claimId !== ""
+        ? draft.claimId
+        : null;
     const backJson =
       draft.type === "mcq"
         ? (() => {
@@ -68,8 +138,9 @@ export async function insertDraftCards(
       .prepare(
         `INSERT INTO cards (
           id, deck_id, job_id, type, front_json, back_json,
-          media_r2_keys_json, provenance_json, status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          media_r2_keys_json, provenance_json, status, created_at, updated_at,
+          claim_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         id,
@@ -83,6 +154,7 @@ export async function insertDraftCards(
         "draft",
         now,
         now,
+        claimId,
       )
       .run();
   }

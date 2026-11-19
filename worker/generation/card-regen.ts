@@ -9,7 +9,7 @@ import {
   writeOneCardFromClaim,
   type TypedRegenDraft,
 } from "./claim-stages";
-import { pickClaimForRegen } from "./claims";
+import { pickClaimForRegen, type StudyClaim } from "./claims";
 import {
   BYO_PROVIDERS_PHRASE,
   createLlmAdapter,
@@ -62,7 +62,8 @@ export function resolveRegenCorpus(args: {
 }
 
 /**
- * Claim-aware single-card regen: excerpt-first extract → pick → typed write → Layer-1.
+ * Claim-aware single-card regen: stored claim or excerpt-first extract → typed write → Layer-1.
+ * When `storedClaim` is set, skips extract (persist-claims D path).
  * Throws ClaimAwareRegenError when no claim or quality fails after one reask.
  */
 export async function regenerateClaimAwareCard(args: {
@@ -70,21 +71,12 @@ export async function regenerateClaimAwareCard(args: {
   materialText: string;
   type: RegenCardType;
   existingFront?: string;
+  storedClaim?: StudyClaim | null;
   studyStruggle?: { again_14d: number; lapses: number };
   llm: LlmAdapter;
   apiKey: string;
   provider: string;
 }): Promise<{ draft: TypedRegenDraft; usage: LlmTokenUsage | null }> {
-  const corpus = resolveRegenCorpus({
-    excerpt: args.excerpt,
-    materialText: args.materialText,
-  });
-  if (!corpus.trim()) {
-    throw new ClaimAwareRegenError(
-      "No source text available for this card. Edit manually or regenerate from material with text.",
-    );
-  }
-
   const struggleSuffix = buildExtraUserSuffix({
     studyStruggle: args.studyStruggle,
   });
@@ -115,11 +107,23 @@ export async function regenerateClaimAwareCard(args: {
     extraUserSuffix: struggleSuffix,
   };
 
-  const claims = await extractClaimsForChunk(corpus, stageArgs);
-  const claim = pickClaimForRegen(claims, {
-    excerpt: args.excerpt,
-    previousFront: args.existingFront,
-  });
+  let claim: StudyClaim | null = args.storedClaim ?? null;
+  if (!claim) {
+    const corpus = resolveRegenCorpus({
+      excerpt: args.excerpt,
+      materialText: args.materialText,
+    });
+    if (!corpus.trim()) {
+      throw new ClaimAwareRegenError(
+        "No source text available for this card. Edit manually or regenerate from material with text.",
+      );
+    }
+    const claims = await extractClaimsForChunk(corpus, stageArgs);
+    claim = pickClaimForRegen(claims, {
+      excerpt: args.excerpt,
+      previousFront: args.existingFront,
+    });
+  }
   if (!claim) {
     throw new ClaimAwareRegenError(
       "Could not extract an atomic claim from the source. Edit the card manually or try different material.",

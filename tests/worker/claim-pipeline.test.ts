@@ -91,13 +91,17 @@ describe("claim pipeline (extract → write → critique)", () => {
       }),
     };
 
-    const drafts = await runGenerationPipeline({
+    const { drafts, claims } = await runGenerationPipeline({
       text: CHUNK,
       llm,
       apiKey: "k",
       provider: "mock",
     });
 
+    expect(claims).toHaveLength(2);
+    expect(claims.every((c) => typeof c.id === "string" && c.id.length > 0)).toBe(
+      true,
+    );
     expect(llm.generateDrafts).not.toHaveBeenCalled();
     expect(llm.complete).toHaveBeenCalled();
     expect(completeCalls.length).toBeGreaterThanOrEqual(3);
@@ -144,7 +148,7 @@ describe("claim pipeline (extract → write → critique)", () => {
       }),
     };
 
-    const drafts = await runGenerationPipeline({
+    const { drafts } = await runGenerationPipeline({
       text: CHUNK,
       llm,
       apiKey: "k",

@@ -48,12 +48,12 @@ export async function runLiveEvalCase(
   const remainder = remainderAfterRules(material, rawRules);
   let llmDrafts: CardDraft[] = [];
   if (remainder.trim()) {
-    llmDrafts = await runGenerationPipeline({
+    llmDrafts = (await runGenerationPipeline({
       text: remainder,
       llm,
       apiKey: process.env.EVAL_LIVE_API_KEY ?? "",
       provider: process.env.EVAL_LIVE_PROVIDER?.trim() || "openai",
-    });
+      })).drafts;
   }
   const merged = mergeAndDedupeDrafts(layer1Rules, llmDrafts);
   const survivors = filterDraftsByQuality(merged);

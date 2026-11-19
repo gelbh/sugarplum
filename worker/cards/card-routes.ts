@@ -9,6 +9,7 @@ import {
   regenerateClaimAwareCard,
   resolveRegenLlm,
 } from "../generation/card-regen";
+import { studyClaimFromRow, type StudyClaim } from "../generation/claims";
 import { recordRegenUsageEvent } from "../generation/usage";
 import { WorkersAiCapacityError } from "../generation/workers-ai";
 import {
@@ -314,7 +315,28 @@ cardRoutes.post("/:id/regen", async (c) => {
   const excerpt = provenanceExcerptText(
     parseProvenanceJson(row.provenance_json),
   );
-  if (!materialText && !excerpt) {
+  let storedClaim: StudyClaim | null = null;
+  const claimId = row.claim_id ?? null;
+  if (claimId) {
+    const claimRow = await db
+      .prepare(
+        `SELECT subject, predicate, source_span, object, qualifiers_json, pages_json
+         FROM study_claims WHERE id = ? AND deck_id = ?`,
+      )
+      .bind(claimId, row.deck_id)
+      .first<{
+        subject: string;
+        predicate: string;
+        source_span: string;
+        object: string | null;
+        qualifiers_json: string | null;
+        pages_json: string | null;
+      }>();
+    if (claimRow) {
+      storedClaim = studyClaimFromRow(claimRow);
+    }
+  }
+  if (!storedClaim && !materialText && !excerpt) {
     throw new HTTPException(422, {
       message:
         "No source text available for this card. Edit manually or regenerate from material with text.",
@@ -358,6 +380,7 @@ cardRoutes.post("/:id/regen", async (c) => {
       type: regenType,
       existingFront:
         typeof existingFront === "string" ? existingFront : undefined,
+      storedClaim,
       studyStruggle,
       llm: llmBundle.llm,
       apiKey: llmBundle.apiKey,

@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   filterClaimsAgainstChunk,
+  matchClaimIdForDraft,
   parseClaimsPayload,
   pickClaimForRegen,
+  studyClaimFromRow,
+  type StoredClaim,
 } from "../../worker/generation/claims";
 
 describe("claims parse and filter", () => {
@@ -92,5 +95,73 @@ describe("pickClaimForRegen", () => {
 
   it("returns the first claim when no excerpt or front match", () => {
     expect(pickClaimForRegen([lysozyme, atp])).toEqual(lysozyme);
+  });
+});
+
+describe("matchClaimIdForDraft", () => {
+  it("matches draft excerpt to claim source_span with normalized whitespace", () => {
+    const claims: StoredClaim[] = [
+      {
+        id: "cl-1",
+        subject: "Lysozyme",
+        predicate: "digests peptidoglycan",
+        source_span: "Lysozyme digests peptidoglycan",
+      },
+    ];
+    expect(
+      matchClaimIdForDraft(claims, "  Lysozyme   digests peptidoglycan "),
+    ).toBe("cl-1");
+    expect(matchClaimIdForDraft(claims, "unrelated")).toBeNull();
+  });
+
+  it("does not join on substring overlap of source_span", () => {
+    const claims: StoredClaim[] = [
+      {
+        id: "cl-short",
+        subject: "ATP",
+        predicate: "is energy",
+        source_span: "ATP",
+      },
+    ];
+    expect(
+      matchClaimIdForDraft(claims, "ATP is the primary energy currency"),
+    ).toBeNull();
+  });
+});
+
+describe("studyClaimFromRow", () => {
+  it("maps row columns and parses optional JSON", () => {
+    const claim = studyClaimFromRow({
+      subject: "ATP",
+      predicate: "stores energy",
+      source_span: "ATP stores energy",
+      object: "energy",
+      qualifiers_json: JSON.stringify(["in cells"]),
+      pages_json: JSON.stringify([1, 2]),
+    });
+    expect(claim).toEqual({
+      subject: "ATP",
+      predicate: "stores energy",
+      source_span: "ATP stores energy",
+      object: "energy",
+      qualifiers: ["in cells"],
+      pages: [1, 2],
+    });
+  });
+
+  it("omits optional fields when JSON is invalid", () => {
+    const claim = studyClaimFromRow({
+      subject: "ATP",
+      predicate: "stores energy",
+      source_span: "ATP stores energy",
+      object: null,
+      qualifiers_json: "{not-json",
+      pages_json: "nope",
+    });
+    expect(claim).toEqual({
+      subject: "ATP",
+      predicate: "stores energy",
+      source_span: "ATP stores energy",
+    });
   });
 });

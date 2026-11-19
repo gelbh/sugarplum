@@ -59,7 +59,11 @@ import {
 import { buildCoverageLedger } from "./coverage";
 import { consumeFreeGenSlot } from "./quota";
 import { parseAtlasJobProvenance } from "../atlas/makeCardsSource";
-import { insertDraftCards } from "./gap-fill";
+import {
+  attachClaimIdsToDrafts,
+  insertDraftCards,
+} from "./gap-fill";
+import type { StoredClaim } from "./claims";
 import { putExtractSidecar } from "./extractSidecar";
 import { afterRunningJobTerminal } from "./jobTerminal";
 import { filterDraftsByQuality } from "./quality";
@@ -360,12 +364,12 @@ export async function runTextDraftPipeline(args: {
   }) => void;
   /** Refresh updated_at when this pass must not emit a stage. */
   heartbeat?: () => Promise<void>;
-}): Promise<CardDraft[]> {
+}): Promise<{ drafts: CardDraft[]; claims: StoredClaim[] }> {
   const rawRules = harvestRuleDrafts(args.text);
   const layer1Rules = filterDraftsByQuality(rawRules);
   const remainder = remainderAfterRules(args.text, rawRules);
   const needsLlm = Boolean(remainder.trim()) || layer1Rules.length > 0;
-  if (!needsLlm) return [];
+  if (!needsLlm) return { drafts: [], claims: [] };
 
   if (args.emitRulesStage && args.emit) {
     await args.emit.emit("rules", 0, 0, "Harvesting rules");
@@ -416,8 +420,9 @@ export async function runTextDraftPipeline(args: {
   }
 
   let llmDrafts: CardDraft[] = [];
+  let claims: StoredClaim[] = [];
   if (remainder.trim()) {
-    llmDrafts = await runGenerationPipeline({
+    const pipeline = await runGenerationPipeline({
       text: remainder,
       llm,
       apiKey,
@@ -441,9 +446,14 @@ export async function runTextDraftPipeline(args: {
         ? (drafts) => recordDraftPreviews(args.emit!, "generate", drafts)
         : undefined,
     });
+    llmDrafts = pipeline.drafts;
+    claims = pipeline.claims;
   }
 
-  return mergeAndDedupeDrafts(critiquedRules, llmDrafts);
+  return {
+    drafts: mergeAndDedupeDrafts(critiquedRules, llmDrafts),
+    claims,
+  };
 }
 
 export type ProcessGenerateResult = "done" | "busy";
@@ -737,8 +747,9 @@ export async function runPass1Phase(
       pdfBytes = undefined;
 
       let textDrafts: CardDraft[] = [];
+      let textClaims: StoredClaim[] = [];
       if (text.trim()) {
-        textDrafts = await runTextDraftPipeline({
+        const textResult = await runTextDraftPipeline({
           text,
           env,
           userId: deck.user_id,
@@ -751,6 +762,8 @@ export async function runPass1Phase(
           avoidFronts: deckFronts,
           emitRulesStage: true,
         });
+        textDrafts = textResult.drafts;
+        textClaims = textResult.claims;
       }
 
       if (stampPageTexts.length > 0 || stampPickedPages.length > 0) {
@@ -786,7 +799,13 @@ export async function runPass1Phase(
         );
       }
       await progress.emit("persist", 0, 1, "Saving drafts");
-      await insertDraftCards(db, { deckId, jobId, drafts, atlasProvenance });
+      await insertDraftCards(db, {
+        deckId,
+        jobId,
+        drafts: attachClaimIdsToDrafts(drafts, textClaims),
+        atlasProvenance,
+        claims: textClaims,
+      });
       await progress.emit("persist", 1, 1, "Saving drafts");
     } else {
       // TEXT_LLM catalog; emit before extract so failures leave progress.
@@ -860,7 +879,7 @@ export async function runPass1Phase(
         );
       }
 
-      drafts = await runTextDraftPipeline({
+      const textResult = await runTextDraftPipeline({
         text,
         env,
         userId: deck.user_id,
@@ -873,6 +892,8 @@ export async function runPass1Phase(
         avoidFronts: deckFronts,
         emitRulesStage: true,
       });
+      drafts = textResult.drafts;
+      const textClaims = textResult.claims;
       if (stampPageTexts.length > 0 || stampPickedPages.length > 0) {
         drafts = stampDraftProvenancePages(
           drafts,
@@ -893,7 +914,13 @@ export async function runPass1Phase(
         );
       }
       await progress.emit("persist", 0, 1, "Saving drafts");
-      await insertDraftCards(db, { deckId, jobId, drafts, atlasProvenance });
+      await insertDraftCards(db, {
+        deckId,
+        jobId,
+        drafts: attachClaimIdsToDrafts(drafts, textClaims),
+        atlasProvenance,
+        claims: textClaims,
+      });
       await progress.emit("persist", 1, 1, "Saving drafts");
     }
 

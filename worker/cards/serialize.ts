@@ -10,6 +10,7 @@ export type CardRow = {
   status: string;
   created_at: string;
   updated_at: string;
+  claim_id?: string | null;
 };
 
 type McqBackJson = { answer: string; options: string[] };

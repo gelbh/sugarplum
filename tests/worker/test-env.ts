@@ -185,6 +185,20 @@ export type CardRow = {
   reject_reason?: string | null;
   created_at: string;
   updated_at: string;
+  claim_id?: string | null;
+};
+
+export type StudyClaimRow = {
+  id: string;
+  job_id: string;
+  deck_id: string;
+  subject: string;
+  predicate: string;
+  source_span: string;
+  object: string | null;
+  qualifiers_json: string | null;
+  pages_json: string | null;
+  created_at: string;
 };
 
 export type ScheduleRow = {
@@ -255,6 +269,7 @@ export type TestEnv = Env & {
   seedUserStudyPrefs: (row: UserStudyPrefsRow) => void;
   seedUserStudyDay: (row: UserStudyDayRow) => void;
   seedCard: (row: CardRow) => void;
+  seedStudyClaim: (row: StudyClaimRow) => void;
   seedGenerationJob: (row: GenerationJobRow) => void;
   seedUsageEvent: (row: UsageEventRow) => void;
   seedExportJob: (row: ExportJobRow) => void;
@@ -271,6 +286,7 @@ export type TestEnv = Env & {
   getDecks: () => DeckRow[];
   getUserStudyPrefs: () => UserStudyPrefsRow[];
   getCards: () => CardRow[];
+  getStudyClaims: () => StudyClaimRow[];
   getSchedules: () => ScheduleRow[];
   getReviewLogs: () => ReviewLogRow[];
   getUsageEvents: () => UsageEventRow[];
@@ -341,6 +357,7 @@ export function createTestEnv(opts?: {
   const userStudyPrefs = new Map<string, UserStudyPrefsRow>();
   const userStudyDay = new Map<string, UserStudyDayRow>();
   const cards = new Map<string, CardRow>();
+  const studyClaims = new Map<string, StudyClaimRow>();
   const schedules = new Map<string, ScheduleRow>();
   type KnowledgeSummaryRow = {
     subject_id: string;
@@ -1210,6 +1227,17 @@ export function createTestEnv(opts?: {
         ) {
           const schedule = schedules.get(bound[0] as string);
           return schedule ? (schedule as T) : null;
+        }
+        if (
+          normalized.includes("FROM study_claims") &&
+          normalized.includes("WHERE id =")
+        ) {
+          const row = studyClaims.get(bound[0] as string);
+          if (!row) return null;
+          if (normalized.includes("deck_id =") && bound.length >= 2) {
+            if (row.deck_id !== (bound[1] as string)) return null;
+          }
+          return row as T;
         }
         if (
           normalized.includes("FROM cards c") &&
@@ -4282,6 +4310,42 @@ export function createTestEnv(opts?: {
                   : (existing?.intros_used ?? 0),
             });
           }
+        } else if (normalized.startsWith("INSERT INTO study_claims")) {
+          const [
+            id,
+            job_id,
+            deck_id,
+            subject,
+            predicate,
+            source_span,
+            object,
+            qualifiers_json,
+            pages_json,
+            created_at,
+          ] = bound as [
+            string,
+            string,
+            string,
+            string,
+            string,
+            string,
+            string | null,
+            string | null,
+            string | null,
+            string,
+          ];
+          studyClaims.set(id, {
+            id,
+            job_id,
+            deck_id,
+            subject,
+            predicate,
+            source_span,
+            object,
+            qualifiers_json,
+            pages_json,
+            created_at,
+          });
         } else if (normalized.startsWith("INSERT INTO cards")) {
           const [
             id,
@@ -4295,6 +4359,7 @@ export function createTestEnv(opts?: {
             status,
             created_at,
             updated_at,
+            claim_id,
           ] = bound as [
             string,
             string,
@@ -4307,6 +4372,7 @@ export function createTestEnv(opts?: {
             string,
             string,
             string,
+            string | null | undefined,
           ];
           cards.set(id, {
             id,
@@ -4320,6 +4386,7 @@ export function createTestEnv(opts?: {
             status,
             created_at,
             updated_at,
+            claim_id: claim_id ?? null,
           });
         } else if (
           normalized.startsWith(
@@ -5036,6 +5103,9 @@ export function createTestEnv(opts?: {
     seedCard(row) {
       cards.set(row.id, row);
     },
+    seedStudyClaim(row) {
+      studyClaims.set(row.id, row);
+    },
     seedGenerationJob(row) {
       generationJobs.set(row.id, row);
     },
@@ -5064,6 +5134,7 @@ export function createTestEnv(opts?: {
     getDecks: () => [...decks.values()],
     getUserStudyPrefs: () => [...userStudyPrefs.values()],
     getCards: () => [...cards.values()],
+    getStudyClaims: () => [...studyClaims.values()],
     getSchedules: () => [...schedules.values()],
     getReviewLogs: () => [...reviewLogs],
     getUsageEvents: () => [...usageEvents.values()],
