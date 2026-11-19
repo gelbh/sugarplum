@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it } from "vitest";
-import { applyStudySwipeFrame } from "../../src/components/useStudyCardGesture";
+import { applyStudySwipeFrame } from "../../src/study/useStudyCardGesture";
 import { studySwipeVisual } from "../../src/study/cardGestures";
 
 describe("applyStudySwipeFrame", () => {

@@ -8,12 +8,12 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 describe("study face mount", () => {
   it("StudyPage mounts CardFace only (no McqFace import)", () => {
     const src = readFileSync(join(root, "src/routes/StudyPage.tsx"), "utf8");
-    expect(src).toMatch(/from ["']\.\.\/components\/CardFace["']/);
+    expect(src).toMatch(/from ["']\.\.\/study\/CardFace["']/);
     expect(src).not.toMatch(/McqFace/);
   });
 
   it("CardFace accepts MCQ props and has no content-height-only plate", () => {
-    const src = readFileSync(join(root, "src/components/CardFace.tsx"), "utf8");
+    const src = readFileSync(join(root, "src/study/CardFace.tsx"), "utf8");
     expect(src).toMatch(/\bcardId\b/);
     expect(src).toMatch(/\boptions\b/);
     expect(src).toMatch(/type === ["']mcq["']/);

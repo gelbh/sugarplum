@@ -1,4 +1,4 @@
-import { extractClozeAnswer } from "../../src/lib/clozeFormat";
+import { extractClozeAnswer } from "../../src/study/clozeFormat";
 import type { CardDraft } from "../../worker/generation/schema";
 import type { EvalMeta, EvalScoreReport } from "./types";
 

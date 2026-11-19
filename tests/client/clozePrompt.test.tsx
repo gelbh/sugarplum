@@ -1,9 +1,9 @@
 /** @vitest-environment jsdom */
-import { act } from "react";
+import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
-import ClozePrompt from "../../src/components/ClozePrompt";
-import { clozeSpoken } from "../../src/lib/clozeFormat";
+import ClozePrompt from "../../src/study/ClozePrompt";
+import { clozeSpoken } from "../../src/study/clozeFormat";
 
 describe("ClozePrompt", () => {
   let root: Root | null = null;
@@ -20,7 +20,7 @@ describe("ClozePrompt", () => {
     el = document.createElement("div");
     document.body.appendChild(el);
     root = createRoot(el);
-    act(() => root?.render(<ClozePrompt front={front} />));
+    act(() => root?.render(createElement(ClozePrompt, { front })));
     return el;
   }
 
