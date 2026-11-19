@@ -3,9 +3,11 @@ import {
   ApiError,
   asRegenType,
   dismissJob,
+  generateCardFromClaim,
   regenCard,
   regenJob,
   type CardDraftView,
+  type ClaimCoverage,
 } from "../api/client";
 import { navigate } from "../nav/navigate";
 import type { DraftReviewNotice, DraftReviewTracked } from "./draftReviewTypes";
@@ -23,6 +25,11 @@ export type DraftReviewRegenCtx = DraftReviewTracked & {
   setRegenConfirmOpen: Dispatch<SetStateAction<boolean>>;
   setCardRegenBusy: Dispatch<SetStateAction<boolean>>;
   setProgressGate: Dispatch<SetStateAction<boolean>>;
+  setClaimCoverage: Dispatch<SetStateAction<ClaimCoverage | null>>;
+  setGeneratingClaimId: Dispatch<SetStateAction<string | null>>;
+  generatingClaimId: string | null;
+  cardRegenBusy: boolean;
+  busy: boolean;
 };
 
 export function createDraftReviewRegen(ctx: DraftReviewRegenCtx) {
@@ -41,6 +48,11 @@ export function createDraftReviewRegen(ctx: DraftReviewRegenCtx) {
     setRegenConfirmOpen,
     setCardRegenBusy,
     setProgressGate,
+    setClaimCoverage,
+    setGeneratingClaimId,
+    generatingClaimId,
+    cardRegenBusy,
+    busy,
   } = ctx;
 
   async function onRegenThisCard() {
@@ -106,5 +118,51 @@ export function createDraftReviewRegen(ctx: DraftReviewRegenCtx) {
     }
   }
 
-  return { onRegenThisCard, onRegen, onDismissFailed };
+  async function onGenerateOrphan(claimId: string) {
+    if (!jobId || generatingClaimId || busy || cardRegenBusy) return;
+    setError(null);
+    setNotice(null);
+    setGeneratingClaimId(claimId);
+    setCardRegenBusy(true);
+    begin("Generating card…");
+    try {
+      const draft = await generateCardFromClaim(jobId, claimId);
+      setDrafts((prev) => [draft, ...prev.filter((d) => d.id !== draft.id)]);
+      setDirty(false);
+      setRegenNonce((n) => n + 1);
+      if (draft.claim_id) {
+        setClaimCoverage((prev) => {
+          if (!prev) return prev;
+          const claims = prev.claims.map((row) =>
+            row.id === draft.claim_id
+              ? { ...row, card_id: draft.id, card_status: draft.status }
+              : row,
+          );
+          const linked = claims.filter((c) => c.card_id != null).length;
+          return {
+            claims,
+            summary: {
+              total: claims.length,
+              linked,
+              orphan: claims.length - linked,
+            },
+          };
+        });
+      }
+      setNotice({ message: "Card generated from claim", tone: "info" });
+      end();
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Could not generate card from claim",
+      );
+      end(false);
+    } finally {
+      setGeneratingClaimId(null);
+      setCardRegenBusy(false);
+    }
+  }
+
+  return { onRegenThisCard, onRegen, onDismissFailed, onGenerateOrphan };
 }

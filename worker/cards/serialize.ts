@@ -80,6 +80,7 @@ export function serializeCard(row: CardRow) {
     status: row.status,
     created_at: row.created_at,
     updated_at: row.updated_at,
+    claim_id: row.claim_id ?? null,
   };
   if (row.type === "occlusion") {
     return {

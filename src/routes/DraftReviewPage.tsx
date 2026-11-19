@@ -71,6 +71,9 @@ export default function DraftReviewPage() {
   const [confirmRejectDrafts, setConfirmRejectDrafts] = useState(false);
   const [regenConfirmOpen, setRegenConfirmOpen] = useState(false);
   const [cardRegenBusy, setCardRegenBusy] = useState(false);
+  const [generatingClaimId, setGeneratingClaimId] = useState<string | null>(
+    null,
+  );
   /** When false, drop jobId from useJobProgress so the same id can remount and poll again after regen. */
   const [progressGate, setProgressGate] = useState(true);
   const { user } = useSession();
@@ -153,22 +156,28 @@ export default function DraftReviewPage() {
     setNotice,
   });
 
-  const { onRegenThisCard, onRegen, onDismissFailed } = createDraftReviewRegen({
-    jobId,
-    current,
-    begin,
-    end,
-    setDrafts,
-    setDirty,
-    setError,
-    setNotice,
-    setJobStatus,
-    setReady,
-    setRegenNonce,
-    setRegenConfirmOpen,
-    setCardRegenBusy,
-    setProgressGate,
-  });
+  const { onRegenThisCard, onRegen, onDismissFailed, onGenerateOrphan } =
+    createDraftReviewRegen({
+      jobId,
+      current,
+      begin,
+      end,
+      setDrafts,
+      setDirty,
+      setError,
+      setNotice,
+      setJobStatus,
+      setReady,
+      setRegenNonce,
+      setRegenConfirmOpen,
+      setCardRegenBusy,
+      setProgressGate,
+      setClaimCoverage,
+      setGeneratingClaimId,
+      generatingClaimId,
+      cardRegenBusy,
+      busy,
+    });
 
   const jobActionDisabled = busy || jobProgress.pending;
   const failedEmpty = !current && jobStatus === "failed";
@@ -289,6 +298,25 @@ export default function DraftReviewPage() {
               {notice?.message ?? ""}
             </CreateFlowNoticeFade>
           </Box>
+
+          {jobStatus === "needs_review" &&
+          claimCoverage &&
+          claimCoverage.summary.total > 0 ? (
+            <Box sx={{ width: "100%", mb: current ? 0 : 2 }}>
+              <ClaimCoveragePanel
+                coverage={claimCoverage}
+                drafts={drafts}
+                onJumpToDraft={jumpToDraft}
+                onGenerateOrphan={(claimId) => {
+                  void onGenerateOrphan(claimId);
+                }}
+                generatingClaimId={generatingClaimId}
+                generateDisabled={
+                  busy || cardRegenBusy || dirty || generatingClaimId != null
+                }
+              />
+            </Box>
+          ) : null}
 
           {!current ? (
             <Box
@@ -478,15 +506,6 @@ export default function DraftReviewPage() {
                     justifyContent: "center",
                   }}
                 >
-                  {jobStatus === "needs_review" &&
-                  claimCoverage &&
-                  claimCoverage.summary.total > 0 ? (
-                    <ClaimCoveragePanel
-                      coverage={claimCoverage}
-                      drafts={drafts}
-                      onJumpToDraft={jumpToDraft}
-                    />
-                  ) : null}
                   <Box data-card-id={current.id} sx={{ width: "100%" }}>
                   <ReviewCard
                     key={`${current.id}:${regenNonce}`}
