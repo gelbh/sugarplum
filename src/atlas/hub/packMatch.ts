@@ -18,11 +18,21 @@ type Scanned = {
   tokens: Token[];
   /** Token positions per distinct token text. */
   byText: Map<string, number[]>;
+  /** Distinct token texts of 7+ chars, by length, for rule 5 candidates. */
+  byLength: Map<number, string[]>;
   /** Memo: name part -> positions of tokens that match it under rule 5. */
   hits: Map<string, ReadonlySet<number>>;
 };
 
 type NameParts = { genus: string; epithet: string | null; sppEntry: boolean };
+
+/** One entry's normalized match targets, built once per scan. */
+export type PackTargets = { forms: string[]; parts: NameParts | null };
+
+/** Rule 5 never allows more than this many edits. */
+const MAX_EDITS = 2;
+/** Rule 5 needs a token of at least this length for any edit. */
+const MIN_FUZZY_LENGTH = 7;
 
 /**
  * Optimal string alignment Damerau-Levenshtein (adjacent swaps cost 1),
@@ -46,6 +56,33 @@ export function damerauLevenshtein(a: string, b: string): number {
   return prev[b.length];
 }
 
+/**
+ * `damerauLevenshtein(a, b) <= max`, stopping once two consecutive rows
+ * exceed `max`: later cells build only on the previous two rows.
+ */
+function withinEdits(a: string, b: string, max: number): boolean {
+  let before = new Array<number>(b.length + 1).fill(0);
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  let cur = new Array<number>(b.length + 1).fill(0);
+  let prevMin = 0;
+  for (let i = 1; i <= a.length; i++) {
+    cur[0] = i;
+    let rowMin = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        cur[j] = Math.min(cur[j], before[j - 2] + 1);
+      }
+      if (cur[j] < rowMin) rowMin = cur[j];
+    }
+    if (rowMin > max && prevMin > max) return false;
+    prevMin = rowMin;
+    [before, prev, cur] = [prev, cur, before];
+  }
+  return prev[b.length] <= max;
+}
+
 /** Rule 5: a text token of 7+ chars allows 1 edit, 8+ chars allows 2. */
 export function tokenMatches(token: string, target: string): boolean {
   if (token === target) return true;
@@ -53,21 +90,29 @@ export function tokenMatches(token: string, target: string): boolean {
   if (allowed === 0 || Math.abs(token.length - target.length) > allowed) {
     return false;
   }
-  return damerauLevenshtein(token, target) <= allowed;
+  return withinEdits(token, target, allowed);
 }
 
 function scan(text: string): Scanned {
   const hay = searchable(collapseSeparators(text));
   const tokens: Token[] = [];
   const byText = new Map<string, number[]>();
+  const byLength = new Map<number, string[]>();
   for (const m of hay.matchAll(/[a-z]+/g)) {
     const at = tokens.length;
     tokens.push({ text: m[0], start: m.index, end: m.index + m[0].length });
     const list = byText.get(m[0]);
-    if (list) list.push(at);
-    else byText.set(m[0], [at]);
+    if (list) {
+      list.push(at);
+      continue;
+    }
+    byText.set(m[0], [at]);
+    if (m[0].length < MIN_FUZZY_LENGTH) continue;
+    const sameLength = byLength.get(m[0].length);
+    if (sameLength) sameLength.push(m[0]);
+    else byLength.set(m[0].length, [m[0]]);
   }
-  return { hay, tokens, byText, hits: new Map() };
+  return { hay, tokens, byText, byLength, hits: new Map() };
 }
 
 // Pages are scanned once per refresh, not once per entry.
@@ -82,12 +127,50 @@ function scanPage(page: { text: string }): Scanned {
   return scanned;
 }
 
+const scannedFilenames = new WeakMap<FocusMaterial, Scanned>();
+
+function scanFilename(material: FocusMaterial, filename: string): Scanned {
+  let scanned = scannedFilenames.get(material);
+  if (!scanned) {
+    scanned = scan(filename);
+    scannedFilenames.set(material, scanned);
+  }
+  return scanned;
+}
+
+/**
+ * Letters of `token` not covered by `target` (as multisets). Each edit adds
+ * at most one, so a count above the allowed edits rules a token out early.
+ */
+function excessLetters(token: string, targetCounts: Int16Array): number {
+  let excess = 0;
+  for (let i = 0; i < token.length; i++) {
+    if (--targetCounts[token.charCodeAt(i) - 97] < 0) excess++;
+  }
+  for (let i = 0; i < token.length; i++) {
+    targetCounts[token.charCodeAt(i) - 97]++;
+  }
+  return excess;
+}
+
 function hitsFor(scanned: Scanned, target: string): ReadonlySet<number> {
   let hits = scanned.hits.get(target);
   if (!hits) {
-    const found = new Set<number>();
-    for (const [text, positions] of scanned.byText) {
-      if (tokenMatches(text, target)) positions.forEach((p) => found.add(p));
+    const found = new Set<number>(scanned.byText.get(target));
+    const targetCounts = new Int16Array(26);
+    for (let i = 0; i < target.length; i++) {
+      targetCounts[target.charCodeAt(i) - 97]++;
+    }
+    // tokenMatches needs |token - target| <= edits <= 2 and a 7+ char token,
+    // so only those lengths can add fuzzy hits.
+    const from = Math.max(MIN_FUZZY_LENGTH, target.length - MAX_EDITS);
+    for (let len = from; len <= target.length + MAX_EDITS; len++) {
+      for (const text of scanned.byLength.get(len) ?? []) {
+        if (text === target) continue;
+        if (excessLetters(text, targetCounts) > MAX_EDITS) continue;
+        if (!tokenMatches(text, target)) continue;
+        scanned.byText.get(text)?.forEach((p) => found.add(p));
+      }
     }
     hits = found;
     scanned.hits.set(target, hits);
@@ -143,16 +226,28 @@ function mentions(
   return parts !== null && lenientMention(scanned, parts);
 }
 
+export function packTargets(entry: NameMatchEntry): PackTargets {
+  return {
+    forms: entryNameForms(entry).map((f) => searchable(collapseSeparators(f))),
+    parts: nameParts(entry.canonicalName),
+  };
+}
+
+export function materialMatchesPackTargets(
+  targets: PackTargets,
+  material: FocusMaterial,
+): boolean {
+  const { forms, parts } = targets;
+  const { filename } = material;
+  if (filename && mentions(scanFilename(material, filename), forms, parts)) {
+    return true;
+  }
+  return material.pages.some((p) => mentions(scanPage(p), forms, parts));
+}
+
 export function materialMentionsForPack(
   entry: NameMatchEntry,
   material: FocusMaterial,
 ): boolean {
-  const forms = entryNameForms(entry).map((f) =>
-    searchable(collapseSeparators(f)),
-  );
-  const parts = nameParts(entry.canonicalName);
-  if (material.filename && mentions(scan(material.filename), forms, parts)) {
-    return true;
-  }
-  return material.pages.some((p) => mentions(scanPage(p), forms, parts));
+  return materialMatchesPackTargets(packTargets(entry), material);
 }

@@ -1,6 +1,6 @@
 import { SOURCE_ROLE_LABELS, type SourceRole } from "../../materials/sourceRole";
 import { entryNameForms, textMentionsEntry } from "./nameMatch";
-import { materialMentionsForPack } from "./packMatch";
+import { materialMatchesPackTargets, packTargets } from "./packMatch";
 import type { AtlasTier } from "../types";
 
 const KEY_ROLES: ReadonlySet<SourceRole> = new Set([
@@ -38,8 +38,9 @@ export function scanFocus(
   materials: FocusMaterial[],
   manualOverride?: FocusManualOverride,
 ): FocusScanResult {
+  const targets = packTargets(entry);
   const materialIds = materials
-    .filter((m) => materialMentionsForPack(entry, m))
+    .filter((m) => materialMatchesPackTargets(targets, m))
     .map((m) => m.id);
   const inPack = materialIds.length > 0;
 
