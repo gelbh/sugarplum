@@ -40,6 +40,7 @@ import {
 } from "../hub/filter";
 import { isShortcutTarget } from "../hub/keys";
 import { atlasHeroName } from "../paths";
+import { atlasBottomSheetPaperSx } from "../hub/atlasOperateSx";
 import MarkImportantControl from "./MarkImportantControl";
 import type { AtlasEntryView, DatasetFields } from "../types";
 
@@ -60,6 +61,8 @@ type Props = {
   onMakeCards?: () => void;
   atlasId?: string;
   onFocusUpdated?: (entry: AtlasEntryView) => void;
+  /** Test override for `breakpoints.down("md")`. */
+  mobile?: boolean;
 };
 
 const TABS: { key: TabKey; label: string }[] = [
@@ -80,6 +83,7 @@ export default function EntryView({
   onMakeCards,
   atlasId,
   onFocusUpdated,
+  mobile: mobileProp,
 }: Props) {
   const [tab, setTab] = useState<TabKey>("lifecycle");
   // An object per click, so citing the same field twice still scrolls.
@@ -89,6 +93,8 @@ export default function EntryView({
   const [drawerOpen, setDrawerOpen] = useState(false);
   // Sticky rail is lg+; only open the mobile drawer below that.
   const isLgUp = useMediaQuery((t: Theme) => t.breakpoints.up("lg"));
+  const mobileMq = useMediaQuery((t: Theme) => t.breakpoints.down("md"));
+  const mobile = mobileProp ?? mobileMq;
 
   const useFocus = isFocusActive(entries);
   const railEntries = useMemo(
@@ -211,8 +217,9 @@ export default function EntryView({
           gap: { xs: 1.5, sm: 2.25 },
           alignItems: "flex-start",
           gridArea: "head",
-          minWidth: 0
-        }}>
+          minWidth: 0,
+        }}
+      >
         <Box sx={{ flex: "none", width: { xs: 84, sm: 120 } }}>
           <ViewTransition name={atlasHeroName(entry.id)} share="atlas-morph">
             <AtlasImage
@@ -233,8 +240,9 @@ export default function EntryView({
                 color: "text.secondary",
                 mt: 0.5,
                 fontSize: "0.68rem",
-                lineHeight: 1.3
-              }}>
+                lineHeight: 1.3,
+              }}
+            >
               <Link
                 href={hero.sourceUrl}
                 target="_blank"
@@ -264,8 +272,9 @@ export default function EntryView({
               sx={{
                 color: "text.secondary",
                 mt: 0.5,
-                fontStyle: "italic"
-              }}>
+                fontStyle: "italic",
+              }}
+            >
               {titles.scientific}
             </Typography>
           ) : null}
@@ -275,8 +284,9 @@ export default function EntryView({
                 color: "text.secondary",
                 mt: 1,
                 fontSize: "0.86rem",
-                lineHeight: 1.4
-              }}>
+                lineHeight: 1.4,
+              }}
+            >
               {meta}
             </Typography>
           ) : null}
@@ -294,11 +304,14 @@ export default function EntryView({
           variant="outlined"
           size="small"
           aria-label="All parasites"
+          aria-haspopup="dialog"
+          aria-expanded={drawerOpen}
           onClick={() => setDrawerOpen(true)}
           sx={{
             display: { lg: "none" },
             flex: "none",
-            minWidth: 0,
+            minWidth: 44,
+            minHeight: 44,
             px: { xs: 1, sm: 1.5 },
             gap: 1,
             bgcolor: "background.paper",
@@ -384,8 +397,20 @@ export default function EntryView({
       <Drawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
+        anchor={mobile ? "bottom" : "left"}
+        aria-label="All parasites"
         slotProps={{
-          paper: { sx: { width: "min(320px, 88vw)", p: 2, display: "flex" } },
+          paper: {
+            sx: mobile
+              ? atlasBottomSheetPaperSx
+              : {
+                  width: "min(320px, 88vw)",
+                  p: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  overflow: "hidden",
+                },
+          },
         }}
       >
         {rail}
@@ -403,9 +428,13 @@ function Diagnosis({ fields }: { fields: DatasetFields }) {
           Tests
         </Typography>
         {tests.length === 0 ? (
-          <Typography sx={{
-            color: "text.secondary"
-          }}>No tests recorded yet.</Typography>
+          <Typography
+            sx={{
+              color: "text.secondary",
+            }}
+          >
+            No tests recorded yet.
+          </Typography>
         ) : (
           <Box
             component="ul"
@@ -430,8 +459,9 @@ function Diagnosis({ fields }: { fields: DatasetFields }) {
                   <Typography
                     sx={{
                       color: "text.secondary",
-                      fontSize: "0.88rem"
-                    }}>
+                      fontSize: "0.88rem",
+                    }}
+                  >
                     {[
                       t.sample && `Sample: ${t.sample}`,
                       when ?? "Window not stated",
@@ -452,9 +482,13 @@ function Diagnosis({ fields }: { fields: DatasetFields }) {
 function References({ refs }: { refs: EntryRefs }) {
   if (refs.groups.length === 0) {
     return (
-      <Typography sx={{
-        color: "text.secondary"
-      }}>No references yet.</Typography>
+      <Typography
+        sx={{
+          color: "text.secondary",
+        }}
+      >
+        No references yet.
+      </Typography>
     );
   }
   return (
@@ -473,8 +507,9 @@ function References({ refs }: { refs: EntryRefs }) {
               color: "text.secondary",
               fontSize: "0.78rem",
               fontWeight: 700,
-              mb: 0.75
-            }}>
+              mb: 0.75,
+            }}
+          >
             {g.label}
           </Typography>
           <Box
@@ -519,8 +554,9 @@ function References({ refs }: { refs: EntryRefs }) {
                       sx={{
                         color: "text.secondary",
                         fontSize: "0.84rem",
-                        mt: 0.25
-                      }}>
+                        mt: 0.25,
+                      }}
+                    >
                       {ref.note}
                     </Typography>
                   ) : null}

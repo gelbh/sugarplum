@@ -102,6 +102,17 @@ export const filtersActive = (f: AtlasFilters) =>
   f.zoonoticOnly ||
   f.tier !== null;
 
+/** Count engaged filter dimensions for the mobile Filters chip label. */
+export function filtersActiveCount(f: AtlasFilters): number {
+  let n = 0;
+  if (f.groups.length > 0) n += 1;
+  if (f.host !== null) n += 1;
+  if (f.organ !== null) n += 1;
+  if (f.zoonoticOnly) n += 1;
+  if (f.tier !== null) n += 1;
+  return n;
+}
+
 export const byName = (a: AtlasEntryView, b: AtlasEntryView) =>
   entryTitles(a).primary.localeCompare(entryTitles(b).primary);
 

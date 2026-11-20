@@ -8,6 +8,7 @@ import {
 } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import Menu from "@mui/material/Menu";
@@ -17,7 +18,10 @@ import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import type { Theme } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import SearchIcon from "@mui/icons-material/Search";
@@ -25,6 +29,7 @@ import TableRowsOutlinedIcon from "@mui/icons-material/TableRowsOutlined";
 import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import AtlasFilters from "./AtlasFilters";
 import AtlasTable from "./AtlasTable";
+import { atlasBottomSheetPaperSx } from "./atlasOperateSx";
 import ComparePicker from "../compare/ComparePicker";
 import SpecimenTile from "../entry/SpecimenTile";
 import {
@@ -33,6 +38,7 @@ import {
   browseSections,
   byName,
   filtersActive,
+  filtersActiveCount,
   focusActive as isFocusActive,
   hostOptions,
   matchesSearch,
@@ -57,6 +63,8 @@ type Props = {
   onMakeCardsFromKey?: (entryKeys: string[]) => void;
   atlasId?: string;
   onFocusUpdated?: (entry: AtlasEntryView) => void;
+  /** Test override for `breakpoints.down("md")`. */
+  mobile?: boolean;
 };
 
 const plural = (n: number) => `${n} ${n === 1 ? "parasite" : "parasites"}`;
@@ -74,13 +82,18 @@ export default function Cabinet({
   onMakeCardsFromKey,
   atlasId,
   onFocusUpdated,
+  mobile: mobileProp,
 }: Props) {
+  const mobileMq = useMediaQuery((t: Theme) => t.breakpoints.down("md"));
+  const mobile = mobileProp ?? mobileMq;
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [view, setView] = useState<AtlasViewMode>(() => readViewPref(userKey));
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [comparing, setComparing] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const activeFilterCount = filtersActiveCount(filters);
   const shownFilters = useDeferredValue(filters);
   const staggering = useRef(stagger);
   useEffect(() => {
@@ -170,8 +183,9 @@ export default function Cabinet({
         direction={{ xs: "column", md: "row" }}
         sx={{
           alignItems: { md: "flex-end" },
-          gap: 2
-        }}>
+          gap: 2,
+        }}
+      >
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
             variant="h4"
@@ -186,8 +200,9 @@ export default function Cabinet({
             sx={{
               color: "text.secondary",
               mt: 0.5,
-              fontVariantNumeric: "tabular-nums"
-            }}>
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
             {narrowed
               ? `${visible.length} of ${plural(entries.length)}`
               : plural(entries.length)}
@@ -198,8 +213,9 @@ export default function Cabinet({
           sx={{
             gap: 1,
             alignItems: "center",
-            flexWrap: "wrap"
-          }}>
+            flexWrap: "wrap",
+          }}
+        >
           <TextField
             type="search"
             size="small"
@@ -222,6 +238,33 @@ export default function Cabinet({
               "& .MuiInputBase-root": { bgcolor: "background.paper" },
             }}
           />
+          {mobile ? (
+            <Button
+              variant="outlined"
+              onClick={() => setFiltersOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={filtersOpen}
+              aria-controls="atlas-filters-sheet"
+              aria-label={
+                activeFilterCount > 0
+                  ? `Filters, ${activeFilterCount} active`
+                  : "Filters"
+              }
+              sx={{
+                bgcolor: "background.paper",
+                flex: "none",
+                minHeight: 44,
+                minWidth: 44,
+                height: 44,
+                px: 1.5,
+                gap: 0.75,
+              }}
+            >
+              <FilterListIcon fontSize="small" />
+              Filters
+              {activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+            </Button>
+          ) : null}
           {onMakeCardsFromKey && showKeyRow ? (
             <Button
               variant="contained"
@@ -231,7 +274,8 @@ export default function Cabinet({
               aria-label="Make cards from Key"
               sx={{
                 flex: "none",
-                height: 40,
+                minHeight: mobile ? 44 : 40,
+                height: mobile ? 44 : 40,
                 px: { xs: 1.25, sm: 1.75 },
               }}
             >
@@ -246,7 +290,8 @@ export default function Cabinet({
               sx={{
                 bgcolor: "background.paper",
                 flex: "none",
-                height: 40,
+                minHeight: mobile ? 44 : 40,
+                height: mobile ? 44 : 40,
                 minWidth: { xs: 40, sm: 64 },
                 px: { xs: 1, sm: 1.75 },
               }}
@@ -268,7 +313,8 @@ export default function Cabinet({
             sx={{
               bgcolor: "background.paper",
               flex: "none",
-              height: 40,
+              minHeight: mobile ? 44 : 40,
+              height: mobile ? 44 : 40,
               minWidth: { xs: 40, sm: 64 },
               px: { xs: 1, sm: 1.75 },
             }}
@@ -332,24 +378,58 @@ export default function Cabinet({
         </Stack>
       </Stack>
 
-      <Box sx={{ borderBottom: 1, borderColor: "divider", pb: 1.5 }}>
-        <AtlasFilters
-          filters={filters}
-          groups={options.groups}
-          hostOptions={options.hosts}
-          organOptions={options.organs}
-          focusActive={focusActive}
-          onChange={setFilters}
-        />
-      </Box>
+      {mobile ? (
+        <Drawer
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          anchor="bottom"
+          aria-labelledby="atlas-filters-sheet-title"
+          id="atlas-filters-sheet"
+          slotProps={{
+            paper: { sx: atlasBottomSheetPaperSx },
+          }}
+        >
+          <Typography
+            id="atlas-filters-sheet-title"
+            sx={{ fontWeight: 600, mb: 1.5, flexShrink: 0 }}
+          >
+            Filters
+          </Typography>
+          <Box sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
+            <AtlasFilters
+              filters={filters}
+              groups={options.groups}
+              hostOptions={options.hosts}
+              organOptions={options.organs}
+              focusActive={focusActive}
+              onChange={setFilters}
+            />
+          </Box>
+        </Drawer>
+      ) : (
+        <Box
+          sx={{ borderBottom: 1, borderColor: "divider", pb: 1.5 }}
+          data-testid="atlas-filters-inline"
+        >
+          <AtlasFilters
+            filters={filters}
+            groups={options.groups}
+            hostOptions={options.hosts}
+            organOptions={options.organs}
+            focusActive={focusActive}
+            onChange={setFilters}
+          />
+        </Box>
+      )}
 
       {visible.length === 0 ? (
         <Stack
           spacing={1}
           sx={{
             alignItems: "flex-start",
-            py: 4
-          }}>
+            py: 4,
+          }}
+        >
           <Typography sx={{ fontWeight: 600 }}>
             No parasites match these filters
           </Typography>
@@ -379,8 +459,9 @@ export default function Cabinet({
                 sx={{
                   alignItems: "baseline",
                   gap: 1.25,
-                  mb: 1.25
-                }}>
+                  mb: 1.25,
+                }}
+              >
                 <Typography
                   id={`atlas-row-${section.id}`}
                   component="h2"
@@ -388,9 +469,12 @@ export default function Cabinet({
                 >
                   {section.title}
                 </Typography>
-                <Typography variant="body2" sx={{
-                  color: "text.secondary"
-                }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
                   {section.subtitle}
                 </Typography>
               </Stack>
