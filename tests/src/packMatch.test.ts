@@ -120,3 +120,40 @@ describe("materialMentionsForPack", () => {
     expect(hits(named("Toxocara canis"), "Demodex (canis, bovis)")).toBe(false);
   });
 });
+
+describe("materialMentionsForPack window boundaries", () => {
+  const demodex = named("Demodex canis");
+  // Digits are not name tokens and single spaces survive normalization, so
+  // the padding sets the gap exactly.
+  const padded = (gap: number, marker: string) =>
+    `Demodex ${"1".repeat(gap - 2)} ${marker}`;
+  const gapOf = (text: string, marker: string) =>
+    text.indexOf(marker, "Demodex".length) - "Demodex".length;
+
+  it("rule 2: an epithet gap of 60 matches and 61 does not", () => {
+    const at60 = padded(60, "canis");
+    const at61 = padded(61, "canis");
+    expect(gapOf(at60, "canis")).toBe(60);
+    expect(gapOf(at61, "canis")).toBe(61);
+    expect(hits(demodex, at60)).toBe(true);
+    expect(hits(demodex, at61)).toBe(false);
+  });
+
+  it("rule 3: a plural marker gap of 8 matches and 9 does not", () => {
+    for (const marker of ["spp", "sp.", "species"]) {
+      const at8 = padded(8, marker);
+      const at9 = padded(9, marker);
+      expect(gapOf(at8, marker)).toBe(8);
+      expect(gapOf(at9, marker)).toBe(9);
+      expect(hits(demodex, at8)).toBe(true);
+      expect(hits(demodex, at9)).toBe(false);
+    }
+  });
+
+  it("rule 3: bare sp without a dot does not match", () => {
+    expect(hits(demodex, "Demodex sp here")).toBe(false);
+    expect(hits(demodex, "Demodex sp, mites")).toBe(false);
+    expect(hits(demodex, "Demodex sp")).toBe(false);
+    expect(hits(demodex, "Demodex sp. here")).toBe(true);
+  });
+});
