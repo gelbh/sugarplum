@@ -84,14 +84,28 @@ export function packHidden(e: AtlasEntryView, packActive: boolean): boolean {
   );
 }
 
+const NO_IDS: ReadonlySet<string> = new Set();
+
+/** Ids of every pack-hidden entry; empty while the pack is inactive. */
+export function packHiddenIds(
+  entries: AtlasEntryView[],
+  packActive: boolean,
+): ReadonlySet<string> {
+  if (!packActive) return NO_IDS;
+  return new Set(entries.filter((e) => packHidden(e, true)).map((e) => e.id));
+}
+
 /** Hidden entries show when Show hidden is on, or when a search is typed. */
+export function revealsHidden(showHidden: boolean, query: string): boolean {
+  return showHidden || searchable(query) !== "";
+}
+
 export function packVisible(
   e: AtlasEntryView,
-  packActive: boolean,
-  showHidden: boolean,
-  query: string,
+  hiddenIds: ReadonlySet<string>,
+  revealHidden: boolean,
 ): boolean {
-  return !packHidden(e, packActive) || showHidden || searchable(query) !== "";
+  return revealHidden || !hiddenIds.has(e.id);
 }
 
 /** Exact rank match for browsing related parasites from the taxonomy glance. */

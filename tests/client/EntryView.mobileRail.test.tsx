@@ -92,6 +92,8 @@ async function renderEntry(onOpen = vi.fn()) {
           entryHref: (id) => `#${id}`,
           onOpen,
           onStep: () => undefined,
+          packHiddenIds: new Set<string>(),
+          showHidden: false,
           mobile: true,
         }),
       ),

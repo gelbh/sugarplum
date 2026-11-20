@@ -6,6 +6,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import EntryView from "../../src/atlas/entry/EntryView";
+import { packHiddenIds } from "../../src/atlas/hub/filter";
 import type { AtlasEntryView } from "../../src/atlas/types";
 import { emptyParasiteFields } from "../../worker/atlas/templates/parasite";
 
@@ -76,8 +77,8 @@ async function renderEntry(current: AtlasEntryView, entries: AtlasEntryView[]) {
           onStep: () => undefined,
           atlasId: "atlas-1",
           onFocusUpdated: () => undefined,
-          packActive: true,
-          userKey: "pack-user",
+          packHiddenIds: packHiddenIds(entries, true),
+          showHidden: false,
           mobile: false,
         }),
       ),

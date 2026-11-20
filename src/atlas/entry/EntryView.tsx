@@ -35,14 +35,13 @@ import {
   focusActive as isFocusActive,
   matchesSearch,
   matchesTaxonomy,
-  packHidden,
   packVisible,
   railSections,
+  revealsHidden,
   termLabel,
   type TaxonomyFilter,
 } from "../hub/filter";
 import { isShortcutTarget } from "../hub/keys";
-import { readShowHiddenPref } from "../hub/packHidePref";
 import { atlasHeroName } from "../paths";
 import { atlasBottomSheetPaperSx } from "../hub/atlasOperateSx";
 import MarkImportantControl from "./MarkImportantControl";
@@ -65,10 +64,10 @@ type Props = {
   onMakeCards?: () => void;
   atlasId?: string;
   onFocusUpdated?: (entry: AtlasEntryView) => void;
-  /** Hide dataset entries the pack does not mention; see packIsActive. */
-  packActive?: boolean;
-  /** Reads the Cabinet's Show hidden preference for the rail. */
-  userKey?: string;
+  /** Dataset entries the pack does not mention; see packHiddenIds. */
+  packHiddenIds: ReadonlySet<string>;
+  /** The Cabinet's Show hidden preference, applied to the rail. */
+  showHidden: boolean;
   /** Test override for `breakpoints.down("md")`. */
   mobile?: boolean;
 };
@@ -91,13 +90,10 @@ export default function EntryView({
   onMakeCards,
   atlasId,
   onFocusUpdated,
-  packActive = false,
-  userKey,
+  packHiddenIds,
+  showHidden,
   mobile: mobileProp,
 }: Props) {
-  const [showHidden] = useState(() =>
-    userKey ? readShowHiddenPref(userKey) : false,
-  );
   const [tab, setTab] = useState<TabKey>("lifecycle");
   // An object per click, so citing the same field twice still scrolls.
   const [cite, setCite] = useState<{ field: FieldKey } | null>(null);
@@ -110,24 +106,15 @@ export default function EntryView({
   const mobile = mobileProp ?? mobileMq;
 
   const useFocus = isFocusActive(entries);
-  const railEntries = useMemo(
-    () =>
-      entries.filter(
-        (e) =>
-          matchesTaxonomy(e, taxonomy) &&
-          matchesSearch(e, query) &&
-          (e.id === entry.id ||
-            packVisible(e, packActive, showHidden, query)),
-      ),
-    [entries, taxonomy, query, entry.id, packActive, showHidden],
-  );
-  const notInPackIds = useMemo(
-    () =>
-      new Set(
-        entries.filter((e) => packHidden(e, packActive)).map((e) => e.id),
-      ),
-    [entries, packActive],
-  );
+  const railEntries = useMemo(() => {
+    const revealHidden = revealsHidden(showHidden, query);
+    return entries.filter(
+      (e) =>
+        matchesTaxonomy(e, taxonomy) &&
+        matchesSearch(e, query) &&
+        (e.id === entry.id || packVisible(e, packHiddenIds, revealHidden)),
+    );
+  }, [entries, taxonomy, query, entry.id, packHiddenIds, showHidden]);
   const rows = useMemo(
     () => railSections(railEntries, useFocus),
     [railEntries, useFocus],
@@ -194,7 +181,7 @@ export default function EntryView({
       onClearTaxonomy={taxonomy ? () => setTaxonomy(null) : undefined}
       entryHref={entryHref}
       onOpen={openFromRail}
-      notInPackIds={notInPackIds}
+      notInPackIds={packHiddenIds}
     />
   );
 
@@ -315,7 +302,7 @@ export default function EntryView({
               {meta}
             </Typography>
           ) : null}
-          {notInPackIds.has(entry.id) ? (
+          {packHiddenIds.has(entry.id) ? (
             <Alert
               severity="info"
               sx={{ mt: 1.25, py: 0, alignItems: "center" }}

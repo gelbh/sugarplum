@@ -13,8 +13,10 @@ import {
   matchesTaxonomy,
   organOptions,
   packHidden,
+  packHiddenIds,
   packIsActive,
   packVisible,
+  revealsHidden,
   railSections,
   sortTable,
 } from "../../src/atlas/hub/filter";
@@ -373,11 +375,25 @@ describe("pack hiding", () => {
     expect(packHidden(named, true)).toBe(false);
   });
 
-  it("packVisible shows hidden entries for Show hidden or a typed search", () => {
-    expect(packVisible(out, true, false, "")).toBe(false);
-    expect(packVisible(out, true, false, "   ")).toBe(false);
-    expect(packVisible(out, true, true, "")).toBe(true);
-    expect(packVisible(out, true, false, "toxo")).toBe(true);
-    expect(packVisible(named, true, false, "")).toBe(true);
+  it("packHiddenIds lists hidden entries only while the pack is active", () => {
+    const pinned = scanned(out, false, { id: "pinned", override: "key" });
+    expect([...packHiddenIds([out, named, pinned], true)]).toEqual([out.id]);
+    expect(packHiddenIds([out, named, pinned], false).size).toBe(0);
+  });
+
+  it("revealsHidden for Show hidden or a typed search", () => {
+    expect(revealsHidden(false, "")).toBe(false);
+    expect(revealsHidden(false, "   ")).toBe(false);
+    expect(revealsHidden(true, "")).toBe(true);
+    expect(revealsHidden(false, "toxo")).toBe(true);
+  });
+
+  it("packVisible shows hidden entries only when revealed", () => {
+    const hidden = packHiddenIds([out, named], true);
+    expect(packVisible(out, hidden, revealsHidden(false, ""))).toBe(false);
+    expect(packVisible(out, hidden, revealsHidden(false, "   "))).toBe(false);
+    expect(packVisible(out, hidden, revealsHidden(true, ""))).toBe(true);
+    expect(packVisible(out, hidden, revealsHidden(false, "toxo"))).toBe(true);
+    expect(packVisible(named, hidden, revealsHidden(false, ""))).toBe(true);
   });
 });

@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type MouseEvent,
@@ -21,9 +22,10 @@ import {
 import {
   apiAtlasSource,
   listAtlasEntries,
-  packHidden,
+  packHiddenIds as computePackHiddenIds,
   packIsActive,
   resetEntry,
+  useShowHiddenPref,
 } from "../atlas";
 import "../atlas/hub/atlasMotion.css";
 import { Cabinet } from "../atlas";
@@ -133,6 +135,14 @@ export default function AtlasPage({
     jobId: string;
     jobCount: number;
   } | null>(null);
+  const [showHidden, setShowHidden] = useShowHiddenPref(loaded?.userKey ?? "");
+  const packActive = loaded
+    ? packIsActive(loaded.entries, loaded.focusRefreshPending)
+    : false;
+  const packHiddenIds = useMemo(
+    () => computePackHiddenIds(loaded?.entries ?? [], packActive),
+    [loaded?.entries, packActive],
+  );
   // The first-load stagger runs once per page mount, not again on Back from an entry.
   const staggered = useRef(false);
   useEffect(() => {
@@ -195,9 +205,6 @@ export default function AtlasPage({
     );
 
   const canMutate = !isGuest();
-  const packActive = loaded
-    ? packIsActive(loaded.entries, loaded.focusRefreshPending)
-    : false;
 
   async function onResetEntry(entry: AtlasEntryView) {
     if (!entry.originKey || !entry.editedAt) return;
@@ -214,6 +221,17 @@ export default function AtlasPage({
         err instanceof ApiError ? err.message : "Could not reset entry",
       );
     }
+  }
+
+  function onFocusUpdated(next: AtlasEntryView) {
+    setLoaded((prev) =>
+      prev
+        ? {
+            ...prev,
+            entries: prev.entries.map((e) => (e.id === next.id ? next : e)),
+          }
+        : prev,
+    );
   }
 
   let body;
@@ -235,8 +253,7 @@ export default function AtlasPage({
             packSummary={
               packActive
                 ? {
-                    shown: loaded.entries.filter((e) => !packHidden(e, true))
-                      .length,
+                    shown: loaded.entries.length - packHiddenIds.size,
                     total: loaded.entries.length,
                   }
                 : null
@@ -250,7 +267,9 @@ export default function AtlasPage({
           onOpenEntry={(id) => navigate(atlasEntryHref(atlasId, id))}
           onCompare={(a, b) => navigate(atlasCompareHref(atlasId, a, b))}
           stagger={!staggered.current}
-          packActive={packActive}
+          packHiddenIds={packHiddenIds}
+          showHidden={showHidden}
+          onShowHiddenChange={setShowHidden}
           onAddEntry={canMutate ? () => setAddOpen(true) : undefined}
           onRecentlyDeleted={canMutate ? () => setDeletedOpen(true) : undefined}
           onEditEntry={canMutate ? (entry) => setEditEntry(entry) : undefined}
@@ -266,21 +285,7 @@ export default function AtlasPage({
               : undefined
           }
           atlasId={canMutate ? atlasId : undefined}
-          onFocusUpdated={
-            canMutate
-              ? (next) => {
-                  setLoaded((prev) => {
-                    if (!prev) return prev;
-                    return {
-                      ...prev,
-                      entries: prev.entries.map((e) =>
-                        e.id === next.id ? next : e,
-                      ),
-                    };
-                  });
-                }
-              : undefined
-          }
+          onFocusUpdated={canMutate ? onFocusUpdated : undefined}
         />
       </>
     );
@@ -296,8 +301,8 @@ export default function AtlasPage({
         entryHref={(id) => atlasEntryHref(atlasId, id)}
         onOpen={(id) => navigate(atlasEntryHref(atlasId, id))}
         onStep={(id) => navigateReplace(atlasEntryHref(atlasId, id))}
-        packActive={packActive}
-        userKey={loaded.userKey}
+        packHiddenIds={packHiddenIds}
+        showHidden={showHidden}
         onEdit={canMutate ? () => setEditEntry(entry) : undefined}
         onEditLifecycle={
           canMutate ? () => setEditLifecycle(entry) : undefined
@@ -317,21 +322,7 @@ export default function AtlasPage({
               }
             : undefined
         }
-        onFocusUpdated={
-          canMutate
-            ? (next) => {
-                setLoaded((prev) => {
-                  if (!prev) return prev;
-                  return {
-                    ...prev,
-                    entries: prev.entries.map((e) =>
-                      e.id === next.id ? next : e,
-                    ),
-                  };
-                });
-              }
-            : undefined
-        }
+        onFocusUpdated={canMutate ? onFocusUpdated : undefined}
         atlasId={canMutate ? atlasId : undefined}
       />
     ) : (

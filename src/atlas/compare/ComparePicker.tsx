@@ -18,8 +18,8 @@ import { entryTitles } from "../entry/entryTitles";
 import {
   browseSections,
   matchesSearch,
-  packHidden,
   packVisible,
+  revealsHidden,
 } from "../hub/filter";
 import NotInPackChip from "../hub/NotInPackChip";
 import type { AtlasEntryView } from "../types";
@@ -30,8 +30,8 @@ type Props = {
   entries: AtlasEntryView[];
   fixedA?: string;
   /** Same pack hiding and search exception as the Cabinet. */
-  packActive?: boolean;
-  showHidden?: boolean;
+  packHiddenIds: ReadonlySet<string>;
+  showHidden: boolean;
   onClose: () => void;
   onPick: (a: string, b: string) => void;
 };
@@ -40,8 +40,8 @@ export default function ComparePicker({
   open,
   entries,
   fixedA,
-  packActive = false,
-  showHidden = false,
+  packHiddenIds,
+  showHidden,
   onClose,
   onPick,
 }: Props) {
@@ -52,18 +52,17 @@ export default function ComparePicker({
   const first = entries.find((e) => e.id === (fixedA ?? picked)) ?? null;
   const a = first?.id ?? null;
 
-  const rows = useMemo(
-    () =>
-      browseSections(
-        entries.filter(
-          (e) =>
-            e.id !== a &&
-            matchesSearch(e, query) &&
-            packVisible(e, packActive, showHidden, query),
-        ),
+  const rows = useMemo(() => {
+    const revealHidden = revealsHidden(showHidden, query);
+    return browseSections(
+      entries.filter(
+        (e) =>
+          e.id !== a &&
+          matchesSearch(e, query) &&
+          packVisible(e, packHiddenIds, revealHidden),
       ),
-    [entries, a, query, packActive, showHidden],
-  );
+    );
+  }, [entries, a, query, packHiddenIds, showHidden]);
 
   const reset = () => {
     setPicked(null);
@@ -170,7 +169,7 @@ export default function ComparePicker({
                             {titles.scientific}
                           </Typography>
                         ) : null}
-                        {packHidden(e, packActive) ? (
+                        {packHiddenIds.has(e.id) ? (
                           <Box component="span" sx={{ ml: 1 }}>
                             <NotInPackChip />
                           </Box>

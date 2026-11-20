@@ -6,6 +6,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { afterEach, describe, expect, it } from "vitest";
 import Cabinet from "../../src/atlas/hub/Cabinet";
+import { packHiddenIds } from "../../src/atlas/hub/filter";
+import { useShowHiddenPref } from "../../src/atlas/hub/packHidePref";
 import type { AtlasEntryView } from "../../src/atlas/types";
 import { emptyParasiteFields } from "../../worker/atlas/templates/parasite";
 
@@ -52,13 +54,30 @@ const ENTRIES = [
   entry("toxocara-canis", "Toxocara canis", false),
 ];
 
+/** Stands in for AtlasPage, which owns the pack state and the preference. */
+function PackCabinet({ entries }: { entries: AtlasEntryView[] }) {
+  const [showHidden, setShowHidden] = useShowHiddenPref(USER);
+  return createElement(Cabinet, {
+    entries,
+    userKey: USER,
+    entryHref: (id) => `#${id}`,
+    onOpenEntry: () => undefined,
+    onCompare: () => undefined,
+    stagger: false,
+    packHiddenIds: packHiddenIds(entries, true),
+    showHidden,
+    onShowHiddenChange: setShowHidden,
+    mobile: false,
+  });
+}
+
 async function flush() {
   await act(async () => {
     await new Promise((r) => setTimeout(r, 0));
   });
 }
 
-async function renderCabinet() {
+async function renderCabinet(entries: AtlasEntryView[] = ENTRIES) {
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
@@ -68,16 +87,7 @@ async function renderCabinet() {
       createElement(
         ThemeProvider,
         { theme: createTheme() },
-        createElement(Cabinet, {
-          entries: ENTRIES,
-          userKey: USER,
-          entryHref: (id) => `#${id}`,
-          onOpenEntry: () => undefined,
-          onCompare: () => undefined,
-          stagger: false,
-          packActive: true,
-          mobile: false,
-        }),
+        createElement(PackCabinet, { entries }),
       ),
     );
   });
