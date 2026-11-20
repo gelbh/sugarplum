@@ -18,12 +18,7 @@ export type GlanceKey =
   | "significance";
 
 export type GlanceSectionId =
-  | "taxonomy"
-  | "hosts"
-  | "body"
-  | "detection"
-  | "range"
-  | "notes";
+  "taxonomy" | "hosts" | "body" | "detection" | "range" | "notes";
 
 export type GlanceRow = {
   key: GlanceKey;
@@ -51,7 +46,9 @@ export function entryMetaLine(fields: DatasetFields): string | null {
   const parts = [
     fields.group ? termLabel(fields.group) : null,
     fields.family || null,
-    fields.lifecycleType ? `${termLabel(fields.lifecycleType)} lifecycle` : null,
+    fields.lifecycleType
+      ? `${termLabel(fields.lifecycleType)} lifecycle`
+      : null,
   ].filter(Boolean) as string[];
   return parts.length ? parts.join(" · ") : null;
 }
@@ -272,6 +269,25 @@ export function glanceSections(fields: DatasetFields): GlanceSection[] {
     });
   if (range.length) sections.push({ id: "range", title: "Range", rows: range });
   return sections;
+}
+
+const MOBILE_PRIMARY_IDS = new Set<GlanceSectionId>([
+  "hosts",
+  "body",
+  "detection",
+]);
+
+/** Split densify bands for phone: study-critical first, rest behind disclosure. */
+export function splitGlanceForMobile(sections: GlanceSection[]): {
+  primary: GlanceSection[];
+  more: GlanceSection[];
+} {
+  const primary: GlanceSection[] = [];
+  const more: GlanceSection[] = [];
+  for (const s of sections) {
+    (MOBILE_PRIMARY_IDS.has(s.id) ? primary : more).push(s);
+  }
+  return { primary, more };
 }
 
 /** Full significance row when the lead preview is truncated. */
