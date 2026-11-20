@@ -1,6 +1,5 @@
 import { SOURCE_ROLE_LABELS, type SourceRole } from "../../materials/sourceRole";
-import { entryNameForms, textMentionsEntry } from "./nameMatch";
-import { materialMatchesPackTargets, packTargets } from "./packMatch";
+import { matchMaterialForPack, packTargets } from "./packMatch";
 import type { AtlasTier } from "../types";
 
 const KEY_ROLES: ReadonlySet<SourceRole> = new Set([
@@ -39,9 +38,13 @@ export function scanFocus(
   manualOverride?: FocusManualOverride,
 ): FocusScanResult {
   const targets = packTargets(entry);
-  const materialIds = materials
-    .filter((m) => materialMatchesPackTargets(targets, m))
-    .map((m) => m.id);
+  const matches = materials.map((material) => ({
+    material,
+    ...matchMaterialForPack(targets, material),
+  }));
+  const materialIds = matches
+    .filter((m) => m.lenient)
+    .map((m) => m.material.id);
   const inPack = materialIds.length > 0;
 
   if (manualOverride) {
@@ -54,10 +57,9 @@ export function scanFocus(
   }
 
   // Tiers keep the strict matcher so ranking does not change.
-  const forms = entryNameForms(entry);
-  const keyHit = materials.find(
-    (m) => KEY_ROLES.has(m.sourceRole) && materialNamesEntry(m, forms),
-  );
+  const keyHit = matches.find(
+    (m) => m.strict && KEY_ROLES.has(m.material.sourceRole),
+  )?.material;
   if (keyHit) {
     const label = SOURCE_ROLE_LABELS[keyHit.sourceRole].toLowerCase();
     const title = keyHit.filename ?? keyHit.id;
@@ -69,9 +71,7 @@ export function scanFocus(
     };
   }
 
-  const mentionCount = materials.filter((m) =>
-    materialNamesEntry(m, forms),
-  ).length;
+  const mentionCount = matches.filter((m) => m.strict).length;
   if (mentionCount >= 3) {
     return {
       tier: "frequent",
@@ -82,14 +82,4 @@ export function scanFocus(
   }
 
   return { tier: "standard", reason: "Standard", materialIds, inPack };
-}
-
-function materialNamesEntry(
-  material: FocusMaterial,
-  forms: readonly string[],
-): boolean {
-  if (material.filename && textMentionsEntry(material.filename, forms)) {
-    return true;
-  }
-  return material.pages.some((p) => textMentionsEntry(p.text, forms));
 }

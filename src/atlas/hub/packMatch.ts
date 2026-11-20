@@ -216,14 +216,9 @@ function lenientMention(scanned: Scanned, parts: NameParts): boolean {
   return false;
 }
 
-function mentions(
-  scanned: Scanned,
-  forms: readonly string[],
-  parts: NameParts | null,
-): boolean {
-  // Rule 1: the same substring test as textMentionsEntry, on cached text.
-  if (forms.some((f) => scanned.hay.includes(f))) return true;
-  return parts !== null && lenientMention(scanned, parts);
+/** Rule 1: the same substring test as textMentionsEntry, on cached text. */
+function strictMention(scanned: Scanned, forms: readonly string[]): boolean {
+  return forms.some((f) => scanned.hay.includes(f));
 }
 
 export function packTargets(entry: NameMatchEntry): PackTargets {
@@ -233,21 +228,31 @@ export function packTargets(entry: NameMatchEntry): PackTargets {
   };
 }
 
-export function materialMatchesPackTargets(
+/**
+ * `strict` is rule 1 alone (what tiers use); `lenient` adds rules 2 to 5
+ * (what pack hiding uses). Both read the same cached normalized text.
+ */
+export type PackMaterialMatch = { strict: boolean; lenient: boolean };
+
+export function matchMaterialForPack(
   targets: PackTargets,
   material: FocusMaterial,
-): boolean {
+): PackMaterialMatch {
   const { forms, parts } = targets;
-  const { filename } = material;
-  if (filename && mentions(scanFilename(material, filename), forms, parts)) {
-    return true;
+  const texts = material.pages.map(scanPage);
+  if (material.filename) {
+    texts.unshift(scanFilename(material, material.filename));
   }
-  return material.pages.some((p) => mentions(scanPage(p), forms, parts));
+  if (texts.some((t) => strictMention(t, forms))) {
+    return { strict: true, lenient: true };
+  }
+  const lenient = parts !== null && texts.some((t) => lenientMention(t, parts));
+  return { strict: false, lenient };
 }
 
 export function materialMentionsForPack(
   entry: NameMatchEntry,
   material: FocusMaterial,
 ): boolean {
-  return materialMatchesPackTargets(packTargets(entry), material);
+  return matchMaterialForPack(packTargets(entry), material).lenient;
 }
