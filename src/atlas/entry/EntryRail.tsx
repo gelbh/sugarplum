@@ -10,6 +10,7 @@ import { alpha } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import AtlasImage, { heroImage } from "../hub/AtlasImage";
 import { entryTitles } from "./entryTitles";
+import NotInPackChip from "../hub/NotInPackChip";
 import type { RailSection } from "../hub/filter";
 import type { AtlasEntryView } from "../types";
 
@@ -25,6 +26,8 @@ type Props = {
   onClearTaxonomy?: () => void;
   entryHref: (id: string) => string;
   onOpen: (id: string) => void;
+  /** Pack-hidden entries shown through Show hidden or search. */
+  notInPackIds?: ReadonlySet<string>;
 };
 
 export default function EntryRail({
@@ -38,6 +41,7 @@ export default function EntryRail({
   onClearTaxonomy,
   entryHref,
   onOpen,
+  notInPackIds,
 }: Props) {
   const listRef = useRef<HTMLDivElement>(null);
   const shown = matched ?? total;
@@ -138,6 +142,7 @@ export default function EntryRail({
                 key={e.id}
                 entry={e}
                 current={e.id === currentId}
+                notInPack={notInPackIds?.has(e.id) ?? false}
                 href={entryHref(e.id)}
                 onClick={(ev) => open(ev, e.id)}
               />
@@ -185,11 +190,13 @@ function StackChip({
 function RailItem({
   entry,
   current,
+  notInPack,
   href,
   onClick,
 }: {
   entry: AtlasEntryView;
   current: boolean;
+  notInPack: boolean;
   href: string;
   onClick: (ev: MouseEvent<HTMLAnchorElement>) => void;
 }) {
@@ -249,6 +256,7 @@ function RailItem({
             {titles.scientific}
           </Typography>
         ) : null}
+        {notInPack ? <NotInPackChip /> : null}
       </Box>
     </ButtonBase>
   );

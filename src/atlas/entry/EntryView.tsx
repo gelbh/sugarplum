@@ -5,6 +5,7 @@ import {
   useState,
   ViewTransition,
 } from "react";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Drawer from "@mui/material/Drawer";
@@ -34,11 +35,14 @@ import {
   focusActive as isFocusActive,
   matchesSearch,
   matchesTaxonomy,
+  packHidden,
+  packVisible,
   railSections,
   termLabel,
   type TaxonomyFilter,
 } from "../hub/filter";
 import { isShortcutTarget } from "../hub/keys";
+import { readShowHiddenPref } from "../hub/packHidePref";
 import { atlasHeroName } from "../paths";
 import { atlasBottomSheetPaperSx } from "../hub/atlasOperateSx";
 import MarkImportantControl from "./MarkImportantControl";
@@ -61,6 +65,10 @@ type Props = {
   onMakeCards?: () => void;
   atlasId?: string;
   onFocusUpdated?: (entry: AtlasEntryView) => void;
+  /** Hide dataset entries the pack does not mention; see packIsActive. */
+  packActive?: boolean;
+  /** Reads the Cabinet's Show hidden preference for the rail. */
+  userKey?: string;
   /** Test override for `breakpoints.down("md")`. */
   mobile?: boolean;
 };
@@ -83,8 +91,13 @@ export default function EntryView({
   onMakeCards,
   atlasId,
   onFocusUpdated,
+  packActive = false,
+  userKey,
   mobile: mobileProp,
 }: Props) {
+  const [showHidden] = useState(() =>
+    userKey ? readShowHiddenPref(userKey) : false,
+  );
   const [tab, setTab] = useState<TabKey>("lifecycle");
   // An object per click, so citing the same field twice still scrolls.
   const [cite, setCite] = useState<{ field: FieldKey } | null>(null);
@@ -100,9 +113,20 @@ export default function EntryView({
   const railEntries = useMemo(
     () =>
       entries.filter(
-        (e) => matchesTaxonomy(e, taxonomy) && matchesSearch(e, query),
+        (e) =>
+          matchesTaxonomy(e, taxonomy) &&
+          matchesSearch(e, query) &&
+          (e.id === entry.id ||
+            packVisible(e, packActive, showHidden, query)),
       ),
-    [entries, taxonomy, query],
+    [entries, taxonomy, query, entry.id, packActive, showHidden],
+  );
+  const notInPackIds = useMemo(
+    () =>
+      new Set(
+        entries.filter((e) => packHidden(e, packActive)).map((e) => e.id),
+      ),
+    [entries, packActive],
   );
   const rows = useMemo(
     () => railSections(railEntries, useFocus),
@@ -170,6 +194,7 @@ export default function EntryView({
       onClearTaxonomy={taxonomy ? () => setTaxonomy(null) : undefined}
       entryHref={entryHref}
       onOpen={openFromRail}
+      notInPackIds={notInPackIds}
     />
   );
 
@@ -290,12 +315,31 @@ export default function EntryView({
               {meta}
             </Typography>
           ) : null}
+          {notInPackIds.has(entry.id) ? (
+            <Alert
+              severity="info"
+              sx={{ mt: 1.25, py: 0, alignItems: "center" }}
+              action={
+                atlasId && onFocusUpdated ? (
+                  <MarkImportantControl
+                    atlasId={atlasId}
+                    entry={entry}
+                    onUpdated={onFocusUpdated}
+                    pinLabel="Pin"
+                  />
+                ) : undefined
+              }
+            >
+              Not in your course pack
+            </Alert>
+          ) : null}
           {atlasId && onFocusUpdated ? (
             <Box sx={{ mt: 1.25 }}>
               <MarkImportantControl
                 atlasId={atlasId}
                 entry={entry}
                 onUpdated={onFocusUpdated}
+                pinLabel="Pin (always show)"
               />
             </Box>
           ) : null}
