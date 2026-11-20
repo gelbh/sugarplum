@@ -11,6 +11,7 @@ import Button from "@mui/material/Button";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
+import Link from "@mui/material/Link";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
@@ -43,9 +44,12 @@ import {
   hostOptions,
   matchesSearch,
   organOptions,
+  packHidden,
+  packVisible,
   presentGroups,
   type AtlasFilters as Filters,
 } from "./filter";
+import { readShowHiddenPref, writeShowHiddenPref } from "./packHidePref";
 import { readViewPref, writeViewPref, type AtlasViewMode } from "./viewPref";
 import type { AtlasEntryView } from "../types";
 
@@ -63,6 +67,8 @@ type Props = {
   onMakeCardsFromKey?: (entryKeys: string[]) => void;
   atlasId?: string;
   onFocusUpdated?: (entry: AtlasEntryView) => void;
+  /** Hide dataset entries the pack does not mention; see packIsActive. */
+  packActive?: boolean;
   /** Test override for `breakpoints.down("md")`. */
   mobile?: boolean;
 };
@@ -82,6 +88,7 @@ export default function Cabinet({
   onMakeCardsFromKey,
   atlasId,
   onFocusUpdated,
+  packActive = false,
   mobile: mobileProp,
 }: Props) {
   const mobileMq = useMediaQuery((t: Theme) => t.breakpoints.down("md"));
@@ -89,6 +96,9 @@ export default function Cabinet({
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [view, setView] = useState<AtlasViewMode>(() => readViewPref(userKey));
+  const [showHidden, setShowHidden] = useState(() =>
+    readShowHiddenPref(userKey),
+  );
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [comparing, setComparing] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -114,12 +124,21 @@ export default function Cabinet({
     }),
     [entries],
   );
+  const hiddenIds = useMemo(
+    () =>
+      new Set(
+        entries.filter((e) => packHidden(e, packActive)).map((e) => e.id),
+      ),
+    [entries, packActive],
+  );
   const visible = useMemo(
     () =>
-      applyFilters(entries, shownFilters).filter((e) =>
-        matchesSearch(e, query),
+      applyFilters(entries, shownFilters).filter(
+        (e) =>
+          matchesSearch(e, query) &&
+          packVisible(e, packActive, showHidden, query),
       ),
-    [entries, shownFilters, query],
+    [entries, shownFilters, query, packActive, showHidden],
   );
   const keyEntries = useMemo(
     () =>
@@ -172,6 +191,10 @@ export default function Cabinet({
   }, [expanded]);
 
   const narrowed = visible.length !== entries.length;
+  const toggleHidden = () => {
+    setShowHidden(!showHidden);
+    writeShowHiddenPref(userKey, !showHidden);
+  };
   const clearAll = () => {
     setFilters(NO_FILTERS);
     setQuery("");
@@ -206,6 +229,16 @@ export default function Cabinet({
             {narrowed
               ? `${visible.length} of ${plural(entries.length)}`
               : plural(entries.length)}
+            {hiddenIds.size > 0 ? (
+              <>
+                {showHidden ? " · " : ` · ${hiddenIds.size} hidden · `}
+                <Link component="button" variant="body2" onClick={toggleHidden}>
+                  {showHidden
+                    ? `Hide ${hiddenIds.size} not in pack`
+                    : "Show hidden"}
+                </Link>
+              </>
+            ) : null}
           </Typography>
         </Box>
         <Stack
@@ -445,6 +478,7 @@ export default function Cabinet({
           entryHref={entryHref}
           onOpen={onOpenEntry}
           focusActive={focusActive}
+          notInPackIds={hiddenIds}
         />
       ) : (
         <Stack spacing={3}>
@@ -510,6 +544,7 @@ export default function Cabinet({
                       onEdit={onEditEntry ? () => onEditEntry(e) : undefined}
                       atlasId={atlasId}
                       onFocusUpdated={onFocusUpdated}
+                      notInPack={hiddenIds.has(e.id)}
                     />
                   </ViewTransition>
                 ))}
@@ -521,6 +556,8 @@ export default function Cabinet({
       <ComparePicker
         open={comparing}
         entries={entries}
+        packActive={packActive}
+        showHidden={showHidden}
         onClose={() => setComparing(false)}
         onPick={(a, b) => {
           setComparing(false);

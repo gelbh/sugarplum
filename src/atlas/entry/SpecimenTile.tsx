@@ -14,6 +14,7 @@ import { entryTitles } from "./entryTitles";
 import { TIER_LABELS, hostSummary, pppLabel, termLabel } from "../hub/filter";
 import { atlasHeroName } from "../paths";
 import MarkImportantControl from "./MarkImportantControl";
+import NotInPackChip from "../hub/NotInPackChip";
 import TermList from "./TermList";
 import type { AtlasEntryView } from "../types";
 
@@ -27,6 +28,8 @@ type Props = {
   onEdit?: () => void;
   atlasId?: string;
   onFocusUpdated?: (entry: AtlasEntryView) => void;
+  /** Pack-hidden entry shown through Show hidden or search. */
+  notInPack?: boolean;
 };
 
 const IMAGE_RATIO = "6 / 5";
@@ -129,6 +132,7 @@ export default function SpecimenTile({
   onEdit,
   atlasId,
   onFocusUpdated,
+  notInPack = false,
 }: Props) {
   const toggleRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -158,7 +162,9 @@ export default function SpecimenTile({
 
   if (!expanded) {
     return (
-      <Box sx={{ position: "relative", minWidth: 0 }}>
+      <Box
+        sx={{ position: "relative", minWidth: 0, opacity: notInPack ? 0.6 : 1 }}
+      >
         <ButtonBase
           ref={toggleRef}
           onClick={onToggle}
@@ -236,6 +242,11 @@ export default function SpecimenTile({
                 }}>
                 {definitive}
               </Typography>
+            ) : null}
+            {notInPack ? (
+              <Box sx={{ mt: 0.75 }}>
+                <NotInPackChip />
+              </Box>
             ) : null}
           </Box>
         </ButtonBase>
@@ -325,6 +336,7 @@ export default function SpecimenTile({
           {entry.editedAt ? (
             <Chip label="Edited" size="small" variant="outlined" />
           ) : null}
+          {notInPack ? <NotInPackChip /> : null}
         </Stack>
         {titles.scientific ? (
           <Typography

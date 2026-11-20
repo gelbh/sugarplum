@@ -15,7 +15,13 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import type { Theme } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import { entryTitles } from "../entry/entryTitles";
-import { browseSections, matchesSearch } from "../hub/filter";
+import {
+  browseSections,
+  matchesSearch,
+  packHidden,
+  packVisible,
+} from "../hub/filter";
+import NotInPackChip from "../hub/NotInPackChip";
 import type { AtlasEntryView } from "../types";
 import { shouldAutoFocusText } from "../../shared/lib/autoFocusText";
 
@@ -23,6 +29,9 @@ type Props = {
   open: boolean;
   entries: AtlasEntryView[];
   fixedA?: string;
+  /** Same pack hiding and search exception as the Cabinet. */
+  packActive?: boolean;
+  showHidden?: boolean;
   onClose: () => void;
   onPick: (a: string, b: string) => void;
 };
@@ -31,6 +40,8 @@ export default function ComparePicker({
   open,
   entries,
   fixedA,
+  packActive = false,
+  showHidden = false,
   onClose,
   onPick,
 }: Props) {
@@ -44,9 +55,14 @@ export default function ComparePicker({
   const rows = useMemo(
     () =>
       browseSections(
-        entries.filter((e) => e.id !== a && matchesSearch(e, query)),
+        entries.filter(
+          (e) =>
+            e.id !== a &&
+            matchesSearch(e, query) &&
+            packVisible(e, packActive, showHidden, query),
+        ),
       ),
-    [entries, a, query],
+    [entries, a, query, packActive, showHidden],
   );
 
   const reset = () => {
@@ -153,6 +169,11 @@ export default function ComparePicker({
                             }}>
                             {titles.scientific}
                           </Typography>
+                        ) : null}
+                        {packHidden(e, packActive) ? (
+                          <Box component="span" sx={{ ml: 1 }}>
+                            <NotInPackChip />
+                          </Box>
                         ) : null}
                       </ListItemButton>
                     );

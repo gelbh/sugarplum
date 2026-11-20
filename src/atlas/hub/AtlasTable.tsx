@@ -9,6 +9,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import AtlasImage, { heroImage } from "./AtlasImage";
+import NotInPackChip from "./NotInPackChip";
 import { entryTitles } from "../entry/entryTitles";
 import { atlasHeroName } from "../paths";
 import {
@@ -28,6 +29,8 @@ type Props = {
   entryHref: (id: string) => string;
   onOpen: (id: string) => void;
   focusActive: boolean;
+  /** Pack-hidden rows shown through Show hidden or search. */
+  notInPackIds?: ReadonlySet<string>;
 };
 
 const BASE_COLUMNS: { id: TableColumn; label: string; wide?: boolean }[] = [
@@ -45,6 +48,7 @@ export default function AtlasTable({
   entryHref,
   onOpen,
   focusActive,
+  notInPackIds,
 }: Props) {
   const columns = useMemo(
     () =>
@@ -105,7 +109,10 @@ export default function AtlasTable({
               key={e.id}
               hover
               onClick={() => onOpen(e.id)}
-              sx={{ cursor: "pointer" }}
+              sx={{
+                cursor: "pointer",
+                opacity: notInPackIds?.has(e.id) ? 0.6 : 1,
+              }}
             >
               <TableCell sx={{ py: 0.75 }}>
                 <ViewTransition name={atlasHeroName(e.id)} share="atlas-morph">
@@ -133,6 +140,12 @@ export default function AtlasTable({
                 >
                   {entryTitles(e).primary}
                 </Link>
+                {notInPackIds?.has(e.id) ? (
+                  <>
+                    {" "}
+                    <NotInPackChip />
+                  </>
+                ) : null}
               </TableCell>
               {focusActive ? (
                 <TableCell>
