@@ -20,39 +20,39 @@ import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
 import { rememberIncomingUnlocks } from "../achievements/rememberUnlocks";
 import type { UnlockView } from "../achievements/wire";
-import CardFace from "../study/CardFace";
-import GradeButtons from "../study/GradeButtons";
-import { FACE_SANS } from "../study/studyFaceSx";
-import { useStudyCardGesture } from "../study/useStudyCardGesture";
+import { CardFace } from "../study";
+import { GradeButtons } from "../study";
+import { FACE_SANS } from "../study";
+import { useStudyCardGesture } from "../study";
 import { ApiError } from "../api/client";
 import { isGuest } from "../guest/session";
 import { navigate } from "../shared/nav/navigate";
 import { useSession } from "../session/SessionContext";
 import { useTrackedOp } from "../progress/useTrackedOp";
-import { useGradeMailboxFlight } from "../study/useGradeMailboxFlight";
-import { studyQueueProgress } from "../study/studyQueueProgress";
+import { useGradeMailboxFlight } from "../study";
+import { studyQueueProgress } from "../study";
 import {
   isMcqCard,
   occlusionStudyParts,
   studyFrontText,
-} from "../study/studyCardPresentation";
-import { useStudyNotesOverlay } from "../study/notes/useStudyNotesOverlay";
-import { scopeLibraryBack } from "../study/scopeLibraryBack";
-import LearningSoftWait from "../study/LearningSoftWait";
-import SessionComplete from "../study/SessionComplete";
-import SessionQuietEnd from "../study/SessionQuietEnd";
-import { StudyCardActions } from "../study/StudyCardActions";
+} from "../study";
+import { useStudyNotesOverlay } from "../study";
+import { scopeLibraryBack } from "../study";
+import { LearningSoftWait } from "../study";
+import { SessionComplete } from "../study";
+import { SessionQuietEnd } from "../study";
+import { StudyCardActions } from "../study";
 import {
   emptyTally,
   gradedTotal,
   sessionSurface,
-} from "../study/sessionTally";
-import { useLearningRequeue } from "../study/useLearningRequeue";
-import { usePendingGradeSync } from "../study/usePendingGradeSync";
-import { useStudyImmersion } from "../study/useStudyImmersion";
-import { useStudyGrade } from "../study/useStudyGrade";
-import { useStudyQueueLoad } from "../study/useStudyQueueLoad";
-import { useStudySessionKeys } from "../study/useStudySessionKeys";
+} from "../study";
+import { useLearningRequeue } from "../study";
+import { usePendingGradeSync } from "../study";
+import { useStudyImmersion } from "../study";
+import { useStudyGrade } from "../study";
+import { useStudyQueueLoad } from "../study";
+import { useStudySessionKeys } from "../study";
 
 /** Study session: reveal answer, grade with FSRS (keys 1-4 or arrows; Space flips). Code-led MUI. */
 export default function StudyPage() {

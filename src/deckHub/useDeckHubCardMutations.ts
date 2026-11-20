@@ -13,8 +13,8 @@ import {
   type Deck,
   type Subject,
 } from "../api/client";
-import { cardPatchBody } from "../draftReview/cardPatchBody";
-import type { DraftEditorChange } from "../draftReview/DraftCardEditor";
+import { cardPatchBody } from "../draftReview";
+import type { DraftEditorChange } from "../draftReview";
 
 type Args = {
   deckId: string;

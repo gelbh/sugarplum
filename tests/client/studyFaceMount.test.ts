@@ -8,7 +8,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 describe("study face mount", () => {
   it("StudyPage mounts CardFace only (no McqFace import)", () => {
     const src = readFileSync(join(root, "src/routes/StudyPage.tsx"), "utf8");
-    expect(src).toMatch(/from ["']\.\.\/study\/CardFace["']/);
+    expect(src).toMatch(/CardFace/);
+    expect(src).toMatch(/from ["']\.\.\/study["']/);
+    expect(src).not.toMatch(/from ["']\.\.\/study\/CardFace["']/);
     expect(src).not.toMatch(/McqFace/);
   });
 

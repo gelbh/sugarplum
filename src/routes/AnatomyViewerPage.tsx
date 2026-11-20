@@ -28,43 +28,43 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 import type { MouseEvent } from "react";
-import AnatomyCanvas, {
+import { AnatomyCanvas,
   type AnatomyCameraMode,
   type AnatomyCanvasHandle,
-} from "../anatomy/viewer/AnatomyCanvas";
-import AnatomyClipBar from "../anatomy/viewer/AnatomyClipBar";
-import AnatomyClipHud from "../anatomy/viewer/AnatomyClipHud";
-import AnatomyHelpOverlay from "../anatomy/viewer/AnatomyHelpOverlay";
-import AnatomyMobileSheet, {
+} from "../anatomy";
+import { AnatomyClipBar } from "../anatomy";
+import { AnatomyClipHud } from "../anatomy";
+import { AnatomyHelpOverlay } from "../anatomy";
+import { AnatomyMobileSheet,
   type AnatomySheetTab,
-} from "../anatomy/viewer/AnatomyMobileSheet";
+} from "../anatomy";
 import {
   anatomyViewerBgChoices,
   type BgChoice,
   type BgChoiceId,
-} from "../anatomy/viewer/anatomyViewerBg";
-import { buildLoads } from "../anatomy/viewer/anatomyViewerLoads";
-import { selectedStructureLabelText } from "../anatomy/viewer/anatomyScreenLabel";
-import InfoPanel from "../anatomy/structure/InfoPanel";
-import MakeCardsDeckDialog from "../anatomy/quiz/MakeCardsDeckDialog";
-import { anatomyHubHref } from "../anatomy/paths";
-import StructurePanel from "../anatomy/structure/StructurePanel";
+} from "../anatomy";
+import { buildLoads } from "../anatomy";
+import { selectedStructureLabelText } from "../anatomy";
+import { InfoPanel } from "../anatomy";
+import { MakeCardsDeckDialog } from "../anatomy";
+import { anatomyHubHref } from "../anatomy";
+import { StructurePanel } from "../anatomy";
 import {
   createStructureUiState,
   structureUiReducer,
-} from "../anatomy/structure/structureState";
-import { makeCardsStructureIds } from "../anatomy/structure/structureCard";
-import TestYourself, {
+} from "../anatomy";
+import { makeCardsStructureIds } from "../anatomy";
+import { TestYourself,
   type AnatomyStudyMode,
-} from "../anatomy/quiz/TestYourself";
-import { useAnatomyViewerClips } from "../anatomy/viewer/useAnatomyViewerClips";
-import { useAnatomyViewerFullscreen } from "../anatomy/viewer/useAnatomyViewerFullscreen";
-import { useAnatomyViewerKeys } from "../anatomy/viewer/useAnatomyViewerKeys";
-import { useAnatomyViewerManifest } from "../anatomy/viewer/useAnatomyViewerManifest";
+} from "../anatomy";
+import { useAnatomyViewerClips } from "../anatomy";
+import { useAnatomyViewerFullscreen } from "../anatomy";
+import { useAnatomyViewerKeys } from "../anatomy";
+import { useAnatomyViewerManifest } from "../anatomy";
 import {
   anatomyClipChrome,
   anatomyViewerMobile,
-} from "../anatomy/viewer/viewerLayout";
+} from "../anatomy";
 import { isPlainClick, navigate } from "../shared/nav/navigate";
 
 type Props = { sceneId: string; initialRegions?: string[] };

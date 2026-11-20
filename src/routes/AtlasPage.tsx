@@ -17,26 +17,26 @@ import {
   EditEntryDialog,
   EditLifecycleDialog,
   RecentlyDeletedDialog,
-} from "../atlas/mutate/AtlasMutateDialogs";
+} from "../atlas";
 import {
   apiAtlasSource,
   listAtlasEntries,
   resetEntry,
-} from "../atlas/hub/apiSource";
+} from "../atlas";
 import "../atlas/hub/atlasMotion.css";
-import Cabinet from "../atlas/hub/Cabinet";
-import CompareView from "../atlas/compare/CompareView";
-import CoursePackPanel from "../atlas/hub/CoursePackPanel";
-import EntryView from "../atlas/entry/EntryView";
-import { entryTitles } from "../atlas/entry/entryTitles";
-import MakeCardsDeckDialog from "../atlas/mutate/MakeCardsDeckDialog";
+import { Cabinet } from "../atlas";
+import { CompareView } from "../atlas";
+import { CoursePackPanel } from "../atlas";
+import { EntryView } from "../atlas";
+import { entryTitles } from "../atlas";
+import { MakeCardsDeckDialog } from "../atlas";
 import {
   atlasCompareHref,
   atlasEntryHref,
   atlasHref,
   type AtlasRoute,
-} from "../atlas/paths";
-import type { AtlasEntryView, AtlasSource } from "../atlas/types";
+} from "../atlas";
+import type { AtlasEntryView, AtlasSource } from "../atlas";
 import { isGuest } from "../guest/session";
 import { isPlainClick, navigate, navigateReplace } from "../shared/nav/navigate";
 import { useSession } from "../session/SessionContext";

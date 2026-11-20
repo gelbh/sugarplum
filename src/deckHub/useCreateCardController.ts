@@ -15,8 +15,8 @@ import {
   type CardDraftView,
   type CardType,
 } from "../api/client";
-import type { DraftEditorChange } from "../draftReview/DraftCardEditor";
-import { isOcclusionFront, starterOcclusionFront } from "../draftReview/draftCardModel";
+import type { DraftEditorChange } from "../draftReview";
+import { isOcclusionFront, starterOcclusionFront } from "../draftReview";
 import { hubDiyTypes, validateHubCreateCard } from "./hubDiyCreate";
 import { MAX_IMAGE_BYTES } from "./pdfPageRender";
 

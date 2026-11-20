@@ -18,34 +18,34 @@ import Typography from "@mui/material/Typography";
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import DialogEyebrow from "../shared/ui/DialogEyebrow";
-import AddMaterialWorkshop from "../deckHub/AddMaterialWorkshop";
-import CompositionSpark from "../materials/CompositionSpark";
-import CoverPickerDialog from "../deckHub/CoverPickerDialog";
+import { AddMaterialWorkshop } from "../deckHub";
+import { CompositionSpark } from "../materials";
+import { CoverPickerDialog } from "../deckHub";
 import { useShellBackOverride } from "../app/shell/ShellBackOverride";
-import CardsWorkshop from "../deckHub/CardsWorkshop";
-import ClaimCoverageFilmstrip, {
+import { CardsWorkshop } from "../deckHub";
+import { ClaimCoverageFilmstrip,
   type ClaimJumpTarget,
-} from "../deckHub/ClaimCoverageFilmstrip";
-import DeckHygienePanel from "../deckHub/DeckHygienePanel";
-import { createDeckHubWorkshopOpeners } from "../deckHub/deckHubWorkshopOpeners";
-import DeckHubTitleHeader from "../deckHub/DeckHubTitleHeader";
-import MaterialsWorkshop from "../deckHub/MaterialsWorkshop";
-import MissionBoard from "../deckHub/MissionBoard";
-import StudyReadySheet from "../deckHub/StudyReadySheet";
-import WorkshopShell from "../deckHub/WorkshopShell";
-import { type WorkshopFrame } from "../deckHub/workshopStack";
+} from "../deckHub";
+import { DeckHygienePanel } from "../deckHub";
+import { createDeckHubWorkshopOpeners } from "../deckHub";
+import { DeckHubTitleHeader } from "../deckHub";
+import { MaterialsWorkshop } from "../deckHub";
+import { MissionBoard } from "../deckHub";
+import { StudyReadySheet } from "../deckHub";
+import { WorkshopShell } from "../deckHub";
+import { type WorkshopFrame } from "../deckHub";
 import { navigate } from "../shared/nav/navigate";
-import { useCreateCardController } from "../deckHub/useCreateCardController";
-import { useAddMaterialWorkshop } from "../deckHub/useAddMaterialWorkshop";
-import { useCardsWorkshop } from "../deckHub/useCardsWorkshop";
-import { useDeckHubCardMutations } from "../deckHub/useDeckHubCardMutations";
-import { useDeckHubDeckLifecycle } from "../deckHub/useDeckHubDeckLifecycle";
-import { useDeckHubDraftPicker } from "../deckHub/useDeckHubDraftPicker";
-import { useDeckHubExport } from "../deckHub/useDeckHubExport";
-import { useDeckHubLoad } from "../deckHub/useDeckHubLoad";
-import { useDeckHubMaterialDelete } from "../deckHub/useDeckHubMaterialDelete";
-import { useDeckHubWorkshopNav } from "../deckHub/useDeckHubWorkshopNav";
-import { useStudyReadySheet } from "../deckHub/useStudyReadySheet";
+import { useCreateCardController } from "../deckHub";
+import { useAddMaterialWorkshop } from "../deckHub";
+import { useCardsWorkshop } from "../deckHub";
+import { useDeckHubCardMutations } from "../deckHub";
+import { useDeckHubDeckLifecycle } from "../deckHub";
+import { useDeckHubDraftPicker } from "../deckHub";
+import { useDeckHubExport } from "../deckHub";
+import { useDeckHubLoad } from "../deckHub";
+import { useDeckHubMaterialDelete } from "../deckHub";
+import { useDeckHubWorkshopNav } from "../deckHub";
+import { useStudyReadySheet } from "../deckHub";
 import "../deckHub/deckHubMotion.css";
 import {
   asRegenType,
@@ -59,10 +59,10 @@ import {
   type Subject,
   type SubjectKnowledge,
 } from "../api/client";
-import DraftCardEditor from "../draftReview/DraftCardEditor";
+import { DraftCardEditor } from "../draftReview";
 import { isGuest } from "../guest/session";
-import { collectDeckImageKeys, hubDiyTypes } from "../deckHub/hubDiyCreate";
-import { ANKI_EXPORT_BUSY_LABEL } from "../export/runAnkiExport";
+import { collectDeckImageKeys, hubDiyTypes } from "../deckHub";
+import { ANKI_EXPORT_BUSY_LABEL } from "../export";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { shouldAutoFocusText } from "../shared/lib/autoFocusText";
 

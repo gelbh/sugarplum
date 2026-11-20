@@ -20,8 +20,8 @@ import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
-import CoverPickerDialog from "../deckHub/CoverPickerDialog";
-import CoverPickerPanel from "../deckHub/CoverPickerPanel";
+import { CoverPickerDialog } from "../deckHub";
+import { CoverPickerPanel } from "../deckHub";
 import BoardTile from "../library/board/BoardTile";
 import LibraryBoard from "../library/board/LibraryBoard";
 import { coverPlaceholderColor } from "../library/board/coverPlaceholder";
@@ -37,8 +37,8 @@ import {
   type Subject,
   type SubjectKnowledge,
 } from "../api/client";
-import SubjectKnowledgeBar from "../study/SubjectKnowledgeBar";
-import { ANKI_EXPORT_BUSY_LABEL } from "../export/runAnkiExport";
+import { SubjectKnowledgeBar } from "../study";
+import { ANKI_EXPORT_BUSY_LABEL } from "../export";
 import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { createSubjectCover } from "../subjects/subjectCover";

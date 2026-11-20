@@ -19,7 +19,7 @@ import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import ViewListOutlinedIcon from "@mui/icons-material/ViewListOutlined";
 import EmptyNext from "./EmptyNext";
 import type { CardDraftView } from "../api/client";
-import { cardFrontPreview } from "../draftReview/draftCardModel";
+import { cardFrontPreview } from "../draftReview";
 import DiyCardPreview from "./DiyCardPreview";
 import {
   PILL_BTN,

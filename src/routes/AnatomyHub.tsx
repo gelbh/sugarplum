@@ -7,10 +7,10 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { MouseEvent, ReactNode } from "react";
-import { ANATOMY_CATALOG } from "../anatomy/catalog";
-import { anatomySceneHref } from "../anatomy/paths";
-import { atlasHubHref } from "../atlas/paths";
-import HubNavCard from "../deckHub/HubNavCard";
+import { ANATOMY_CATALOG } from "../anatomy";
+import { anatomySceneHref } from "../anatomy";
+import { atlasHubHref } from "../atlas";
+import { HubNavCard } from "../deckHub";
 import { isPlainClick, navigate } from "../shared/nav/navigate";
 
 const SPECIES_ICON: Record<string, ReactNode> = {

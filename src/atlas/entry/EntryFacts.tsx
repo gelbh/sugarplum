@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import Collapse from "@mui/material/Collapse";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import type { Theme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import AtlasImage from "../hub/AtlasImage";
 import EntryPersonalNotes from "./EntryPersonalNotes";
@@ -16,7 +19,9 @@ import {
   entryLead,
   glanceSections,
   significanceFullRow,
+  splitGlanceForMobile,
   taxonomyTree,
+  type GlanceSection,
 } from "./entryGlance";
 import {
   BandSheetPanel,
@@ -42,6 +47,8 @@ type Props = {
   onMakeCards?: () => void;
   atlasId?: string;
   onNoteUpdated?: (entry: AtlasEntryView) => void;
+  /** Test override for `breakpoints.down("md")`. */
+  mobile?: boolean;
 };
 
 const IMAGE_ROLE_LABELS: Record<
@@ -68,17 +75,76 @@ export default function EntryFacts({
   onMakeCards,
   atlasId,
   onNoteUpdated,
+  mobile: mobileProp,
 }: Props) {
+  const mobileMq = useMediaQuery((t: Theme) => t.breakpoints.down("md"));
+  const mobile = mobileProp ?? mobileMq;
   const lead = entryLead(entry.fields.significance);
-  const sections = glanceSections(entry.fields);
-  const fullSig = significanceFullRow(
-    entry.fields,
-    Boolean(lead?.truncated),
-  );
+  const allSections = glanceSections(entry.fields);
+  const { primary, more } = mobile
+    ? splitGlanceForMobile(allSections)
+    : { primary: allSections, more: [] as GlanceSection[] };
+  const fullSig = significanceFullRow(entry.fields, Boolean(lead?.truncated));
   const heroId = entry.images.find((i) => i.isHero)?.id;
   const gallery = entry.images.filter((i) => i.id !== heroId);
   const showActions = Boolean(onEdit || onReset || onMakeCards);
   const [lightbox, setLightbox] = useState<AtlasImageView | null>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  const renderSection = (section: GlanceSection): ReactNode => {
+    const tree = section.id === "taxonomy" ? taxonomyTree(entry.fields) : null;
+    return (
+      <Box key={section.id} component="section" aria-label={section.title}>
+        <Typography
+          sx={{
+            color: "text.secondary",
+            fontSize: "0.78rem",
+            fontWeight: 700,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            mb: 1,
+          }}
+        >
+          {section.title}
+        </Typography>
+        {tree && tree.length > 0 ? (
+          <TaxonomyTreeCard
+            nodes={tree}
+            groupCue={entry.fields.group}
+            refs={refs}
+            onCite={onCite}
+            onTaxonomyBrowse={onTaxonomyBrowse}
+            taxonomyActive={taxonomyActive}
+          />
+        ) : section.id === "hosts" || section.id === "detection" ? (
+          <Box component="dl" sx={{ m: 0 }}>
+            <BandSheetPanel rows={section.rows} refs={refs} onCite={onCite} />
+          </Box>
+        ) : section.id === "body" ? (
+          <Box component="dl" sx={{ m: 0 }}>
+            <BodyCoursePanel rows={section.rows} refs={refs} onCite={onCite} />
+          </Box>
+        ) : (
+          <Box
+            component="dl"
+            sx={{
+              m: 0,
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "minmax(0, 1fr)",
+                sm: "repeat(2, minmax(0, 1fr))",
+              },
+              gap: 1.25,
+            }}
+          >
+            {section.rows.map((row) => (
+              <GlanceFact key={row.key} row={row} refs={refs} onCite={onCite} />
+            ))}
+          </Box>
+        )}
+      </Box>
+    );
+  };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -88,8 +154,9 @@ export default function EntryFacts({
           sx={{
             gap: 1,
             flexWrap: "wrap",
-            alignItems: "center"
-          }}>
+            alignItems: "center",
+          }}
+        >
           {entry.editedAt ? (
             <Chip label="Edited" size="small" variant="outlined" />
           ) : null}
@@ -121,75 +188,24 @@ export default function EntryFacts({
           />
         </Typography>
       ) : null}
-      {sections.map((section) => {
-        const tree =
-          section.id === "taxonomy"
-            ? taxonomyTree(entry.fields)
-            : null;
-        return (
-          <Box key={section.id} component="section" aria-label={section.title}>
-            <Typography
-              sx={{
-                color: "text.secondary",
-                fontSize: "0.78rem",
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                mb: 1
-              }}>
-              {section.title}
-            </Typography>
-            {tree && tree.length > 0 ? (
-              <TaxonomyTreeCard
-                nodes={tree}
-                groupCue={entry.fields.group}
-                refs={refs}
-                onCite={onCite}
-                onTaxonomyBrowse={onTaxonomyBrowse}
-                taxonomyActive={taxonomyActive}
-              />
-            ) : section.id === "hosts" || section.id === "detection" ? (
-              <Box component="dl" sx={{ m: 0 }}>
-                <BandSheetPanel
-                  rows={section.rows}
-                  refs={refs}
-                  onCite={onCite}
-                />
-              </Box>
-            ) : section.id === "body" ? (
-              <Box component="dl" sx={{ m: 0 }}>
-                <BodyCoursePanel
-                  rows={section.rows}
-                  refs={refs}
-                  onCite={onCite}
-                />
-              </Box>
-            ) : (
-              <Box
-                component="dl"
-                sx={{
-                  m: 0,
-                  display: "grid",
-                  gridTemplateColumns: {
-                    xs: "minmax(0, 1fr)",
-                    sm: "repeat(2, minmax(0, 1fr))",
-                  },
-                  gap: 1.25,
-                }}
-              >
-                {section.rows.map((row) => (
-                  <GlanceFact
-                    key={row.key}
-                    row={row}
-                    refs={refs}
-                    onCite={onCite}
-                  />
-                ))}
-              </Box>
-            )}
-          </Box>
-        );
-      })}
+      {primary.map(renderSection)}
+      {more.length > 0 ? (
+        <>
+          <Button
+            variant="text"
+            size="small"
+            onClick={() => setMoreOpen((v) => !v)}
+            aria-expanded={moreOpen}
+            aria-controls="atlas-glance-more"
+            sx={{ alignSelf: "flex-start", minHeight: 44 }}
+          >
+            {moreOpen ? "Less facts" : "More facts"}
+          </Button>
+          <Collapse in={moreOpen} unmountOnExit>
+            <Box id="atlas-glance-more">{more.map(renderSection)}</Box>
+          </Collapse>
+        </>
+      ) : null}
       {fullSig ? (
         <Box component="section" aria-label="Notes">
           <Typography
@@ -199,8 +215,9 @@ export default function EntryFacts({
               fontWeight: 700,
               letterSpacing: "0.06em",
               textTransform: "uppercase",
-              mb: 1
-            }}>
+              mb: 1,
+            }}
+          >
             Notes
           </Typography>
           <Box component="dl" sx={{ m: 0 }}>
@@ -269,8 +286,9 @@ export default function EntryFacts({
                   <Typography
                     sx={{
                       color: "text.secondary",
-                      fontSize: "0.72rem"
-                    }}>
+                      fontSize: "0.72rem",
+                    }}
+                  >
                     <Link
                       href={img.sourceUrl}
                       target="_blank"
@@ -321,14 +339,17 @@ export default function EntryFacts({
                   borderColor: "divider",
                 }}
               />
-              <Typography sx={{ mt: 1.5, fontWeight: 600, fontSize: "0.95rem" }}>
+              <Typography
+                sx={{ mt: 1.5, fontWeight: 600, fontSize: "0.95rem" }}
+              >
                 {lightbox.caption ?? IMAGE_ROLE_LABELS[lightbox.role]}
               </Typography>
               <Typography
                 sx={{
                   color: "text.secondary",
-                  fontSize: "0.82rem"
-                }}>
+                  fontSize: "0.82rem",
+                }}
+              >
                 <Link
                   href={lightbox.sourceUrl}
                   target="_blank"

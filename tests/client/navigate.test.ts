@@ -1,12 +1,12 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { shellBackHref } from "../../src/app/shell/shellBackHref";
 import {
   currentEntryKey,
   goShellBack,
   locationKey,
   navigate,
   navigateReplace,
-  shellBackHref,
   subscribeLocation,
   subscribePath,
 } from "../../src/shared/nav/navigate";

@@ -41,7 +41,7 @@ import {
   ZAI_DEFAULT_TEXT_MODEL,
   ZAI_TEXT_MODEL_OPTIONS,
 } from "../settings/zaiModels";
-import type { EasyDay } from "../study/loadBalance";
+import type { EasyDay } from "../study";
 import type { SvgIconComponent } from "@mui/icons-material";
 import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
 import BoltOutlinedIcon from "@mui/icons-material/BoltOutlined";

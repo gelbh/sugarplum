@@ -11,7 +11,7 @@ import {
 import Box from "@mui/material/Box";
 import AppShell from "./AppShell";
 import BareScroll from "./BareScroll";
-import GradeButtons from "../study/GradeButtons";
+import { GradeButtons } from "../study";
 import DraftReviewPage from "../routes/DraftReviewPage";
 import HomePage from "../routes/HomePage";
 import LibraryPage from "../routes/LibraryPage";
@@ -30,18 +30,18 @@ import AdminUserPage from "../routes/AdminUserPage";
 import { navigateReplace, subscribeLocation } from "../shared/nav/navigate";
 import { UnlockToastProvider } from "../achievements/UnlockToastProvider";
 import AchievementsPage from "../routes/AchievementsPage";
-import { StudyChromeProvider } from "../study/StudyChromeContext";
+import { StudyChromeProvider } from "../study";
 import RouteSuspenseFallback from "../progress/RouteSuspenseFallback";
-import { isAtlasToAtlas, matchAtlasPath } from "../atlas/paths";
+import { isAtlasToAtlas, matchAtlasPath } from "../atlas";
 import {
   anatomySceneHref,
   canonicalAnatomySceneId,
   matchAnatomyPath,
   regionsFromSearch,
-} from "../anatomy/paths";
+} from "../anatomy";
 import AtlasHub from "../routes/AtlasHub";
 import ParasitologyAtlasBounce from "../routes/ParasitologyAtlasBounce";
-import AnatomyViewerGate from "../anatomy/viewer/AnatomyViewerGate";
+import { AnatomyViewerGate } from "../anatomy";
 import AnatomyHub from "../routes/AnatomyHub";
 import SessionBootstrap from "../session/SessionBootstrap";
 
