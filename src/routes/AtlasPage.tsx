@@ -21,6 +21,8 @@ import {
 import {
   apiAtlasSource,
   listAtlasEntries,
+  packHidden,
+  packIsActive,
   resetEntry,
 } from "../atlas";
 import "../atlas/hub/atlasMotion.css";
@@ -54,7 +56,11 @@ type Props = {
 type Loaded = {
   entries: AtlasEntryView[];
   userKey: string;
+  /** True when polling gave up; pack hiding stays off until a reload. */
+  focusRefreshPending: boolean;
 };
+
+type LoadedEntries = Pick<Loaded, "entries" | "focusRefreshPending">;
 
 function NavLink({ href, children }: { href: string; children: string }) {
   const onClick = (ev: MouseEvent<HTMLAnchorElement>) => {
@@ -133,20 +139,26 @@ export default function AtlasPage({
     if (loaded && route.kind === "cabinet") staggered.current = true;
   }, [loaded, route.kind]);
 
-  const loadApiEntries = useCallback(async (): Promise<AtlasEntryView[]> => {
-    if (source !== apiAtlasSource) return source.list(atlasId);
+  const loadApiEntries = useCallback(async (): Promise<LoadedEntries> => {
+    if (source !== apiAtlasSource) {
+      const entries = await source.list(atlasId);
+      return { entries, focusRefreshPending: false };
+    }
     let body = await listAtlasEntries(atlasId);
     // Background Focus extract (PDF) may take several seconds; poll a few times.
     for (let i = 0; i < 6 && body.focusRefreshPending; i++) {
       await new Promise((r) => setTimeout(r, 2000));
       body = await listAtlasEntries(atlasId);
     }
-    return body.entries;
+    return {
+      entries: body.entries,
+      focusRefreshPending: body.focusRefreshPending ?? false,
+    };
   }, [source, atlasId]);
 
   const reloadEntries = useCallback(async () => {
-    const entries = await loadApiEntries();
-    setLoaded((prev) => (prev ? { ...prev, entries } : prev));
+    const next = await loadApiEntries();
+    setLoaded((prev) => (prev ? { ...prev, ...next } : prev));
   }, [loadApiEntries]);
 
   useEffect(() => {
@@ -154,10 +166,10 @@ export default function AtlasPage({
     let cancelled = false;
     (async () => {
       try {
-        const entries = await loadApiEntries();
+        const next = await loadApiEntries();
         if (cancelled) return;
         setLoaded({
-          entries,
+          ...next,
           userKey: isGuest() ? "guest" : user.id,
         });
       } catch (err) {
@@ -183,6 +195,9 @@ export default function AtlasPage({
     );
 
   const canMutate = !isGuest();
+  const packActive = loaded
+    ? packIsActive(loaded.entries, loaded.focusRefreshPending)
+    : false;
 
   async function onResetEntry(entry: AtlasEntryView) {
     if (!entry.originKey || !entry.editedAt) return;
@@ -217,6 +232,15 @@ export default function AtlasPage({
             onFocusChanged={() => {
               void reloadEntries();
             }}
+            packSummary={
+              packActive
+                ? {
+                    shown: loaded.entries.filter((e) => !packHidden(e, true))
+                      .length,
+                    total: loaded.entries.length,
+                  }
+                : null
+            }
           />
         ) : null}
         <Cabinet
@@ -226,6 +250,7 @@ export default function AtlasPage({
           onOpenEntry={(id) => navigate(atlasEntryHref(atlasId, id))}
           onCompare={(a, b) => navigate(atlasCompareHref(atlasId, a, b))}
           stagger={!staggered.current}
+          packActive={packActive}
           onAddEntry={canMutate ? () => setAddOpen(true) : undefined}
           onRecentlyDeleted={canMutate ? () => setDeletedOpen(true) : undefined}
           onEditEntry={canMutate ? (entry) => setEditEntry(entry) : undefined}
@@ -271,6 +296,8 @@ export default function AtlasPage({
         entryHref={(id) => atlasEntryHref(atlasId, id)}
         onOpen={(id) => navigate(atlasEntryHref(atlasId, id))}
         onStep={(id) => navigateReplace(atlasEntryHref(atlasId, id))}
+        packActive={packActive}
+        userKey={loaded.userKey}
         onEdit={canMutate ? () => setEditEntry(entry) : undefined}
         onEditLifecycle={
           canMutate ? () => setEditLifecycle(entry) : undefined

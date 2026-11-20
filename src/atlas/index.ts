@@ -34,4 +34,5 @@ export {
   atlasOpenErrorMessage,
 } from "./hub/atlasOpenCopy";
 export { entryTitles } from "./entry/entryTitles";
+export { packHidden, packIsActive } from "./hub/filter";
 export { readLastDeckId, writeLastDeckId } from "./hub/lastDeckStorage";
