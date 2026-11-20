@@ -73,11 +73,12 @@ export function overrideFocusView(override: AtlasTier): {
 /**
  * `packFresh: false` (rows from an older scan version) reports every entry as
  * unscanned for pack hiding, so stale `in_pack` never hides anything.
+ * Callers pass `isFocusPackFresh` read after any inline refresh.
  */
 export function enrichEntriesWithFocus(
   entries: AtlasEntryView[],
   focus: FocusMap | null,
-  packFresh = true,
+  packFresh: boolean,
 ): AtlasEntryView[] {
   if (!focus) {
     return entries.map((e) => ({
@@ -183,6 +184,18 @@ async function loadStoredFocusPackFingerprint(
     .bind(atlasId)
     .first<{ focus_pack_fingerprint: string | null }>();
   return row?.focus_pack_fingerprint ?? null;
+}
+
+/**
+ * True when the stored scan matches the current pack. A `refreshing:` lease
+ * never equals a versioned fingerprint, so a lease reads as stale.
+ */
+export async function isFocusPackFresh(
+  db: D1Database,
+  atlasId: string,
+): Promise<boolean> {
+  const current = focusPackFingerprint(await loadAtlasMaterialRows(db, atlasId));
+  return (await loadStoredFocusPackFingerprint(db, atlasId)) === current;
 }
 
 async function saveFocusPackFingerprint(
@@ -394,14 +407,18 @@ export async function listEntriesWithFocus(
     await refreshFocusBestEffort(db, env, { atlasId: opts.atlasId });
     focus = await loadFocusMap(db, opts.atlasId);
     return {
-      entries: enrichEntriesWithFocus(opts.entries, focus),
+      entries: enrichEntriesWithFocus(
+        opts.entries,
+        focus,
+        await isFocusPackFresh(db, opts.atlasId),
+      ),
       focusRefreshPending: false,
     };
   }
 
   if (refreshInFlight) {
     return {
-      entries: enrichEntriesWithFocus(opts.entries, focus),
+      entries: enrichEntriesWithFocus(opts.entries, focus, false),
       focusRefreshPending: true,
     };
   }
@@ -434,26 +451,29 @@ export async function listEntriesWithFocus(
         })(),
       );
       return {
-        entries: enrichEntriesWithFocus(opts.entries, focus),
+        entries: enrichEntriesWithFocus(opts.entries, focus, false),
         focusRefreshPending: true,
       };
     }
     await refreshFocusBestEffort(db, env, { atlasId: opts.atlasId });
     focus = await loadFocusMap(db, opts.atlasId);
     // A failed best-effort refresh leaves the old fingerprint and old rows.
-    const refreshed = await loadStoredFocusPackFingerprint(db, opts.atlasId);
     return {
       entries: enrichEntriesWithFocus(
         opts.entries,
         focus,
-        refreshed === currentFingerprint,
+        await isFocusPackFresh(db, opts.atlasId),
       ),
       focusRefreshPending: false,
     };
   }
 
   return {
-    entries: enrichEntriesWithFocus(opts.entries, focus),
+    entries: enrichEntriesWithFocus(
+      opts.entries,
+      focus,
+      storedFingerprint === currentFingerprint,
+    ),
     focusRefreshPending: false,
   };
 }

@@ -415,6 +415,7 @@ describe("enrichEntriesWithFocus override", () => {
           },
         ],
       ]),
+      true,
     );
     expect(enriched[0]).toMatchObject({
       tier: "frequent",
@@ -1045,9 +1046,87 @@ describe("atlas focus in_pack", () => {
     expect(result.entries.every((e) => e.inPack === null)).toBe(true);
   });
 
+  async function markStale(env: ReturnType<typeof createTestEnv>, atlasId: string) {
+    await env.DB.prepare(
+      "UPDATE atlases SET focus_pack_fingerprint = ? WHERE id = ?",
+    )
+      .bind("v2:stale", atlasId)
+      .run();
+  }
+
+  it("reports inPack null while a background rescan is scheduled or leased", async () => {
+    const { env, atlasId } = await packAtlas();
+    await list(env, atlasId);
+    expect((await storedInPack(env, atlasId, "psoroptes-ovis"))?.in_pack).toBe(1);
+    await markStale(env, atlasId);
+    const entries = overlayAtlas(loadParasiteDataset().entries, []);
+
+    let scheduled: Promise<unknown> | null = null;
+    const first = await listEntriesWithFocus(env.DB, env, {
+      atlasId,
+      userId: "user-a",
+      entries,
+      schedule: (p) => {
+        scheduled = p;
+      },
+    });
+    expect(scheduled).not.toBeNull();
+    expect(first.focusRefreshPending).toBe(true);
+    expect(first.entries.every((e) => e.inPack === null)).toBe(true);
+
+    const leased = await listEntriesWithFocus(env.DB, env, {
+      atlasId,
+      userId: "user-a",
+      entries,
+      schedule: () => {
+        throw new Error("must not schedule again while leased");
+      },
+    });
+    expect(leased.focusRefreshPending).toBe(true);
+    expect(leased.entries.every((e) => e.inPack === null)).toBe(true);
+
+    await scheduled!;
+    const done = await list(env, atlasId);
+    expect(inPackOf(done.entries, "psoroptes-ovis")).toBe(true);
+  });
+
+  it("reports inPack null from a single-entry route on a stale fingerprint", async () => {
+    const { env, atlasId } = await packAtlas();
+    await list(env, atlasId);
+    await markStale(env, atlasId);
+    const put = await app.request(
+      `/api/atlas/${atlasId}/entries/psoroptes-ovis/note`,
+      {
+        method: "PUT",
+        headers: authHeaders(true),
+        body: JSON.stringify({ body: "Check the ear" }),
+      },
+      env,
+    );
+    expect(put.status).toBe(200);
+    expect(((await put.json()) as AtlasEntryView).inPack).toBeNull();
+  });
+
+  it("reports inPack after a route refreshes a stale fingerprint inline", async () => {
+    const { env, atlasId } = await packAtlas();
+    await list(env, atlasId);
+    await markStale(env, atlasId);
+    const patch = await app.request(
+      `/api/atlas/${atlasId}/entries/psoroptes-ovis/focus`,
+      {
+        method: "PATCH",
+        headers: authHeaders(true),
+        body: JSON.stringify({ override: "key" }),
+      },
+      env,
+    );
+    expect(patch.status).toBe(200);
+    expect(((await patch.json()) as AtlasEntryView).inPack).toBe(true);
+  });
+
   it("enrich maps unscanned entries to inPack null", () => {
     const views = overlayAtlas(loadParasiteDataset().entries, []);
-    expect(enrichEntriesWithFocus(views, null).every((e) => e.inPack === null)).toBe(true);
-    expect(enrichEntriesWithFocus(views, new Map()).every((e) => e.inPack === null)).toBe(true);
+    expect(enrichEntriesWithFocus(views, null, true).every((e) => e.inPack === null)).toBe(true);
+    expect(enrichEntriesWithFocus(views, new Map(), true).every((e) => e.inPack === null)).toBe(true);
   });
 });
