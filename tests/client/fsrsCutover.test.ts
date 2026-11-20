@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyCutoverMemory,
   replayMemoryFromLogs,
-} from "../../src/study/fsrsCutover";
+} from "../../src/study/fsrs/fsrsCutover";
 import {
   cardFromScheduleRow,
   emptyFsrsCard,

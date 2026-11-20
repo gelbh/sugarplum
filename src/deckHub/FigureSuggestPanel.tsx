@@ -29,7 +29,7 @@ import {
   renderPageToCanvas,
   type EmbedPdfDocument,
   type EmbedPdfPageLayout,
-} from "../study/embedPdfEngine";
+} from "../study/notes/embedPdfEngine";
 import { cropCanvasToPngFile } from "./pdfPageRender";
 
 export type FigureSuggestPanelProps = {

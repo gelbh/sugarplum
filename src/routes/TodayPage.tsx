@@ -38,7 +38,7 @@ import TodayDueBreakdown from "../study/TodayDueBreakdown";
 import { pendingCardIdSet } from "../study/pendingGrades";
 import { usePendingGradeSync } from "../study/usePendingGradeSync";
 import { warmDueMedia } from "../study/warmDueMedia";
-import { maybeRunFsrsOptimize } from "../study/fsrsOptimizeClient";
+import { maybeRunFsrsOptimize } from "../study/fsrs/fsrsOptimizeClient";
 
 async function loadDeckTitles(): Promise<Record<string, string>> {
   try {

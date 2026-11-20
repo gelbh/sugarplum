@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveNotesDisplayPage } from "../../src/study/excerptPages";
+import { resolveNotesDisplayPage } from "../../src/study/notes/excerptPages";
 
 describe("Notes page rescue", () => {
   const pages = [

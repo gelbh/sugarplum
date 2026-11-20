@@ -1,9 +1,9 @@
-import type { FsrsPrefs } from "../../src/study/fsrsFactory";
+import type { FsrsPrefs } from "../../src/study/fsrs/fsrsFactory";
 import {
   replayCardFromLogs,
   type RescheduleSummary,
   type ReviewLogReplayRow,
-} from "../../src/study/fsrsReplay";
+} from "../../src/study/fsrs/fsrsReplay";
 import { scheduleColumnsFromCard } from "../../src/study/retrievability";
 import { prepareFullScheduleUpdate } from "./scheduleWrite";
 
@@ -11,7 +11,7 @@ export {
   replayCardFromLogs,
   type RescheduleSummary,
   type ReviewLogReplayRow,
-} from "../../src/study/fsrsReplay";
+} from "../../src/study/fsrs/fsrsReplay";
 
 const D1_BATCH_SIZE = 50;
 

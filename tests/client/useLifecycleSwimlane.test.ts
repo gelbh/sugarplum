@@ -4,8 +4,8 @@
 import { act, createElement, useEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { bundledAtlasSource } from "../../src/atlas/bundledSource";
-import { useLifecycleSwimlane } from "../../src/atlas/useLifecycleSwimlane";
+import { bundledAtlasSource } from "../../src/atlas/hub/bundledSource";
+import { useLifecycleSwimlane } from "../../src/atlas/lifecycle/useLifecycleSwimlane";
 import type { DatasetFields } from "../../src/atlas/types";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =

@@ -4,7 +4,7 @@ import {
   applyPerspectiveFit,
   orbitDistanceLimits,
   perspectiveFitDistance,
-} from "../../src/anatomy/cameraFit";
+} from "../../src/anatomy/viewer/cameraFit";
 
 describe("perspectiveFitDistance", () => {
   it("scales linearly with radius", () => {

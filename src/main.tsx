@@ -6,7 +6,7 @@ import InitColorSchemeScript from "@mui/material/InitColorSchemeScript";
 import { registerSW } from "virtual:pwa-register";
 import App from "./app/App";
 import { theme } from "./theme";
-import { syncAtlasPreviewParam } from "./atlas/preview";
+import { syncAtlasPreviewParam } from "./atlas/hub/preview";
 import "./styles/brand.css";
 
 // https://vite-pwa-org.netlify.app/guide/auto-update

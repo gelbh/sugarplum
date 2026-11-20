@@ -13,7 +13,7 @@ import {
   buildBvhUnderRoot,
   disposeGeometryWithBvh,
   installAnatomyAcceleratedRaycast,
-} from "../../src/anatomy/anatomyBvh";
+} from "../../src/anatomy/viewer/anatomyBvh";
 
 describe("anatomyBvh", () => {
   it("install is idempotent", () => {

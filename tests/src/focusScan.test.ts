@@ -3,7 +3,7 @@ import {
   scanFocus,
   type FocusEntry,
   type FocusMaterial,
-} from "../../src/atlas/focusScan";
+} from "../../src/atlas/hub/focusScan";
 
 const entry: FocusEntry = {
   canonicalName: "Fasciola hepatica",

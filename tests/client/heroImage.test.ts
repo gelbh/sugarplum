@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { heroImage } from "../../src/atlas/AtlasImage";
+import { heroImage } from "../../src/atlas/hub/AtlasImage";
 import type { AtlasEntryView, AtlasImageView } from "../../src/atlas/types";
 
 const img = (

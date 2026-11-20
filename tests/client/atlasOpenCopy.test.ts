@@ -3,7 +3,7 @@ import { ApiError } from "../../src/api/client";
 import {
   VIEW_AS_ATLAS_EMPTY,
   atlasOpenErrorMessage,
-} from "../../src/atlas/atlasOpenCopy";
+} from "../../src/atlas/hub/atlasOpenCopy";
 
 describe("atlasOpenErrorMessage", () => {
   it("maps view-as RO 403 to empty atlas copy", () => {

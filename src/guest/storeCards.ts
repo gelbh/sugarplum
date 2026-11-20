@@ -3,7 +3,7 @@ import { assertSingleCloze } from "../study/clozeFormat";
 import {
   mergeProvenancePagesIntoJson,
   normalizeProvenancePages,
-} from "../study/notesProvenanceWrite";
+} from "../study/notes/notesProvenanceWrite";
 import { nowIso, readStore, writeStore } from "./storePersist";
 import type {
   GuestCardPatch,

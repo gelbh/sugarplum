@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   excerptHighlightRects,
   type TextRun,
-} from "../../src/study/excerptHighlight";
+} from "../../src/study/notes/excerptHighlight";
 
 const IDENTITY = [1, 0, 0, 1, 0, 0] as const;
 const Y_DOWN = [1, 0, 0, -1, 0, 100] as const;

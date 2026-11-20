@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { bundledAtlasSource } from "../../src/atlas/bundledSource";
-import { entryRefs, windowLabel } from "../../src/atlas/entryFields";
+import { bundledAtlasSource } from "../../src/atlas/hub/bundledSource";
+import { entryRefs, windowLabel } from "../../src/atlas/entry/entryFields";
 import {
   entryLead,
   entryMetaLine,
@@ -10,20 +10,20 @@ import {
   infectiveStageLabel,
   significanceFullRow,
   taxonomyTree,
-} from "../../src/atlas/entryGlance";
-import { glanceIconFor } from "../../src/atlas/glanceIcons";
-import { resolveHostPortrait } from "../../src/atlas/hostPortraits";
-import { resolveSitePortrait } from "../../src/atlas/sitePortraits";
-import { resolveStagePortrait } from "../../src/atlas/stagePortraits";
-import { countryHeatWeight } from "../../src/atlas/distributionHeat";
+} from "../../src/atlas/entry/entryGlance";
+import { glanceIconFor } from "../../src/atlas/entry/glanceIcons";
+import { resolveHostPortrait } from "../../src/atlas/hub/hostPortraits";
+import { resolveSitePortrait } from "../../src/atlas/hub/sitePortraits";
+import { resolveStagePortrait } from "../../src/atlas/hub/stagePortraits";
+import { countryHeatWeight } from "../../src/atlas/hub/distributionHeat";
 import {
   distributionChipLabels,
   distributionTags,
   litRegions,
   tagsToMeta,
-} from "../../src/atlas/distributionTags";
-import { entryTitles } from "../../src/atlas/entryTitles";
-import { isShortcutTarget } from "../../src/atlas/keys";
+} from "../../src/atlas/hub/distributionTags";
+import { entryTitles } from "../../src/atlas/entry/entryTitles";
+import { isShortcutTarget } from "../../src/atlas/hub/keys";
 import { isAtlasToAtlas } from "../../src/atlas/paths";
 
 function hostBytes(name: string): Buffer {

@@ -7,7 +7,7 @@ export type {
   SubjectKnowledgeBucketsAggregate,
 } from "../study/subjectKnowledge";
 export type { SubjectCompositionSummary } from "../guest/composition";
-export type { FsrsOptimizeStatus } from "../study/fsrsOptimizeTypes";
+export type { FsrsOptimizeStatus } from "../study/fsrs/fsrsOptimizeTypes";
 export type { InsightsGradeCounts, InsightsSummary } from "../insights/types";
 
 export type AuthUser = {

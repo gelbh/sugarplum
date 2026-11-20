@@ -23,7 +23,7 @@ import type {
   StudyRating,
   FsrsRescheduleSummary,
 } from "./types";
-import type { FsrsOptimizeStatus } from "../study/fsrsOptimizeTypes";
+import type { FsrsOptimizeStatus } from "../study/fsrs/fsrsOptimizeTypes";
 
 function buildDueQuery(opts?: ListDueOpts): string {
   const params = new URLSearchParams();

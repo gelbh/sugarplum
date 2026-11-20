@@ -3,7 +3,7 @@ import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites/in
 import {
   distributionTags,
   tagsToMeta,
-} from "../../../src/atlas/distributionTags";
+} from "../../../src/atlas/hub/distributionTags";
 
 describe("parasite distribution fields", () => {
   it("keeps structured fields aligned with prose parsing", () => {

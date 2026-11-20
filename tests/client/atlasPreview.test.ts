@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   ATLAS_PREVIEW_KEY,
   syncAtlasPreviewParam,
-} from "../../src/atlas/preview";
+} from "../../src/atlas/hub/preview";
 import { matchAtlasPath } from "../../src/atlas/paths";
 
 describe("syncAtlasPreviewParam", () => {

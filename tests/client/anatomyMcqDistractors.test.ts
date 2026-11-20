@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildMcqOptions,
   pickMcqDistractors,
-} from "../../src/anatomy/mcqDistractors";
+} from "../../src/anatomy/quiz/mcqDistractors";
 import type { AnatomyStructure } from "../../src/anatomy/types";
 
 const structures: AnatomyStructure[] = [

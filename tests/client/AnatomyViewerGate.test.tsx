@@ -4,7 +4,7 @@
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import AnatomyViewerGate from "../../src/anatomy/AnatomyViewerGate";
+import AnatomyViewerGate from "../../src/anatomy/viewer/AnatomyViewerGate";
 import {
   SessionProvider,
   type SessionValue,

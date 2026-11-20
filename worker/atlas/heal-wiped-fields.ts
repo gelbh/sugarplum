@@ -5,7 +5,7 @@ import {
   type ParasiteFieldKey,
   type ParasiteFields,
 } from "./templates/parasite";
-import { loadParasiteDataset } from "./datasets/parasites";
+import { loadParasiteDataset } from "./datasets/parasites/index";
 import { nowIso } from "./ownership";
 
 function deepEqual(a: unknown, b: unknown): boolean {

@@ -11,7 +11,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { EasyDay } from "../study/loadBalance";
 import type { StudyPrefs } from "../study/policyQueue";
-import { maybeRunFsrsOptimize } from "../study/fsrsOptimizeClient";
+import { maybeRunFsrsOptimize } from "../study/fsrs/fsrsOptimizeClient";
 import { ankiExportFsrsBlurb } from "./ankiExportFsrsBlurb";
 import FsrsWeightsSettings from "./FsrsWeightsSettings";
 import {

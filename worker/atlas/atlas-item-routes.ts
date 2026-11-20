@@ -22,7 +22,7 @@ import {
   toOverlayRows,
   type EntryRow,
 } from "./entryOverlays";
-import { loadParasiteDataset } from "./datasets/parasites";
+import { loadParasiteDataset } from "./datasets/parasites/index";
 import { normalizeParasiteName } from "./names";
 import { emptyParasiteFields, type ParasiteFields } from "./templates/parasite";
 import { applySandboxKeyPrefix, sandboxWriteUserId } from "../admin/sandbox-r2";

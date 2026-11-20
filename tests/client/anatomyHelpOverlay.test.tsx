@@ -3,7 +3,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { afterEach, describe, expect, it } from "vitest";
-import AnatomyHelpOverlay from "../../src/anatomy/AnatomyHelpOverlay";
+import AnatomyHelpOverlay from "../../src/anatomy/viewer/AnatomyHelpOverlay";
 
 async function renderOverlay(touch: boolean) {
   const host = document.createElement("div");

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parseAnatomySceneManifest } from "../../src/anatomy/parseScene";
-import { resolveAnatomyAssetUrl } from "../../src/anatomy/resolveAssetUrl";
+import { parseAnatomySceneManifest } from "../../src/anatomy/viewer/parseScene";
+import { resolveAnatomyAssetUrl } from "../../src/anatomy/viewer/resolveAssetUrl";
 
 const ORIGIN = "https://anatomy-assets.example.com";
 

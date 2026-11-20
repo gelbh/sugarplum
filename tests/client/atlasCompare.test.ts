@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { bundledAtlasSource } from "../../src/atlas/bundledSource";
-import { compareRows, type CompareRowKey } from "../../src/atlas/compare";
+import { bundledAtlasSource } from "../../src/atlas/hub/bundledSource";
+import { compareRows, type CompareRowKey } from "../../src/atlas/compare/compare";
 import { atlasCompareHref, matchAtlasPath } from "../../src/atlas/paths";
 
 const entries = await bundledAtlasSource.list("subj_1");

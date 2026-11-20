@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { sessionAnatomyViewerEnabled } from "../anatomy/anatomyViewerAccess";
+import { sessionAnatomyViewerEnabled } from "../anatomy/viewer/anatomyViewerAccess";
 import { anatomyHubHref } from "../anatomy/paths";
 import HubNavCard from "../deckHub/HubNavCard";
 import { isGuest } from "../guest/session";

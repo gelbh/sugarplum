@@ -8,8 +8,8 @@ import { extractAllPdfPageTexts } from "../materials/extract-pdf";
 import {
   stampDraftProvenancePages,
   type PageText,
-} from "../../src/study/excerptPages";
-import { mergeProvenancePagesIntoJson } from "../../src/study/notesProvenanceWrite";
+} from "../../src/study/notes/excerptPages";
+import { mergeProvenancePagesIntoJson } from "../../src/study/notes/notesProvenanceWrite";
 import { provenanceExcerptText } from "../../src/study/regenSource";
 
 const SKIP_TYPES = new Set(["image_label", "diagram", "occlusion"]);

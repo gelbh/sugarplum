@@ -5,7 +5,7 @@ import {
   errMessage,
   parseHostList,
   previewLifecycleFields,
-} from "../../src/atlas/atlasMutateHelpers";
+} from "../../src/atlas/mutate/atlasMutateHelpers";
 import { emptyParasiteFields } from "../../worker/atlas/templates/parasite";
 
 describe("parseHostList", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lastDeckStorageKey } from "../../src/atlas/lastDeckStorage";
+import { lastDeckStorageKey } from "../../src/atlas/hub/lastDeckStorage";
 
 describe("lastDeckStorage", () => {
   it("keys last deck by atlas id", () => {

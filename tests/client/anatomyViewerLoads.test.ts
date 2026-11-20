@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildLoads } from "../../src/anatomy/anatomyViewerLoads";
+import { buildLoads } from "../../src/anatomy/viewer/anatomyViewerLoads";
 import type { AnatomySceneManifest } from "../../src/anatomy/types";
 
 const sharedAssetManifest = {

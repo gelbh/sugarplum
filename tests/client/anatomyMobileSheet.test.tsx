@@ -5,8 +5,8 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { afterEach, describe, expect, it } from "vitest";
 import AnatomyMobileSheet, {
   type AnatomySheetTab,
-} from "../../src/anatomy/AnatomyMobileSheet";
-import { createStructureUiState } from "../../src/anatomy/structureState";
+} from "../../src/anatomy/viewer/AnatomyMobileSheet";
+import { createStructureUiState } from "../../src/anatomy/structure/structureState";
 import type { AnatomyClip } from "../../src/anatomy/types";
 
 const structures = [

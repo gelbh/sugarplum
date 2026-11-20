@@ -1,6 +1,6 @@
-import { replayMemoryFromLogs } from "../../src/study/fsrsCutover";
-import type { FsrsPrefs } from "../../src/study/fsrsFactory";
-import type { ReviewLogReplayRow } from "../../src/study/fsrsReplay";
+import { replayMemoryFromLogs } from "../../src/study/fsrs/fsrsCutover";
+import type { FsrsPrefs } from "../../src/study/fsrs/fsrsFactory";
+import type { ReviewLogReplayRow } from "../../src/study/fsrs/fsrsReplay";
 import type { ScheduleRowLike } from "../../src/study/retrievability";
 import { prepareCutoverMemoryUpdate } from "./scheduleWrite";
 

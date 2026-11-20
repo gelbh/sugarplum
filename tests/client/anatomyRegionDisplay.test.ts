@@ -5,7 +5,7 @@ import {
   groupRegionsByFamily,
   parseRegionDisplay,
   regionFamilyKey,
-} from "../../src/anatomy/regionDisplay";
+} from "../../src/anatomy/structure/regionDisplay";
 
 function region(id: string, label: string): AnatomyRegion {
   return { id, label };

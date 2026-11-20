@@ -1,4 +1,4 @@
-import { ratingToGrade } from "../../src/study/fsrsReplay";
+import { ratingToGrade } from "../../src/study/fsrs/fsrsReplay";
 
 export { ratingToGrade };
 

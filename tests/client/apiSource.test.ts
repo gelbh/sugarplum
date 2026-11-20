@@ -13,7 +13,7 @@ import {
   resetEntry,
   restoreEntry,
   softDeleteEntry,
-} from "../../src/atlas/apiSource";
+} from "../../src/atlas/hub/apiSource";
 
 function jsonResponse(status: number, body?: unknown): Response {
   if (status === 204) {

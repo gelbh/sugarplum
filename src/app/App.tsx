@@ -41,7 +41,7 @@ import {
 } from "../anatomy/paths";
 import AtlasHub from "../routes/AtlasHub";
 import ParasitologyAtlasBounce from "../routes/ParasitologyAtlasBounce";
-import AnatomyViewerGate from "../anatomy/AnatomyViewerGate";
+import AnatomyViewerGate from "../anatomy/viewer/AnatomyViewerGate";
 import AnatomyHub from "../routes/AnatomyHub";
 import SessionBootstrap from "../session/SessionBootstrap";
 

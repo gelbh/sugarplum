@@ -3,7 +3,7 @@ import {
   addRegionIds,
   removeRegionIds,
   toggleRegionId,
-} from "../../src/anatomy/structurePanelRegions";
+} from "../../src/anatomy/structure/structurePanelRegions";
 
 describe("structurePanelRegions", () => {
   it("toggleRegionId adds and removes", () => {

@@ -2,10 +2,10 @@ import {
   FSRS_CRON_MARK_LIMIT,
   FSRS_MIN_REVIEWS,
   FSRS_RETRAIN_DAYS,
-} from "../../src/study/fsrsOptimizeConstants";
-import { isOptimizeDue } from "../../src/study/fsrsOptimizeDue";
-import type { FsrsOptimizeStatus } from "../../src/study/fsrsOptimizeTypes";
-import { validateFsrsW } from "../../src/study/fsrsWeights";
+} from "../../src/study/fsrs/fsrsOptimizeConstants";
+import { isOptimizeDue } from "../../src/study/fsrs/fsrsOptimizeDue";
+import type { FsrsOptimizeStatus } from "../../src/study/fsrs/fsrsOptimizeTypes";
+import { validateFsrsW } from "../../src/study/fsrs/fsrsWeights";
 import {
   rescheduleUserSchedules,
   type RescheduleSummary,

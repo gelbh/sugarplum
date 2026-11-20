@@ -7,7 +7,7 @@ import { clampEasyDays, DEFAULT_EASY_DAYS } from "../../src/study/loadBalance";
 import {
   isLegacyFsrs6W,
   parseFsrsWJson,
-} from "../../src/study/fsrsWeights";
+} from "../../src/study/fsrs/fsrsWeights";
 
 export { clampStudyPrefs, DEFAULT_STUDY_PREFS, type StudyPrefs };
 

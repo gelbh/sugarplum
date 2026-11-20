@@ -3,7 +3,7 @@ import {
   FADE_OTHERS_MAX,
   FADE_OTHERS_OPACITY,
   selectFadeIds,
-} from "../../src/anatomy/fadeOthers";
+} from "../../src/anatomy/viewer/fadeOthers";
 
 describe("fadeOthers constants", () => {
   it("keeps opacity inside the spec band", () => {

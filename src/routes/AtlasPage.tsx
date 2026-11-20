@@ -17,19 +17,19 @@ import {
   EditEntryDialog,
   EditLifecycleDialog,
   RecentlyDeletedDialog,
-} from "../atlas/AtlasMutateDialogs";
+} from "../atlas/mutate/AtlasMutateDialogs";
 import {
   apiAtlasSource,
   listAtlasEntries,
   resetEntry,
-} from "../atlas/apiSource";
-import "../atlas/atlasMotion.css";
-import Cabinet from "../atlas/Cabinet";
-import CompareView from "../atlas/CompareView";
-import CoursePackPanel from "../atlas/CoursePackPanel";
-import EntryView from "../atlas/EntryView";
-import { entryTitles } from "../atlas/entryTitles";
-import MakeCardsDeckDialog from "../atlas/MakeCardsDeckDialog";
+} from "../atlas/hub/apiSource";
+import "../atlas/hub/atlasMotion.css";
+import Cabinet from "../atlas/hub/Cabinet";
+import CompareView from "../atlas/compare/CompareView";
+import CoursePackPanel from "../atlas/hub/CoursePackPanel";
+import EntryView from "../atlas/entry/EntryView";
+import { entryTitles } from "../atlas/entry/entryTitles";
+import MakeCardsDeckDialog from "../atlas/mutate/MakeCardsDeckDialog";
 import {
   atlasCompareHref,
   atlasEntryHref,

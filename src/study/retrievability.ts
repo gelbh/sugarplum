@@ -1,5 +1,5 @@
 import { fsrs, State } from "ts-fsrs";
-import { clampLearningStep } from "./fsrsFactory";
+import { clampLearningStep } from "./fsrs/fsrsFactory";
 
 export type ScheduleRowLike = {
   due: string;

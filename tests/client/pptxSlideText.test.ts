@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import JSZip from "jszip";
-import { extractPptxSlides } from "../../src/study/pptxSlideText";
+import { extractPptxSlides } from "../../src/study/notes/pptxSlideText";
 
 async function minimalPptx(slideXml: string): Promise<ArrayBuffer> {
   const zip = new JSZip();

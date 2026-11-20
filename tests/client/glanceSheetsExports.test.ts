@@ -5,7 +5,7 @@ import {
   CiteSup,
   GlanceFact,
   TaxonomyTreeCard,
-} from "../../src/atlas/glanceSheets";
+} from "../../src/atlas/entry/glanceSheets";
 
 describe("glanceSheets barrel exports", () => {
   it("re-exports presentational panels as functions", () => {

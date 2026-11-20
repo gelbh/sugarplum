@@ -3,7 +3,7 @@ import {
   FSRS_W_LENGTH,
   parseFsrsWJson,
   validateFsrsW,
-} from "../../src/study/fsrsWeights";
+} from "../../src/study/fsrs/fsrsWeights";
 
 describe("validateFsrsW", () => {
   it("accepts exactly 34 finite numbers", () => {

@@ -2,8 +2,8 @@ export { default as CardFace } from "./CardFace";
 export { default as ClozePrompt } from "./ClozePrompt";
 export { default as GradeButtons } from "./GradeButtons";
 export { default as ReviewCard } from "./ReviewCard";
-export { StudyNotesButton } from "./StudyNotesButton";
-export { default as StudyNotesDialog } from "./StudyNotesDialog";
+export { StudyNotesButton } from "./notes/StudyNotesButton";
+export { default as StudyNotesDialog } from "./notes/StudyNotesDialog";
 export { default as SubjectKnowledgeBar } from "./SubjectKnowledgeBar";
 export {
   default as StrugglingList,
@@ -31,4 +31,4 @@ export {
   openPdfDocument,
   listPdfPages,
   renderPageToCanvas,
-} from "./embedPdfEngine";
+} from "./notes/embedPdfEngine";

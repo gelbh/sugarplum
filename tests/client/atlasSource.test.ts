@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { loadParasiteDataset } from "../../worker/atlas/datasets/parasites/index";
-import { bundledAtlasSource } from "../../src/atlas/bundledSource";
+import { bundledAtlasSource } from "../../src/atlas/hub/bundledSource";
 
 describe("bundledAtlasSource", () => {
   it("maps every dataset entry to an AtlasEntryView", async () => {

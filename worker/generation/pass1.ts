@@ -72,7 +72,7 @@ import { harvestRuleDrafts } from "./rules";
 import { type CardDraft } from "./schema";
 import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
 import { resolveTextLlm } from "./resolve-text-llm";
-import { stampDraftProvenancePages } from "../../src/study/excerptPages";
+import { stampDraftProvenancePages } from "../../src/study/notes/excerptPages";
 
 export { mergeAndDedupeDrafts };
 
