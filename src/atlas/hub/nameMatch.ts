@@ -15,7 +15,7 @@ export type NameMatchEntry = {
   aliases: string[];
 };
 
-const collapseSeparators = (s: string) => s.replace(/[_-]+/g, " ");
+export const collapseSeparators = (s: string) => s.replace(/[_-]+/g, " ");
 
 export function entryNameForms(entry: NameMatchEntry): string[] {
   const names = [entry.canonicalName, entry.commonName, ...entry.aliases]
