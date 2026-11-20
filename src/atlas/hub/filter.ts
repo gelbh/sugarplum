@@ -60,6 +60,40 @@ export function matchesSearch(entry: AtlasEntryView, q: string): boolean {
   return entryNameForms(entry).some((n) => n.includes(needle));
 }
 
+/**
+ * Pack hiding waits for a finished scan: rows exist for every entry only after
+ * a scan of at least one material, and a pending refresh may still change them.
+ */
+export function packIsActive(
+  entries: AtlasEntryView[],
+  focusRefreshPending: boolean,
+): boolean {
+  return (
+    !focusRefreshPending &&
+    entries.length > 0 &&
+    entries.every((e) => typeof e.inPack === "boolean")
+  );
+}
+
+export function packHidden(e: AtlasEntryView, packActive: boolean): boolean {
+  return (
+    packActive &&
+    e.originKey !== null &&
+    e.inPack === false &&
+    e.override !== "key"
+  );
+}
+
+/** Hidden entries show when Show hidden is on, or when a search is typed. */
+export function packVisible(
+  e: AtlasEntryView,
+  packActive: boolean,
+  showHidden: boolean,
+  query: string,
+): boolean {
+  return !packHidden(e, packActive) || showHidden || searchable(query) !== "";
+}
+
 /** Exact rank match for browsing related parasites from the taxonomy glance. */
 export function matchesTaxonomy(
   entry: AtlasEntryView,

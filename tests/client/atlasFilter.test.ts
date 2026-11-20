@@ -12,6 +12,9 @@ import {
   matchesSearch,
   matchesTaxonomy,
   organOptions,
+  packHidden,
+  packIsActive,
+  packVisible,
   railSections,
   sortTable,
 } from "../../src/atlas/hub/filter";
@@ -326,5 +329,55 @@ describe("term options", () => {
     );
     expect(unused.length).toBeGreaterThan(0);
     for (const t of unused) expect(terms).not.toContain(t);
+  });
+});
+
+describe("pack hiding", () => {
+  const scanned = (
+    entry: AtlasEntryView,
+    inPack: boolean | null,
+    patch: Partial<AtlasEntryView> = {},
+  ): AtlasEntryView => ({ ...entry, inPack, ...patch });
+  const out = scanned(byId("toxocara-canis"), false);
+  const named = scanned(byId("fasciola-hepatica"), true);
+
+  it("packIsActive is false while a focus refresh is pending", () => {
+    expect(packIsActive([out, named], true)).toBe(false);
+    expect(packIsActive([out, named], false)).toBe(true);
+  });
+
+  it("packIsActive is false while any entry is unscanned", () => {
+    expect(packIsActive([out, scanned(named, null)], false)).toBe(false);
+    expect(packIsActive([out, { ...named, inPack: undefined } as unknown as AtlasEntryView], false)).toBe(false);
+    expect(packIsActive([], false)).toBe(false);
+  });
+
+  it("hides nothing when the pack is inactive", () => {
+    expect(packHidden(out, false)).toBe(false);
+  });
+
+  it("never hides an unscanned entry", () => {
+    expect(packHidden(scanned(out, null), true)).toBe(false);
+  });
+
+  it("never hides a learner-added entry", () => {
+    expect(packHidden(scanned(out, false, { originKey: null }), true)).toBe(false);
+  });
+
+  it("never hides a pinned entry", () => {
+    expect(packHidden(scanned(out, false, { override: "key" }), true)).toBe(false);
+  });
+
+  it("hides a dataset entry the pack does not mention", () => {
+    expect(packHidden(out, true)).toBe(true);
+    expect(packHidden(named, true)).toBe(false);
+  });
+
+  it("packVisible shows hidden entries for Show hidden or a typed search", () => {
+    expect(packVisible(out, true, false, "")).toBe(false);
+    expect(packVisible(out, true, false, "   ")).toBe(false);
+    expect(packVisible(out, true, true, "")).toBe(true);
+    expect(packVisible(out, true, false, "toxo")).toBe(true);
+    expect(packVisible(named, true, false, "")).toBe(true);
   });
 });
