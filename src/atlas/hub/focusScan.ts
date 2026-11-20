@@ -28,7 +28,6 @@ export type FocusScanResult = {
   reason: string;
   /** Every material that mentions the entry under lenient pack matching. */
   materialIds: string[];
-  /** materialIds.length > 0 */
   inPack: boolean;
 };
 
