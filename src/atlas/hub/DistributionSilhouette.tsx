@@ -48,10 +48,9 @@ export default function DistributionSilhouette({
   const [open, setOpen] = useState(readMapOpen);
   const mapId = useId();
   const toggleMap = () => {
-    setOpen((prev) => {
-      writeMapOpen(!prev);
-      return !prev;
-    });
+    const next = !open;
+    writeMapOpen(next);
+    setOpen(next);
   };
   // High-contrast ramp: grey silhouette vs amber endemic (theme warning).
   const mute =
