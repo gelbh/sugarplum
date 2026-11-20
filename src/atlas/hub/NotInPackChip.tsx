@@ -1,5 +1,8 @@
 import Chip from "@mui/material/Chip";
 
+/** Dims a shown pack-hidden entry; the chip and pin control stay full contrast. */
+export const NOT_IN_PACK_DIM = { opacity: 0.6 } as const;
+
 export default function NotInPackChip() {
   return (
     <Chip

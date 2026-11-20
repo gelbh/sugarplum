@@ -9,7 +9,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import AtlasImage, { heroImage } from "./AtlasImage";
-import NotInPackChip from "./NotInPackChip";
+import NotInPackChip, { NOT_IN_PACK_DIM } from "./NotInPackChip";
 import { entryTitles } from "../entry/entryTitles";
 import { atlasHeroName } from "../paths";
 import {
@@ -50,6 +50,8 @@ export default function AtlasTable({
   focusActive,
   notInPackIds,
 }: Props) {
+  const dimFor = (id: string) =>
+    notInPackIds?.has(id) ? NOT_IN_PACK_DIM : {};
   const columns = useMemo(
     () =>
       focusActive
@@ -105,16 +107,14 @@ export default function AtlasTable({
         </TableHead>
         <TableBody>
           {rows.map((e) => (
+            // The name cell holds the chip, so only the other cells dim.
             <TableRow
               key={e.id}
               hover
               onClick={() => onOpen(e.id)}
-              sx={{
-                cursor: "pointer",
-                opacity: notInPackIds?.has(e.id) ? 0.6 : 1,
-              }}
+              sx={{ cursor: "pointer" }}
             >
-              <TableCell sx={{ py: 0.75 }}>
+              <TableCell sx={[{ py: 0.75 }, dimFor(e.id)]}>
                 <ViewTransition name={atlasHeroName(e.id)} share="atlas-morph">
                   <AtlasImage
                     image={heroImage(e)}
@@ -148,20 +148,24 @@ export default function AtlasTable({
                 ) : null}
               </TableCell>
               {focusActive ? (
-                <TableCell>
+                <TableCell sx={dimFor(e.id)}>
                   {e.tier === null ? "-" : TIER_LABELS[e.tier]}
                 </TableCell>
               ) : null}
-              <TableCell>
+              <TableCell sx={dimFor(e.id)}>
                 {e.fields.group
                   ? GROUP_LABELS[e.fields.group].plural
                   : "Ungrouped"}
               </TableCell>
-              <TableCell>{hostSummary(e.fields.definitiveHosts, 3)}</TableCell>
-              <TableCell sx={wideOnly}>
+              <TableCell sx={dimFor(e.id)}>
+                {hostSummary(e.fields.definitiveHosts, 3)}
+              </TableCell>
+              <TableCell sx={[wideOnly, dimFor(e.id)]}>
                 {e.fields.majorOrgan ? termLabel(e.fields.majorOrgan) : null}
               </TableCell>
-              <TableCell sx={[wideOnly, { whiteSpace: "nowrap" }]}>
+              <TableCell
+                sx={[wideOnly, { whiteSpace: "nowrap" }, dimFor(e.id)]}
+              >
                 {pppLabel(e.fields.pppDays)}
               </TableCell>
             </TableRow>
