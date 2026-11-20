@@ -44,6 +44,12 @@ function entry(): AtlasEntryView {
   };
 }
 
+async function flush() {
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 0));
+  });
+}
+
 async function renderCabinet(mobile: boolean) {
   const host = document.createElement("div");
   document.body.append(host);
@@ -66,6 +72,7 @@ async function renderCabinet(mobile: boolean) {
       ),
     );
   });
+  await flush();
   return host;
 }
 
@@ -73,17 +80,21 @@ describe("Cabinet mobile filters", () => {
   it("keeps filters in a bottom sheet below md", async () => {
     const host = await renderCabinet(true);
     expect(host.querySelector('[data-testid="atlas-filters-inline"]')).toBeNull();
-    const opener = host.querySelector('[aria-label="Filters"]') as HTMLButtonElement;
+    const opener = host.querySelector(
+      'button[aria-label="Filters"]',
+    ) as HTMLButtonElement;
     expect(opener).toBeTruthy();
     await act(async () => {
       opener.click();
     });
-    expect(document.querySelector(".MuiDrawer-paperAnchorBottom")).toBeTruthy();
+    await flush();
+    expect(opener.getAttribute("aria-expanded")).toBe("true");
+    expect(document.getElementById("atlas-filters-sheet-title")).toBeTruthy();
   });
 
   it("keeps the inline filter strip at md+", async () => {
     const host = await renderCabinet(false);
     expect(host.querySelector('[data-testid="atlas-filters-inline"]')).toBeTruthy();
-    expect(host.querySelector('[aria-label="Filters"]')).toBeNull();
+    expect(host.querySelector('button[aria-label="Filters"]')).toBeNull();
   });
 });

@@ -101,8 +101,11 @@ async function renderEntry(onOpen = vi.fn()) {
   return { host, onOpen };
 }
 
-function drawerPaper(anchor: "Bottom" | "Left") {
-  return document.querySelector(`[class*="paperAnchor${anchor}"]`);
+function railDrawerOpen(): boolean {
+  const opener = document.querySelector(
+    'button[aria-label="All parasites"]',
+  ) as HTMLButtonElement | null;
+  return opener?.getAttribute("aria-expanded") === "true";
 }
 
 describe("EntryView mobile rail", () => {
@@ -116,8 +119,12 @@ describe("EntryView mobile rail", () => {
       opener.click();
     });
     await flush();
-    expect(drawerPaper("Bottom")).toBeTruthy();
-    expect(drawerPaper("Left")).toBeNull();
+    expect(railDrawerOpen()).toBe(true);
+    // Mobile path uses bottom anchor; left-docked paper should not appear.
+    expect(document.querySelector('[class*="paperAnchorLeft"]')).toBeNull();
+    expect(
+      document.querySelector('nav[aria-label="All parasites"]'),
+    ).toBeTruthy();
   });
 
   it("closes the sheet when picking another entry", async () => {
@@ -141,6 +148,6 @@ describe("EntryView mobile rail", () => {
     await act(async () => {
       await new Promise((r) => setTimeout(r, 350));
     });
-    expect(drawerPaper("Bottom")).toBeNull();
+    expect(railDrawerOpen()).toBe(false);
   });
 });
