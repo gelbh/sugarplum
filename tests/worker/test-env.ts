@@ -21,6 +21,13 @@ import {
   type AtlasMaterialRow,
   type AtlasRow,
 } from "./atlas-test-handlers";
+import {
+  cardRegenOpsAll,
+  cardRegenOpsFirst,
+  cardRegenOpsRun,
+  initCardRegenOpsState,
+  type CardRegenOpRow,
+} from "./card-regen-ops-test-handlers";
 import type { AchievementDefSeed } from "./gamification-seeds";
 
 /** Mirrors SQL `lower(email) LIKE '%' || lower(q) || '%'` (% and _ wildcards). */
@@ -274,6 +281,7 @@ export type TestEnv = Env & {
   seedUserStudyDay: (row: UserStudyDayRow) => void;
   seedCard: (row: CardRow) => void;
   seedStudyClaim: (row: StudyClaimRow) => void;
+  seedCardRegenOp: (row: CardRegenOpRow) => void;
   seedGenerationJob: (row: GenerationJobRow) => void;
   seedUsageEvent: (row: UsageEventRow) => void;
   seedExportJob: (row: ExportJobRow) => void;
@@ -291,6 +299,7 @@ export type TestEnv = Env & {
   getUserStudyPrefs: () => UserStudyPrefsRow[];
   getCards: () => CardRow[];
   getStudyClaims: () => StudyClaimRow[];
+  getCardRegenOps: () => CardRegenOpRow[];
   getSchedules: () => ScheduleRow[];
   getReviewLogs: () => ReviewLogRow[];
   getUsageEvents: () => UsageEventRow[];
@@ -391,6 +400,7 @@ export function createTestEnv(opts?: {
     reviewLogs,
   );
   const atlasState = initAtlasState();
+  const cardRegenOpsState = initCardRegenOpsState();
 
   // Test harness only: missing wrap key → fixed 32-byte test key.
   const wrapKey =
@@ -419,6 +429,12 @@ export function createTestEnv(opts?: {
         if (gamificationEarly !== null) return gamificationEarly;
         const atlasEarly = atlasFirst<T>(atlasState, normalized, bound);
         if (atlasEarly !== null) return atlasEarly;
+        const regenOpEarly = cardRegenOpsFirst<T>(
+          cardRegenOpsState,
+          normalized,
+          bound,
+        );
+        if (regenOpEarly !== undefined) return regenOpEarly;
         if (normalized.startsWith("INSERT INTO free_gen_usage")) {
           const [user_id, day, cap] = bound as [string, string, number];
           const key = `${user_id}:${day}`;
@@ -1503,6 +1519,12 @@ export function createTestEnv(opts?: {
         if (gamificationAllHit !== null) return gamificationAllHit;
         const atlasAllHit = atlasAll<T>(atlasState, normalized, bound);
         if (atlasAllHit !== null) return atlasAllHit;
+        const regenOpsAllHit = cardRegenOpsAll<T>(
+          cardRegenOpsState,
+          normalized,
+          bound,
+        );
+        if (regenOpsAllHit !== null) return regenOpsAllHit;
         if (
           normalized.includes("SELECT s.due AS due") &&
           normalized.includes("FROM card_schedules s") &&
@@ -5174,6 +5196,12 @@ export function createTestEnv(opts?: {
         if (gamificationRunHit !== null) return gamificationRunHit;
         const atlasRunHit = atlasRun(atlasState, normalized, bound);
         if (atlasRunHit !== null) return atlasRunHit;
+        const regenOpsRunHit = cardRegenOpsRun(
+          cardRegenOpsState,
+          normalized,
+          bound,
+        );
+        if (regenOpsRunHit !== null) return regenOpsRunHit;
         return { success: true, meta: { changes: 1 } } as D1Result;
       },
     };
@@ -5455,6 +5483,9 @@ export function createTestEnv(opts?: {
     seedStudyClaim(row) {
       studyClaims.set(row.id, row);
     },
+    seedCardRegenOp(row) {
+      cardRegenOpsState.ops.set(row.id, row);
+    },
     seedGenerationJob(row) {
       generationJobs.set(row.id, row);
     },
@@ -5484,6 +5515,7 @@ export function createTestEnv(opts?: {
     getUserStudyPrefs: () => [...userStudyPrefs.values()],
     getCards: () => [...cards.values()],
     getStudyClaims: () => [...studyClaims.values()],
+    getCardRegenOps: () => [...cardRegenOpsState.ops.values()],
     getSchedules: () => [...schedules.values()],
     getReviewLogs: () => [...reviewLogs],
     getUsageEvents: () => [...usageEvents.values()],

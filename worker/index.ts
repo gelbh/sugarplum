@@ -11,6 +11,7 @@ import { coverRoutes } from "./covers/routes";
 import { settingsRoutes } from "./settings/routes";
 import { jobRoutes } from "./generation/routes";
 import { cardRoutes, jobDraftRoutes } from "./cards/routes";
+import { cardRegenOpRoutes } from "./cards/card-regen-op-routes";
 import { studyRoutes } from "./study/routes";
 import { journeyRoutes } from "./journey/routes";
 import { guestRoutes } from "./guest/import";
@@ -27,6 +28,7 @@ import { GenerationWorkflow } from "./generation/workflow";
 import { FillAllWorkflow } from "./generation/fillAllWorkflow";
 import { GenerationSlotDO } from "./generation/GenerationSlotDO";
 import { failStaleRunningJobs } from "./generation/staleFail";
+import { failStaleCardRegenOps } from "./generation/card-regen-op";
 import { isAllowedMutatingOrigin } from "./security/origin";
 import { getDb } from "./db/client";
 import { markOptimizePendingBatch } from "./study/fsrsOptimize";
@@ -96,6 +98,7 @@ app.route("/api/settings", settingsRoutes);
 app.route("/api/jobs", jobRoutes);
 app.route("/api/jobs", jobDraftRoutes);
 app.route("/api/cards", cardRoutes);
+app.route("/api/card-regen-ops", cardRegenOpRoutes);
 app.route("/api/journey", journeyRoutes);
 app.route("/api/study", studyRoutes);
 app.route("/api/insights", insightsRoutes);
@@ -131,6 +134,7 @@ const worker = {
       );
     }
     await failStaleRunningJobs(env);
+    await failStaleCardRegenOps(env);
   },
 };
 

@@ -252,7 +252,32 @@ deckRoutes.get("/:id/hygiene", async (c) => {
       media_r2_keys_json: string | null;
     }>();
 
-  const cards = flagAcceptedCardsForHygiene(results ?? []);
+  const flagged = flagAcceptedCardsForHygiene(results ?? []);
+  if (flagged.length === 0) {
+    return c.json({ cards: flagged, summary: { flagged: 0 } });
+  }
+
+  const placeholders = flagged.map(() => "?").join(", ");
+  const { results: opRows } = await db
+    .prepare(
+      `SELECT id, card_id, status FROM card_regen_ops
+       WHERE status IN ('queued', 'running')
+         AND card_id IN (${placeholders})`.replace(/\s+/g, " "),
+    )
+    .bind(...flagged.map((c) => c.id))
+    .all<{ id: string; card_id: string; status: "queued" | "running" }>();
+
+  const byCard = new Map<string, { id: string; status: "queued" | "running" }>();
+  for (const row of opRows ?? []) {
+    if (!byCard.has(row.card_id)) {
+      byCard.set(row.card_id, { id: row.id, status: row.status });
+    }
+  }
+
+  const cards = flagged.map((card) => {
+    const regen_op = byCard.get(card.id);
+    return regen_op ? { ...card, regen_op } : card;
+  });
   return c.json({ cards, summary: { flagged: cards.length } });
 });
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -15,10 +15,19 @@ import {
   asRegenType,
   getDeckHygiene,
   regenCard,
+  waitForCardRegenOp,
   type DeckHygieneCard,
 } from "../api/client";
 import { useHygieneRegenAll } from "./HygieneRegenAllControls";
 import { PILL_BTN, ROW_ACTION } from "./workshopChrome";
+
+const SPIN_ICON_SX = {
+  fontSize: 16,
+  animation: "sp-hygiene-spin 1s linear infinite",
+  "@keyframes sp-hygiene-spin": {
+    to: { transform: "rotate(360deg)" },
+  },
+} as const;
 
 const VISIBLE_LIMIT = 5;
 
@@ -42,6 +51,7 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const resumedOpsRef = useRef(new Set<string>());
 
   const load = useCallback(async (opts?: { clearError?: boolean }) => {
     setLoading(true);
@@ -61,6 +71,42 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    const inflight = cards.filter(
+      (c) => c.regen_op && !resumedOpsRef.current.has(c.regen_op.id),
+    );
+    if (inflight.length === 0) return;
+    let cancelled = false;
+    const ownedOpIds: string[] = [];
+    void (async () => {
+      for (const c of inflight) {
+        const opId = c.regen_op!.id;
+        resumedOpsRef.current.add(opId);
+        ownedOpIds.push(opId);
+        setBusyId(c.id);
+        try {
+          await waitForCardRegenOp(opId);
+        } catch (err) {
+          if (!cancelled) {
+            setError(
+              err instanceof ApiError
+                ? err.message
+                : "Could not regenerate",
+            );
+          }
+        } finally {
+          setBusyId(null);
+        }
+      }
+      if (!cancelled) await load({ clearError: false });
+    })();
+    return () => {
+      cancelled = true;
+      for (const id of ownedOpIds) resumedOpsRef.current.delete(id);
+      setBusyId(null);
+    };
+  }, [cards, load]);
 
   const regenAll = useHygieneRegenAll({
     cards,
@@ -180,6 +226,8 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
       <Stack spacing={0.85}>
         {visible.map((card) => {
           const regenType = asRegenType(card.type);
+          const regenerating =
+            busyId === card.id || card.regen_op != null;
           return (
             <Stack
               key={card.id}
@@ -302,10 +350,14 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
                 <Button
                   size="small"
                   variant="outlined"
-                  startIcon={<AutorenewRoundedIcon sx={{ fontSize: 16 }} />}
-                  disabled={busy || regenType == null}
+                  startIcon={
+                    <AutorenewRoundedIcon
+                      sx={regenerating ? SPIN_ICON_SX : { fontSize: 16 }}
+                    />
+                  }
+                  disabled={busy || regenerating || regenType == null}
                   onClick={() => {
-                    if (regenType == null) return;
+                    if (regenType == null || regenerating) return;
                     void (async () => {
                       setBusyId(card.id);
                       setError(null);
@@ -340,14 +392,14 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
                     },
                   }}
                 >
-                  Regen
+                  {regenerating ? "Regenerating…" : "Regen"}
                 </Button>
                 <Tooltip title="Archive">
                   <span>
                     <IconButton
                       size="small"
                       aria-label="Archive card"
-                      disabled={busy}
+                      disabled={busy || regenerating}
                       onClick={() => {
                         void (async () => {
                           setBusyId(card.id);

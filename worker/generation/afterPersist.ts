@@ -1,6 +1,6 @@
 import type { Env } from "../env";
 import { getDb } from "../db/client";
-import type { GenerateQueueMessage } from "./enqueue";
+import type { MaterialGenerateQueueMessage } from "./enqueue";
 import { appendGapFillDrafts } from "./gap-fill";
 import { getExtractSidecar } from "./extractSidecar";
 import { buildCoverageLedger } from "./coverage";
@@ -135,7 +135,7 @@ async function finalizeAfterPersist(
 /** Resume gap-fill + finalize after a durable pass-1 step (Workflow). */
 export async function runAfterPersistPhase(
   env: Env,
-  message: GenerateQueueMessage,
+  message: MaterialGenerateQueueMessage,
   opts?: ProcessGenerateOptions,
 ): Promise<ProcessGenerateResult> {
   const db = getDb(env);
