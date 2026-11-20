@@ -232,7 +232,7 @@ export default function AtlasPage({
           }
         : prev,
     );
-    // Refetch so no older in-flight load or stale sibling rows decide hiding.
+    // Refetch so sibling rows from an older scan are replaced after a pin.
     void reloadEntries();
   }
 
