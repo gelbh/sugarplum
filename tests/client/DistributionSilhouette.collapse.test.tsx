@@ -4,8 +4,9 @@
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import DistributionSilhouette from "../../src/atlas/hub/DistributionSilhouette";
+import { MAP_OPEN_STORAGE_KEY } from "../../src/atlas/hub/mapOpenPref";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;
@@ -47,10 +48,17 @@ async function renderMap() {
   return host;
 }
 
-const toggle = (host: HTMLElement) =>
-  [...host.querySelectorAll("button")].find((b) =>
-    /map/i.test(b.textContent ?? ""),
-  )!;
+function toggle(host: HTMLElement): HTMLButtonElement {
+  const button = host.querySelector<HTMLButtonElement>("button[aria-expanded]");
+  expect(button).toBeTruthy();
+  return button as HTMLButtonElement;
+}
+
+async function waitForMap(host: HTMLElement) {
+  await vi.waitFor(() => {
+    expect(host.querySelector('[role="img"]')).toBeTruthy();
+  });
+}
 
 describe("DistributionSilhouette collapse", () => {
   it("starts collapsed with chips and text but no map", async () => {
@@ -66,12 +74,33 @@ describe("DistributionSilhouette collapse", () => {
     await act(async () => {
       toggle(host).click();
     });
-    expect(host.querySelector('[role="img"]')).toBeTruthy();
+    await waitForMap(host);
     expect(toggle(host).textContent).toBe("Hide map");
     expect(toggle(host).getAttribute("aria-expanded")).toBe("true");
-    expect(localStorage.getItem("sugarplum.atlas.mapOpen")).toBe("1");
+    expect(localStorage.getItem(MAP_OPEN_STORAGE_KEY)).toBe("1");
 
     const again = await renderMap();
-    expect(again.querySelector('[role="img"]')).toBeTruthy();
+    await waitForMap(again);
+  });
+
+  it("unmounts the map on Hide map and remembers it", async () => {
+    const host = await renderMap();
+    await act(async () => {
+      toggle(host).click();
+    });
+    await waitForMap(host);
+    await act(async () => {
+      toggle(host).click();
+    });
+    expect(localStorage.getItem(MAP_OPEN_STORAGE_KEY)).toBe("0");
+    expect(host.querySelector('[role="img"]')).toBeNull();
+    expect(toggle(host).textContent).toBe("Show map");
+  });
+
+  it("shows the map after mount when the stored preference is open", async () => {
+    localStorage.setItem(MAP_OPEN_STORAGE_KEY, "1");
+    const host = await renderMap();
+    await waitForMap(host);
+    expect(toggle(host).getAttribute("aria-expanded")).toBe("true");
   });
 });
