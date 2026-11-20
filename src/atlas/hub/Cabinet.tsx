@@ -49,6 +49,7 @@ import {
   revealsHidden,
   type AtlasFilters as Filters,
 } from "./filter";
+import { searchable } from "./nameMatch";
 import { readViewPref, writeViewPref, type AtlasViewMode } from "./viewPref";
 import type { AtlasEntryView } from "../types";
 
@@ -124,13 +125,17 @@ export default function Cabinet({
     }),
     [entries],
   );
-  const visible = useMemo(() => {
-    const revealHidden = revealsHidden(showHidden, query);
-    return applyFilters(entries, shownFilters).filter(
-      (e) =>
-        matchesSearch(e, query) && packVisible(e, packHiddenIds, revealHidden),
-    );
-  }, [entries, shownFilters, query, packHiddenIds, showHidden]);
+  const searching = searchable(query) !== "";
+  const revealHidden = revealsHidden(showHidden, query);
+  const visible = useMemo(
+    () =>
+      applyFilters(entries, shownFilters).filter(
+        (e) =>
+          matchesSearch(e, query) &&
+          packVisible(e, packHiddenIds, revealHidden),
+      ),
+    [entries, shownFilters, query, packHiddenIds, revealHidden],
+  );
   const keyEntries = useMemo(
     () =>
       focusActive ? visible.filter((e) => e.tier === "key").sort(byName) : [],
@@ -181,8 +186,19 @@ export default function Cabinet({
     return () => document.removeEventListener("keydown", onKey);
   }, [expanded]);
 
-  const narrowed = visible.length !== entries.length;
+  // Pack hiding is not user narrowing: "X of N" counts the pool hiding leaves.
+  const pool = revealHidden
+    ? entries.length
+    : entries.length - packHiddenIds.size;
+  const narrowed = visible.length !== pool;
+  const userNarrowed = filtersActive(filters) || searching;
   const toggleHidden = () => onShowHiddenChange(!showHidden);
+  const hiddenMatches =
+    visible.length === 0 && !revealHidden
+      ? applyFilters(entries, shownFilters).filter((e) =>
+          packHiddenIds.has(e.id),
+        ).length
+      : 0;
   const clearAll = () => {
     setFilters(NO_FILTERS);
     setQuery("");
@@ -215,12 +231,17 @@ export default function Cabinet({
             }}
           >
             {narrowed
-              ? `${visible.length} of ${plural(entries.length)}`
-              : plural(entries.length)}
-            {packHiddenIds.size > 0 ? (
+              ? `${visible.length} of ${plural(pool)}`
+              : plural(pool)}
+            {packHiddenIds.size > 0 && !searching ? (
               <>
                 {showHidden ? " · " : ` · ${packHiddenIds.size} hidden · `}
-                <Link component="button" variant="body2" onClick={toggleHidden}>
+                <Link
+                  component="button"
+                  type="button"
+                  variant="body2"
+                  onClick={toggleHidden}
+                >
                   {showHidden
                     ? `Hide ${packHiddenIds.size} not in pack`
                     : "Show hidden"}
@@ -452,13 +473,26 @@ export default function Cabinet({
           }}
         >
           <Typography sx={{ fontWeight: 600 }}>
-            No parasites match these filters
+            {userNarrowed || packHiddenIds.size === 0
+              ? "No parasites match these filters"
+              : "No parasites named in your pack"}
           </Typography>
-          {filtersActive(filters) || query ? (
-            <Button variant="outlined" size="small" onClick={clearAll}>
-              Clear filters
-            </Button>
-          ) : null}
+          <Stack direction="row" sx={{ gap: 1 }}>
+            {userNarrowed ? (
+              <Button variant="outlined" size="small" onClick={clearAll}>
+                Clear filters
+              </Button>
+            ) : null}
+            {hiddenMatches > 0 ? (
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => onShowHiddenChange(true)}
+              >
+                Show {hiddenMatches} hidden
+              </Button>
+            ) : null}
+          </Stack>
         </Stack>
       ) : view === "table" ? (
         <AtlasTable

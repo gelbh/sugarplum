@@ -125,7 +125,23 @@ describe("Cabinet pack hiding", () => {
     const { host } = await renderCabinet();
     expect(host.textContent).toContain("Psoroptes ovis");
     expect(host.textContent).not.toContain("Toxocara canis");
-    expect(host.textContent).toContain("1 of 2 parasites · 1 hidden · Show hidden");
+    // Pack hiding alone is not narrowing, so no "X of N".
+    expect(host.textContent).toContain("1 parasite · 1 hidden · Show hidden");
+    expect(host.textContent).not.toContain("1 of 2");
+    expect(buttonByText(host, "Show hidden")!.type).toBe("button");
+  });
+
+  it("keeps a key-pinned entry visible while the pack is active", async () => {
+    const pinned: AtlasEntryView = {
+      ...entry("demodex-canis", "Demodex canis", false),
+      override: "key",
+      tier: "key",
+      reason: "Manual pin",
+    };
+    const { host } = await renderCabinet([...ENTRIES, pinned]);
+    expect(host.textContent).toContain("Demodex canis");
+    expect(host.textContent).not.toContain("Toxocara canis");
+    expect(host.textContent).toContain("2 parasites · 1 hidden · Show hidden");
   });
 
   it("Show hidden reveals hidden entries with the chip", async () => {
@@ -144,7 +160,25 @@ describe("Cabinet pack hiding", () => {
     await type(search, "toxocara");
     expect(host.textContent).toContain("Toxocara canis");
     expect(host.textContent).toContain("Not in your pack");
-    expect(buttonByText(host, "Show hidden")).toBeTruthy();
+    // Matches are already shown, so the hidden segment drops while searching.
+    expect(host.textContent).toContain("1 of 2 parasites");
+    expect(host.textContent).not.toContain("1 hidden");
+    expect(buttonByText(host, "Show hidden")).toBeUndefined();
+    await type(search, "");
+    expect(host.textContent).toContain("1 hidden · Show hidden");
+  });
+
+  it("offers Show N hidden when the pack hides everything", async () => {
+    const { host } = await renderCabinet([
+      entry("toxocara-canis", "Toxocara canis", false),
+      entry("toxascaris-leonina", "Toxascaris leonina", false),
+    ]);
+    expect(host.textContent).toContain("No parasites named in your pack");
+    expect(buttonByText(host, "Clear filters")).toBeUndefined();
+    await click(buttonByText(host, "Show 2 hidden")!);
+    expect(host.textContent).toContain("Toxocara canis");
+    expect(host.textContent).toContain("Toxascaris leonina");
+    expect(host.textContent).toContain("Hide 2 not in pack");
   });
 
   it("keeps Show hidden after a remount", async () => {
