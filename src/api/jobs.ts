@@ -138,13 +138,51 @@ export function asRegenType(type: string): RegenCardType | null {
 
 export { cardHasRegenSource } from "../study/regenSource";
 
+export type CardRegenOpView = {
+  id: string;
+  cardId: string;
+  status: string;
+  error: string | null;
+  finishedAt: string | null;
+  card?: CardDraftView;
+};
+
+export function getCardRegenOp(opId: string) {
+  if (isGuest()) guestUnsupported("poll card regeneration");
+  return api<CardRegenOpView>(`/api/card-regen-ops/${opId}`);
+}
+
+/** Poll until done/failed or deadline (default 10 min). */
+export async function waitForCardRegenOp(
+  opId: string,
+  opts?: { pollMs?: number; deadlineMs?: number },
+): Promise<CardDraftView> {
+  const pollMs = opts?.pollMs ?? 1000;
+  const deadline = Date.now() + (opts?.deadlineMs ?? 10 * 60 * 1000);
+  while (Date.now() < deadline) {
+    const op = await getCardRegenOp(opId);
+    if (op.status === "done" && op.card) return op.card;
+    if (op.status === "failed") {
+      throw new ApiError(422, op.error ?? "Could not regenerate card");
+    }
+    await new Promise((r) => setTimeout(r, pollMs));
+  }
+  throw new ApiError(504, "Card regeneration timed out");
+}
+
 /** Rebuild one card as qa/cloze/mcq; siblings and FSRS schedule stay. Account-only. */
-export function regenCard(cardId: string, body: { type: RegenCardType }) {
+export async function regenCard(
+  cardId: string,
+  body: { type: RegenCardType },
+) {
   if (isGuest()) guestUnsupported("regenerate a single card");
-  return api<CardDraftView>(`/api/cards/${cardId}/regen`, {
+  const started = await api<{
+    op: { id: string; status: string; cardId: string };
+  }>(`/api/cards/${cardId}/regen`, {
     method: "POST",
     json: body,
   });
+  return waitForCardRegenOp(started.op.id);
 }
 
 /** Soft-clean: reject remaining drafts only; accepted cards stay. No requeue. */

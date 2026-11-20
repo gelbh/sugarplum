@@ -3,15 +3,8 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
-import {
-  ClaimAwareRegenError,
-  loadCardSourceText,
-  regenerateClaimAwareCard,
-  resolveRegenLlm,
-} from "../generation/card-regen";
-import { studyClaimFromRow, type StudyClaim } from "../generation/claims";
-import { recordRegenUsageEvent } from "../generation/usage";
-import { WorkersAiCapacityError } from "../generation/workers-ai";
+import { loadCardSourceText } from "../generation/card-regen";
+import { enqueueCardRegen } from "../generation/enqueue";
 import {
   parseProvenanceJson,
   provenanceExcerptText,
@@ -34,7 +27,6 @@ import {
 import { cardContentFingerprint } from "./contentFingerprint";
 import {
   decodeStoredBack,
-  encodeStoredBack,
   parseJsonField,
   serializeCard,
 } from "./serialize";
@@ -49,8 +41,6 @@ import {
   parseRejectBody,
   parseRegenBody,
 } from "./card-action-bodies";
-
-const STUDY_STRUGGLE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -347,7 +337,11 @@ cardRoutes.post("/:id/move", async (c) => {
   );
 });
 
-/** Single-card regen: UPDATE one row only; never job-wide DELETE. */
+/**
+ * Single-card regen: enqueue async op (202). LLM + UPDATE run in the
+ * GENERATE_QUEUE consumer via processCardRegenOp. Quota reserved at process
+ * time (not accept) so reconnect polls do not double-reserve.
+ */
 cardRoutes.post("/:id/regen", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");
@@ -372,177 +366,59 @@ cardRoutes.post("/:id/regen", async (c) => {
   const excerpt = provenanceExcerptText(
     parseProvenanceJson(row.provenance_json),
   );
-  let storedClaim: StudyClaim | null = null;
+  let hasStoredClaim = false;
   const claimId = row.claim_id ?? null;
   if (claimId) {
     const claimRow = await db
       .prepare(
-        `SELECT subject, predicate, source_span, object, qualifiers_json, pages_json
-         FROM study_claims WHERE id = ? AND deck_id = ?`,
+        `SELECT subject FROM study_claims WHERE id = ? AND deck_id = ?`,
       )
       .bind(claimId, row.deck_id)
-      .first<{
-        subject: string;
-        predicate: string;
-        source_span: string;
-        object: string | null;
-        qualifiers_json: string | null;
-        pages_json: string | null;
-      }>();
-    if (claimRow) {
-      storedClaim = studyClaimFromRow(claimRow);
-    }
+      .first<{ subject: string }>();
+    hasStoredClaim = Boolean(claimRow);
   }
-  if (!storedClaim && !materialText && !excerpt) {
+  if (!hasStoredClaim && !materialText && !excerpt) {
     throw new HTTPException(422, {
       message:
         "No source text available for this card. Edit manually or regenerate from material with text.",
     });
   }
 
-  let llmBundle: Awaited<ReturnType<typeof resolveRegenLlm>>;
-  try {
-    llmBundle = await resolveRegenLlm(c.env, userId);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "LLM unavailable";
-    const freeGenCap = message.includes("Daily free generation limit");
-    throw new HTTPException(freeGenCap ? 429 : 502, { message });
+  const existing = await db
+    .prepare(
+      `SELECT id, status, card_id FROM card_regen_ops
+       WHERE card_id = ? AND status IN ('queued', 'running')
+       ORDER BY created_at DESC LIMIT 1`,
+    )
+    .bind(cardId)
+    .first<{ id: string; status: string; card_id: string }>();
+  if (existing) {
+    return c.json(
+      { op: { id: existing.id, status: existing.status, cardId } },
+      202,
+    );
   }
 
-  const since = new Date(Date.now() - STUDY_STRUGGLE_WINDOW_MS).toISOString();
-  const [scheduleRow, againRow] = await Promise.all([
-    db
-      .prepare(`SELECT lapses FROM card_schedules WHERE card_id = ?`)
-      .bind(cardId)
-      .first<{ lapses: number }>(),
-    db
-      .prepare(
-        `SELECT COUNT(*) AS again_14d FROM review_logs
-         WHERE card_id = ? AND rating = 1 AND reviewed_at >= ?`,
-      )
-      .bind(cardId, since)
-      .first<{ again_14d: number }>(),
-  ]);
-  const studyStruggle = {
-    again_14d: Number(againRow?.again_14d) || 0,
-    lapses: Number(scheduleRow?.lapses) || 0,
-  };
+  const opId = crypto.randomUUID();
+  const createdAt = new Date().toISOString();
+  await db
+    .prepare(
+      `INSERT INTO card_regen_ops
+       (id, card_id, user_id, regen_type, status, error, created_at, finished_at)
+       VALUES (?, ?, ?, ?, ?, NULL, ?, NULL)`,
+    )
+    .bind(opId, cardId, userId, regenType, "queued", createdAt)
+    .run();
 
-  const existingFront = parseJsonField<unknown>(row.front_json, null);
-  let generated: Awaited<ReturnType<typeof regenerateClaimAwareCard>>;
-  try {
-    generated = await regenerateClaimAwareCard({
-      excerpt,
-      materialText,
-      type: regenType,
-      existingFront:
-        typeof existingFront === "string" ? existingFront : undefined,
-      storedClaim,
-      studyStruggle,
-      llm: llmBundle.llm,
-      apiKey: llmBundle.apiKey,
-      provider: llmBundle.provider,
-    });
-  } catch (err) {
-    if (err instanceof ClaimAwareRegenError) {
-      // Soft-fail: no card update; refund free slot reserved at resolve.
-      await llmBundle.releaseQuota().catch((e) => console.error(e));
-      throw new HTTPException(422, { message: err.message });
-    }
-    if (err instanceof WorkersAiCapacityError) {
-      await llmBundle.releaseQuota().catch((e) => console.error(e));
-    }
-    throw new HTTPException(502, {
-      message: err instanceof Error ? err.message : "Card regeneration failed",
-    });
-  }
-
-  const { draft, usage } = generated;
-  const nextBackJson =
-    draft.type === "mcq"
-      ? encodeStoredBack(draft.type, draft.back, draft.options)
-      : encodeStoredBack(draft.type, draft.back);
-  const nextFrontJson = JSON.stringify(draft.front);
-  const nextProvenanceJson = JSON.stringify(draft.provenance);
-  const updatedAt = new Date().toISOString();
-
-  // Regen targets qa/cloze/mcq only; drop figure media so text cards do not keep stale keys.
-  const regenFp = await cardContentFingerprint({
-    type: draft.type,
-    front: draft.front,
-    mediaR2Keys: null,
-    back: draft.type === "mcq" ? draft.back : undefined,
-    options: draft.type === "mcq" ? draft.options : null,
+  await enqueueCardRegen(c.env, {
+    kind: "cardRegen",
+    opId,
+    cardId,
+    userId,
+    type: regenType,
   });
-  if (row.claim_id == null) {
-    const clash = await db
-      .prepare(
-        `SELECT id FROM cards
-         WHERE deck_id = ? AND claim_id IS NULL AND content_fp = ?
-           AND status IN ('draft', 'accepted') AND id != ?
-         LIMIT 1`,
-      )
-      .bind(row.deck_id, regenFp, cardId)
-      .first<{ id: string }>();
-    if (clash) {
-      await llmBundle.releaseQuota().catch((e) => console.error(e));
-      throw new HTTPException(409, {
-        message: "Another live card in this deck already has this content",
-      });
-    }
-  }
-  try {
-    await db
-      .prepare(
-        `UPDATE cards
-         SET type = ?, front_json = ?, back_json = ?, provenance_json = ?,
-             media_r2_keys_json = NULL, content_fp = ?, updated_at = ?
-         WHERE id = ?`,
-      )
-      .bind(
-        draft.type,
-        nextFrontJson,
-        nextBackJson,
-        nextProvenanceJson,
-        regenFp,
-        updatedAt,
-        cardId,
-      )
-      .run();
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    if (/UNIQUE|unique|constraint/i.test(message)) {
-      await llmBundle.releaseQuota().catch((e) => console.error(e));
-      throw new HTTPException(409, {
-        message: "Another live card in this deck already has this content",
-      });
-    }
-    throw err;
-  }
 
-  try {
-    await recordRegenUsageEvent(db, {
-      userId,
-      path: llmBundle.path,
-      provider: llmBundle.provider,
-      usage,
-      createdAt: updatedAt,
-    });
-  } catch {
-    // best-effort metering; card already updated
-  }
-
-  return c.json(
-    serializeCard({
-      ...row,
-      type: draft.type,
-      front_json: nextFrontJson,
-      back_json: nextBackJson,
-      provenance_json: nextProvenanceJson,
-      media_r2_keys_json: null,
-      updated_at: updatedAt,
-    }),
-  );
+  return c.json({ op: { id: opId, status: "queued", cardId } }, 202);
 });
 
 cardRoutes.post("/:id/archive", async (c) => {

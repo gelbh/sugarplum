@@ -3,7 +3,8 @@ import { getDb } from "../db/client";
 
 export type FigureExtractMode = "fast" | "accurate";
 
-export type GenerateQueueMessage = {
+export type MaterialGenerateQueueMessage = {
+  kind?: "generate";
   jobId: string;
   materialId: string;
   deckId: string;
@@ -13,6 +14,18 @@ export type GenerateQueueMessage = {
    */
   autoFollowup?: boolean;
 };
+
+export type CardRegenQueueMessage = {
+  kind: "cardRegen";
+  opId: string;
+  cardId: string;
+  userId: string;
+  type: "qa" | "cloze" | "mcq";
+};
+
+export type GenerateQueueMessage =
+  | MaterialGenerateQueueMessage
+  | CardRegenQueueMessage;
 
 function newId(): string {
   return crypto.randomUUID();
@@ -84,7 +97,17 @@ export async function enqueueGeneration(
 /** Send an existing job onto GENERATE_QUEUE when bound (no new row). */
 export async function requeueGeneration(
   env: Env,
-  message: GenerateQueueMessage,
+  message: MaterialGenerateQueueMessage,
+): Promise<void> {
+  if (env.GENERATE_QUEUE) {
+    await env.GENERATE_QUEUE.send(message);
+  }
+}
+
+/** Enqueue a single-card regen op onto GENERATE_QUEUE when bound. */
+export async function enqueueCardRegen(
+  env: Env,
+  message: CardRegenQueueMessage,
 ): Promise<void> {
   if (env.GENERATE_QUEUE) {
     await env.GENERATE_QUEUE.send(message);

@@ -1,6 +1,10 @@
 import type { Env } from "../env";
-import type { GenerateQueueMessage } from "./enqueue";
+import type {
+  GenerateQueueMessage,
+  MaterialGenerateQueueMessage,
+} from "./enqueue";
 import { failStaleRunningJobs } from "./staleFail";
+import { failStaleCardRegenOps, processCardRegenOp } from "./card-regen-op";
 import { GENERATE_QUEUE_RETRY_DELAY_SEC } from "./progress";
 import { insertDraftCards } from "./gap-fill";
 export { insertDraftCards };
@@ -27,7 +31,7 @@ export type { ProcessGenerateOptions, ProcessGenerateResult };
  */
 export async function processGenerateJob(
   env: Env,
-  message: GenerateQueueMessage,
+  message: MaterialGenerateQueueMessage,
   opts?: ProcessGenerateOptions,
 ): Promise<ProcessGenerateResult> {
   const pass1 = await runPass1Phase(env, message, opts);
@@ -48,12 +52,22 @@ export async function handleGenerateQueue(
 ): Promise<void> {
   for (const msg of batch.messages) {
     try {
+      if (msg.body.kind === "cardRegen") {
+        await processCardRegenOp(env, msg.body);
+        msg.ack();
+        continue;
+      }
       await startGenerationWorkflow(env, msg.body);
       msg.ack();
     } catch (err) {
-      console.error("generation workflow create failed", msg.body.jobId, err);
+      const label =
+        msg.body.kind === "cardRegen"
+          ? `card regen ${msg.body.opId}`
+          : `generation workflow create failed ${msg.body.jobId}`;
+      console.error(label, err);
       msg.retry({ delaySeconds: GENERATE_QUEUE_RETRY_DELAY_SEC });
     }
   }
   await failStaleRunningJobs(env);
+  await failStaleCardRegenOps(env);
 }

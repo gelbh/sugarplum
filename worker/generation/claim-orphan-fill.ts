@@ -9,7 +9,7 @@ import {
   ClaimFillNotFoundError,
   fillDraftFromClaim,
 } from "./claim-fill";
-import type { GenerateQueueMessage } from "./enqueue";
+import type { MaterialGenerateQueueMessage } from "./enqueue";
 import { isFreeGenCapError } from "./quota";
 import { WorkersAiCapacityError } from "./workers-ai";
 
@@ -189,7 +189,7 @@ export async function fillOrphanClaims(args: {
  */
 export async function runClaimOrphanFillPhase(
   env: Env,
-  message: GenerateQueueMessage,
+  message: MaterialGenerateQueueMessage,
 ): Promise<ClaimOrphanFillSummary> {
   const zeros: ClaimOrphanFillSummary = {
     attempted: 0,

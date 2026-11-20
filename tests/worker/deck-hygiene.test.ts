@@ -104,6 +104,66 @@ describe("GET /api/decks/:id/hygiene", () => {
     expect(body.cards.map((c) => c.id)).toEqual(["c-essay"]);
   });
 
+  it("includes regen_op when a queued/running op exists", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "u1",
+      email: "u1@example.com",
+      password_hash: null,
+      oauth_subject: "g-u1",
+      created_at: NOW,
+    });
+    env.seedSession("s1", "u1");
+    env.seedDeck({
+      id: "deck-1",
+      user_id: "u1",
+      title: "Imm",
+      subject_hint: null,
+      subject_id: null,
+      created_at: NOW,
+    });
+    const essayBack = Array.from({ length: 30 }, (_, i) => `w${i}`).join(" ");
+    env.seedCard({
+      id: "c-essay",
+      deck_id: "deck-1",
+      job_id: null,
+      type: "qa",
+      front_json: JSON.stringify("What is lysozyme?"),
+      back_json: JSON.stringify(essayBack),
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "accepted",
+      created_at: NOW,
+      updated_at: NOW,
+    });
+    env.seedCardRegenOp({
+      id: "op-1",
+      card_id: "c-essay",
+      user_id: "u1",
+      regen_type: "qa",
+      status: "running",
+      error: null,
+      created_at: NOW,
+      finished_at: null,
+    });
+
+    const res = await app.request("/api/decks/deck-1/hygiene", {
+      headers: { cookie: `${SESSION_COOKIE}=s1` },
+    }, env);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      cards: Array<{
+        id: string;
+        regen_op?: { id: string; status: string };
+      }>;
+    };
+    expect(body.cards).toHaveLength(1);
+    expect(body.cards[0]!.regen_op).toEqual({
+      id: "op-1",
+      status: "running",
+    });
+  });
+
   it("404s for non-owner", async () => {
     const env = createTestEnv();
     env.seedUser({

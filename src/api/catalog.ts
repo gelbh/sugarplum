@@ -274,6 +274,7 @@ export type DeckHygieneCard = {
   type: string;
   front_preview: string;
   reasons: string[];
+  regen_op?: { id: string; status: "queued" | "running" };
 };
 
 export type DeckHygiene = {

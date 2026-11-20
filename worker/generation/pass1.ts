@@ -5,7 +5,7 @@ import { readOcrSidecar, type OcrSidecar } from "../materials/ocr-sidecar";
 import { extractPptxSlides } from "../materials/extract-pptx";
 import { bytesToBase64, mimeFromR2Key } from "../materials/figures";
 import { MAX_IMAGE_BYTES } from "../materials/limits";
-import type { GenerateQueueMessage } from "./enqueue";
+import type { MaterialGenerateQueueMessage } from "./enqueue";
 import { collectPdfFigureDrafts } from "./pdf-figures";
 import { studyPdfWithOcrSidecar } from "./pdf-ocr-study";
 import {
@@ -470,7 +470,7 @@ export type ProcessGenerateResult = "done" | "busy";
  */
 export async function runPass1Phase(
   env: Env,
-  message: GenerateQueueMessage,
+  message: MaterialGenerateQueueMessage,
   opts?: ProcessGenerateOptions,
 ): Promise<ProcessGenerateResult> {
   const db = getDb(env);

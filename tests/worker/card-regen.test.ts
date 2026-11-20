@@ -5,8 +5,15 @@ import {
   capRegenSourceText,
   resolveRegenCorpus,
 } from "../../worker/generation/card-regen";
+import {
+  failStaleCardRegenOps,
+  processCardRegenOp,
+  STALE_CARD_REGEN_FAIL_ERROR,
+} from "../../worker/generation/card-regen-op";
+import type { CardRegenQueueMessage } from "../../worker/generation/enqueue";
 import { studyStrugglePromptSuffix } from "../../worker/generation/feedback-hints";
 import { CHUNK_CHAR_LIMIT } from "../../worker/generation/pipeline";
+import { RUNNING_JOB_STALE_MS } from "../../worker/generation/progress";
 import {
   FREE_GEN_DAILY_CAP,
   consumeFreeGenSlot,
@@ -170,19 +177,63 @@ function stubWorkersAiMcq(env: ReturnType<typeof createTestEnv>) {
   return stubWorkersAiSequence(env, [VALID_CLAIMS, VALID_MCQ]);
 }
 
-function regenRequest(env: ReturnType<typeof createTestEnv>) {
+function regenRequest(
+  env: ReturnType<typeof createTestEnv>,
+  cardId = "c-mid",
+  type = "mcq",
+  cookie = "sess-a",
+) {
   return app.request(
-    "/api/cards/c-mid/regen",
+    `/api/cards/${cardId}/regen`,
     {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        cookie: `${SESSION_COOKIE}=sess-a`,
+        cookie: `${SESSION_COOKIE}=${cookie}`,
       },
-      body: JSON.stringify({ type: "mcq" }),
+      body: JSON.stringify({ type }),
     },
     env,
   );
+}
+
+function latestCardRegenMessage(
+  env: ReturnType<typeof createTestEnv>,
+): CardRegenQueueMessage {
+  const msgs = env.getQueueMessages() as CardRegenQueueMessage[];
+  const regen = msgs.filter((m) => m.kind === "cardRegen");
+  const last = regen[regen.length - 1];
+  if (!last) throw new Error("expected cardRegen queue message");
+  return last;
+}
+
+async function processLatestCardRegen(env: ReturnType<typeof createTestEnv>) {
+  return processCardRegenOp(env, latestCardRegenMessage(env));
+}
+
+async function getRegenOp(
+  env: ReturnType<typeof createTestEnv>,
+  opId: string,
+  cookie = "sess-a",
+) {
+  return app.request(`/api/card-regen-ops/${opId}`, {
+    headers: { cookie: `${SESSION_COOKIE}=${cookie}` },
+  }, env);
+}
+
+/** POST 202 then drain the unbound/test queue via processCardRegenOp. */
+async function enqueueAndProcess(
+  env: ReturnType<typeof createTestEnv>,
+  cardId = "c-mid",
+  type = "mcq",
+) {
+  const res = await regenRequest(env, cardId, type);
+  expect(res.status).toBe(202);
+  const body = (await res.json()) as {
+    op: { id: string; status: string; cardId: string };
+  };
+  const result = await processLatestCardRegen(env);
+  return { body, result };
 }
 
 describe("POST /api/cards/:id/regen", () => {
@@ -226,12 +277,17 @@ describe("POST /api/cards/:id/regen", () => {
     });
     env.AI = { run } as unknown as Ai;
 
-    const res = await regenRequest(env);
-    expect(res.status).toBe(200);
+    const { body, result } = await enqueueAndProcess(env);
+    expect(result).toBe("done");
     expect(run).toHaveBeenCalled();
     const updated = env.getCards().find((c) => c.id === "c-mid")!;
     expect(updated.claim_id).toBe("cl-mid");
     expect(JSON.parse(updated.front_json)).toBe("Which organelle produces ATP?");
+    const getRes = await getRegenOp(env, body.op.id);
+    expect(getRes.status).toBe(200);
+    const opBody = (await getRes.json()) as { status: string; card?: { front: string } };
+    expect(opBody.status).toBe("done");
+    expect(opBody.card?.front).toBe("Which organelle produces ATP?");
   });
 
   it("regenerates middle draft as mcq and leaves sibling fronts intact", async () => {
@@ -244,29 +300,23 @@ describe("POST /api/cards/:id/regen", () => {
     );
     const run = stubWorkersAiMcq(env);
 
-    const res = await app.request(
-      "/api/cards/c-mid/regen",
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          cookie: `${SESSION_COOKIE}=sess-a`,
-        },
-        body: JSON.stringify({ type: "mcq" }),
-      },
-      env,
-    );
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      id: string;
-      type: string;
-      front: string;
-      back: string;
-      options?: string[];
+    const { body, result } = await enqueueAndProcess(env);
+    expect(result).toBe("done");
+    const getRes = await getRegenOp(env, body.op.id);
+    const opBody = (await getRes.json()) as {
       status: string;
-      job_id: string | null;
+      card?: {
+        id: string;
+        type: string;
+        front: string;
+        back: string;
+        options?: string[];
+        status: string;
+        job_id: string | null;
+      };
     };
-    expect(body).toMatchObject({
+    expect(opBody.status).toBe("done");
+    expect(opBody.card).toMatchObject({
       id: "c-mid",
       type: "mcq",
       status: "draft",
@@ -274,7 +324,7 @@ describe("POST /api/cards/:id/regen", () => {
       front: "Which organelle produces ATP?",
       back: "Mitochondria",
     });
-    expect(body.options).toEqual([
+    expect(opBody.card?.options).toEqual([
       "Mitochondria",
       "Nucleus",
       "Ribosome",
@@ -314,7 +364,7 @@ describe("POST /api/cards/:id/regen", () => {
     });
   });
 
-  it("returns 429 when free-gen daily cap is exhausted on workers-ai", async () => {
+  it("fails the op when free-gen daily cap is exhausted on workers-ai", async () => {
     const env = createTestEnv();
     seedOwner(env);
     seedThreeDrafts(env);
@@ -324,19 +374,12 @@ describe("POST /api/cards/:id/regen", () => {
       await consumeFreeGenSlot(env, "user-a");
     }
 
-    const res = await app.request(
-      "/api/cards/c-mid/regen",
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          cookie: `${SESSION_COOKIE}=sess-a`,
-        },
-        body: JSON.stringify({ type: "mcq" }),
-      },
-      env,
-    );
-    expect(res.status).toBe(429);
+    const { body, result } = await enqueueAndProcess(env);
+    expect(result).toBe("failed");
+    const getRes = await getRegenOp(env, body.op.id);
+    const opBody = (await getRes.json()) as { status: string; error: string | null };
+    expect(opBody.status).toBe("failed");
+    expect(opBody.error).toMatch(/Daily free generation limit/i);
     expect(env.getUsageEvents().filter((e) => e.kind === "regen")).toHaveLength(
       0,
     );
@@ -354,19 +397,8 @@ describe("POST /api/cards/:id/regen", () => {
     env.seedR2("materials/deck-a/mat-a.txt", huge);
     const run = stubWorkersAiMcq(env);
 
-    const res = await app.request(
-      "/api/cards/c-mid/regen",
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          cookie: `${SESSION_COOKIE}=sess-a`,
-        },
-        body: JSON.stringify({ type: "mcq" }),
-      },
-      env,
-    );
-    expect(res.status).toBe(200);
+    const { result } = await enqueueAndProcess(env);
+    expect(result).toBe("done");
     expect(run).toHaveBeenCalled();
     const body = run.mock.calls[0]![1] as {
       messages?: { role: string; content: string }[];
@@ -411,25 +443,14 @@ describe("POST /api/cards/:id/regen", () => {
     );
     stubWorkersAiMcq(env);
 
-    const res = await app.request(
-      "/api/cards/c-vis/regen",
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          cookie: `${SESSION_COOKIE}=sess-a`,
-        },
-        body: JSON.stringify({ type: "mcq" }),
-      },
-      env,
-    );
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      type: string;
-      media_r2_keys?: string[];
+    const { body, result } = await enqueueAndProcess(env, "c-vis");
+    expect(result).toBe("done");
+    const getRes = await getRegenOp(env, body.op.id);
+    const opBody = (await getRes.json()) as {
+      card?: { type: string; media_r2_keys?: string[] };
     };
-    expect(body.type).toBe("mcq");
-    expect(body.media_r2_keys ?? []).toEqual([]);
+    expect(opBody.card?.type).toBe("mcq");
+    expect(opBody.card?.media_r2_keys ?? []).toEqual([]);
     expect(env.getCards().find((c) => c.id === "c-vis")!.media_r2_keys_json).toBe(
       null,
     );
@@ -559,22 +580,14 @@ describe("POST /api/cards/:id/regen", () => {
     );
     stubWorkersAiMcq(env);
 
-    const res = await app.request(
-      "/api/cards/c-acc/regen",
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          cookie: `${SESSION_COOKIE}=sess-a`,
-        },
-        body: JSON.stringify({ type: "mcq" }),
-      },
-      env,
-    );
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { status: string; type: string };
-    expect(body.status).toBe("accepted");
-    expect(body.type).toBe("mcq");
+    const { body, result } = await enqueueAndProcess(env, "c-acc");
+    expect(result).toBe("done");
+    const getRes = await getRegenOp(env, body.op.id);
+    const opBody = (await getRes.json()) as {
+      card?: { status: string; type: string };
+    };
+    expect(opBody.card?.status).toBe("accepted");
+    expect(opBody.card?.type).toBe("mcq");
     expect(env.getSchedules()).toHaveLength(1);
     expect(env.getSchedules()[0]!.due).toBe(due);
     expect(env.getSchedules()[0]!.reps).toBe(2);
@@ -636,19 +649,8 @@ describe("POST /api/cards/:id/regen", () => {
     );
     const run = stubWorkersAiMcq(env);
 
-    const res = await app.request(
-      "/api/cards/c-struggle/regen",
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          cookie: `${SESSION_COOKIE}=sess-a`,
-        },
-        body: JSON.stringify({ type: "mcq" }),
-      },
-      env,
-    );
-    expect(res.status).toBe(200);
+    const { result } = await enqueueAndProcess(env, "c-struggle");
+    expect(result).toBe("done");
     expect(run).toHaveBeenCalled();
     const expected = studyStrugglePromptSuffix({ again_14d: 1, lapses: 2 });
     expect(expected.length).toBeGreaterThan(0);
@@ -674,8 +676,8 @@ describe("POST /api/cards/:id/regen", () => {
       VALID_MCQ,
     ]);
 
-    const res = await regenRequest(env);
-    expect(res.status).toBe(200);
+    const { result } = await enqueueAndProcess(env);
+    expect(result).toBe("done");
     expect(run).toHaveBeenCalledTimes(3);
     const writeReask = run.mock.calls[2][1] as {
       messages: { role: string; content: string }[];
@@ -688,7 +690,7 @@ describe("POST /api/cards/:id/regen", () => {
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
   });
 
-  it("returns 502 JSON with the validation error after two invalid write replies", async () => {
+  it("fails the op with the validation error after two invalid write replies", async () => {
     const env = createTestEnv();
     seedOwner(env);
     seedThreeDrafts(env);
@@ -699,10 +701,11 @@ describe("POST /api/cards/:id/regen", () => {
       "still not json",
     ]);
 
-    const res = await regenRequest(env);
-    expect(res.status).toBe(502);
+    const { body, result } = await enqueueAndProcess(env);
+    expect(result).toBe("failed");
     expect(run).toHaveBeenCalledTimes(3);
-    expect(((await res.json()) as { message: string }).message).toMatch(
+    const getRes = await getRegenOp(env, body.op.id);
+    expect(((await getRes.json()) as { error: string }).error).toMatch(
       /non-JSON/,
     );
     expect(
@@ -721,9 +724,10 @@ describe("POST /api/cards/:id/regen", () => {
     });
     env.AI = { run } as unknown as Ai;
 
-    const res = await regenRequest(env);
-    expect(res.status).toBe(502);
-    expect(((await res.json()) as { message: string }).message).toMatch(
+    const { body, result } = await enqueueAndProcess(env);
+    expect(result).toBe("failed");
+    const getRes = await getRegenOp(env, body.op.id);
+    expect(((await getRes.json()) as { error: string }).error).toMatch(
       /temporarily at capacity/,
     );
     expect(run).toHaveBeenCalledTimes(1);
@@ -748,8 +752,8 @@ describe("POST /api/cards/:id/regen", () => {
     });
     const run = stubWorkersAiSequence(env, [VALID_CLAIMS, badMcq, VALID_MCQ]);
 
-    const res = await regenRequest(env);
-    expect(res.status).toBe(200);
+    const { result } = await enqueueAndProcess(env);
+    expect(result).toBe("done");
     expect(run).toHaveBeenCalledTimes(3);
   });
 
@@ -764,12 +768,12 @@ describe("POST /api/cards/:id/regen", () => {
       VALID_MCQ,
     ]);
 
-    const res = await regenRequest(env);
-    expect(res.status).toBe(200);
+    const { result } = await enqueueAndProcess(env);
+    expect(result).toBe("done");
     expect(run).toHaveBeenCalledTimes(3);
   });
 
-  it("returns 422 when extract yields no claims", async () => {
+  it("fails the op when extract yields no claims", async () => {
     const env = createTestEnv();
     seedOwner(env);
     seedThreeDrafts(env);
@@ -779,8 +783,8 @@ describe("POST /api/cards/:id/regen", () => {
       VALID_MCQ,
     ]);
 
-    const res = await regenRequest(env);
-    expect(res.status).toBe(422);
+    const { result } = await enqueueAndProcess(env);
+    expect(result).toBe("failed");
     expect(run).toHaveBeenCalledTimes(1);
     expect(
       JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json),
@@ -788,7 +792,7 @@ describe("POST /api/cards/:id/regen", () => {
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(0);
   });
 
-  it("returns 422 when Layer-1 rejects the card after quality reask", async () => {
+  it("fails the op when Layer-1 rejects the card after quality reask", async () => {
     const env = createTestEnv();
     seedOwner(env);
     seedThreeDrafts(env);
@@ -799,13 +803,82 @@ describe("POST /api/cards/:id/regen", () => {
       COMPOUND_MCQ,
     ]);
 
-    const res = await regenRequest(env);
-    expect(res.status).toBe(422);
+    const { result } = await enqueueAndProcess(env);
+    expect(result).toBe("failed");
     expect(run.mock.calls.length).toBeGreaterThanOrEqual(3);
     expect(
       JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json),
     ).toBe("Middle front?");
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(0);
+  });
+
+  it("returns the same op id on a second POST while in flight", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    stubWorkersAiMcq(env);
+
+    const first = await regenRequest(env);
+    expect(first.status).toBe(202);
+    const firstBody = (await first.json()) as {
+      op: { id: string; status: string };
+    };
+    expect(firstBody.op.status).toBe("queued");
+
+    const second = await regenRequest(env);
+    expect(second.status).toBe(202);
+    const secondBody = (await second.json()) as { op: { id: string } };
+    expect(secondBody.op.id).toBe(firstBody.op.id);
+    expect(env.getCardRegenOps()).toHaveLength(1);
+    expect(
+      env.getQueueMessages().filter(
+        (m) => (m as CardRegenQueueMessage).kind === "cardRegen",
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("processCardRegenOp is idempotent after done", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const run = stubWorkersAiMcq(env);
+
+    const { result } = await enqueueAndProcess(env);
+    expect(result).toBe("done");
+    const callsAfterFirst = run.mock.calls.length;
+    const again = await processLatestCardRegen(env);
+    expect(again).toBe("done");
+    expect(run.mock.calls.length).toBe(callsAfterFirst);
+    expect(env.getUsageEvents().filter((e) => e.kind === "regen")).toHaveLength(
+      1,
+    );
+  });
+
+  it("fails stale running card regen ops", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    const staleCreated = new Date(
+      Date.now() - RUNNING_JOB_STALE_MS - 60_000,
+    ).toISOString();
+    env.seedCardRegenOp({
+      id: "op-stale",
+      card_id: "c-mid",
+      user_id: "user-a",
+      regen_type: "mcq",
+      status: "running",
+      error: null,
+      created_at: staleCreated,
+      finished_at: null,
+    });
+
+    const failed = await failStaleCardRegenOps(env);
+    expect(failed).toBe(1);
+    const op = env.getCardRegenOps().find((o) => o.id === "op-stale")!;
+    expect(op.status).toBe("failed");
+    expect(op.error).toBe(STALE_CARD_REGEN_FAIL_ERROR);
   });
 });
 
