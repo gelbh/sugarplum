@@ -29,16 +29,16 @@ import {
   filterDueExcludingPending,
   loadDueCache,
   saveDueCache,
-} from "../study/dueCache";
+} from "../study";
 import {
   buildDueBreakdown,
   type DueBreakdown,
-} from "../study/dueBreakdown";
-import TodayDueBreakdown from "../study/TodayDueBreakdown";
-import { pendingCardIdSet } from "../study/pendingGrades";
-import { usePendingGradeSync } from "../study/usePendingGradeSync";
-import { warmDueMedia } from "../study/warmDueMedia";
-import { maybeRunFsrsOptimize } from "../study/fsrs/fsrsOptimizeClient";
+} from "../study";
+import { TodayDueBreakdown } from "../study";
+import { pendingCardIdSet } from "../study";
+import { usePendingGradeSync } from "../study";
+import { warmDueMedia } from "../study";
+import { maybeRunFsrsOptimize } from "../study";
 
 async function loadDeckTitles(): Promise<Record<string, string>> {
   try {

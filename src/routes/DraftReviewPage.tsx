@@ -16,7 +16,7 @@ import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded";
 import HighlightOffRoundedIcon from "@mui/icons-material/HighlightOffRounded";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
-import ReviewCard from "../study/ReviewCard";
+import { ReviewCard } from "../study";
 import {
   asRegenType,
   cardHasRegenSource,
@@ -39,16 +39,16 @@ import {
   DIALOG_PAPER_SX,
   DIALOG_TITLE_SX,
   PRIMARY_PILL_SX,
-} from "../draftReview/draftReviewChrome";
+} from "../draftReview";
 import DialogEyebrow from "../shared/ui/DialogEyebrow";
-import { jobIdFromPath } from "../draftReview/draftReviewPath";
-import { createDraftReviewBatch } from "../draftReview/draftReviewBatch";
-import { createDraftReviewDecide } from "../draftReview/draftReviewDecide";
-import { createDraftReviewRegen } from "../draftReview/draftReviewRegen";
-import type { DraftReviewNotice } from "../draftReview/draftReviewTypes";
-import { friendlyJobError } from "../draftReview/friendlyJobError";
-import ClaimCoveragePanel from "../draftReview/ClaimCoveragePanel";
-import { useDraftReviewLoad } from "../draftReview/useDraftReviewLoad";
+import { jobIdFromPath } from "../draftReview";
+import { createDraftReviewBatch } from "../draftReview";
+import { createDraftReviewDecide } from "../draftReview";
+import { createDraftReviewRegen } from "../draftReview";
+import type { DraftReviewNotice } from "../draftReview";
+import { friendlyJobError } from "../draftReview";
+import { ClaimCoveragePanel } from "../draftReview";
+import { useDraftReviewLoad } from "../draftReview";
 
 export default function DraftReviewPage() {
   const jobId = jobIdFromPath();

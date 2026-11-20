@@ -12,10 +12,10 @@ import {
   getInsightsSummary,
   getStudyPrefs,
 } from "../api/client";
-import CompositionSpark, {
+import { CompositionSpark,
   COMPOSITION_SEGMENT_COLORS,
-} from "../materials/CompositionSpark";
-import EmptyNext from "../deckHub/EmptyNext";
+} from "../materials";
+import { EmptyNext } from "../deckHub";
 import { navigate } from "../shared/nav/navigate";
 import ActivityHeatmap from "../insights/ActivityHeatmap";
 import {
