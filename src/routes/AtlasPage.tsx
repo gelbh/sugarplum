@@ -58,7 +58,7 @@ type Props = {
 type Loaded = {
   entries: AtlasEntryView[];
   userKey: string;
-  /** True when polling gave up; pack hiding stays off until a reload. */
+  /** Server was still refreshing Focus after polling; pack hiding stays off. */
   focusRefreshPending: boolean;
 };
 
