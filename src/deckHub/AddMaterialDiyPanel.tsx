@@ -7,10 +7,10 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import DraftCardEditor, {
+import { DraftCardEditor,
   type DraftEditorChange,
   type DraftPreviewFace,
-} from "../draftReview/DraftCardEditor";
+} from "../draftReview";
 import { CreateFlowNoticeFade } from "../library/CreateFlowNotice";
 import type { CardDraftView, CardType } from "../api/client";
 import DiyCardPreview from "./DiyCardPreview";

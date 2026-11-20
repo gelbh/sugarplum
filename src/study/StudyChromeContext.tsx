@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 
-type StudyChromeValue = {
+export type StudyChromeValue = {
   hideChrome: boolean;
   setHideChrome: (hide: boolean) => void;
 };

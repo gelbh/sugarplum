@@ -9,9 +9,9 @@ import { ApiError } from "../api/client";
 import {
   VIEW_AS_ATLAS_EMPTY,
   atlasOpenErrorMessage,
-} from "../atlas/hub/atlasOpenCopy";
-import { ensureAtlas, findParasiteAtlas } from "../atlas/hub/apiSource";
-import { atlasHref, atlasHubHref } from "../atlas/paths";
+} from "../atlas";
+import { ensureAtlas, findParasiteAtlas } from "../atlas";
+import { atlasHref, atlasHubHref } from "../atlas";
 import { isGuest } from "../guest/session";
 import { navigate, navigateReplace } from "../shared/nav/navigate";
 import { useSession } from "../session/SessionContext";

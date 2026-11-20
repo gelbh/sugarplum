@@ -2,10 +2,10 @@ import { useEffect, useState, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { FlipCardPlate, StudyCardPlate } from "../study/CardFace";
-import { CardFaceMcqBody } from "../study/cardFaceMcq";
-import ClozePrompt from "../study/ClozePrompt";
-import type { DraftPreviewFace } from "../draftReview/DraftCardEditor";
+import { FlipCardPlate, StudyCardPlate } from "../study";
+import { CardFaceMcqBody } from "../study";
+import { ClozePrompt } from "../study";
+import type { DraftPreviewFace } from "../draftReview";
 import {
   FACE_ANSWER_TEXT_SX,
   FACE_BODY_SX,
@@ -14,9 +14,9 @@ import {
   FACE_MEDIA_SX,
   FACE_PROMPT_TEXT_SX,
   PROMPT_SX,
-} from "../study/studyFaceSx";
-import { clozeExtraSubtitle, extractClozeAnswers } from "../study/clozeFormat";
-import { backAnswer, isOcclusionFront } from "../draftReview/draftCardModel";
+} from "../study";
+import { clozeExtraSubtitle, extractClozeAnswers } from "../study";
+import { backAnswer, isOcclusionFront } from "../draftReview";
 import { mediaUrl, type CardDraftView } from "../api/client";
 import {
   occlusionTileFocusTransform,
@@ -25,7 +25,7 @@ import {
 import {
   occlusionRevealAnswer,
   pickOcclusionRegion,
-} from "../study/pickOcclusionRegion";
+} from "../study";
 
 type Props = {
   card: CardDraftView;

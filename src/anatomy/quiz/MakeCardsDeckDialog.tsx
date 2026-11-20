@@ -25,7 +25,7 @@ import {
 import {
   readLastDeckId,
   writeLastDeckId,
-} from "../../atlas/hub/lastDeckStorage";
+} from "../../atlas";
 import { structureToQaFields } from "../structure/structureCard";
 import type { AnatomyStructure } from "../types";
 

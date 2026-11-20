@@ -1,4 +1,13 @@
-export { atlasHref, atlasHubHref, ATLAS_LEGACY_PATH, isAtlasToAtlas, matchAtlasPath } from "./paths";
+export {
+  atlasHref,
+  atlasHubHref,
+  atlasEntryHref,
+  atlasCompareHref,
+  ATLAS_LEGACY_PATH,
+  isAtlasToAtlas,
+  matchAtlasPath,
+  type AtlasRoute,
+} from "./paths";
 export type { AtlasEntryView, AtlasSource } from "./types";
 export { default as EntryView } from "./entry/EntryView";
 export { default as CompareView } from "./compare/CompareView";
@@ -14,8 +23,15 @@ export { default as MakeCardsDeckDialog } from "./mutate/MakeCardsDeckDialog";
 export {
   apiAtlasSource,
   listAtlases,
+  listAtlasEntries,
+  resetEntry,
   createAtlas,
   ensureAtlas,
   findParasiteAtlas,
 } from "./hub/apiSource";
+export {
+  VIEW_AS_ATLAS_EMPTY,
+  atlasOpenErrorMessage,
+} from "./hub/atlasOpenCopy";
 export { entryTitles } from "./entry/entryTitles";
+export { readLastDeckId, writeLastDeckId } from "./hub/lastDeckStorage";
