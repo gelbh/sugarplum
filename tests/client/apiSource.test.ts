@@ -4,6 +4,8 @@ import {
   apiAtlasSource,
   createAtlas,
   createEntry,
+  ensureAtlas,
+  findParasiteAtlas,
   getAtlas,
   listDeletedEntries,
   patchEntry,
@@ -79,24 +81,79 @@ describe("apiAtlasSource", () => {
     await expect(getAtlas("atl-1")).resolves.toEqual(meta);
   });
 
-  it("createAtlas POSTs to the atlas collection", async () => {
-    const meta = {
-      id: "atl-1",
-      userId: "user-a",
-      templateKey: "parasite",
-      createdAt: "2026-01-01T00:00:00.000Z",
-    };
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(201, meta));
-    vi.stubGlobal("fetch", fetchMock);
+  const parasiteMeta = {
+    id: "atl-1",
+    userId: "user-a",
+    templateKey: "parasite",
+    createdAt: "2026-01-01T00:00:00.000Z",
+  };
 
-    await expect(createAtlas()).resolves.toEqual(meta);
+  it("findParasiteAtlas returns parasite row from GET list", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse(200, {
+        atlases: [
+          {
+            id: "other",
+            userId: "user-a",
+            templateKey: "other",
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+          parasiteMeta,
+        ],
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(findParasiteAtlas()).resolves.toEqual(parasiteMeta);
     expect(fetchMock).toHaveBeenCalledWith(
+      "/api/atlas",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
+  it("findParasiteAtlas returns null when no parasite atlas", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(jsonResponse(200, { atlases: [] })),
+    );
+    await expect(findParasiteAtlas()).resolves.toBeNull();
+  });
+
+  it("ensureAtlas returns existing parasite atlas without POST", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse(200, { atlases: [parasiteMeta] }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(ensureAtlas()).resolves.toEqual(parasiteMeta);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[1]).not.toEqual(
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("ensureAtlas POSTs when list has no parasite atlas", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(200, { atlases: [] }))
+      .mockResolvedValueOnce(jsonResponse(201, parasiteMeta));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(ensureAtlas()).resolves.toEqual(parasiteMeta);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
       "/api/atlas",
       expect.objectContaining({
         method: "POST",
         credentials: "include",
       }),
     );
+  });
+
+  it("createAtlas aliases ensureAtlas GET-then-POST", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(200, { atlases: [] }))
+      .mockResolvedValueOnce(jsonResponse(201, parasiteMeta));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(createAtlas()).resolves.toEqual(parasiteMeta);
   });
 
   it("mutate helpers hit the overlay routes", async () => {
