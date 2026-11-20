@@ -395,7 +395,7 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
                     <IconButton
                       size="small"
                       aria-label="Archive card"
-                      disabled={busy}
+                      disabled={busy || regenerating}
                       onClick={() => {
                         void (async () => {
                           setBusyId(card.id);

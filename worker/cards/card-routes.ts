@@ -4,6 +4,7 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { loadCardSourceText } from "../generation/card-regen";
+import { processCardRegenOp } from "../generation/card-regen-op";
 import { enqueueCardRegen } from "../generation/enqueue";
 import {
   parseProvenanceJson,
@@ -410,13 +411,23 @@ cardRoutes.post("/:id/regen", async (c) => {
     .bind(opId, cardId, userId, regenType, "queued", createdAt)
     .run();
 
-  await enqueueCardRegen(c.env, {
-    kind: "cardRegen",
+  const message = {
+    kind: "cardRegen" as const,
     opId,
     cardId,
     userId,
     type: regenType,
-  });
+  };
+  await enqueueCardRegen(c.env, message);
+  // Without a queue binding (some local/test harnesses), process inline so
+  // the op cannot sit forever in queued.
+  if (!c.env.GENERATE_QUEUE) {
+    c.executionCtx.waitUntil(
+      processCardRegenOp(c.env, message).catch((err) =>
+        console.error("inline card regen failed", opId, err),
+      ),
+    );
+  }
 
   return c.json({ op: { id: opId, status: "queued", cardId } }, 202);
 });
