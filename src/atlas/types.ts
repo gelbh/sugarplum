@@ -44,6 +44,8 @@ export type AtlasEntryView = {
   /** DB focus override when set; pin UI keys off this, not reason copy. */
   override: AtlasTier | null;
   focusMaterialIds: string[];
+  /** Named in the course pack (lenient match); null when unscanned. */
+  inPack: boolean | null;
 };
 
 export type AtlasSource = {

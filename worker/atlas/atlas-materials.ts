@@ -174,7 +174,7 @@ export async function countReadyAtlasMaterials(
 }
 
 /** Bump when Focus scan rules or fingerprint inputs change so complete maps rescan. */
-export const FOCUS_PACK_FINGERPRINT_VERSION = "v2";
+export const FOCUS_PACK_FINGERPRINT_VERSION = "v3";
 
 export function focusPackFingerprint(
   rows: ReadonlyArray<{

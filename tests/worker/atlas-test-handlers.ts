@@ -57,6 +57,7 @@ export type AtlasFocusRow = {
   material_ids_json: string;
   override: string | null;
   updated_at: string;
+  in_pack: number;
 };
 
 export type AtlasNoteRow = {
@@ -702,6 +703,7 @@ export function atlasRun(
       material_ids_json,
       override,
       updated_at,
+      in_pack,
     ] = bound as [
       string,
       string,
@@ -710,6 +712,7 @@ export function atlasRun(
       string,
       string | null,
       string,
+      number | undefined,
     ];
     state.focus.set(focusKey(atlas_id, entry_key), {
       atlas_id,
@@ -719,6 +722,7 @@ export function atlasRun(
       material_ids_json,
       override,
       updated_at,
+      in_pack: in_pack ?? 0,
     });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
