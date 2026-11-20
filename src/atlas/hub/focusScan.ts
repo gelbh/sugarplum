@@ -1,5 +1,6 @@
 import { SOURCE_ROLE_LABELS, type SourceRole } from "../../materials/sourceRole";
 import { entryNameForms, textMentionsEntry } from "./nameMatch";
+import { materialMentionsForPack } from "./packMatch";
 import type { AtlasTier } from "../types";
 
 const KEY_ROLES: ReadonlySet<SourceRole> = new Set([
@@ -26,7 +27,10 @@ export type FocusManualOverride = AtlasTier | null;
 export type FocusScanResult = {
   tier: AtlasTier;
   reason: string;
+  /** Every material that mentions the entry under lenient pack matching. */
   materialIds: string[];
+  /** materialIds.length > 0 */
+  inPack: boolean;
 };
 
 export function scanFocus(
@@ -34,54 +38,52 @@ export function scanFocus(
   materials: FocusMaterial[],
   manualOverride?: FocusManualOverride,
 ): FocusScanResult {
+  const materialIds = materials
+    .filter((m) => materialMentionsForPack(entry, m))
+    .map((m) => m.id);
+  const inPack = materialIds.length > 0;
+
   if (manualOverride) {
     return {
       tier: manualOverride,
       reason: manualOverride === "key" ? "Manual pin" : "Manual demote",
-      materialIds: [],
+      materialIds,
+      inPack,
     };
   }
 
+  // Tiers keep the strict matcher so ranking does not change.
   const forms = entryNameForms(entry);
-  const keyHits = materials.filter(
-    (m) => KEY_ROLES.has(m.sourceRole) && materialKeysEntry(m, forms),
+  const keyHit = materials.find(
+    (m) => KEY_ROLES.has(m.sourceRole) && materialNamesEntry(m, forms),
   );
-  if (keyHits.length > 0) {
-    const hit = keyHits[0];
-    const label = SOURCE_ROLE_LABELS[hit.sourceRole].toLowerCase();
-    const title = hit.filename ?? hit.id;
+  if (keyHit) {
+    const label = SOURCE_ROLE_LABELS[keyHit.sourceRole].toLowerCase();
+    const title = keyHit.filename ?? keyHit.id;
     return {
       tier: "key",
       reason: `Named in ${label} "${title}"`,
-      materialIds: keyHits.map((m) => m.id),
+      materialIds,
+      inPack,
     };
   }
 
-  const mentionIds = materials
-    .filter((m) => materialMentionsEntry(m, forms))
-    .map((m) => m.id);
-  if (mentionIds.length >= 3) {
+  const mentionCount = materials.filter((m) =>
+    materialNamesEntry(m, forms),
+  ).length;
+  if (mentionCount >= 3) {
     return {
       tier: "frequent",
-      reason: `Mentioned in ${mentionIds.length} materials`,
-      materialIds: mentionIds,
+      reason: `Mentioned in ${mentionCount} materials`,
+      materialIds,
+      inPack,
     };
   }
 
-  return { tier: "standard", reason: "Standard", materialIds: [] };
+  return { tier: "standard", reason: "Standard", materialIds, inPack };
 }
 
-function materialKeysEntry(
-  material: FocusMaterial,
-  forms: readonly string[],
-): boolean {
-  if (material.filename && textMentionsEntry(material.filename, forms)) {
-    return true;
-  }
-  return material.pages.some((p) => textMentionsEntry(p.text, forms));
-}
-
-function materialMentionsEntry(
+function materialNamesEntry(
   material: FocusMaterial,
   forms: readonly string[],
 ): boolean {

@@ -22,11 +22,12 @@ function mat(
 }
 
 describe("scanFocus", () => {
-  it("returns Standard with empty materialIds when there are no materials", () => {
+  it("returns Standard, out of pack, when there are no materials", () => {
     expect(scanFocus(entry, [])).toEqual({
       tier: "standard",
       reason: "Standard",
       materialIds: [],
+      inPack: false,
     });
   });
 
@@ -42,6 +43,7 @@ describe("scanFocus", () => {
       tier: "key",
       reason: 'Named in tutorial "Week2_Fasciola_hepatica_TUTORIAL.pdf"',
       materialIds: ["m1"],
+      inPack: true,
     });
   });
 
@@ -61,6 +63,7 @@ describe("scanFocus", () => {
       tier: "key",
       reason: 'Named in practical "lab3.pdf"',
       materialIds: ["m2"],
+      inPack: true,
     });
   });
 
@@ -80,6 +83,7 @@ describe("scanFocus", () => {
       tier: "key",
       reason: 'Named in tutorial "tut.pdf"',
       materialIds: ["m3"],
+      inPack: true,
     });
   });
 
@@ -117,10 +121,11 @@ describe("scanFocus", () => {
       tier: "frequent",
       reason: "Mentioned in 3 materials",
       materialIds: ["a", "b", "c"],
+      inPack: true,
     });
   });
 
-  it("Standard when mentioned in fewer than 3 materials", () => {
+  it("Standard but in pack when mentioned in fewer than 3 materials", () => {
     const materials = [
       mat({
         id: "a",
@@ -136,11 +141,12 @@ describe("scanFocus", () => {
     expect(scanFocus(entry, materials)).toEqual({
       tier: "standard",
       reason: "Standard",
-      materialIds: [],
+      materialIds: ["a", "b"],
+      inPack: true,
     });
   });
 
-  it("manual override wins over scan; materialIds empty", () => {
+  it("manual override wins over the scan tier; pack matches still apply", () => {
     const materials = [
       mat({
         id: "m1",
@@ -151,17 +157,20 @@ describe("scanFocus", () => {
     expect(scanFocus(entry, materials, "standard")).toEqual({
       tier: "standard",
       reason: "Manual demote",
-      materialIds: [],
+      materialIds: ["m1"],
+      inPack: true,
     });
     expect(scanFocus(entry, materials, "key")).toEqual({
       tier: "key",
       reason: "Manual pin",
-      materialIds: [],
+      materialIds: ["m1"],
+      inPack: true,
     });
     expect(scanFocus(entry, [], "frequent")).toEqual({
       tier: "frequent",
       reason: "Manual demote",
       materialIds: [],
+      inPack: false,
     });
   });
 
@@ -214,5 +223,50 @@ describe("scanFocus", () => {
         }),
       ]).tier,
     ).toBe("key");
+  });
+
+  it("a single lecture mention is Standard and in pack", () => {
+    const materials = [
+      mat({
+        id: "lec",
+        sourceRole: "lecture",
+        pages: [{ page: 3, text: "Fasciola hepatica in sheep" }],
+      }),
+      mat({ id: "other", sourceRole: "lecture", pages: [{ page: 1, text: "Ticks" }] }),
+    ];
+    expect(scanFocus(entry, materials)).toEqual({
+      tier: "standard",
+      reason: "Standard",
+      materialIds: ["lec"],
+      inPack: true,
+    });
+  });
+
+  it("a lenient-only hit in a tutorial stays Standard (tiers use the strict matcher)", () => {
+    const materials = [
+      mat({
+        id: "tut",
+        sourceRole: "tutorial",
+        pages: [{ page: 1, text: "Fasciola (hepatica, gigantica)" }],
+      }),
+    ];
+    expect(scanFocus(entry, materials)).toEqual({
+      tier: "standard",
+      reason: "Standard",
+      materialIds: ["tut"],
+      inPack: true,
+    });
+  });
+
+  it("an entry no material names is out of pack", () => {
+    const materials = [
+      mat({ id: "lec", sourceRole: "lecture", pages: [{ page: 1, text: "Ticks and mites" }] }),
+    ];
+    expect(scanFocus(entry, materials)).toEqual({
+      tier: "standard",
+      reason: "Standard",
+      materialIds: [],
+      inPack: false,
+    });
   });
 });
