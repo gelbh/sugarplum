@@ -346,6 +346,8 @@ export default function AtlasPage({
         entryHref={(id) => atlasEntryHref(atlasId, id)}
         onOpenEntry={(id) => navigate(atlasEntryHref(atlasId, id))}
         onChange={(a, b) => navigateReplace(atlasCompareHref(atlasId, a, b))}
+        packHiddenIds={packHiddenIds}
+        showHidden={showHidden}
       />
     );
   }
