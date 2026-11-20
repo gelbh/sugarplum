@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bundledAtlasSource } from "../../src/atlas/bundledSource";
+import { bundledAtlasSource } from "../../src/atlas/hub/bundledSource";
 import {
   NO_FILTERS,
   applyFilters,
@@ -14,7 +14,7 @@ import {
   organOptions,
   railSections,
   sortTable,
-} from "../../src/atlas/filter";
+} from "../../src/atlas/hub/filter";
 import type { AtlasEntryView } from "../../src/atlas/types";
 import {
   HOST_TERM_KEYS,

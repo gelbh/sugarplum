@@ -6,24 +6,24 @@ import type {
   StrugglingRow,
   StudyRating,
 } from "../api/client";
-import { replayMemoryFromLogs } from "../study/fsrsCutover";
-import { schedulerForPrefs } from "../study/fsrsFactory";
+import { replayMemoryFromLogs } from "../study/fsrs/fsrsCutover";
+import { schedulerForPrefs } from "../study/fsrs/fsrsFactory";
 import {
   buildGuestFsrsPrefs,
   guestFsrsOptimizeStatus,
   guestRevlogCsv,
   nextGuestFsrsPending,
-} from "../study/guestFsrsOptimize";
-import { rescheduleGuestSchedules } from "../study/guestFsrsReschedule";
-import { normalizeSchedulerCard } from "../study/fsrsReplay";
+} from "../study/fsrs/guestFsrsOptimize";
+import { rescheduleGuestSchedules } from "../study/fsrs/guestFsrsReschedule";
+import { normalizeSchedulerCard } from "../study/fsrs/fsrsReplay";
 import { buildDueHistogramFromDues } from "../study/dueHistogram";
 import { applyLoadBalance } from "../study/loadBalance";
 import { clientLocalDay, resolveLocalDayStartIso } from "../study/localDay";
 import { type StudyPrefs } from "../study/policyQueue";
 import { clampStudyPrefs } from "../study/policyPrefs";
-import type { FsrsOptimizeStatus } from "../study/fsrsOptimizeTypes";
-import type { RescheduleSummary } from "../study/fsrsReplay";
-import { validateFsrsW } from "../study/fsrsWeights";
+import type { FsrsOptimizeStatus } from "../study/fsrs/fsrsOptimizeTypes";
+import type { RescheduleSummary } from "../study/fsrs/fsrsReplay";
+import { validateFsrsW } from "../study/fsrs/fsrsWeights";
 import {
   cardFromScheduleRow,
   emptyFsrsCard,

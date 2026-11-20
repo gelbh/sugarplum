@@ -36,7 +36,7 @@ import {
   occlusionStudyParts,
   studyFrontText,
 } from "../study/studyCardPresentation";
-import { useStudyNotesOverlay } from "../study/useStudyNotesOverlay";
+import { useStudyNotesOverlay } from "../study/notes/useStudyNotesOverlay";
 import { scopeLibraryBack } from "../study/scopeLibraryBack";
 import LearningSoftWait from "../study/LearningSoftWait";
 import SessionComplete from "../study/SessionComplete";

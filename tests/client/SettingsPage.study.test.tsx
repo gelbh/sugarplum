@@ -18,7 +18,7 @@ vi.mock("../../src/settings/FsrsWeightsSettings", () => ({
   },
 }));
 
-vi.mock("../../src/study/fsrsOptimizeClient", () => ({
+vi.mock("../../src/study/fsrs/fsrsOptimizeClient", () => ({
   maybeRunFsrsOptimize: vi.fn(async () => "skipped" as const),
 }));
 

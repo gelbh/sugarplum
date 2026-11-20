@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { stampDraftProvenancePages } from "../../src/study/excerptPages";
+import { stampDraftProvenancePages } from "../../src/study/notes/excerptPages";
 
 describe("stampDraftProvenancePages (worker generation)", () => {
   const pageTexts = [

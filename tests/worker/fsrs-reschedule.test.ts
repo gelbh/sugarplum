@@ -17,7 +17,7 @@ import {
 } from "../../worker/study/fsrsOptimize";
 import { applyDeferrals } from "../../worker/study/dueQueue";
 import { emptyFsrsCard } from "../../src/study/retrievability";
-import { schedulerForPrefs } from "../../src/study/fsrsFactory";
+import { schedulerForPrefs } from "../../src/study/fsrs/fsrsFactory";
 
 const customW = FSRS7_DEFAULT_WEIGHTS.map((x, i) => (i < 10 ? x * 2 : x));
 

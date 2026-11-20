@@ -4,7 +4,7 @@ import {
   pagesForExcerpt,
   resolveNotesDisplayPage,
   stampDraftProvenancePages,
-} from "../../src/study/excerptPages";
+} from "../../src/study/notes/excerptPages";
 
 describe("normalizeExcerptText", () => {
   it("trims and collapses whitespace", () => {

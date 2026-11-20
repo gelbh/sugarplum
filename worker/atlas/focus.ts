@@ -1,7 +1,7 @@
 import type { Env } from "../env";
 import type { AtlasEntryView, AtlasTier } from "../../src/atlas/types";
-import { scanFocus } from "../../src/atlas/focusScan";
-import { loadParasiteDataset } from "./datasets/parasites";
+import { scanFocus } from "../../src/atlas/hub/focusScan";
+import { loadParasiteDataset } from "./datasets/parasites/index";
 import { overlayAtlas, type OverlayRow } from "./merge";
 import {
   focusPackFingerprint,

@@ -4,7 +4,7 @@ import { type EntryRow } from "./entryOverlays";
 import {
   loadParasiteDataset,
   PARASITE_DATASET_VERSION,
-} from "./datasets/parasites";
+} from "./datasets/parasites/index";
 import type { DatasetEntry } from "./datasets/schema";
 import {
   diagnosticOwnershipIssue,

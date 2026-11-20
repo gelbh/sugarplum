@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bundledAtlasSource } from "../../src/atlas/bundledSource";
+import { bundledAtlasSource } from "../../src/atlas/hub/bundledSource";
 import {
   axis,
   buildLanes,
@@ -11,7 +11,7 @@ import {
   stageLanes,
   stageSpan,
   windowLit,
-} from "../../src/atlas/lifecycle";
+} from "../../src/atlas/lifecycle/lifecycle";
 
 const entries = await bundledAtlasSource.list("subj_1");
 const fields = (id: string) => entries.find((e) => e.id === id)!.fields;

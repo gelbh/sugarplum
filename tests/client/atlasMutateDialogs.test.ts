@@ -9,14 +9,14 @@ import {
   EditEntryDialog,
   EditLifecycleDialog,
   RecentlyDeletedDialog,
-} from "../../src/atlas/AtlasMutateDialogs";
+} from "../../src/atlas/mutate/AtlasMutateDialogs";
 import type { AtlasEntryView } from "../../src/atlas/types";
 import {
   emptyParasiteFields,
   lifecycleStageSchema,
 } from "../../worker/atlas/templates/parasite";
 
-vi.mock("../../src/atlas/apiSource", () => ({
+vi.mock("../../src/atlas/hub/apiSource", () => ({
   createEntry: vi.fn(),
   listDeletedEntries: vi.fn(),
   patchEntry: vi.fn(),
@@ -30,8 +30,8 @@ import {
   createEntry,
   listDeletedEntries,
   patchEntry,
-} from "../../src/atlas/apiSource";
-import { parseDays } from "../../src/atlas/StageListEditor";
+} from "../../src/atlas/hub/apiSource";
+import { parseDays } from "../../src/atlas/lifecycle/StageListEditor";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;

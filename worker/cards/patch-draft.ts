@@ -5,7 +5,7 @@ import {
   assertValidMcqOptions,
   OcclusionFrontSchema,
 } from "../generation/schema";
-import { mergeProvenancePagesIntoJson } from "../../src/study/notesProvenanceWrite";
+import { mergeProvenancePagesIntoJson } from "../../src/study/notes/notesProvenanceWrite";
 import {
   decodeStoredBack,
   encodeStoredBack,

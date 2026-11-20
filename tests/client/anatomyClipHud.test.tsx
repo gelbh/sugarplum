@@ -3,7 +3,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { afterEach, describe, expect, it } from "vitest";
-import AnatomyClipHud from "../../src/anatomy/AnatomyClipHud";
+import AnatomyClipHud from "../../src/anatomy/viewer/AnatomyClipHud";
 
 async function renderHud(props: {
   activeClipId: string | null;

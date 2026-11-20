@@ -2,9 +2,9 @@ import { Rating, type Grade } from "ts-fsrs";
 import {
   schedulerForPrefs,
   type FsrsPrefs,
-} from "../../src/study/fsrsFactory";
+} from "../../src/study/fsrs/fsrsFactory";
 import { DEFAULT_STUDY_PREFS } from "../../src/study/policyPrefs";
-import { normalizeSchedulerCard } from "../../src/study/fsrsReplay";
+import { normalizeSchedulerCard } from "../../src/study/fsrs/fsrsReplay";
 import {
   emptyFsrsCard,
   type FsrsSchedulerCard,

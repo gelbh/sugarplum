@@ -25,7 +25,7 @@ import { CardFaceMcqBody } from "./cardFaceMcq";
 import ClozePrompt from "./ClozePrompt";
 import { FaceOverline } from "./faceOverline";
 import KeyChip from "./KeyChip";
-import { StudyNotesButton } from "./StudyNotesButton";
+import { StudyNotesButton } from "./notes/StudyNotesButton";
 import {
   CARD_COLUMN_SX,
   FACE_ANSWER_TEXT_SX,

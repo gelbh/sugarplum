@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { highlightModeFor } from "../../src/anatomy/structureHighlight";
+import { highlightModeFor } from "../../src/anatomy/structure/structureHighlight";
 
 describe("highlightModeFor", () => {
   it("is none when neither selected nor hovered", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entryNameForms, textMentionsEntry } from "../../src/atlas/nameMatch";
+import { entryNameForms, textMentionsEntry } from "../../src/atlas/hub/nameMatch";
 
 describe("nameMatch separator normalization", () => {
   it("matches hyphenated and underscored forms against spaced haystacks", () => {

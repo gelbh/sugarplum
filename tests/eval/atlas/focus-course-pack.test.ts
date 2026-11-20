@@ -4,7 +4,7 @@ import {
   scanFocus,
   type FocusEntry,
   type FocusMaterial,
-} from "../../../src/atlas/focusScan";
+} from "../../../src/atlas/hub/focusScan";
 import type { SourceRole } from "../../../src/materials/sourceRole";
 
 type Fixture = {

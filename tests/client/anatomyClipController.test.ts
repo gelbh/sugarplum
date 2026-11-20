@@ -7,7 +7,7 @@ import {
 import {
   createClipController,
   findAnimation,
-} from "../../src/anatomy/clipController";
+} from "../../src/anatomy/viewer/clipController";
 
 function makeClip(name: string, duration = 1): AnimationClip {
   const track = new NumberKeyframeTrack(

@@ -3,7 +3,7 @@ import {
   clampLearningStep,
   clearSchedulerCache,
   schedulerForPrefs,
-} from "../../src/study/fsrsFactory";
+} from "../../src/study/fsrs/fsrsFactory";
 import { cardFromScheduleRow } from "../../src/study/retrievability";
 import { State } from "ts-fsrs";
 

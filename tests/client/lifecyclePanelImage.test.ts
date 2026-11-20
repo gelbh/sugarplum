@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lifecyclePanelImage } from "../../src/atlas/lifecyclePanelImage";
+import { lifecyclePanelImage } from "../../src/atlas/lifecycle/lifecyclePanelImage";
 import type { AtlasImageView } from "../../src/atlas/types";
 
 const img = (

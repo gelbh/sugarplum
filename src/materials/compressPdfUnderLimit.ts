@@ -8,7 +8,7 @@ import {
   listPdfPages,
   openPdfDocument,
   renderPageToCanvasAtScale,
-} from "../study/embedPdfEngine";
+} from "../study/notes/embedPdfEngine";
 import { fileSizeCapMb } from "./materialUploadLimits";
 
 export type CompressPdfOk = { ok: true; file: File };

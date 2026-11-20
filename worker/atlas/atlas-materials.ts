@@ -1,6 +1,6 @@
 import type { Env } from "../env";
 import { isSourceRole, type SourceRole } from "../../src/materials/sourceRole";
-import { type FocusMaterial } from "../../src/atlas/focusScan";
+import { type FocusMaterial } from "../../src/atlas/hub/focusScan";
 import { extractPdfPages } from "../materials/extract-pdf";
 import {
   applyOcrSidecar,

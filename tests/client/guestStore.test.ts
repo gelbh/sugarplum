@@ -1221,7 +1221,7 @@ describe("guest store", () => {
 
   it("save and reset weights reschedule cards with review history", async () => {
     const { FSRS7_DEFAULT_WEIGHTS } = await import("ts-fsrs/models/fsrs-7");
-    const { replayCardFromLogs } = await import("../../src/study/fsrsReplay");
+    const { replayCardFromLogs } = await import("../../src/study/fsrs/fsrsReplay");
     const { scheduleColumnsFromCard } =
       await import("../../src/study/retrievability");
     enterGuest(storage);

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { enrichGuestReviewLogs } from "../../src/guest/enrichScheduledDays";
 import type { GuestReviewLog } from "../../src/guest/storeTypes";
-import { clearSchedulerCache } from "../../src/study/fsrsFactory";
+import { clearSchedulerCache } from "../../src/study/fsrs/fsrsFactory";
 
 describe("enrichGuestReviewLogs", () => {
   beforeEach(() => {

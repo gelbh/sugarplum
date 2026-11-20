@@ -5,7 +5,7 @@ import {
   ensureGuestStore,
   guestGetFsrsOptimizeStatus,
 } from "../../src/guest/store";
-import { FSRS_MIN_REVIEWS } from "../../src/study/fsrsOptimizeConstants";
+import { FSRS_MIN_REVIEWS } from "../../src/study/fsrs/fsrsOptimizeConstants";
 
 vi.mock("../../src/guest/session", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/guest/session")>();
@@ -15,7 +15,7 @@ vi.mock("../../src/guest/session", async (importOriginal) => {
   };
 });
 
-vi.mock("../../src/study/fsrsOptimize.worker?worker", () => {
+vi.mock("../../src/study/fsrs/fsrsOptimize.worker?worker", () => {
   class FakeWorker {
     onmessage: ((ev: MessageEvent) => void) | null = null;
     onerror: ((err: ErrorEvent) => void) | null = null;
@@ -58,7 +58,7 @@ describe("guest maybeRunFsrsOptimize", () => {
     clearGuestStore(storage);
     enterGuest(storage);
     ensureGuestStore(storage);
-    const mod = await import("../../src/study/fsrsOptimizeClient");
+    const mod = await import("../../src/study/fsrs/fsrsOptimizeClient");
     mod.resetFsrsOptimizeClientGuardsForTests();
   });
 
@@ -81,7 +81,7 @@ describe("guest maybeRunFsrsOptimize", () => {
     storage.setItem(STORE_KEY, JSON.stringify(raw));
 
     const { maybeRunFsrsOptimize } = await import(
-      "../../src/study/fsrsOptimizeClient"
+      "../../src/study/fsrs/fsrsOptimizeClient"
     );
     expect(await maybeRunFsrsOptimize()).toBe("ran");
     expect(guestGetFsrsOptimizeStatus(storage).hasCustomW).toBe(true);
@@ -90,7 +90,7 @@ describe("guest maybeRunFsrsOptimize", () => {
 
   it("skips when below floor", async () => {
     const { maybeRunFsrsOptimize } = await import(
-      "../../src/study/fsrsOptimizeClient"
+      "../../src/study/fsrs/fsrsOptimizeClient"
     );
     expect(await maybeRunFsrsOptimize()).toBe("skipped");
   });
@@ -114,7 +114,7 @@ describe("guest maybeRunFsrsOptimize", () => {
     storage.setItem(STORE_KEY, JSON.stringify(raw));
 
     const { runFsrsOptimizeTrainNow } = await import(
-      "../../src/study/fsrsOptimizeClient"
+      "../../src/study/fsrs/fsrsOptimizeClient"
     );
     await runFsrsOptimizeTrainNow();
     const status = guestGetFsrsOptimizeStatus(storage);

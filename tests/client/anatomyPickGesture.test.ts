@@ -5,7 +5,7 @@ import {
   movementExceeded,
   pickThresholdForPointerType,
   shouldCommitPick,
-} from "../../src/anatomy/pickGesture";
+} from "../../src/anatomy/viewer/pickGesture";
 
 describe("movementExceeded", () => {
   it("is false at exactly the threshold", () => {

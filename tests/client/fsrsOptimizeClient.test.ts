@@ -14,7 +14,7 @@ vi.mock("../../src/api/client", () => ({
   putFsrsWeights: (w: number[]) => putWeights(w),
 }));
 
-vi.mock("../../src/study/fsrsOptimize.worker?worker", () => {
+vi.mock("../../src/study/fsrs/fsrsOptimize.worker?worker", () => {
   class FakeWorker {
     onmessage: ((ev: MessageEvent) => void) | null = null;
     onerror: ((err: ErrorEvent) => void) | null = null;
@@ -36,7 +36,7 @@ describe("maybeRunFsrsOptimize", () => {
     getStatus.mockReset();
     getCsv.mockReset();
     putWeights.mockReset();
-    const mod = await import("../../src/study/fsrsOptimizeClient");
+    const mod = await import("../../src/study/fsrs/fsrsOptimizeClient");
     mod.resetFsrsOptimizeClientGuardsForTests();
   });
 
@@ -49,7 +49,7 @@ describe("maybeRunFsrsOptimize", () => {
       eligible: false,
     });
     const { maybeRunFsrsOptimize } = await import(
-      "../../src/study/fsrsOptimizeClient"
+      "../../src/study/fsrs/fsrsOptimizeClient"
     );
     expect(await maybeRunFsrsOptimize()).toBe("skipped");
     expect(getCsv).not.toHaveBeenCalled();
@@ -67,7 +67,7 @@ describe("maybeRunFsrsOptimize", () => {
     putWeights.mockResolvedValue({ ok: true, wLength: 34 });
 
     const { maybeRunFsrsOptimize } = await import(
-      "../../src/study/fsrsOptimizeClient"
+      "../../src/study/fsrs/fsrsOptimizeClient"
     );
     const first = maybeRunFsrsOptimize();
     const second = maybeRunFsrsOptimize();

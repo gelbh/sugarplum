@@ -2,7 +2,7 @@ import type { CardDraftView, Deck, Subject } from "../api/client";
 import {
   DEFAULT_GUEST_FSRS_OPTIMIZE,
   normalizeGuestFsrsOptimize,
-} from "../study/guestFsrsOptimize";
+} from "../study/fsrs/guestFsrsOptimize";
 import { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "../study/policyPrefs";
 import type {
   GuestStore,

@@ -4,7 +4,7 @@ import {
   attachSectionClipPlanes,
   parkedSectionClipConstant,
   sectionClipConstant,
-} from "../../src/anatomy/anatomySectionClip";
+} from "../../src/anatomy/viewer/anatomySectionClip";
 
 describe("sectionClipConstant", () => {
   it("maps t=0 to minX face", () => {

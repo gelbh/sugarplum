@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   shouldReportStagePage,
   stageJumpKey,
-} from "../../src/study/notesStagePageSync";
+} from "../../src/study/notes/notesStagePageSync";
 
 describe("stageJumpKey", () => {
   it("joins pageCount and 0-based target", () => {

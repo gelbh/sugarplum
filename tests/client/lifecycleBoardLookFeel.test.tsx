@@ -5,8 +5,8 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { afterEach, describe, expect, it } from "vitest";
-import { bundledAtlasSource } from "../../src/atlas/bundledSource";
-import LifecycleBoard from "../../src/atlas/LifecycleBoard";
+import { bundledAtlasSource } from "../../src/atlas/hub/bundledSource";
+import LifecycleBoard from "../../src/atlas/lifecycle/LifecycleBoard";
 import { theme } from "../../src/theme";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =

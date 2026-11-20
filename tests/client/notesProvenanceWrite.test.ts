@@ -4,7 +4,7 @@ import {
   pagesToPersistAfterNavigate,
   pagesToPersistAfterRescue,
   pagesToPersistAfterSearchHits,
-} from "../../src/study/notesProvenanceWrite";
+} from "../../src/study/notes/notesProvenanceWrite";
 
 describe("pagesToPersistAfterRescue", () => {
   const scanned = [

@@ -30,7 +30,7 @@ import { failStaleRunningJobs } from "./generation/staleFail";
 import { isAllowedMutatingOrigin } from "./security/origin";
 import { getDb } from "./db/client";
 import { markOptimizePendingBatch } from "./study/fsrsOptimize";
-import { FSRS_CRON_MARK_LIMIT } from "../src/study/fsrsOptimizeConstants";
+import { FSRS_CRON_MARK_LIMIT } from "../src/study/fsrs/fsrsOptimizeConstants";
 
 export { GenerationWorkflow, FillAllWorkflow, GenerationSlotDO };
 
