@@ -232,6 +232,8 @@ export default function AtlasPage({
           }
         : prev,
     );
+    // Refetch so no older in-flight load or stale sibling rows decide hiding.
+    void reloadEntries();
   }
 
   let body;
