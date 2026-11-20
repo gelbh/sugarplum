@@ -69,7 +69,7 @@ async function pasteAtlasPack(
 
 describe("focusRefreshLeaseActive", () => {
   const now = 1_700_000_000_000;
-  const fp = "v1:abc";
+  const fp = "v2:abc";
 
   it("is active within TTL for timestamped leases", () => {
     expect(focusRefreshLeaseActive(`refreshing:${now}:${fp}`, now)).toBe(true);
@@ -741,7 +741,7 @@ describe("atlas focus empty materials and lazy GET", () => {
     )
       .bind(atlasId)
       .first<{ focus_pack_fingerprint: string | null }>();
-    expect(current?.focus_pack_fingerprint?.startsWith("v1:")).toBe(true);
+    expect(current?.focus_pack_fingerprint?.startsWith("v2:")).toBe(true);
 
     await env.DB.prepare(
       `INSERT OR REPLACE INTO atlas_entry_focus (
@@ -822,7 +822,7 @@ describe("atlas focus empty materials and lazy GET", () => {
     )
       .bind(atlasId)
       .first<{ focus_pack_fingerprint: string | null }>();
-    expect(fpRow?.focus_pack_fingerprint).toMatch(/^v1:/);
+    expect(fpRow?.focus_pack_fingerprint).toMatch(/^v2:/);
 
     await env.DB.prepare(
       `INSERT OR REPLACE INTO atlas_entry_focus (
