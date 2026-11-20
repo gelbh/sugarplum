@@ -1,6 +1,6 @@
 import type { Env } from "../env";
 import type { AuthVariables } from "../auth/session";
-import type { SourceRole } from "../../src/lib/sourceRole";
+import type { SourceRole } from "../../src/materials/sourceRole";
 
 export type AppEnv = { Bindings: Env; Variables: AuthVariables };
 

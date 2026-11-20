@@ -7,7 +7,7 @@ import Grid from "@mui/material/Grid";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import CalendarSuggestionsPanel from "../components/CalendarSuggestionsPanel";
+import CalendarSuggestionsPanel from "../calendar/CalendarSuggestionsPanel";
 import CreateMaterialStepper from "../materials/CreateMaterialStepper";
 import OperateSection from "../materials/OperateSection";
 import { ANKI_EXPORT_BUSY_LABEL } from "../export/runAnkiExport";

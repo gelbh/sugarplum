@@ -22,7 +22,7 @@ import { isGuest } from "../guest/session";
 import { useSession } from "../session/SessionContext";
 import { deriveJourney } from "../journey/derive";
 import type { JourneyView } from "../journey/types";
-import JourneyNextButton from "../components/JourneyNextButton";
+import JourneyNextButton from "../journey/JourneyNextButton";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import {

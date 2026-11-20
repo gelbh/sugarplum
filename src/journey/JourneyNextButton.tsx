@@ -4,7 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import NoteAddIcon from "@mui/icons-material/NoteAdd";
 import RateReviewIcon from "@mui/icons-material/RateReview";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import type { JourneyView } from "../journey/types";
+import type { JourneyView } from "./types";
 import type { FC } from "react";
 
 type Props = {

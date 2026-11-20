@@ -1,6 +1,6 @@
 import type { OcclusionStudyFace } from "./CardFace";
 import type { CardDraftView } from "../api/client";
-import { backAnswer, isOcclusionFront } from "../lib/draftCardModel";
+import { backAnswer, isOcclusionFront } from "../draftReview/draftCardModel";
 import {
   occlusionRevealAnswer,
   pickOcclusionRegion,

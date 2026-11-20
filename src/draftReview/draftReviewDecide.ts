@@ -8,8 +8,8 @@ import {
   undoReviewCard,
   type CardDraftView,
 } from "../api/client";
-import { cardPatchBody } from "../cards/cardPatchBody";
-import { REJECT_REASON_LABELS, type RejectReason } from "../lib/rejectReasons";
+import { cardPatchBody } from "./cardPatchBody";
+import { REJECT_REASON_LABELS, type RejectReason } from "./rejectReasons";
 import type {
   DraftReviewEnqueueUnlocks,
   DraftReviewNotice,

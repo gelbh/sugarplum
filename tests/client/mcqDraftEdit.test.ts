@@ -7,7 +7,7 @@ import {
   withMcqOptionAdded,
   withMcqOptionRemoved,
   withMcqOptionText,
-} from "../../src/deckHub/mcqDraftEdit";
+} from "../../src/draftReview/mcqDraftEdit";
 
 const draft = { options: ["Paris", "Rome", "Oslo"], correctIndex: 0 };
 

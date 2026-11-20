@@ -1,6 +1,6 @@
 import { HTTPException } from "hono/http-exception";
 import { normalizeTopicHints } from "../generation/topic-hints";
-import type { SourceRole } from "../../src/lib/sourceRole";
+import type { SourceRole } from "../../src/materials/sourceRole";
 import { MAX_PASTE_BYTES } from "./limits";
 import { resolveSourceRole } from "./upload";
 

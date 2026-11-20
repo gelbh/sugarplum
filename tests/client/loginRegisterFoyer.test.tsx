@@ -12,7 +12,7 @@ import {
 } from "../../src/session/SessionContext";
 import { theme } from "../../src/theme";
 
-vi.mock("../../src/components/TurnstileWidget", () => ({
+vi.mock("../../src/session/TurnstileWidget", () => ({
   default: function MockTurnstile() {
     return createElement("div", { "data-testid": "turnstile" });
   },
@@ -22,7 +22,7 @@ vi.mock("../../src/guest/enterGuest", () => ({
   continueAsGuest: vi.fn(),
 }));
 
-import LegalPage from "../../src/components/LegalPage";
+import LegalPage from "../../src/legal/LegalPage";
 import LoginPage from "../../src/routes/LoginPage";
 import RegisterPage from "../../src/routes/RegisterPage";
 

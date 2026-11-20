@@ -23,7 +23,7 @@ describe("study face mount", () => {
   it("public McqFace.tsx is gone", () => {
     let missing = false;
     try {
-      readFileSync(join(root, "src/components/McqFace.tsx"), "utf8");
+      readFileSync(join(root, "src/study/McqFace.tsx"), "utf8");
     } catch {
       missing = true;
     }

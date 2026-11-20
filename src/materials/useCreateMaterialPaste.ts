@@ -7,7 +7,7 @@ import {
 } from "../api/client";
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
-import type { SourceRole } from "../lib/sourceRole";
+import type { SourceRole } from "./sourceRole";
 
 type Args = {
   decks: Deck[];

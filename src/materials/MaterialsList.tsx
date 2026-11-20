@@ -21,7 +21,7 @@ import {
 } from "../api/client";
 import { materialDisplayName } from "./materialActions";
 import { partitionSplitSiblings } from "./splitSiblingGroups";
-import type { SourceRole } from "../lib/sourceRole";
+import type { SourceRole } from "./sourceRole";
 import EmptyNext from "../deckHub/EmptyNext";
 import MaterialRow from "./MaterialRow";
 import { shouldAutoFocusText } from "../shared/lib/autoFocusText";

@@ -37,7 +37,7 @@ import {
   writeOcrSidecar,
   type OcrPageText,
 } from "./ocr-sidecar";
-import { isSourceRole } from "../../src/lib/sourceRole";
+import { isSourceRole } from "../../src/materials/sourceRole";
 import type { Env } from "../env";
 import type { AppEnv, MaterialRow } from "./types";
 import { requireOwnedMaterial } from "./ownership";

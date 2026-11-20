@@ -66,3 +66,18 @@ export {
   diyOcclusionNotice,
   createFreePathImageNotice,
 } from "./learningObjectivesOffer";
+export {
+  SOURCE_ROLES,
+  SOURCE_ROLE_LABELS,
+  isSourceRole,
+  suggestSourceRole,
+  type SourceRole,
+} from "./sourceRole";
+export { SOURCE_ROLE_ICONS } from "./sourceRoleIcons";
+export {
+  OCR_EMPTY_PAGE_LIMIT,
+  OCR_TEXT_LAYER_SCAN_LIMIT,
+  ocrEmptyPdfPages,
+  ocrEmptyPdfPagesInWindow,
+  type PageText,
+} from "./pdfScanOcr";

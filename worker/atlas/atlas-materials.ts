@@ -1,5 +1,5 @@
 import type { Env } from "../env";
-import { isSourceRole, type SourceRole } from "../../src/lib/sourceRole";
+import { isSourceRole, type SourceRole } from "../../src/materials/sourceRole";
 import { type FocusMaterial } from "../../src/atlas/focusScan";
 import { extractPdfPages } from "../materials/extract-pdf";
 import {

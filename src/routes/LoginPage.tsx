@@ -8,11 +8,11 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { ApiError } from "../api/client";
-import GoogleSignInButton from "../components/GoogleSignInButton";
+import GoogleSignInButton from "../session/GoogleSignInButton";
 import PublicNightShell from "../app/PublicNightShell";
 import TurnstileWidget, {
   type TurnstileWidgetHandle,
-} from "../components/TurnstileWidget";
+} from "../session/TurnstileWidget";
 import { continueAsGuest } from "../guest/enterGuest";
 import { useSession } from "../session/SessionContext";
 

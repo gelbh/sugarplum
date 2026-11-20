@@ -50,7 +50,7 @@ import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import {
   SelectEnumItem,
   renderSelectEnumValue,
-} from "../components/SelectEnumItem";
+} from "../shared/ui/SelectEnumItem";
 
 const DEFAULT_STUDY_FORM: StudyPrefs = {
   introBudget: 20,

@@ -27,13 +27,13 @@ import {
   SOURCE_ROLES,
   SOURCE_ROLE_LABELS,
   type SourceRole,
-} from "../lib/sourceRole";
-import { SOURCE_ROLE_ICONS } from "../lib/sourceRoleIcons";
+} from "./sourceRole";
+import { SOURCE_ROLE_ICONS } from "./sourceRoleIcons";
 import { navigate } from "../shared/nav/navigate";
 import {
   SelectEnumItem,
   renderSelectEnumValue,
-} from "../components/SelectEnumItem";
+} from "../shared/ui/SelectEnumItem";
 
 export type MaterialRowProps = {
   material: MaterialListItem;

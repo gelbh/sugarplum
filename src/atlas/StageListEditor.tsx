@@ -16,7 +16,7 @@ import {
   lifecycleStageSchema,
   type ParasiteFields,
 } from "../../worker/atlas/templates/parasite";
-import { SelectEnumItem, renderSelectEnumValue } from "../components/SelectEnumItem";
+import { SelectEnumItem, renderSelectEnumValue } from "../shared/ui/SelectEnumItem";
 
 /** Learner drafts use the loose template stage (free-text host). */
 export type StageDraft = ParasiteFields["lifecycleStages"][number];

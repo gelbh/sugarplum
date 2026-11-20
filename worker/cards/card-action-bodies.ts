@@ -1,6 +1,6 @@
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { REJECT_REASONS } from "../../src/lib/rejectReasons";
+import { REJECT_REASONS } from "../../src/draftReview/rejectReasons";
 import { REGEN_CARD_TYPES } from "../generation/card-regen";
 
 export const RejectBodySchema = z.object({
