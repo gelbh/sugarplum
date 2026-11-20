@@ -126,6 +126,7 @@ export default function EntryView({
   const refs = useMemo(() => entryRefs(entry.refs), [entry.refs]);
   const titles = entryTitles(entry);
   const meta = entryMetaLine(entry.fields);
+  const notInPack = packHiddenIds.has(entry.id);
 
   const onKey = useEffectEvent((ev: KeyboardEvent) => {
     if (!isShortcutTarget(ev) || (ev.key !== "j" && ev.key !== "k")) return;
@@ -302,7 +303,7 @@ export default function EntryView({
               {meta}
             </Typography>
           ) : null}
-          {packHiddenIds.has(entry.id) ? (
+          {notInPack ? (
             <Alert
               severity="info"
               sx={{ mt: 1.25, py: 0, alignItems: "center" }}
@@ -312,7 +313,7 @@ export default function EntryView({
                     atlasId={atlasId}
                     entry={entry}
                     onUpdated={onFocusUpdated}
-                    pinLabel="Pin"
+                    pinLabel="Pin (always show)"
                   />
                 ) : undefined
               }
@@ -320,7 +321,7 @@ export default function EntryView({
               Not in your course pack
             </Alert>
           ) : null}
-          {atlasId && onFocusUpdated ? (
+          {atlasId && onFocusUpdated && !notInPack ? (
             <Box sx={{ mt: 1.25 }}>
               <MarkImportantControl
                 atlasId={atlasId}

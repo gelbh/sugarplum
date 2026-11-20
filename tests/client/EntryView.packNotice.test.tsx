@@ -91,17 +91,28 @@ describe("EntryView pack notice", () => {
   const named = entry("psoroptes-ovis", "Psoroptes ovis", true);
   const hidden = entry("toxocara-canis", "Toxocara canis", false);
 
-  it("opens a hidden entry with a notice and a Pin action", async () => {
+  const pinButtons = (host: HTMLElement) =>
+    [...host.querySelectorAll("button")].filter((b) =>
+      b.textContent?.startsWith("Pin"),
+    );
+
+  it("opens a hidden entry with a notice holding the only pin control", async () => {
     const host = await renderEntry(hidden, [named, hidden]);
-    expect(host.textContent).toContain("Not in your course pack");
-    const labels = [...host.querySelectorAll("button")].map((b) => b.textContent);
-    expect(labels).toContain("Pin");
-    expect(labels).toContain("Pin (always show)");
+    const notice = host.querySelector('[role="alert"]') as HTMLElement;
+    expect(notice.textContent).toContain("Not in your course pack");
+    const pins = pinButtons(host);
+    expect(pins).toHaveLength(1);
+    expect(pins[0]!.textContent).toBe("Pin (always show)");
+    expect(notice.contains(pins[0]!)).toBe(true);
   });
 
-  it("shows no notice for an entry in the pack", async () => {
+  it("shows no notice for an entry in the pack, only the header pin", async () => {
     const host = await renderEntry(named, [named, hidden]);
     expect(host.textContent).not.toContain("Not in your course pack");
+    const pins = pinButtons(host);
+    expect(pins).toHaveLength(1);
+    expect(pins[0]!.textContent).toBe("Pin (always show)");
+    expect(host.querySelector('[role="alert"]')).toBeNull();
   });
 
   it("keeps hidden entries out of the rail", async () => {
