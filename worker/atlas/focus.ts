@@ -246,6 +246,7 @@ export async function refreshAtlasFocus(
             "[]",
             row.override,
             now,
+            // Never hides: an empty pack never activates pack hiding.
             0,
           )
           .run();
