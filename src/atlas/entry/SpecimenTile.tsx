@@ -90,18 +90,27 @@ function FocusBadge({
           {entry.reason ?? "No Focus reason"}
         </Typography>
         {entry.focusMaterialIds.length > 0 ? (
-          <Stack component="ul" spacing={0.25} sx={{ m: 0, mt: 1, pl: 0, listStyle: "none" }}>
-            {entry.focusMaterialIds.map((id) => (
-              <Typography
-                key={id}
-                component="li"
-                variant="caption"
-                sx={{ fontFamily: "ui-monospace, monospace" }}
-              >
-                {id}
-              </Typography>
-            ))}
-          </Stack>
+          <>
+            <Typography
+              variant="caption"
+              component="p"
+              sx={{ mt: 1, color: "text.secondary", fontWeight: 600 }}
+            >
+              Named in your pack
+            </Typography>
+            <Stack component="ul" spacing={0.25} sx={{ m: 0, mt: 0.25, pl: 0, listStyle: "none" }}>
+              {entry.focusMaterialIds.map((id) => (
+                <Typography
+                  key={id}
+                  component="li"
+                  variant="caption"
+                  sx={{ fontFamily: "ui-monospace, monospace" }}
+                >
+                  {id}
+                </Typography>
+              ))}
+            </Stack>
+          </>
         ) : null}
         {atlasId && onFocusUpdated ? (
           <Box
