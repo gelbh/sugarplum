@@ -221,7 +221,6 @@ async function getRegenOp(
   }, env);
 }
 
-/** POST 202 then drain the unbound/test queue via processCardRegenOp. */
 async function enqueueAndProcess(
   env: ReturnType<typeof createTestEnv>,
   cardId = "c-mid",

@@ -46,10 +46,7 @@ export type ApplyRegenResult =
   | { ok: true; updatedAt: string; row: CardRow }
   | { ok: false; error: string };
 
-/**
- * Persist claim-aware regen draft onto one card row (fingerprint + usage).
- * Shared by the async op processor (formerly the sync POST body).
- */
+/** Persist claim-aware regen draft onto one card row (fingerprint + usage). */
 export async function applyClaimAwareRegenToCard(
   env: Env,
   args: {
@@ -186,8 +183,8 @@ async function markOpDone(db: D1Database, opId: string): Promise<"done"> {
 }
 
 /**
- * Run one card-regen queue message. Quota is reserved here (processor-time),
- * not at HTTP accept, so reconnect polls do not double-reserve.
+ * Quota is reserved here (processor-time), not at HTTP accept, so reconnect
+ * polls do not double-reserve.
  */
 export async function processCardRegenOp(
   env: Env,

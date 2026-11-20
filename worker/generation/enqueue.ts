@@ -104,7 +104,6 @@ export async function requeueGeneration(
   }
 }
 
-/** Enqueue a single-card regen op onto GENERATE_QUEUE when bound. */
 export async function enqueueCardRegen(
   env: Env,
   message: CardRegenQueueMessage,

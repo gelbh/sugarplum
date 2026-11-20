@@ -152,7 +152,6 @@ export function getCardRegenOp(opId: string) {
   return api<CardRegenOpView>(`/api/card-regen-ops/${opId}`);
 }
 
-/** Poll until done/failed or deadline (default 10 min). */
 export async function waitForCardRegenOp(
   opId: string,
   opts?: { pollMs?: number; deadlineMs?: number },
