@@ -207,12 +207,25 @@ export async function processCardRegenOp(
   if (op.status === "done") return "done";
   if (op.status === "failed") return "failed";
 
-  await db
+  // Sole-worker claim (export-style CAS): only one consumer leaves queued.
+  const claim = await db
     .prepare(
-      `UPDATE card_regen_ops SET status = ? WHERE id = ? AND status IN ('queued', 'running')`,
+      `UPDATE card_regen_ops SET status = ?
+       WHERE id = ? AND status = 'queued'`,
     )
     .bind("running", msg.opId)
     .run();
+  if ((claim.meta.changes ?? 0) === 0) {
+    const again = await db
+      .prepare(
+        `SELECT status FROM card_regen_ops WHERE id = ?`,
+      )
+      .bind(msg.opId)
+      .first<{ status: string }>();
+    if (again?.status === "done") return "done";
+    if (again?.status === "failed") return "failed";
+    return "busy";
+  }
 
   let row: CardRow;
   try {
@@ -270,73 +283,83 @@ export async function processCardRegenOp(
     return markOpFailed(db, msg.opId, message);
   }
 
-  const since = new Date(Date.now() - STUDY_STRUGGLE_WINDOW_MS).toISOString();
-  const [scheduleRow, againRow] = await Promise.all([
-    db
-      .prepare(`SELECT lapses FROM card_schedules WHERE card_id = ?`)
-      .bind(msg.cardId)
-      .first<{ lapses: number }>(),
-    db
-      .prepare(
-        `SELECT COUNT(*) AS again_14d FROM review_logs
-         WHERE card_id = ? AND rating = 1 AND reviewed_at >= ?`,
-      )
-      .bind(msg.cardId, since)
-      .first<{ again_14d: number }>(),
-  ]);
-  const studyStruggle = {
-    again_14d: Number(againRow?.again_14d) || 0,
-    lapses: Number(scheduleRow?.lapses) || 0,
-  };
-
-  const existingFront = parseJsonField<unknown>(row.front_json, null);
-  const regenType = msg.type as RegenCardType;
-  let generated: Awaited<ReturnType<typeof regenerateClaimAwareCard>>;
+  // Do not rethrow after reserve: consumer retry would double-consume free-gen.
   try {
-    generated = await regenerateClaimAwareCard({
-      excerpt,
-      materialText,
-      type: regenType,
-      existingFront:
-        typeof existingFront === "string" ? existingFront : undefined,
-      storedClaim,
-      studyStruggle,
-      llm: llmBundle.llm,
-      apiKey: llmBundle.apiKey,
+    const since = new Date(Date.now() - STUDY_STRUGGLE_WINDOW_MS).toISOString();
+    const [scheduleRow, againRow] = await Promise.all([
+      db
+        .prepare(`SELECT lapses FROM card_schedules WHERE card_id = ?`)
+        .bind(msg.cardId)
+        .first<{ lapses: number }>(),
+      db
+        .prepare(
+          `SELECT COUNT(*) AS again_14d FROM review_logs
+           WHERE card_id = ? AND rating = 1 AND reviewed_at >= ?`,
+        )
+        .bind(msg.cardId, since)
+        .first<{ again_14d: number }>(),
+    ]);
+    const studyStruggle = {
+      again_14d: Number(againRow?.again_14d) || 0,
+      lapses: Number(scheduleRow?.lapses) || 0,
+    };
+
+    const existingFront = parseJsonField<unknown>(row.front_json, null);
+    const regenType = msg.type as RegenCardType;
+    let generated: Awaited<ReturnType<typeof regenerateClaimAwareCard>>;
+    try {
+      generated = await regenerateClaimAwareCard({
+        excerpt,
+        materialText,
+        type: regenType,
+        existingFront:
+          typeof existingFront === "string" ? existingFront : undefined,
+        storedClaim,
+        studyStruggle,
+        llm: llmBundle.llm,
+        apiKey: llmBundle.apiKey,
+        provider: llmBundle.provider,
+      });
+    } catch (err) {
+      if (err instanceof ClaimAwareRegenError) {
+        await llmBundle.releaseQuota().catch((e) => console.error(e));
+        return markOpFailed(db, msg.opId, err.message);
+      }
+      if (err instanceof WorkersAiCapacityError) {
+        await llmBundle.releaseQuota().catch((e) => console.error(e));
+      }
+      // Other LLM errors: slot already spent (same as former sync 502 path).
+      const message =
+        err instanceof Error ? err.message : "Card regeneration failed";
+      return markOpFailed(db, msg.opId, message);
+    }
+
+    const applied = await applyClaimAwareRegenToCard(env, {
+      userId: msg.userId,
+      cardId: msg.cardId,
+      row,
+      draft: generated.draft,
+      usage: generated.usage,
+      path: llmBundle.path,
       provider: llmBundle.provider,
+      releaseQuota: llmBundle.releaseQuota,
     });
+    if (!applied.ok) {
+      return markOpFailed(db, msg.opId, applied.error);
+    }
+    return markOpDone(db, msg.opId);
   } catch (err) {
-    if (err instanceof ClaimAwareRegenError) {
-      await llmBundle.releaseQuota().catch((e) => console.error(e));
-      return markOpFailed(db, msg.opId, err.message);
-    }
-    if (err instanceof WorkersAiCapacityError) {
-      await llmBundle.releaseQuota().catch((e) => console.error(e));
-    }
+    // Unexpected post-reserve failure: refund so queue retry does not double-bill.
+    await llmBundle.releaseQuota().catch((e) => console.error(e));
     const message =
       err instanceof Error ? err.message : "Card regeneration failed";
     return markOpFailed(db, msg.opId, message);
   }
-
-  const applied = await applyClaimAwareRegenToCard(env, {
-    userId: msg.userId,
-    cardId: msg.cardId,
-    row,
-    draft: generated.draft,
-    usage: generated.usage,
-    path: llmBundle.path,
-    provider: llmBundle.provider,
-    releaseQuota: llmBundle.releaseQuota,
-  });
-  if (!applied.ok) {
-    return markOpFailed(db, msg.opId, applied.error);
-  }
-  return markOpDone(db, msg.opId);
 }
 
 /**
- * Fail abandoned `running` card regen ops older than the generation stale window.
- * Aligns UI busy state with failStaleRunningJobs timing.
+ * Fail abandoned `queued`/`running` card regen ops older than the generation
+ * stale window (lost queue messages, quiet consumer, isolate kill).
  */
 export async function failStaleCardRegenOps(
   env: Env,
@@ -347,13 +370,13 @@ export async function failStaleCardRegenOps(
   const limit = opts?.limit ?? 50;
   const { results } = await db
     .prepare(
-      `SELECT id, created_at FROM card_regen_ops
-       WHERE status = 'running'
+      `SELECT id, created_at, status FROM card_regen_ops
+       WHERE status IN ('queued', 'running')
        ORDER BY created_at ASC
        LIMIT ?`,
     )
     .bind(limit)
-    .all<{ id: string; created_at: string }>();
+    .all<{ id: string; created_at: string; status: string }>();
 
   let failed = 0;
   const finishedAt = new Date(nowMs).toISOString();
@@ -365,7 +388,7 @@ export async function failStaleCardRegenOps(
       .prepare(
         `UPDATE card_regen_ops
          SET status = ?, error = ?, finished_at = ?
-         WHERE id = ? AND status = 'running'`,
+         WHERE id = ? AND status IN ('queued', 'running')`,
       )
       .bind("failed", STALE_CARD_REGEN_FAIL_ERROR, finishedAt, row.id)
       .run();

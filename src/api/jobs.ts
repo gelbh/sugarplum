@@ -161,7 +161,10 @@ export async function waitForCardRegenOp(
   const deadline = Date.now() + (opts?.deadlineMs ?? 10 * 60 * 1000);
   while (Date.now() < deadline) {
     const op = await getCardRegenOp(opId);
-    if (op.status === "done" && op.card) return op.card;
+    if (op.status === "done") {
+      if (op.card) return op.card;
+      throw new ApiError(422, "Regeneration finished but card is unavailable");
+    }
     if (op.status === "failed") {
       throw new ApiError(422, op.error ?? "Could not regenerate card");
     }

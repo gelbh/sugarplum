@@ -78,10 +78,12 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
     );
     if (inflight.length === 0) return;
     let cancelled = false;
+    const ownedOpIds: string[] = [];
     void (async () => {
       for (const c of inflight) {
         const opId = c.regen_op!.id;
         resumedOpsRef.current.add(opId);
+        ownedOpIds.push(opId);
         setBusyId(c.id);
         try {
           await waitForCardRegenOp(opId);
@@ -94,13 +96,15 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
             );
           }
         } finally {
-          if (!cancelled) setBusyId(null);
+          setBusyId(null);
         }
       }
       if (!cancelled) await load({ clearError: false });
     })();
     return () => {
       cancelled = true;
+      for (const id of ownedOpIds) resumedOpsRef.current.delete(id);
+      setBusyId(null);
     };
   }, [cards, load]);
 

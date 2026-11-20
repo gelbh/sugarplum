@@ -30,6 +30,10 @@ export function cardRegenOpsFirst<T>(
     const row = state.ops.get(bound[0] as string);
     return (row ?? null) as T | null;
   }
+  if (normalized.startsWith("SELECT status FROM card_regen_ops WHERE id =")) {
+    const row = state.ops.get(bound[0] as string);
+    return (row ? { status: row.status } : null) as T | null;
+  }
   if (
     normalized.startsWith(
       "SELECT id, status, card_id FROM card_regen_ops WHERE card_id =",
@@ -73,16 +77,21 @@ export function cardRegenOpsAll<T>(
     return { results: rows as T[] };
   }
   if (
-    normalized.startsWith(
-      "SELECT id, created_at FROM card_regen_ops WHERE status = 'running'",
-    )
+    normalized.includes("FROM card_regen_ops") &&
+    normalized.includes("status IN") &&
+    normalized.includes("created_at") &&
+    !normalized.includes("card_id IN")
   ) {
     const limit = Number(bound[0] ?? 50);
     const rows = [...state.ops.values()]
-      .filter((o) => o.status === "running")
+      .filter((o) => o.status === "queued" || o.status === "running")
       .sort((a, b) => a.created_at.localeCompare(b.created_at))
       .slice(0, limit)
-      .map((o) => ({ id: o.id, created_at: o.created_at }));
+      .map((o) => ({
+        id: o.id,
+        created_at: o.created_at,
+        status: o.status,
+      }));
     return { results: rows as T[] };
   }
   return null;
@@ -116,12 +125,21 @@ export function cardRegenOpsRun(
   }
   if (
     normalized.startsWith(
+      "UPDATE card_regen_ops SET status = ? WHERE id = ? AND status = 'queued'",
+    ) ||
+    normalized.startsWith(
       "UPDATE card_regen_ops SET status = ? WHERE id = ? AND status IN",
     )
   ) {
     const [status, id] = bound as [string, string];
     const row = state.ops.get(id);
-    if (row && (row.status === "queued" || row.status === "running")) {
+    const allowQueuedOnly = normalized.includes("status = 'queued'");
+    if (
+      row &&
+      (allowQueuedOnly
+        ? row.status === "queued"
+        : row.status === "queued" || row.status === "running")
+    ) {
       state.ops.set(id, { ...row, status });
       return { success: true, meta: { changes: 1 } } as D1Result;
     }

@@ -28,6 +28,7 @@ import { GenerationWorkflow } from "./generation/workflow";
 import { FillAllWorkflow } from "./generation/fillAllWorkflow";
 import { GenerationSlotDO } from "./generation/GenerationSlotDO";
 import { failStaleRunningJobs } from "./generation/staleFail";
+import { failStaleCardRegenOps } from "./generation/card-regen-op";
 import { isAllowedMutatingOrigin } from "./security/origin";
 import { getDb } from "./db/client";
 import { markOptimizePendingBatch } from "./study/fsrsOptimize";
@@ -133,6 +134,7 @@ const worker = {
       );
     }
     await failStaleRunningJobs(env);
+    await failStaleCardRegenOps(env);
   },
 };
 

@@ -394,6 +394,29 @@ cardRoutes.post("/:id/regen", async (c) => {
     .bind(cardId)
     .first<{ id: string; status: string; card_id: string }>();
   if (existing) {
+    // Re-send when still queued so a lost send / dropped message can recover.
+    if (existing.status === "queued") {
+      await enqueueCardRegen(c.env, {
+        kind: "cardRegen",
+        opId: existing.id,
+        cardId,
+        userId,
+        type: regenType,
+      });
+      if (!c.env.GENERATE_QUEUE) {
+        c.executionCtx.waitUntil(
+          processCardRegenOp(c.env, {
+            kind: "cardRegen",
+            opId: existing.id,
+            cardId,
+            userId,
+            type: regenType,
+          }).catch((err) =>
+            console.error("inline card regen failed", existing.id, err),
+          ),
+        );
+      }
+    }
     return c.json(
       { op: { id: existing.id, status: existing.status, cardId } },
       202,

@@ -831,11 +831,12 @@ describe("POST /api/cards/:id/regen", () => {
     const secondBody = (await second.json()) as { op: { id: string } };
     expect(secondBody.op.id).toBe(firstBody.op.id);
     expect(env.getCardRegenOps()).toHaveLength(1);
+    // Second POST re-enqueues while still queued (lost-message recovery).
     expect(
       env.getQueueMessages().filter(
         (m) => (m as CardRegenQueueMessage).kind === "cardRegen",
       ),
-    ).toHaveLength(1);
+    ).toHaveLength(2);
   });
 
   it("processCardRegenOp is idempotent after done", async () => {
