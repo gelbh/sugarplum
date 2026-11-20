@@ -3,7 +3,7 @@ import {
   isSourceRole,
   suggestSourceRole,
   type SourceRole,
-} from "../../src/lib/sourceRole";
+} from "../../src/materials/sourceRole";
 
 export function resolveSourceRole(
   bodyRole: unknown,

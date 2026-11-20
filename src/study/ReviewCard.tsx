@@ -13,20 +13,20 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { CardDraftView, CardType, StudyRating } from "../api/client";
-import { CARD_TYPE_ICONS } from "../lib/cardTypeIcons";
+import { CARD_TYPE_ICONS } from "../shared/ui/cardTypeIcons";
 import {
   draftFaceKind,
   draftForType,
   TYPE_LABELS,
   typeSelectModel,
   type DraftEditorChange,
-} from "../lib/draftCardModel";
-import { SelectEnumItem, renderSelectEnumValue } from "../components/SelectEnumItem";
+} from "../draftReview/draftCardModel";
+import { SelectEnumItem, renderSelectEnumValue } from "../shared/ui/SelectEnumItem";
 import {
   REJECT_REASONS,
   REJECT_REASON_LABELS,
   type RejectReason,
-} from "../lib/rejectReasons";
+} from "../draftReview/rejectReasons";
 import { type ReviewSwipeDecision } from "./cardGestures";
 import { gradeColorVars } from "./gradeColors";
 import { StudyCardPlate } from "./CardFace";

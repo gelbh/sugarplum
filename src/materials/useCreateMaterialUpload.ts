@@ -38,7 +38,7 @@ import {
 import { runConsentedPdfCompressUpload } from "./runConsentedPdfCompressUpload";
 import { runConsentedPdfSplitUpload } from "./runConsentedPdfSplitUpload";
 import { runConsentedPptxSplitUpload } from "./runConsentedPptxSplitUpload";
-import type { SourceRole } from "../lib/sourceRole";
+import type { SourceRole } from "./sourceRole";
 import {
   ALLOWED_UPLOAD_MIMES,
   FIGURES_SKIPPED_NOTICE,

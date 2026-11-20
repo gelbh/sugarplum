@@ -5,7 +5,7 @@ import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { requeueGeneration } from "./enqueue";
 import { terminateGenerationWorkflow } from "./workflowLifecycle";
-import { isRejectReason, type RejectReason } from "../../src/lib/rejectReasons";
+import { isRejectReason, type RejectReason } from "../../src/draftReview/rejectReasons";
 import { buildAvoidPatternsFromRejected } from "./feedback-hints";
 import { getFreeGenUsage } from "./quota";
 import { failRunningJobIfStale } from "./staleFail";

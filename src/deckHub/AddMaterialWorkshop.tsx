@@ -7,7 +7,7 @@ import PptxSplitConsent from "../materials/PptxSplitConsent";
 import { CreateFlowNotice } from "../library/CreateFlowNotice";
 import { fileSizeCapMb } from "../materials/materialUploadLimits";
 import type { CardDraftView, CardType } from "../api/client";
-import type { DraftEditorChange } from "./DraftCardEditor";
+import type { DraftEditorChange } from "../draftReview/DraftCardEditor";
 import AddMaterialDiyPanel from "./AddMaterialDiyPanel";
 import AddMaterialMethodChooser, {
   METHOD_META,

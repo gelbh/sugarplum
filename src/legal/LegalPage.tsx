@@ -4,7 +4,7 @@ import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { LAST_UPDATED } from "../legal/contact";
+import { LAST_UPDATED } from "./contact";
 import PublicNightShell from "../app/PublicNightShell";
 
 const LEGAL_NAV = [

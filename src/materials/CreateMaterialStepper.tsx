@@ -30,8 +30,8 @@ import {
   SOURCE_ROLE_LABELS,
   suggestSourceRole,
   type SourceRole,
-} from "../lib/sourceRole";
-import { SOURCE_ROLE_ICONS } from "../lib/sourceRoleIcons";
+} from "./sourceRole";
+import { SOURCE_ROLE_ICONS } from "./sourceRoleIcons";
 import { CreateMaterialDeckStep } from "./CreateMaterialDeckStep";
 import { CreateMaterialDoneStep } from "./CreateMaterialDoneStep";
 import { useCreateMaterialDeckStep } from "./useCreateMaterialDeckStep";
@@ -41,7 +41,7 @@ import { FigureSuggestPanel } from "../deckHub/FigureSuggestPanel";
 import PdfCompressConsent from "./PdfCompressConsent";
 import PdfSplitConsent from "./PdfSplitConsent";
 import PptxSplitConsent from "./PptxSplitConsent";
-import { SelectEnumItem, renderSelectEnumValue } from "../components/SelectEnumItem";
+import { SelectEnumItem, renderSelectEnumValue } from "../shared/ui/SelectEnumItem";
 import { stepperSx } from "./stepperSx";
 
 type Props = {

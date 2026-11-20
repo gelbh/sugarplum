@@ -25,10 +25,10 @@ import {
   backAnswer,
   isOcclusionFront,
   type DraftEditorChange,
-} from "../lib/draftCardModel";
+} from "../draftReview/draftCardModel";
 import { FaceOverline, FlipCardPlate, StudyCardPlate } from "./CardFace";
 import ClozePrompt from "./ClozePrompt";
-import OcclusionRegionEditor from "../deckHub/OcclusionRegionEditor";
+import OcclusionRegionEditor from "../draftReview/OcclusionRegionEditor";
 import {
   FACE_ANSWER_TEXT_SX,
   FACE_BODY_SX,

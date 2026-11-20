@@ -1,4 +1,4 @@
-import { SOURCE_ROLE_LABELS, type SourceRole } from "../lib/sourceRole";
+import { SOURCE_ROLE_LABELS, type SourceRole } from "../materials/sourceRole";
 import { entryNameForms, textMentionsEntry } from "./nameMatch";
 import type { AtlasTier } from "./types";
 

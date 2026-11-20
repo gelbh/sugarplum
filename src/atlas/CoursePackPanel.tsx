@@ -12,13 +12,13 @@ import Typography from "@mui/material/Typography";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { ApiError, PPTX_MIME, resolveUploadContentType } from "../api/client";
-import { ocrEmptyPdfPages } from "../lib/pdfScanOcr";
+import { ocrEmptyPdfPages } from "../materials/pdfScanOcr";
 import {
   SOURCE_ROLE_LABELS,
   SOURCE_ROLES,
   suggestSourceRole,
   type SourceRole,
-} from "../lib/sourceRole";
+} from "../materials/sourceRole";
 import {
   completeAtlasMaterial,
   deleteAtlasMaterial,

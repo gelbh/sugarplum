@@ -1,7 +1,7 @@
 import {
   REJECT_REASON_LABELS,
   type RejectReason,
-} from "../../src/lib/rejectReasons";
+} from "../../src/draftReview/rejectReasons";
 
 const MAX_PATTERN_LEN = 80;
 const MAX_PATTERNS = 8;

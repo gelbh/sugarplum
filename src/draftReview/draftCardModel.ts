@@ -9,7 +9,7 @@ import {
   correctIndexFor,
   pickCorrect,
   type McqDraft,
-} from "../deckHub/mcqDraftEdit";
+} from "./mcqDraftEdit";
 
 export type DraftEditorChange = Pick<
   CardDraftView,

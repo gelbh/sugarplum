@@ -1,4 +1,4 @@
-import LegalPage from "../components/LegalPage";
+import LegalPage from "../legal/LegalPage";
 import { PrivacyContent } from "../legal/privacyContent";
 
 export default function PrivacyPage() {

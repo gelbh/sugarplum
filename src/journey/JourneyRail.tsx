@@ -2,7 +2,7 @@ import Box from "@mui/material/Box";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Stepper from "@mui/material/Stepper";
-import type { JourneyView } from "../journey/types";
+import type { JourneyView } from "./types";
 import { stepperSx } from "../materials/stepperSx";
 
 type Props = {

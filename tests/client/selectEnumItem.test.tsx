@@ -6,11 +6,11 @@ import type { CardType } from "../../src/api/client";
 import {
   SelectEnumItem,
   renderSelectEnumValue,
-} from "../../src/components/SelectEnumItem";
-import { CARD_TYPE_ICONS } from "../../src/lib/cardTypeIcons";
-import { TYPE_LABELS } from "../../src/lib/draftCardModel";
-import { SOURCE_ROLES } from "../../src/lib/sourceRole";
-import { SOURCE_ROLE_ICONS } from "../../src/lib/sourceRoleIcons";
+} from "../../src/shared/ui/SelectEnumItem";
+import { CARD_TYPE_ICONS } from "../../src/shared/ui/cardTypeIcons";
+import { TYPE_LABELS } from "../../src/draftReview/draftCardModel";
+import { SOURCE_ROLES } from "../../src/materials/sourceRole";
+import { SOURCE_ROLE_ICONS } from "../../src/materials/sourceRoleIcons";
 
 const CARD_TYPES = Object.keys(TYPE_LABELS) as CardType[];
 

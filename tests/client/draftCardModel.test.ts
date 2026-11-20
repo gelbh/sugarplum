@@ -6,8 +6,8 @@ import {
   mcqDraftFromCard,
   starterOcclusionFront,
   typeSelectModel,
-} from "../../src/lib/draftCardModel";
-import { pickCorrect } from "../../src/deckHub/mcqDraftEdit";
+} from "../../src/draftReview/draftCardModel";
+import { pickCorrect } from "../../src/draftReview/mcqDraftEdit";
 
 function card(partial: Partial<CardDraftView>): CardDraftView {
   return {

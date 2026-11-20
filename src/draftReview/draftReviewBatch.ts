@@ -6,7 +6,7 @@ import {
   rejectJobDrafts,
   type CardDraftView,
 } from "../api/client";
-import { cardPatchBody } from "../cards/cardPatchBody";
+import { cardPatchBody } from "./cardPatchBody";
 import type {
   DraftReviewEnqueueUnlocks,
   DraftReviewNotice,

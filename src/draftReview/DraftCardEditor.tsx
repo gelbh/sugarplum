@@ -24,7 +24,7 @@ import {
   parseClozeDiyFields,
   revealClozeFront,
 } from "../study/clozeFormat";
-import { CARD_TYPE_ICONS } from "../lib/cardTypeIcons";
+import { CARD_TYPE_ICONS } from "../shared/ui/cardTypeIcons";
 import {
   backAnswer,
   draftForType,
@@ -34,7 +34,7 @@ import {
   typeSelectModel,
   TYPE_LABELS,
   type DraftEditorChange,
-} from "../lib/draftCardModel";
+} from "./draftCardModel";
 import {
   MCQ_MAX,
   MCQ_MIN,
@@ -47,7 +47,7 @@ import {
 } from "./mcqDraftEdit";
 import ClozePrompt from "../study/ClozePrompt";
 import OcclusionRegionEditor from "./OcclusionRegionEditor";
-import { SelectEnumItem, renderSelectEnumValue } from "../components/SelectEnumItem";
+import { SelectEnumItem, renderSelectEnumValue } from "../shared/ui/SelectEnumItem";
 
 export { resolveEditorType, type DraftEditorChange };
 

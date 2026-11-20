@@ -5,7 +5,7 @@ import Typography from "@mui/material/Typography";
 import { FlipCardPlate, StudyCardPlate } from "../study/CardFace";
 import { CardFaceMcqBody } from "../study/cardFaceMcq";
 import ClozePrompt from "../study/ClozePrompt";
-import type { DraftPreviewFace } from "./DraftCardEditor";
+import type { DraftPreviewFace } from "../draftReview/DraftCardEditor";
 import {
   FACE_ANSWER_TEXT_SX,
   FACE_BODY_SX,
@@ -16,7 +16,7 @@ import {
   PROMPT_SX,
 } from "../study/studyFaceSx";
 import { clozeExtraSubtitle, extractClozeAnswers } from "../study/clozeFormat";
-import { backAnswer, isOcclusionFront } from "../lib/draftCardModel";
+import { backAnswer, isOcclusionFront } from "../draftReview/draftCardModel";
 import { mediaUrl, type CardDraftView } from "../api/client";
 import {
   occlusionTileFocusTransform,

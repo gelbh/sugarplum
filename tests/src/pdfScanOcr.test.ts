@@ -7,7 +7,7 @@ import {
   refillLookbehindScanEnd,
   selectEmptyPages,
   selectEmptyPagesInWindow,
-} from "../../src/lib/pdfScanOcr";
+} from "../../src/materials/pdfScanOcr";
 
 describe("selectEmptyPages", () => {
   it("keeps at most eight blanks and skips pages that already have text", () => {

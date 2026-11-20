@@ -5,7 +5,7 @@ import {
   type FocusEntry,
   type FocusMaterial,
 } from "../../../src/atlas/focusScan";
-import type { SourceRole } from "../../../src/lib/sourceRole";
+import type { SourceRole } from "../../../src/materials/sourceRole";
 
 type Fixture = {
   source: string;

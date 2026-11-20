@@ -29,7 +29,7 @@ import {
   parseUploadUrlRequest,
   requireR2UploadCredentials,
 } from "../materials/upload-request";
-import { isSourceRole } from "../../src/lib/sourceRole";
+import { isSourceRole } from "../../src/materials/sourceRole";
 import { refreshFocusBestEffort } from "./focus";
 import { persistAtlasPptxSidecarFromBytes } from "./pptx-sidecar";
 import type { AppEnv } from "./types";

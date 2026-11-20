@@ -13,7 +13,7 @@ import type { CardDraftView } from "../api/client";
 import {
   mcqDraftFromCard,
   type DraftEditorChange,
-} from "../lib/draftCardModel";
+} from "../draftReview/draftCardModel";
 import {
   MCQ_MAX,
   MCQ_MIN,
@@ -23,7 +23,7 @@ import {
   withMcqOptionRemoved,
   withMcqOptionText,
   type McqDraft,
-} from "../deckHub/mcqDraftEdit";
+} from "../draftReview/mcqDraftEdit";
 import { FaceOverline, StudyCardPlate } from "./CardFace";
 import {
   FACE_BODY_SX,

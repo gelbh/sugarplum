@@ -3,7 +3,7 @@ import {
   isSourceRole,
   suggestSourceRole,
   SOURCE_ROLES,
-} from "../../src/lib/sourceRole";
+} from "../../src/materials/sourceRole";
 
 describe("suggestSourceRole", () => {
   it("defaults to lecture for empty or unrelated names", () => {

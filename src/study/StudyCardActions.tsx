@@ -21,10 +21,10 @@ import {
   regenCard,
   type CardDraftView,
 } from "../api/client";
-import { cardPatchBody } from "../cards/cardPatchBody";
+import { cardPatchBody } from "../draftReview/cardPatchBody";
 import DraftCardEditor, {
   type DraftEditorChange,
-} from "../deckHub/DraftCardEditor";
+} from "../draftReview/DraftCardEditor";
 import { isGuest } from "../guest/session";
 import { hubDiyTypes } from "../deckHub/hubDiyCreate";
 import { dropPendingGrade } from "./pendingGrades";

@@ -59,7 +59,7 @@ import {
   type Subject,
   type SubjectKnowledge,
 } from "../api/client";
-import DraftCardEditor from "../deckHub/DraftCardEditor";
+import DraftCardEditor from "../draftReview/DraftCardEditor";
 import { isGuest } from "../guest/session";
 import { collectDeckImageKeys, hubDiyTypes } from "../deckHub/hubDiyCreate";
 import { ANKI_EXPORT_BUSY_LABEL } from "../export/runAnkiExport";

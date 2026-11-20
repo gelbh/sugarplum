@@ -10,7 +10,7 @@ import Typography from "@mui/material/Typography";
 import DraftCardEditor, {
   type DraftEditorChange,
   type DraftPreviewFace,
-} from "./DraftCardEditor";
+} from "../draftReview/DraftCardEditor";
 import { CreateFlowNoticeFade } from "../library/CreateFlowNotice";
 import type { CardDraftView, CardType } from "../api/client";
 import DiyCardPreview from "./DiyCardPreview";

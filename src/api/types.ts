@@ -1,6 +1,6 @@
 import type { GuestHubCardBody } from "../guest/store";
 import type { AchievementItem, UnlockView } from "../achievements/wire";
-import type { SourceRole } from "../lib/sourceRole";
+import type { SourceRole } from "../materials/sourceRole";
 
 export type {
   SubjectKnowledge,
