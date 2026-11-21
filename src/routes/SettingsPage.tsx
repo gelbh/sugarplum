@@ -24,7 +24,6 @@ import {
   type LlmSettings,
   type StudyPrefs,
 } from "../api/client";
-import MagnificCredits from "../achievements/MagnificCredits";
 import { navigate } from "../shared/nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { useSession } from "../session/SessionContext";
@@ -504,7 +503,6 @@ export default function SettingsPage() {
               >
                 View achievements
               </Button>
-              <MagnificCredits />
             </Stack>
           ) : (
             <Stack spacing={2}>
@@ -513,7 +511,7 @@ export default function SettingsPage() {
               }}>
                 {gamification
                   ? `Streak ${gamification.streakCurrent} · Level ${gamification.level} · ${gamification.xpTotal} XP`
-                  : "Track study milestones and optional weekly leaderboard."}
+                  : "Track study milestones and the global weekly XP board."}
               </Typography>
               <Button
                 variant="outlined"
@@ -534,7 +532,7 @@ export default function SettingsPage() {
                     value={displayNameInput}
                     onChange={(ev) => setDisplayNameInput(ev.target.value)}
                     fullWidth
-                    helperText="Shown on the weekly board when opted in."
+                    helperText="Shown on the global weekly XP board when opted in."
                   />
                   <TextField
                     label="Daily review goal"
@@ -559,7 +557,7 @@ export default function SettingsPage() {
                         color="primary"
                       />
                     }
-                    label="Show me on the weekly XP board"
+                    label="Show me on the global weekly XP board"
                   />
                   <Button
                     type="submit"
@@ -571,7 +569,6 @@ export default function SettingsPage() {
                   </Button>
                 </Stack>
               </Box>
-              <MagnificCredits />
             </Stack>
           )}
         </Paper>

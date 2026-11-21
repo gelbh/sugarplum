@@ -202,10 +202,28 @@ export function gamificationFirst<T>(
         (r) =>
           r.user_id === userId &&
           r.created_at >= start &&
-          r.created_at <= end,
+          r.created_at < end,
       )
       .reduce((sum, r) => sum + r.amount, 0);
     return { xp } as T;
+  }
+  if (
+    normalized.startsWith(
+      "SELECT board_opt_in, xp_total FROM user_gamification WHERE user_id =",
+    )
+  ) {
+    const row = state.userGamification.get(bound[0] as string);
+    return row
+      ? ({ board_opt_in: row.board_opt_in, xp_total: row.xp_total } as T)
+      : null;
+  }
+  if (
+    normalized.startsWith(
+      "SELECT board_opt_in FROM user_gamification WHERE user_id =",
+    )
+  ) {
+    const row = state.userGamification.get(bound[0] as string);
+    return row ? ({ board_opt_in: row.board_opt_in } as T) : null;
   }
   if (
     normalized.startsWith(
@@ -394,6 +412,24 @@ export function gamificationAll<T>(
     return { results: rows as T[] };
   }
   if (
+    normalized.includes("ug.xp_total AS xp") &&
+    normalized.includes("FROM user_gamification ug") &&
+    normalized.includes("board_opt_in = 1")
+  ) {
+    const results = [...state.userGamification.values()]
+      .filter((row) => row.board_opt_in === 1 && row.xp_total > 0)
+      .map((row) => ({
+        user_id: row.user_id,
+        display_name: row.display_name,
+        xp: row.xp_total,
+      }))
+      .sort((a, b) => {
+        if (b.xp !== a.xp) return b.xp - a.xp;
+        return a.user_id < b.user_id ? -1 : a.user_id > b.user_id ? 1 : 0;
+      });
+    return { results: results as T[] };
+  }
+  if (
     normalized.includes("FROM user_gamification ug") &&
     normalized.includes("INNER JOIN xp_ledger xl") &&
     normalized.includes("board_opt_in = 1")
@@ -419,8 +455,10 @@ export function gamificationAll<T>(
     }
     const results = [...byUser.values()]
       .filter((r) => r.xp > 0)
-      .sort((a, b) => b.xp - a.xp)
-      .slice(0, 50);
+      .sort((a, b) => {
+        if (b.xp !== a.xp) return b.xp - a.xp;
+        return a.user_id < b.user_id ? -1 : a.user_id > b.user_id ? 1 : 0;
+      });
     return { results: results as T[] };
   }
   if (

@@ -1,13 +1,14 @@
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import type { GamificationResponse } from "../api/client";
-import {
-  insightsBrandSerif,
-  insightsHeroPaperSx,
-} from "../insights/operatePaper";
+import { insightsBrandSerif } from "../insights/operatePaper";
+import { orchardOverviewSx } from "./orchardSurfaces";
 
 type Props = {
   gamification: GamificationResponse;
@@ -26,7 +27,7 @@ function AliceValue({
       sx={{
         fontFamily: insightsBrandSerif,
         fontWeight: 400,
-        fontSize: { xs: "2rem", sm: "2.35rem" },
+        fontSize: { xs: "1.85rem", sm: "2.1rem" },
         lineHeight: 1,
         letterSpacing: "0.01em",
         fontVariantNumeric: "tabular-nums",
@@ -39,27 +40,34 @@ function AliceValue({
 }
 
 function FreezeChip({ count }: { count: number }) {
+  const tip =
+    count === 1
+      ? "Covers one missed study day"
+      : "Each freeze covers one missed study day";
   return (
-    <Box
-      component="span"
-      sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        px: 1,
-        py: 0.25,
-        borderRadius: 999,
-        border: "1px solid",
-        borderColor: "rgba(196, 165, 116, 0.45)",
-        bgcolor: "rgba(196, 165, 116, 0.12)",
-        color: "secondary.main",
-        fontSize: "0.75rem",
-        fontWeight: 600,
-        letterSpacing: "0.02em",
-        lineHeight: 1.4,
-      }}
-    >
-      {count} freeze{count === 1 ? "" : "s"}
-    </Box>
+    <Tooltip title={tip}>
+      <Box
+        component="span"
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          px: 1,
+          py: 0.25,
+          borderRadius: 999,
+          border: "1px solid",
+          borderColor: "rgba(196, 165, 116, 0.45)",
+          bgcolor: "rgba(196, 165, 116, 0.12)",
+          color: "secondary.main",
+          fontSize: "0.75rem",
+          fontWeight: 600,
+          letterSpacing: "0.02em",
+          lineHeight: 1.4,
+          cursor: "help",
+        }}
+      >
+        {count} freeze{count === 1 ? "" : "s"}
+      </Box>
+    </Tooltip>
   );
 }
 
@@ -76,21 +84,21 @@ export default function OrchardOverview({ gamification }: Props) {
   const streakLive = gamification.streakCurrent > 0;
 
   return (
-    <Paper variant="outlined" sx={insightsHeroPaperSx}>
-      <Stack spacing={2.75}>
+    <Paper elevation={0} sx={orchardOverviewSx}>
+      <Stack spacing={2.25}>
         <Stack
           direction={{ xs: "column", sm: "row" }}
-          spacing={{ xs: 2.5, sm: 3.5 }}
+          spacing={{ xs: 2, sm: 2.75 }}
           sx={{ alignItems: { sm: "stretch" } }}
         >
-          <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0 }}>
+          <Stack spacing={0.6} sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               component="h2"
               sx={{
                 fontFamily: insightsBrandSerif,
                 fontWeight: 400,
                 letterSpacing: "0.03em",
-                fontSize: "1.05rem",
+                fontSize: "1rem",
                 color: "text.primary",
               }}
             >
@@ -134,9 +142,6 @@ export default function OrchardOverview({ gamification }: Props) {
                 Best {gamification.streakBest}
               </Typography>
               <FreezeChip count={gamification.streakFreezes} />
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                preserves one missed day each
-              </Typography>
             </Stack>
           </Stack>
 
@@ -147,23 +152,35 @@ export default function OrchardOverview({ gamification }: Props) {
               width: "1px",
               alignSelf: "stretch",
               bgcolor: "divider",
+              opacity: 0.7,
               flexShrink: 0,
             }}
           />
 
-          <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              component="h2"
-              sx={{
-                fontFamily: insightsBrandSerif,
-                fontWeight: 400,
-                letterSpacing: "0.03em",
-                fontSize: "1.05rem",
-                color: "text.primary",
-              }}
-            >
-              Daily goal
-            </Typography>
+          <Stack spacing={0.6} sx={{ flex: 1, minWidth: 0 }}>
+            <Stack direction="row" alignItems="center" spacing={0.25}>
+              <Typography
+                component="h2"
+                sx={{
+                  fontFamily: insightsBrandSerif,
+                  fontWeight: 400,
+                  letterSpacing: "0.03em",
+                  fontSize: "1rem",
+                  color: "text.primary",
+                }}
+              >
+                Daily goal
+              </Typography>
+              <Tooltip title="Optional volume target. Meeting it does not control your streak.">
+                <IconButton
+                  size="small"
+                  aria-label="About daily goal"
+                  sx={{ color: "text.secondary", p: 0.35 }}
+                >
+                  <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Tooltip>
+            </Stack>
             <Stack
               direction="row"
               spacing={1}
@@ -186,7 +203,7 @@ export default function OrchardOverview({ gamification }: Props) {
               color={goalMet ? "secondary" : "primary"}
               sx={{
                 mt: 0.5,
-                height: 10,
+                height: 8,
                 borderRadius: 999,
                 bgcolor: (t) =>
                   t.palette.mode === "dark"
@@ -197,12 +214,6 @@ export default function OrchardOverview({ gamification }: Props) {
                 },
               }}
             />
-            <Typography
-              variant="caption"
-              sx={{ color: "text.secondary", display: "block", pt: 0.25 }}
-            >
-              Optional volume target. Meeting it does not control your streak.
-            </Typography>
           </Stack>
         </Stack>
 
@@ -211,51 +222,34 @@ export default function OrchardOverview({ gamification }: Props) {
           sx={{
             height: "1px",
             bgcolor: "divider",
-            opacity: 0.85,
+            opacity: 0.65,
           }}
         />
 
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={{ xs: 0.5, sm: 2 }}
-          useFlexGap
-          sx={{
-            flexWrap: "wrap",
-            alignItems: { sm: "baseline" },
-            justifyContent: "space-between",
-          }}
+        <Typography
+          variant="body2"
+          sx={{ color: "rgba(232, 216, 199, 0.72)" }}
         >
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Today{" "}
-            <Box
-              component="span"
-              sx={{
-                fontFamily: insightsBrandSerif,
-                color: "secondary.main",
-                fontSize: "1.1rem",
-                mx: 0.35,
-              }}
-            >
-              {gamification.xpToday}
-            </Box>{" "}
-            XP · Level{" "}
-            <Box
-              component="span"
-              sx={{
-                fontFamily: insightsBrandSerif,
-                color: "primary.main",
-                fontSize: "1.1rem",
-                mx: 0.35,
-              }}
-            >
-              {gamification.level}
-            </Box>{" "}
-            · {gamification.xpTotal} XP total
-          </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Day boundary is UTC for now.
-          </Typography>
-        </Stack>
+          {gamification.xpToday > 0 ? (
+            <>
+              Today{" "}
+              <Box
+                component="span"
+                sx={{
+                  fontFamily: insightsBrandSerif,
+                  color: "secondary.main",
+                  fontSize: "1.05rem",
+                  mx: 0.35,
+                }}
+              >
+                {gamification.xpToday}
+              </Box>{" "}
+              XP
+            </>
+          ) : (
+            "No XP today yet"
+          )}
+        </Typography>
       </Stack>
     </Paper>
   );

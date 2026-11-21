@@ -22,7 +22,14 @@ import {
 } from "./evaluate";
 import { reconcileStreakWithFreeze } from "./streak";
 import { traitsForAchievement } from "./traits";
+import {
+  buildLeaderboard,
+  isoWeekWindow,
+  type LeaderboardResponse,
+} from "./weeklyBoard";
 import { ensureUserGamification } from "./xp";
+
+export { isoWeekWindow, type LeaderboardResponse };
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -54,12 +61,6 @@ type AchievementListRow = {
   completed_at: string | null;
 };
 
-type LeaderboardRow = {
-  user_id: string;
-  display_name: string | null;
-  xp: number;
-};
-
 export type GamificationResponse = {
   streakCurrent: number;
   streakBest: number;
@@ -75,43 +76,6 @@ export type GamificationResponse = {
   displayName: string | null;
   boardOptIn: boolean;
 };
-
-export type LeaderboardResponse = {
-  weekKey: string;
-  entries: Array<{
-    userId: string;
-    displayName: string | null;
-    xp: number;
-  }>;
-};
-
-/** ISO week key YYYY-Www and [start, end) UTC bounds for the week containing `d`. */
-export function isoWeekWindow(d = new Date()): {
-  weekKey: string;
-  startIso: string;
-  endIso: string;
-} {
-  const date = new Date(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
-  );
-  const day = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() - day + 1);
-  const startIso = date.toISOString();
-
-  const end = new Date(date);
-  end.setUTCDate(end.getUTCDate() + 7);
-  const endIso = end.toISOString();
-
-  const thursday = new Date(date);
-  thursday.setUTCDate(thursday.getUTCDate() + 3);
-  const year = thursday.getUTCFullYear();
-  const yearStart = new Date(Date.UTC(year, 0, 1));
-  const week = Math.ceil(
-    ((thursday.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7,
-  );
-  const weekKey = `${year}-W${String(week).padStart(2, "0")}`;
-  return { weekKey, startIso, endIso };
-}
 
 async function xpTodayForUser(db: D1Database, userId: string, day: string) {
   const row = await db
@@ -284,34 +248,15 @@ gamificationRoutes.get("/gamification", async (c) => {
 });
 
 gamificationRoutes.get("/leaderboard/weekly", async (c) => {
-  await requireUser(c);
+  const userId = await requireUser(c);
   const db = getDb(c.env);
-  const { weekKey, startIso, endIso } = isoWeekWindow();
+  return c.json(await buildLeaderboard(db, userId, "week"));
+});
 
-  const { results } = await db
-    .prepare(
-      `SELECT ug.user_id, ug.display_name, COALESCE(SUM(xl.amount), 0) AS xp
-       FROM user_gamification ug
-       INNER JOIN users u ON u.id = ug.user_id
-       INNER JOIN xp_ledger xl ON xl.user_id = ug.user_id
-       WHERE ug.board_opt_in = 1
-         AND u.sandbox_of IS NULL
-         AND xl.created_at >= ?
-         AND xl.created_at < ?
-       GROUP BY ug.user_id, ug.display_name
-       ORDER BY xp DESC
-       LIMIT 50`,
-    )
-    .bind(startIso, endIso)
-    .all<LeaderboardRow>();
-
-  const entries = (results ?? []).map((row) => ({
-    userId: row.user_id,
-    displayName: row.display_name,
-    xp: Number(row.xp) || 0,
-  }));
-
-  return c.json({ weekKey, entries } satisfies LeaderboardResponse);
+gamificationRoutes.get("/leaderboard/all-time", async (c) => {
+  const userId = await requireUser(c);
+  const db = getDb(c.env);
+  return c.json(await buildLeaderboard(db, userId, "all"));
 });
 
 gamificationRoutes.patch("/gamification/settings", async (c) => {

@@ -40,8 +40,8 @@ export function cssFilterFromTraits(
   opts?: { locked?: boolean },
 ): string {
   if (opts?.locked) {
-    // Unripe warmth: dim + muted, not pure grayscale chrome.
-    return "brightness(0.72) saturate(0.48) sepia(0.22)";
+    // Soft silhouette: readable shape, not crushed black fruit.
+    return "brightness(0.78) saturate(0.22) contrast(0.92)";
   }
   const shine = SHINE[traits.shine] ?? SHINE.low;
   const colour = COLOUR[traits.colour] ?? { b: 1, s: 1 };

@@ -44,21 +44,27 @@ function ProgressLine({
   label,
   current,
   target,
+  compact = false,
 }: {
   label?: string;
   current: number;
   target: number;
+  compact?: boolean;
 }) {
   return (
-    <Box sx={{ mt: 1 }}>
+    <Box sx={{ mt: compact ? 0.25 : 0.5 }}>
       <LinearProgress
         variant="determinate"
         value={target > 0 ? Math.min(100, (current / target) * 100) : 0}
-        sx={{ height: 6, borderRadius: 1 }}
+        sx={{ height: compact ? 3 : 4, borderRadius: 1 }}
       />
-      <Typography variant="caption" sx={{
-        color: "text.secondary"
-      }}>
+      <Typography
+        variant="caption"
+        sx={{
+          color: "text.secondary",
+          fontSize: compact ? "0.65rem" : "0.7rem",
+        }}
+      >
         {label ? `${label} ` : ""}
         {current} / {target}
       </Typography>
@@ -102,9 +108,11 @@ const hoverCaptionSx = {
 function StatusCaption({
   color,
   children,
+  compact = false,
 }: {
   color: string;
   children: string;
+  compact?: boolean;
 }) {
   return (
     <Typography
@@ -112,8 +120,10 @@ function StatusCaption({
       color={color}
       sx={{
         display: "block",
-        mt: 0.5
-      }}>
+        mt: compact ? 0.2 : 0.5,
+        fontSize: compact ? "0.65rem" : undefined,
+      }}
+    >
       {children}
     </Typography>
   );
@@ -122,16 +132,22 @@ function StatusCaption({
 function RowStatus({
   state,
   progress,
+  compact = false,
 }: {
   state: RowState;
   progress: AchievementProgress;
+  compact?: boolean;
 }) {
   if (state === "unlocked") {
-    return <StatusCaption color="success.main">Unlocked</StatusCaption>;
+    return (
+      <StatusCaption color="success.main" compact={compact}>
+        Unlocked
+      </StatusCaption>
+    );
   }
   if (!progress) {
     return (
-      <StatusCaption color="text.secondary">
+      <StatusCaption color="text.secondary" compact={compact}>
         Progress tracked automatically
       </StatusCaption>
     );
@@ -142,6 +158,7 @@ function RowStatus({
         <ProgressLine
           current={progress.currentValue}
           target={progress.threshold}
+          compact={compact}
         />
       );
     case "composite":
@@ -153,10 +170,13 @@ function RowStatus({
               label={PART_LABEL[part.key]}
               current={part.current}
               target={part.target}
+              compact={compact}
             />
           ))}
           {state === "near" ? (
-            <StatusCaption color="primary.main">Almost there</StatusCaption>
+            <StatusCaption color="primary.main" compact={compact}>
+              Almost there
+            </StatusCaption>
           ) : null}
         </>
       );
@@ -173,21 +193,24 @@ export default function AchievementRow({
   staggerIndex,
   sheenOnce,
   descriptionMode = "always",
+  compact = false,
 }: {
   item: AchievementItem;
   staggerIndex: number;
   sheenOnce: boolean;
-  descriptionMode?: "always" | "hover";
+  descriptionMode?: "always" | "hover" | "never";
+  compact?: boolean;
 }) {
   const state = rowState(item);
   const unlocked = state === "unlocked";
+  const showDescription = descriptionMode !== "never";
   return (
     <Box
       tabIndex={descriptionMode === "hover" ? 0 : undefined}
       sx={{
         display: "flex",
-        gap: 1.5,
-        alignItems: "flex-start",
+        gap: compact ? 1 : 1.5,
+        alignItems: compact ? "center" : "flex-start",
         opacity: ROW_OPACITY[state],
         ...(unlocked
           ? {
@@ -204,30 +227,40 @@ export default function AchievementRow({
       <FruitMedal
         fruitType={item.def.fruitType}
         traits={item.traits}
-        size={48}
+        size={compact ? 32 : 48}
         locked={!unlocked}
         sheenOnce={sheenOnce}
       />
       <Box
         sx={{
           flex: 1,
-          minWidth: 0
-        }}>
-        <Typography variant="subtitle2" sx={{
-          fontWeight: 600
-        }}>
+          minWidth: 0,
+        }}
+      >
+        <Typography
+          variant="subtitle2"
+          sx={{
+            fontWeight: 600,
+            fontSize: compact ? "0.85rem" : undefined,
+            lineHeight: 1.25,
+          }}
+        >
           {item.def.title}
         </Typography>
-        <Typography
-          variant="caption"
-          className={descriptionMode === "hover" ? "medal-desc" : undefined}
-          sx={{
-            color: "text.secondary",
-            display: "block"
-          }}>
-          {RARITY_LABEL[item.def.rarity]} · {item.def.description}
-        </Typography>
-        <RowStatus state={state} progress={item.progress} />
+        {showDescription ? (
+          <Typography
+            variant="caption"
+            className={descriptionMode === "hover" ? "medal-desc" : undefined}
+            sx={{
+              color: "text.secondary",
+              display: "block",
+              fontSize: compact ? "0.72rem" : undefined,
+            }}
+          >
+            {RARITY_LABEL[item.def.rarity]} · {item.def.description}
+          </Typography>
+        ) : null}
+        <RowStatus state={state} progress={item.progress} compact={compact} />
       </Box>
     </Box>
   );
