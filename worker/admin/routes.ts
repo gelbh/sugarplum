@@ -7,6 +7,7 @@ import {
   usageFieldsFromProgress,
 } from "../generation/usage";
 import { requireAdmin } from "./requireAdmin";
+import { atlasCorrectionAdminRoutes } from "./atlas-corrections";
 import { runProvenanceBackfill } from "./provenance-backfill";
 import { runHealWipedFields } from "../atlas/heal-wiped-fields";
 import { runBackfillFieldOverrides } from "../atlas/backfill-field-overrides";
@@ -213,6 +214,8 @@ adminRoutes.post("/atlas/backfill-field-overrides", async (c) => {
   const opts = await readAtlasScopeBody(c);
   return c.json(await runBackfillFieldOverrides(getDb(c.env), opts));
 });
+
+adminRoutes.route("/atlas/corrections", atlasCorrectionAdminRoutes);
 
 adminRoutes.get("/users/:id", async (c) => {
   await requireAdmin(c);

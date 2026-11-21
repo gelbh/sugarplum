@@ -18,19 +18,31 @@ import {
   upsertEntryNote,
 } from "./notes";
 import {
+  assertCanonicalUnchanged,
+  currentEntryState,
+  enrichAtlasEntriesWithSuggestions,
+  loadOpenSuggestionDiff,
+  mergeSuggestionDiff,
+  parseSuggestionBody,
+  upsertOpenSuggestion,
+} from "./corrections";
+import {
   hasLearnerRefsOrImages,
   loadEntryRows,
   toOverlayRows,
   type EntryRow,
 } from "./entryOverlays";
-import { loadParasiteDataset } from "./datasets/parasites/index";
+import {
+  loadParasiteDataset,
+  PARASITE_DATASET_VERSION,
+} from "./datasets/parasites/index";
 import { emptyParasiteFields } from "./templates/parasite";
 import { applySandboxKeyPrefix, sandboxWriteUserId } from "../admin/sandbox-r2";
 import { createR2PutUrl } from "../materials/r2-presign";
 import { sha256Hex } from "../materials/content-hash";
 import { requireOwnedDeck } from "../materials/routes";
 import { enqueueGeneration } from "../generation/enqueue";
-import type { AppEnv } from "./types";
+import type { AppEnv, AtlasRow } from "./types";
 import { isUniqueViolation } from "../db/client";
 import {
   atlasMeta,
@@ -73,10 +85,11 @@ export const atlasItemRoutes = new Hono<AppEnv>();
 
 async function entryViewsWithNotes(
   db: D1Database,
-  atlasId: string,
+  atlas: AtlasRow,
   entries: Awaited<ReturnType<typeof enrichEntriesWithFocus>>,
 ) {
-  return enrichAtlasEntriesWithNotes(db, atlasId, entries);
+  const withNotes = await enrichAtlasEntriesWithNotes(db, atlas.id, entries);
+  return enrichAtlasEntriesWithSuggestions(db, atlas.user_id, withNotes);
 }
 
 function scheduleFocusRefresh(
@@ -116,7 +129,7 @@ atlasItemRoutes.get("/entries", async (c) => {
       skipMutatingRefresh,
     },
   );
-  const withNotes = await enrichAtlasEntriesWithNotes(db, atlas.id, entries);
+  const withNotes = await entryViewsWithNotes(db, atlas, entries);
   return c.json({ entries: withNotes, focusRefreshPending });
 });
 
@@ -124,9 +137,9 @@ atlasItemRoutes.get("/deleted", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const rows = await loadEntryRows(db, atlas.id);
   const overlays = await toOverlayRows(db, atlas.id, rows);
-  const entries = await enrichAtlasEntriesWithNotes(
+  const entries = await entryViewsWithNotes(
     db,
-    atlas.id,
+    atlas,
     deletedEntryViews(rows, overlays, datasetByKey()),
   );
   return c.json({ entries });
@@ -289,7 +302,7 @@ atlasItemRoutes.post("/entries", async (c) => {
     focus,
     await isFocusPackFresh(db, atlas.id),
   );
-  const view = (await entryViewsWithNotes(db, atlas.id, focused)).find(
+  const view = (await entryViewsWithNotes(db, atlas, focused)).find(
     (e) => e.id === row.id,
   );
   if (!view)
@@ -435,7 +448,7 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   const focus = await loadFocusMap(db, atlas.id);
   const views = await entryViewsWithNotes(
     db,
-    atlas.id,
+    atlas,
     enrichEntriesWithFocus(
       overlayAtlas(loadParasiteDataset().entries, overlays),
       focus,
@@ -482,7 +495,7 @@ atlasItemRoutes.patch("/entries/:entryId/focus", async (c) => {
   const focus = await loadFocusMap(db, atlas.id);
   const entries = await entryViewsWithNotes(
     db,
-    atlas.id,
+    atlas,
     enrichEntriesWithFocus(
       overlayAtlas(loadParasiteDataset().entries, overlays),
       focus,
@@ -529,7 +542,7 @@ atlasItemRoutes.put("/entries/:entryId/note", async (c) => {
   const focus = await loadFocusMap(db, atlas.id);
   const entries = await entryViewsWithNotes(
     db,
-    atlas.id,
+    atlas,
     enrichEntriesWithFocus(
       overlayAtlas(loadParasiteDataset().entries, overlays),
       focus,
@@ -558,7 +571,7 @@ atlasItemRoutes.delete("/entries/:entryId/note", async (c) => {
   const focus = await loadFocusMap(db, atlas.id);
   const entries = await entryViewsWithNotes(
     db,
-    atlas.id,
+    atlas,
     enrichEntriesWithFocus(
       overlayAtlas(loadParasiteDataset().entries, overlays),
       focus,
@@ -568,6 +581,60 @@ atlasItemRoutes.delete("/entries/:entryId/note", async (c) => {
   const view = entries.find((e) => focusEntryKey(e) === entryKey);
   if (!view) throw new HTTPException(404, { message: "Entry not found" });
   return c.json(view);
+});
+
+atlasItemRoutes.post("/entries/:entryId/suggestion", async (c) => {
+  const { atlas, db, userId } = await requireOwnedAtlas(
+    c,
+    requireParam(c, "atlasId"),
+  );
+  const entryId = requireParam(c, "entryId");
+  let raw: unknown;
+  try {
+    raw = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  const input = parseSuggestionBody(raw);
+
+  const resolved = await resolveEntry(db, atlas.id, entryId);
+  if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
+  if (resolved.kind === "row" && resolved.row.deleted_at) {
+    throw new HTTPException(409, { message: "Entry is deleted" });
+  }
+  const row = resolved.kind === "row" ? resolved.row : null;
+  const originKey =
+    resolved.kind === "dataset" ? resolved.entry.key : resolved.row.origin_key;
+  const base = originKey ? datasetByKey().get(originKey) : undefined;
+  if (!base) {
+    throw new HTTPException(400, {
+      message: "Only built-in parasites take correction suggestions",
+    });
+  }
+  assertCanonicalUnchanged(input.canonicalName, base, row);
+
+  // Only this save's keys, valued from storage, merged into the open row.
+  const diff = mergeSuggestionDiff(
+    await loadOpenSuggestionDiff(db, userId, base.key),
+    base,
+    currentEntryState(base, row),
+    input.keys,
+  );
+  if (Object.keys(diff).length === 0) {
+    throw new HTTPException(400, { message: "No changes from the dataset" });
+  }
+  await upsertOpenSuggestion(db, {
+    id: newId(),
+    userId,
+    atlasId: atlas.id,
+    originKey: base.key,
+    datasetVersion: PARASITE_DATASET_VERSION,
+    diff,
+    note: input.note,
+    sourceUrl: input.sourceUrl,
+    now: nowIso(),
+  });
+  return c.json({ status: "open" as const, diff });
 });
 
 atlasItemRoutes.post("/entries/:entryId/soft-delete", async (c) => {

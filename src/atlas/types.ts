@@ -23,6 +23,26 @@ export type AtlasImageView = {
   isHero: boolean;
 };
 
+export type CorrectionStatus = "open" | "accepted" | "rejected";
+
+/** `{ field: { from, to } }`; `from` is the bundled dataset value. */
+export type CorrectionDiff = Record<string, { from: unknown; to: unknown }>;
+
+export type AdminAtlasCorrection = {
+  id: string;
+  originKey: string;
+  canonicalName: string;
+  commonName: string | null;
+  datasetVersion: number;
+  diff: CorrectionDiff;
+  note: string | null;
+  sourceUrl: string | null;
+  status: CorrectionStatus;
+  createdAt: string;
+  resolvedAt: string | null;
+  studentEmail: string;
+};
+
 export type AtlasEntryView = {
   id: string;
   originKey: string | null;
@@ -53,6 +73,8 @@ export type AtlasEntryView = {
   editedFields: FieldKey[];
   /** True when a dataset entry's common name is the learner's own (stored non-null and different). */
   commonNameEdited: boolean;
+  /** Latest correction suggestion for this parasite; absent on older payloads. */
+  suggestionStatus?: CorrectionStatus | null;
 };
 
 /** Sparse PATCH /entries/:entryId body: only keys the learner changed. */

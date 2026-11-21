@@ -28,6 +28,12 @@ import {
   initCardRegenOpsState,
   type CardRegenOpRow,
 } from "./card-regen-ops-test-handlers";
+import {
+  correctionSuggestionsAll,
+  correctionSuggestionsFirst,
+  correctionSuggestionsRun,
+  initCorrectionSuggestionsState,
+} from "./correction-suggestions-test-handlers";
 import type { AchievementDefSeed } from "./gamification-seeds";
 
 /** Mirrors SQL `lower(email) LIKE '%' || lower(q) || '%'` (% and _ wildcards). */
@@ -401,6 +407,7 @@ export function createTestEnv(opts?: {
   );
   const atlasState = initAtlasState();
   const cardRegenOpsState = initCardRegenOpsState();
+  const correctionState = initCorrectionSuggestionsState();
 
   // Test harness only: missing wrap key → fixed 32-byte test key.
   const wrapKey =
@@ -421,6 +428,12 @@ export function createTestEnv(opts?: {
         return stmt;
       },
       async first<T>(): Promise<T | null> {
+        const correctionEarly = correctionSuggestionsFirst<T>(
+          correctionState,
+          normalized,
+          bound,
+        );
+        if (correctionEarly !== undefined) return correctionEarly;
         const gamificationEarly = gamificationFirst<T>(
           gamificationState,
           normalized,
@@ -1518,6 +1531,13 @@ export function createTestEnv(opts?: {
         return null;
       },
       async all<T>(): Promise<{ results: T[] }> {
+        const correctionAllHit = correctionSuggestionsAll<T>(
+          correctionState,
+          users,
+          normalized,
+          bound,
+        );
+        if (correctionAllHit !== null) return correctionAllHit;
         const gamificationAllHit = gamificationAll<T>(
           gamificationState,
           normalized,
@@ -3082,6 +3102,12 @@ export function createTestEnv(opts?: {
         return { results: [] };
       },
       async run(): Promise<D1Result> {
+        const correctionRunHit = correctionSuggestionsRun(
+          correctionState,
+          normalized,
+          bound,
+        );
+        if (correctionRunHit !== null) return correctionRunHit;
         if (
           normalized.startsWith("UPDATE free_gen_usage SET used = used - 1")
         ) {
