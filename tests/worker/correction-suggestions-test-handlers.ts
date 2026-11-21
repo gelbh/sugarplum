@@ -3,7 +3,7 @@ import {
   RESOLVE_CORRECTION_SQL,
   SELECT_CORRECTION_STATUS_SQL,
   SELECT_OPEN_SUGGESTION_SQL,
-  SUGGESTION_STATUS_BY_ATLAS_SQL,
+  SUGGESTION_STATUS_BY_USER_SQL,
   UPSERT_OPEN_SUGGESTION_SQL,
 } from "../../worker/atlas/corrections";
 
@@ -33,7 +33,7 @@ export function initCorrectionSuggestionsState(): CorrectionSuggestionsState {
 const norm = (sql: string) => sql.replace(/\s+/g, " ").trim();
 const SELECT_OPEN = norm(SELECT_OPEN_SUGGESTION_SQL);
 const UPSERT = norm(UPSERT_OPEN_SUGGESTION_SQL);
-const STATUS_BY_ATLAS = norm(SUGGESTION_STATUS_BY_ATLAS_SQL);
+const STATUS_BY_USER = norm(SUGGESTION_STATUS_BY_USER_SQL);
 const ADMIN_LIST = norm(ADMIN_LIST_CORRECTIONS_SQL);
 const SELECT_STATUS = norm(SELECT_CORRECTION_STATUS_SQL);
 const RESOLVE = norm(RESOLVE_CORRECTION_SQL);
@@ -71,16 +71,19 @@ export function correctionSuggestionsAll<T>(
   normalized: string,
   bound: unknown[],
 ): { results: T[] } | null {
-  if (normalized === STATUS_BY_ATLAS) {
+  if (normalized === STATUS_BY_USER) {
     const rows = [...state.rows.values()]
-      .filter((r) => r.atlas_id === bound[0])
+      .filter((r) => r.user_id === bound[0])
+      // Stable sort over insertion order stands in for `rowid ASC`.
       .sort((a, b) => a.created_at.localeCompare(b.created_at))
       .map((r) => ({ origin_key: r.origin_key, status: r.status }));
     return { results: rows as T[] };
   }
   if (normalized === ADMIN_LIST) {
     const [status, limit] = bound as [string, number];
+    // Reversed insertion order under a stable sort stands in for `rowid DESC`.
     const rows = [...state.rows.values()]
+      .reverse()
       .filter((r) => r.status === status && users.has(r.user_id))
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
       .slice(0, limit)

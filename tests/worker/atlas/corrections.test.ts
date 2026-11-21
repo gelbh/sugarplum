@@ -10,7 +10,7 @@ import {
   RESOLVE_CORRECTION_SQL,
   SELECT_CORRECTION_STATUS_SQL,
   SELECT_OPEN_SUGGESTION_SQL,
-  SUGGESTION_STATUS_BY_ATLAS_SQL,
+  SUGGESTION_STATUS_BY_USER_SQL,
   UPSERT_OPEN_SUGGESTION_SQL,
   type CurrentEntryState,
 } from "../../../worker/atlas/corrections";
@@ -116,7 +116,7 @@ describe("0043 atlas_correction_suggestions (real SQLite)", () => {
       status: "rejected",
     });
     expect(
-      db.prepare(SUGGESTION_STATUS_BY_ATLAS_SQL).all("a1").map((r) => ({ ...r })),
+      db.prepare(SUGGESTION_STATUS_BY_USER_SQL).all("u1").map((r) => ({ ...r })),
     ).toEqual([
       { origin_key: "psoroptes-ovis", status: "rejected" },
       { origin_key: "psoroptes-ovis", status: "open" },
@@ -138,6 +138,34 @@ describe("0043 atlas_correction_suggestions (real SQLite)", () => {
       },
     ]);
     expect(db.prepare(ADMIN_LIST_CORRECTIONS_SQL).all("rejected", 10)).toHaveLength(1);
+  });
+
+  it("reads status per user, latest insert winning a created_at tie", () => {
+    const db = freshDb();
+    upsert(db, "s1", '{"a":1}', null, T0);
+    db.prepare(RESOLVE_CORRECTION_SQL).run("accepted", T0, "admin", "s1");
+    upsert(db, "s2", '{"b":2}', null, T0);
+    const statuses = db
+      .prepare(SUGGESTION_STATUS_BY_USER_SQL)
+      .all("u1")
+      .map((r) => ({ ...r }));
+    expect(statuses.at(-1)).toEqual({ origin_key: "psoroptes-ovis", status: "open" });
+  });
+
+  it("lists admin rows newest first, later insert first on a created_at tie", () => {
+    const db = freshDb();
+    for (const [id, key] of [
+      ["s1", "k1"],
+      ["s2", "k2"],
+      ["s3", "k3"],
+    ]) {
+      db.prepare(UPSERT_OPEN_SUGGESTION_SQL).run(id, "u1", "a1", key, 9, "{}", null, null, T0);
+    }
+    const ids = db
+      .prepare(ADMIN_LIST_CORRECTIONS_SQL)
+      .all("open", 10)
+      .map((r) => r.id);
+    expect(ids).toEqual(["s3", "s2", "s1"]);
   });
 
   it("rejects statuses outside open, accepted, rejected", () => {
@@ -200,6 +228,15 @@ describe("computeCorrectionDiff", () => {
     expect(computeCorrectionDiff(base, stored({}, []), ["aliases"])).toEqual({});
   });
 
+  it("dedupes learner aliases the way the entry view does", () => {
+    const base = psoroptes();
+    expect(
+      computeCorrectionDiff(base, stored({}, ["Scab mite", "scab-mite", " x "]), ["aliases"]),
+    ).toEqual({
+      aliases: { from: base.aliases, to: [...base.aliases, "Scab mite"] },
+    });
+  });
+
   it("compares objects by value, not key order", () => {
     const base = psoroptes();
     const withPpp = { ...base, fields: { ...base.fields, pppDays: { min: 10, max: 14 } } };
@@ -230,6 +267,30 @@ describe("mergeSuggestionDiff", () => {
       significance: { from: base.fields.significance, to: "Earlier" },
       majorOrgan: { from: base.fields.majorOrgan, to: "back" },
     });
+  });
+
+  it("revalues earlier keys from current storage and the current dataset", () => {
+    const base = psoroptes();
+    const prior = JSON.stringify({
+      significance: { from: "stale dataset", to: "Earlier" },
+    });
+    expect(
+      mergeSuggestionDiff(prior, base, stored({ significance: "Later", majorOrgan: "back" }), [
+        "majorOrgan",
+      ]),
+    ).toEqual({
+      significance: { from: base.fields.significance, to: "Later" },
+      majorOrgan: { from: base.fields.majorOrgan, to: "back" },
+    });
+  });
+
+  it("reads a malformed stored diff as empty", () => {
+    const base = psoroptes();
+    for (const bad of ["not json", "[1]", "null"]) {
+      expect(
+        mergeSuggestionDiff(bad, base, stored({ majorOrgan: "back" }), ["majorOrgan"]),
+      ).toEqual({ majorOrgan: { from: base.fields.majorOrgan, to: "back" } });
+    }
   });
 
   it("removes earlier keys whose stored value is back to the dataset", () => {
@@ -444,6 +505,20 @@ describe("POST /api/atlas/:atlasId/entries/:entryId/suggestion", () => {
     expect(unknown.status).toBe(404);
   });
 
+  it("sends an earlier suggested key at its current stored value", async () => {
+    const { env, atlasId } = await studentSetup();
+    const base = psoroptes();
+    await editAndSuggest(env, atlasId, { fields: { significance: "First" } });
+    await patchOnly(env, atlasId, { fields: { significance: "Second" } });
+    const res = await editAndSuggest(env, atlasId, {
+      fields: { majorOrgan: "skin of the back" },
+    });
+    expect(((await res.json()) as { diff: object }).diff).toEqual({
+      significance: { from: base.fields.significance, to: "Second" },
+      majorOrgan: { from: base.fields.majorOrgan, to: "skin of the back" },
+    });
+  });
+
   it("merges two ticked saves into one open diff", async () => {
     const { env, atlasId } = await studentSetup();
     const base = psoroptes();
@@ -575,6 +650,16 @@ describe("admin atlas corrections", () => {
       "accepted",
     );
     expect(await openRows(env)).toEqual([]);
+  });
+
+  it("lists a row with a malformed diff as an empty diff", async () => {
+    const { env, atlasId } = await studentSetup();
+    seedAdmin(env);
+    await env.DB.prepare(UPSERT_OPEN_SUGGESTION_SQL)
+      .bind("bad-1", "user-a", atlasId, "psoroptes-ovis", 9, "not json", null, null, T0)
+      .run();
+    const [row] = await openRows(env);
+    expect(row).toMatchObject({ id: "bad-1", diff: {} });
   });
 
   it("opens a fresh row after a resolved one", async () => {

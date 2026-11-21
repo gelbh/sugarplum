@@ -42,7 +42,7 @@ import { createR2PutUrl } from "../materials/r2-presign";
 import { sha256Hex } from "../materials/content-hash";
 import { requireOwnedDeck } from "../materials/routes";
 import { enqueueGeneration } from "../generation/enqueue";
-import type { AppEnv } from "./types";
+import type { AppEnv, AtlasRow } from "./types";
 import { isUniqueViolation } from "../db/client";
 import {
   atlasMeta,
@@ -85,11 +85,11 @@ export const atlasItemRoutes = new Hono<AppEnv>();
 
 async function entryViewsWithNotes(
   db: D1Database,
-  atlasId: string,
+  atlas: AtlasRow,
   entries: Awaited<ReturnType<typeof enrichEntriesWithFocus>>,
 ) {
-  const withNotes = await enrichAtlasEntriesWithNotes(db, atlasId, entries);
-  return enrichAtlasEntriesWithSuggestions(db, atlasId, withNotes);
+  const withNotes = await enrichAtlasEntriesWithNotes(db, atlas.id, entries);
+  return enrichAtlasEntriesWithSuggestions(db, atlas.user_id, withNotes);
 }
 
 function scheduleFocusRefresh(
@@ -129,7 +129,7 @@ atlasItemRoutes.get("/entries", async (c) => {
       skipMutatingRefresh,
     },
   );
-  const withNotes = await entryViewsWithNotes(db, atlas.id, entries);
+  const withNotes = await entryViewsWithNotes(db, atlas, entries);
   return c.json({ entries: withNotes, focusRefreshPending });
 });
 
@@ -139,7 +139,7 @@ atlasItemRoutes.get("/deleted", async (c) => {
   const overlays = await toOverlayRows(db, atlas.id, rows);
   const entries = await entryViewsWithNotes(
     db,
-    atlas.id,
+    atlas,
     deletedEntryViews(rows, overlays, datasetByKey()),
   );
   return c.json({ entries });
@@ -302,7 +302,7 @@ atlasItemRoutes.post("/entries", async (c) => {
     focus,
     await isFocusPackFresh(db, atlas.id),
   );
-  const view = (await entryViewsWithNotes(db, atlas.id, focused)).find(
+  const view = (await entryViewsWithNotes(db, atlas, focused)).find(
     (e) => e.id === row.id,
   );
   if (!view)
@@ -448,7 +448,7 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   const focus = await loadFocusMap(db, atlas.id);
   const views = await entryViewsWithNotes(
     db,
-    atlas.id,
+    atlas,
     enrichEntriesWithFocus(
       overlayAtlas(loadParasiteDataset().entries, overlays),
       focus,
@@ -495,7 +495,7 @@ atlasItemRoutes.patch("/entries/:entryId/focus", async (c) => {
   const focus = await loadFocusMap(db, atlas.id);
   const entries = await entryViewsWithNotes(
     db,
-    atlas.id,
+    atlas,
     enrichEntriesWithFocus(
       overlayAtlas(loadParasiteDataset().entries, overlays),
       focus,
@@ -542,7 +542,7 @@ atlasItemRoutes.put("/entries/:entryId/note", async (c) => {
   const focus = await loadFocusMap(db, atlas.id);
   const entries = await entryViewsWithNotes(
     db,
-    atlas.id,
+    atlas,
     enrichEntriesWithFocus(
       overlayAtlas(loadParasiteDataset().entries, overlays),
       focus,
@@ -571,7 +571,7 @@ atlasItemRoutes.delete("/entries/:entryId/note", async (c) => {
   const focus = await loadFocusMap(db, atlas.id);
   const entries = await entryViewsWithNotes(
     db,
-    atlas.id,
+    atlas,
     enrichEntriesWithFocus(
       overlayAtlas(loadParasiteDataset().entries, overlays),
       focus,

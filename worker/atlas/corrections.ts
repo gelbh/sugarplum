@@ -2,7 +2,13 @@ import { HTTPException } from "hono/http-exception";
 import type { DatasetEntry } from "./datasets/schema";
 import type { EntryRow } from "./entryOverlays";
 import { BUILT_IN_NAME_MESSAGE } from "./entry-helpers";
-import { mergeOverlayFields, parseLearnerAliases, sameFieldValue } from "./merge";
+import {
+  mergeOverlayFields,
+  parseLearnerAliases,
+  sameFieldValue,
+  tryParseObject,
+} from "./merge";
+import { cleanAliasList } from "../../src/atlas/hub/nameMatch";
 import { normalizeParasiteName } from "./names";
 import {
   PARASITE_FIELD_KEYS,
@@ -23,11 +29,12 @@ export const SELECT_OPEN_SUGGESTION_SQL =
 export const UPSERT_OPEN_SUGGESTION_SQL =
   "INSERT INTO atlas_correction_suggestions (id, user_id, atlas_id, origin_key, dataset_version, diff_json, note, source_url, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?) ON CONFLICT (user_id, origin_key) WHERE status = 'open' DO UPDATE SET atlas_id = excluded.atlas_id, dataset_version = excluded.dataset_version, diff_json = excluded.diff_json, note = COALESCE(excluded.note, atlas_correction_suggestions.note), source_url = COALESCE(excluded.source_url, atlas_correction_suggestions.source_url)";
 
-export const SUGGESTION_STATUS_BY_ATLAS_SQL =
-  "SELECT origin_key, status FROM atlas_correction_suggestions WHERE atlas_id = ? ORDER BY created_at ASC";
+// Per user, not per atlas: the open row's atlas_id moves on each upsert.
+export const SUGGESTION_STATUS_BY_USER_SQL =
+  "SELECT origin_key, status FROM atlas_correction_suggestions WHERE user_id = ? ORDER BY created_at ASC, rowid ASC";
 
 export const ADMIN_LIST_CORRECTIONS_SQL =
-  "SELECT s.id, s.origin_key, s.dataset_version, s.diff_json, s.note, s.source_url, s.status, s.created_at, s.resolved_at, u.email AS student_email FROM atlas_correction_suggestions s JOIN users u ON u.id = s.user_id WHERE s.status = ? ORDER BY s.created_at DESC LIMIT ?";
+  "SELECT s.id, s.origin_key, s.dataset_version, s.diff_json, s.note, s.source_url, s.status, s.created_at, s.resolved_at, u.email AS student_email FROM atlas_correction_suggestions s JOIN users u ON u.id = s.user_id WHERE s.status = ? ORDER BY s.created_at DESC, s.rowid DESC LIMIT ?";
 
 export const SELECT_CORRECTION_STATUS_SQL =
   "SELECT status FROM atlas_correction_suggestions WHERE id = ?";
@@ -113,16 +120,19 @@ export function parseSuggestionBody(raw: unknown): SuggestionInput {
   };
 }
 
-function withLearnerAliases(dataset: string[], learner: string[]): string[] {
-  const seen = new Set(dataset.map((a) => a.toLowerCase()));
-  const out = [...dataset];
-  for (const alias of learner) {
-    const key = alias.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(alias);
-  }
-  return out;
+/**
+ * Dataset aliases plus the learner aliases the entry view keeps (same
+ * cleanAliasList pass over dataset aliases, misspellings, then learner ones).
+ */
+function withLearnerAliases(base: DatasetEntry, learner: string[]): string[] {
+  const seeds = [...base.aliases, ...base.misspellings];
+  const shown = cleanAliasList([...seeds, ...learner]);
+  return [...base.aliases, ...shown.slice(cleanAliasList(seeds).length)];
+}
+
+/** A stored diff_json, or {} when it is unreadable. */
+export function parseStoredDiff(json: string | null): CorrectionDiff {
+  return (tryParseObject(json) ?? {}) as CorrectionDiff;
 }
 
 function fromTo(
@@ -134,7 +144,7 @@ function fromTo(
     return [base.commonName, current.commonName ?? base.commonName];
   }
   if (key === "aliases") {
-    return [base.aliases, withLearnerAliases(base.aliases, current.learnerAliases)];
+    return [base.aliases, withLearnerAliases(base, current.learnerAliases)];
   }
   if (!FIELD_KEYS.has(key)) return null;
   const field = key as keyof ParasiteFields;
@@ -158,8 +168,9 @@ export function computeCorrectionDiff(
 }
 
 /**
- * Repeat submission: this save's keys replace the same keys, earlier keys
- * keep their values, and keys now stored at the dataset value drop out.
+ * Repeat submission: the open row's keys stay and this save's keys join
+ * them. Every key is revalued (dataset now vs stored now); keys back at the
+ * dataset value drop out.
  */
 export function mergeSuggestionDiff(
   existingJson: string | null,
@@ -167,15 +178,8 @@ export function mergeSuggestionDiff(
   current: CurrentEntryState,
   keys: readonly string[],
 ): CorrectionDiff {
-  const prior: CorrectionDiff = existingJson
-    ? (JSON.parse(existingJson) as CorrectionDiff)
-    : {};
-  const merged = { ...prior, ...computeCorrectionDiff(base, current, keys) };
-  const stillEdited = computeCorrectionDiff(base, current, Object.keys(merged));
-  for (const key of Object.keys(merged)) {
-    if (!(key in stillEdited)) delete merged[key];
-  }
-  return merged;
+  const allKeys = new Set([...Object.keys(parseStoredDiff(existingJson)), ...keys]);
+  return computeCorrectionDiff(base, current, [...allKeys]);
 }
 
 /**
@@ -253,15 +257,15 @@ export async function upsertOpenSuggestion(
 
 export async function enrichAtlasEntriesWithSuggestions(
   db: D1Database,
-  atlasId: string,
+  userId: string,
   entries: AtlasEntryView[],
 ): Promise<AtlasEntryView[]> {
   const { results } = await db
-    .prepare(SUGGESTION_STATUS_BY_ATLAS_SQL)
-    .bind(atlasId)
+    .prepare(SUGGESTION_STATUS_BY_USER_SQL)
+    .bind(userId)
     .all<{ origin_key: string; status: CorrectionStatus }>();
   const statuses = new Map<string, CorrectionStatus>();
-  // ORDER BY created_at ASC: the latest row per parasite wins.
+  // Ascending order: the latest row per parasite wins.
   for (const row of results ?? []) statuses.set(row.origin_key, row.status);
   return entries.map((e) => ({
     ...e,

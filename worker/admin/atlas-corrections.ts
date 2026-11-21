@@ -4,6 +4,7 @@ import { getDb } from "../db/client";
 import { datasetByKey } from "../atlas/entry-helpers";
 import {
   ADMIN_LIST_CORRECTIONS_SQL,
+  parseStoredDiff,
   RESOLVE_CORRECTION_SQL,
   SELECT_CORRECTION_STATUS_SQL,
 } from "../atlas/corrections";
@@ -11,7 +12,6 @@ import { requireAdmin } from "./requireAdmin";
 import type { AppEnv } from "./types";
 import type {
   AdminAtlasCorrection,
-  CorrectionDiff,
   CorrectionStatus,
 } from "../../src/atlas/types";
 
@@ -59,7 +59,7 @@ atlasCorrectionAdminRoutes.get("/", async (c) => {
       canonicalName: entry?.canonicalName ?? row.origin_key,
       commonName: entry?.commonName ?? null,
       datasetVersion: row.dataset_version,
-      diff: JSON.parse(row.diff_json) as CorrectionDiff,
+      diff: parseStoredDiff(row.diff_json),
       note: row.note,
       sourceUrl: row.source_url,
       status: row.status,
