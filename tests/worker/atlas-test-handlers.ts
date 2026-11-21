@@ -248,14 +248,14 @@ export function atlasAll<T>(
     return { results: rows as T[] };
   }
 
-  // Backfill scan: legacy origin rows (soft-deleted included), per scope.
+  // scopedOriginRows (heal and backfill scans): origin rows per scope plus
+  // the optional deleted_at / field_overrides_json filters.
   if (
-    normalized.includes("FROM atlas_entries") &&
-    normalized.includes("origin_key IS NOT NULL") &&
-    normalized.includes("field_overrides_json IS NULL")
+    normalized.includes("FROM atlas_entries e") &&
+    normalized.includes("e.origin_key IS NOT NULL")
   ) {
     let candidates = [...state.entries.values()];
-    if (normalized.includes("a.user_id =")) {
+    if (normalized.includes("a.user_id = ?")) {
       const userId = bound[0] as string;
       const atlasIds = new Set(
         [...state.atlases.values()]
@@ -263,57 +263,15 @@ export function atlasAll<T>(
           .map((a) => a.id),
       );
       candidates = candidates.filter((e) => atlasIds.has(e.atlas_id));
-    } else if (normalized.includes("atlas_id =")) {
+    } else if (normalized.includes("e.atlas_id = ?")) {
       candidates = entriesForAtlas(state, bound[0] as string);
     }
     const rows = candidates.filter(
-      (e) => e.origin_key != null && e.field_overrides_json == null,
-    );
-    return { results: rows as T[] };
-  }
-
-  if (
-    normalized.includes("FROM atlas_entries e") &&
-    normalized.includes("JOIN atlases a") &&
-    normalized.includes("a.user_id =") &&
-    normalized.includes("origin_key IS NOT NULL")
-  ) {
-    const userId = bound[0] as string;
-    const atlasIds = new Set(
-      [...state.atlases.values()]
-        .filter((a) => a.user_id === userId)
-        .map((a) => a.id),
-    );
-    const rows = [...state.entries.values()].filter(
       (e) =>
-        atlasIds.has(e.atlas_id) &&
-        e.deleted_at == null &&
-        e.origin_key != null,
-    );
-    return { results: rows as T[] };
-  }
-
-  if (
-    normalized.includes("FROM atlas_entries") &&
-    normalized.includes("deleted_at IS NULL") &&
-    normalized.includes("origin_key IS NOT NULL") &&
-    !normalized.includes("atlas_id =") &&
-    !normalized.includes("a.user_id")
-  ) {
-    const rows = [...state.entries.values()].filter(
-      (e) => e.deleted_at == null && e.origin_key != null,
-    );
-    return { results: rows as T[] };
-  }
-
-  if (
-    normalized.includes("FROM atlas_entries WHERE atlas_id =") &&
-    normalized.includes("deleted_at IS NULL") &&
-    normalized.includes("origin_key IS NOT NULL")
-  ) {
-    const atlasId = bound[0] as string;
-    const rows = entriesForAtlas(state, atlasId).filter(
-      (e) => e.deleted_at == null && e.origin_key != null,
+        e.origin_key !== null &&
+        (!normalized.includes("e.deleted_at IS NULL") || e.deleted_at === null) &&
+        (!normalized.includes("e.field_overrides_json IS NULL") ||
+          e.field_overrides_json === null),
     );
     return { results: rows as T[] };
   }
@@ -494,7 +452,8 @@ export function atlasRun(
       origin_key,
       origin_version,
       edited_at,
-      deleted_at,
+      // Seeds may write a literal NULL instead of binding the last column.
+      deleted_at: deleted_at ?? null,
       // The 0042 columns default to NULL; when listed they are the last two bound values.
       ...(normalized.includes("field_overrides_json")
         ? {

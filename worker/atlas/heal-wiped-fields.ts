@@ -1,9 +1,41 @@
 import { healOverlayFieldsFromDataset } from "./heal-fields";
 import { parasiteFieldsSchema, type ParasiteFields } from "./templates/parasite";
-import { loadParasiteDataset } from "./datasets/parasites/index";
+import { datasetByKey } from "./entry-helpers";
 import { nowIso } from "./ownership";
 
 export { healOverlayFieldsFromDataset, isEmptyDefaultField } from "./heal-fields";
+
+export type OriginRowScope = { userId?: string; atlasId?: string };
+
+/**
+ * Dataset-origin rows (`origin_key IS NOT NULL`) in one atlas, one user's
+ * atlases, or everywhere. `columns` and `extraWhere` use the `e.` alias.
+ */
+export async function scopedOriginRows<T>(
+  db: D1Database,
+  scope: OriginRowScope,
+  columns: readonly string[],
+  extraWhere: string,
+): Promise<T[]> {
+  const select = `SELECT ${columns.map((c) => `e.${c}`).join(", ")} FROM atlas_entries e`;
+  const where = `e.origin_key IS NOT NULL AND ${extraWhere}`;
+  let stmt: D1PreparedStatement;
+  if (scope.atlasId) {
+    stmt = db
+      .prepare(`${select} WHERE e.atlas_id = ? AND ${where}`)
+      .bind(scope.atlasId);
+  } else if (scope.userId) {
+    stmt = db
+      .prepare(
+        `${select} JOIN atlases a ON a.id = e.atlas_id WHERE a.user_id = ? AND ${where}`,
+      )
+      .bind(scope.userId);
+  } else {
+    stmt = db.prepare(`${select} WHERE ${where}`);
+  }
+  const { results } = await stmt.all<T>();
+  return results ?? [];
+}
 
 export type HealWipedFieldsOpts = {
   dry_run: boolean;
@@ -31,61 +63,25 @@ export async function runHealWipedFields(
   db: D1Database,
   opts: HealWipedFieldsOpts,
 ): Promise<HealWipedFieldsResult> {
-  const byKey = new Map(
-    loadParasiteDataset().entries.map((e) => [e.key, e.fields]),
+  const byKey = datasetByKey();
+  const rows = await scopedOriginRows<OverlayScanRow>(
+    db,
+    opts,
+    ["id", "atlas_id", "origin_key", "fields_json", "field_overrides_json", "edited_at"],
+    "e.deleted_at IS NULL",
   );
-
-  let rows: OverlayScanRow[];
-  if (opts.atlasId) {
-    const result = await db
-      .prepare(
-        `SELECT id, atlas_id, origin_key, fields_json, field_overrides_json, edited_at
-         FROM atlas_entries
-         WHERE atlas_id = ? AND deleted_at IS NULL AND origin_key IS NOT NULL`,
-      )
-      .bind(opts.atlasId)
-      .all<OverlayScanRow>();
-    rows = result.results ?? [];
-  } else if (opts.userId) {
-    const result = await db
-      .prepare(
-        `SELECT e.id, e.atlas_id, e.origin_key, e.fields_json, e.field_overrides_json, e.edited_at
-         FROM atlas_entries e
-         JOIN atlases a ON a.id = e.atlas_id
-         WHERE a.user_id = ?
-           AND e.deleted_at IS NULL
-           AND e.origin_key IS NOT NULL`,
-      )
-      .bind(opts.userId)
-      .all<OverlayScanRow>();
-    rows = result.results ?? [];
-  } else {
-    const result = await db
-      .prepare(
-        `SELECT id, atlas_id, origin_key, fields_json, field_overrides_json, edited_at
-         FROM atlas_entries
-         WHERE deleted_at IS NULL AND origin_key IS NOT NULL`,
-      )
-      .all<OverlayScanRow>();
-    rows = result.results ?? [];
-  }
 
   let healed = 0;
   let skipped = 0;
   const ts = nowIso();
 
   for (const row of rows) {
-    // Defensive: mocks / loose SELECTs may return rows SQL would exclude.
-    if (!row.origin_key) {
-      skipped += 1;
-      continue;
-    }
     // Override rows read through to the dataset, so no field can be wiped.
-    if (row.field_overrides_json != null) {
+    if (row.field_overrides_json !== null) {
       skipped += 1;
       continue;
     }
-    const dataset = byKey.get(row.origin_key);
+    const dataset = byKey.get(row.origin_key)?.fields;
     if (!dataset) {
       skipped += 1;
       continue;
