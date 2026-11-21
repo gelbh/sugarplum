@@ -52,6 +52,8 @@ function overlayRow(
     }),
     edited_at: "2026-11-09T12:00:00.000Z",
     deleted_at: null,
+    field_overrides_json: null,
+    aliases_json: null,
     ...overrides,
   };
 }

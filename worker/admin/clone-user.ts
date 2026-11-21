@@ -862,8 +862,8 @@ async function cloneAtlases(
           entry.origin_version,
           entry.edited_at,
           entry.deleted_at,
-          entry.field_overrides_json ?? null,
-          entry.aliases_json ?? null,
+          entry.field_overrides_json,
+          entry.aliases_json,
         )
         .run();
     }

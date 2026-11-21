@@ -23,7 +23,7 @@ type LegacyRow = {
   origin_key: string | null;
   common_name: string | null;
   fields_json: string;
-  field_overrides_json?: string | null;
+  field_overrides_json: string | null;
 };
 
 const BATCH = 50;

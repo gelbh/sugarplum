@@ -122,7 +122,7 @@ describe("POST /api/admin/atlas/backfill-field-overrides", () => {
       dry_run: true,
     });
     const row = await overridesOf(env);
-    expect(row.field_overrides_json ?? null).toBeNull();
+    expect(row.field_overrides_json).toBeNull();
     expect(row.common_name).toBe(fasciola().commonName);
   });
 
@@ -225,7 +225,7 @@ describe("POST /api/admin/atlas/backfill-field-overrides", () => {
       dry_run: false,
     });
     const row = await overridesOf(env);
-    expect(row.field_overrides_json ?? null).toBeNull();
+    expect(row.field_overrides_json).toBeNull();
     expect(row.common_name).toBe(fasciola().commonName);
   });
 });

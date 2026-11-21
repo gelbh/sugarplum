@@ -25,9 +25,9 @@ export type OverlayRow = {
   edited_at: string | null;
   deleted_at: string | null;
   /** Dataset-origin rows: changed keys only. NULL on an origin row means a legacy full copy. */
-  field_overrides_json?: string | null;
-  /** JSON string array of learner aliases; null or absent means none. */
-  aliases_json?: string | null;
+  field_overrides_json: string | null;
+  /** JSON string array of learner aliases; NULL means none. */
+  aliases_json: string | null;
   refs?: AtlasEntryView["refs"];
   images?: AtlasImageView[];
 };
@@ -165,7 +165,7 @@ export function overlayOverrides(
   datasetFields: DatasetFields,
   row: OverlayFieldsRow,
 ): Partial<ParasiteFields> {
-  const legacy = row.field_overrides_json == null;
+  const legacy = row.field_overrides_json === null;
   const stored = legacy
     ? parseObject(row.fields_json, { rowId: row.id, column: "fields_json" })
     : parseObject(row.field_overrides_json, {

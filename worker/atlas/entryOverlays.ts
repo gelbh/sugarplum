@@ -14,8 +14,10 @@ export type EntryRow = {
   origin_version: number | null;
   edited_at: string | null;
   deleted_at: string | null;
-  field_overrides_json?: string | null;
-  aliases_json?: string | null;
+  /** Dataset-origin rows: changed keys only. NULL on an origin row means a legacy full copy. */
+  field_overrides_json: string | null;
+  /** JSON string array of learner aliases; NULL means none. */
+  aliases_json: string | null;
 };
 
 type RefRow = {
@@ -149,8 +151,8 @@ export async function toOverlayRows(
       fields_json: e.fields_json,
       edited_at: e.edited_at,
       deleted_at: e.deleted_at,
-      field_overrides_json: e.field_overrides_json ?? null,
-      aliases_json: e.aliases_json ?? null,
+      field_overrides_json: e.field_overrides_json,
+      aliases_json: e.aliases_json,
     };
     if (entryRefs && entryRefs.length > 0) row.refs = refViews(entryRefs);
     if (entryImages && entryImages.length > 0) {

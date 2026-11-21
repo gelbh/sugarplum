@@ -23,7 +23,7 @@ type OverlayScanRow = {
   atlas_id: string;
   origin_key: string;
   fields_json: string;
-  field_overrides_json?: string | null;
+  field_overrides_json: string | null;
   edited_at: string | null;
 };
 
