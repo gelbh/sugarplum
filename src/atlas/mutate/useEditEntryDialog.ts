@@ -101,6 +101,7 @@ export function useEditEntryDialog({
       const view = await resetEntryFields(atlasId, base.id, [field]);
       setBase(view);
       setDraft((d) => (d ? withFieldFromEntry(d, base, view, field) : d));
+      setFieldErrors(({ [field]: _cleared, ...rest }) => rest);
       onDone();
     } catch (err) {
       setError(errMessage(err, "Could not reset field"));

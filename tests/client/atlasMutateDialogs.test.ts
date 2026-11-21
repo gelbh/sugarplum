@@ -10,6 +10,7 @@ import {
   EditLifecycleDialog,
   RecentlyDeletedDialog,
 } from "../../src/atlas/mutate/AtlasMutateDialogs";
+import { PPP_ERROR } from "../../src/atlas/mutate/entryPatch";
 import type { AtlasEntryView } from "../../src/atlas/types";
 import {
   emptyParasiteFields,
@@ -591,6 +592,54 @@ describe("EditEntryDialog sections", () => {
     await submitForm();
     expect(patchEntry).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("shows a save error next to the actions, outside the scrolling content", async () => {
+    vi.mocked(patchEntry).mockRejectedValueOnce(new Error("boom"));
+    await render(editDialog());
+    await typeInto(fieldByLabel("Vector role"), "Vector");
+    await submitForm();
+    const alert = document.body.querySelector('[role="alert"]');
+    expect(alert?.textContent).toContain("Could not save entry");
+    expect(alert?.closest(".MuiDialogContent-root")).toBeNull();
+  });
+
+  it("clears the field error and a stale reset error after a successful reset", async () => {
+    const edited = entry({
+      originKey: "psoroptes-ovis",
+      editedFields: ["pppDays"],
+      fields: {
+        ...emptyParasiteFields(),
+        group: "arthropod",
+        pppDays: { min: 1, max: 2 },
+      } as AtlasEntryView["fields"],
+    });
+    vi.mocked(resetEntryFields)
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValueOnce({
+        ...edited,
+        editedFields: [],
+        fields: { ...edited.fields, pppDays: { min: 3, max: 4 } },
+      });
+    await render(editDialog({ entry: edited }));
+    await typeInto(fieldByLabel("PPP min (days)"), "");
+    await submitForm();
+    const biology = () => document.getElementById("atlas-edit-biology")!;
+    expect(biology().textContent).toContain(PPP_ERROR);
+    const reset = () =>
+      document.body.querySelector<HTMLButtonElement>(
+        'button[aria-label="Reset Prepatent period"]',
+      )!;
+    await act(async () => {
+      reset().click();
+    });
+    expect(document.body.textContent).toContain("Could not reset field");
+    await act(async () => {
+      reset().click();
+    });
+    expect(biology().textContent).not.toContain(PPP_ERROR);
+    expect(document.body.textContent).not.toContain("Could not reset field");
+    expect(fieldByLabel("PPP min (days)").value).toBe("3");
   });
 
   it("runs afterSave after patchEntry with the sent patch and renders footerExtra", async () => {

@@ -270,11 +270,6 @@ export function EditEntryDialog({
           dividers
           sx={{ flex: "1 1 auto", minHeight: 0, overflowY: "auto" }}
         >
-          {error ? (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          ) : null}
           {draft ? (
             <Stack spacing={3}>
               <Section id="names">
@@ -526,6 +521,11 @@ export function EditEntryDialog({
             </Stack>
           ) : null}
         </DialogContent>
+        {error ? (
+          <Alert severity="error" sx={{ mx: 3, mt: 1.5, flex: "none" }}>
+            {error}
+          </Alert>
+        ) : null}
         {footerExtra ? (
           <Box sx={{ px: 3, pt: 1.5, flex: "none" }}>{footerExtra}</Box>
         ) : null}
