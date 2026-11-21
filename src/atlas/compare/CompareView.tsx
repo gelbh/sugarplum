@@ -11,7 +11,15 @@ import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import AtlasImage, { heroImage } from "../hub/AtlasImage";
 import { compareRows, type CompareValue } from "./compare";
 import { entryTitles } from "../entry/entryTitles";
-import { byName, matchesSearch, pppLabel, termLabel } from "../hub/filter";
+import {
+  byName,
+  matchesSearch,
+  packVisible,
+  pppLabel,
+  revealsHidden,
+  termLabel,
+} from "../hub/filter";
+import NotInPackChip from "../hub/NotInPackChip";
 import TermList from "../entry/TermList";
 import { isPlainClick } from "../../shared/nav/navigate";
 import type { AtlasEntryView } from "../types";
@@ -23,6 +31,9 @@ type Props = {
   entryHref: (id: string) => string;
   onOpenEntry: (id: string) => void;
   onChange: (a: string, b: string) => void;
+  /** Same pack hiding and search exception as the Cabinet. */
+  packHiddenIds: ReadonlySet<string>;
+  showHidden: boolean;
 };
 
 const NOT_RECORDED = "Not recorded";
@@ -69,12 +80,16 @@ function SidePicker({
   value,
   exclude,
   onChange,
+  packHiddenIds,
+  showHidden,
 }: {
   label: string;
   entries: AtlasEntryView[];
   value: AtlasEntryView | null;
   exclude: string;
   onChange: (id: string) => void;
+  packHiddenIds: ReadonlySet<string>;
+  showHidden: boolean;
 }) {
   const options = useMemo(
     () =>
@@ -92,9 +107,14 @@ function SidePicker({
       disableClearable={value !== null}
       getOptionLabel={(e) => entryTitles(e).primary}
       isOptionEqualToValue={(x, y) => x.id === y.id}
-      filterOptions={(list, { inputValue }) =>
-        list.filter((e) => matchesSearch(e, inputValue))
-      }
+      filterOptions={(list, { inputValue }) => {
+        const revealHidden = revealsHidden(showHidden, inputValue);
+        return list.filter(
+          (e) =>
+            matchesSearch(e, inputValue) &&
+            packVisible(e, packHiddenIds, revealHidden),
+        );
+      }}
       onChange={(_, next) => {
         if (next) onChange(next.id);
       }}
@@ -117,6 +137,11 @@ function SidePicker({
                   }}
                 >
                   {titles.scientific}
+                </Box>
+              ) : null}
+              {packHiddenIds.has(e.id) ? (
+                <Box component="span" sx={{ ml: 1 }}>
+                  <NotInPackChip />
                 </Box>
               ) : null}
             </Box>
@@ -215,6 +240,8 @@ export default function CompareView({
   entryHref,
   onOpenEntry,
   onChange,
+  packHiddenIds,
+  showHidden,
 }: Props) {
   const left = entries.find((e) => e.id === a) ?? null;
   const right = entries.find((e) => e.id === b) ?? null;
@@ -271,6 +298,8 @@ export default function CompareView({
           value={left}
           exclude={b}
           onChange={(id) => onChange(id, b)}
+          packHiddenIds={packHiddenIds}
+          showHidden={showHidden}
         />
         <SidePicker
           label="Second parasite"
@@ -278,6 +307,8 @@ export default function CompareView({
           value={right}
           exclude={a}
           onChange={(id) => onChange(a, id)}
+          packHiddenIds={packHiddenIds}
+          showHidden={showHidden}
         />
         <Hero
           entry={left}

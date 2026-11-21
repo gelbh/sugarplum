@@ -5,6 +5,7 @@ import {
   useState,
   ViewTransition,
 } from "react";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Drawer from "@mui/material/Drawer";
@@ -34,7 +35,9 @@ import {
   focusActive as isFocusActive,
   matchesSearch,
   matchesTaxonomy,
+  packVisible,
   railSections,
+  revealsHidden,
   termLabel,
   type TaxonomyFilter,
 } from "../hub/filter";
@@ -61,6 +64,10 @@ type Props = {
   onMakeCards?: () => void;
   atlasId?: string;
   onFocusUpdated?: (entry: AtlasEntryView) => void;
+  /** Dataset entries the pack does not mention; see packHiddenIds. */
+  packHiddenIds: ReadonlySet<string>;
+  /** The Cabinet's Show hidden preference, applied to the rail. */
+  showHidden: boolean;
   /** Test override for `breakpoints.down("md")`. */
   mobile?: boolean;
 };
@@ -83,6 +90,8 @@ export default function EntryView({
   onMakeCards,
   atlasId,
   onFocusUpdated,
+  packHiddenIds,
+  showHidden,
   mobile: mobileProp,
 }: Props) {
   const [tab, setTab] = useState<TabKey>("lifecycle");
@@ -97,13 +106,15 @@ export default function EntryView({
   const mobile = mobileProp ?? mobileMq;
 
   const useFocus = isFocusActive(entries);
-  const railEntries = useMemo(
-    () =>
-      entries.filter(
-        (e) => matchesTaxonomy(e, taxonomy) && matchesSearch(e, query),
-      ),
-    [entries, taxonomy, query],
-  );
+  const railEntries = useMemo(() => {
+    const revealHidden = revealsHidden(showHidden, query);
+    return entries.filter(
+      (e) =>
+        matchesTaxonomy(e, taxonomy) &&
+        matchesSearch(e, query) &&
+        (e.id === entry.id || packVisible(e, packHiddenIds, revealHidden)),
+    );
+  }, [entries, taxonomy, query, entry.id, packHiddenIds, showHidden]);
   const rows = useMemo(
     () => railSections(railEntries, useFocus),
     [railEntries, useFocus],
@@ -115,6 +126,7 @@ export default function EntryView({
   const refs = useMemo(() => entryRefs(entry.refs), [entry.refs]);
   const titles = entryTitles(entry);
   const meta = entryMetaLine(entry.fields);
+  const notInPack = packHiddenIds.has(entry.id);
 
   const onKey = useEffectEvent((ev: KeyboardEvent) => {
     if (!isShortcutTarget(ev) || (ev.key !== "j" && ev.key !== "k")) return;
@@ -170,6 +182,7 @@ export default function EntryView({
       onClearTaxonomy={taxonomy ? () => setTaxonomy(null) : undefined}
       entryHref={entryHref}
       onOpen={openFromRail}
+      notInPackIds={packHiddenIds}
     />
   );
 
@@ -290,12 +303,31 @@ export default function EntryView({
               {meta}
             </Typography>
           ) : null}
-          {atlasId && onFocusUpdated ? (
+          {notInPack ? (
+            <Alert
+              severity="info"
+              sx={{ mt: 1.25, py: 0, alignItems: "center" }}
+              action={
+                atlasId && onFocusUpdated ? (
+                  <MarkImportantControl
+                    atlasId={atlasId}
+                    entry={entry}
+                    onUpdated={onFocusUpdated}
+                    pinLabel="Pin (always show)"
+                  />
+                ) : undefined
+              }
+            >
+              Not in your course pack
+            </Alert>
+          ) : null}
+          {atlasId && onFocusUpdated && !notInPack ? (
             <Box sx={{ mt: 1.25 }}>
               <MarkImportantControl
                 atlasId={atlasId}
                 entry={entry}
                 onUpdated={onFocusUpdated}
+                pinLabel="Pin (always show)"
               />
             </Box>
           ) : null}

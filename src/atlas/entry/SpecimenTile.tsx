@@ -14,6 +14,7 @@ import { entryTitles } from "./entryTitles";
 import { TIER_LABELS, hostSummary, pppLabel, termLabel } from "../hub/filter";
 import { atlasHeroName } from "../paths";
 import MarkImportantControl from "./MarkImportantControl";
+import NotInPackChip, { NOT_IN_PACK_DIM } from "../hub/NotInPackChip";
 import TermList from "./TermList";
 import type { AtlasEntryView } from "../types";
 
@@ -27,6 +28,8 @@ type Props = {
   onEdit?: () => void;
   atlasId?: string;
   onFocusUpdated?: (entry: AtlasEntryView) => void;
+  /** Pack-hidden entry shown through Show hidden or search. */
+  notInPack?: boolean;
 };
 
 const IMAGE_RATIO = "6 / 5";
@@ -87,18 +90,27 @@ function FocusBadge({
           {entry.reason ?? "No Focus reason"}
         </Typography>
         {entry.focusMaterialIds.length > 0 ? (
-          <Stack component="ul" spacing={0.25} sx={{ m: 0, mt: 1, pl: 0, listStyle: "none" }}>
-            {entry.focusMaterialIds.map((id) => (
-              <Typography
-                key={id}
-                component="li"
-                variant="caption"
-                sx={{ fontFamily: "ui-monospace, monospace" }}
-              >
-                {id}
-              </Typography>
-            ))}
-          </Stack>
+          <>
+            <Typography
+              variant="caption"
+              component="p"
+              sx={{ mt: 1, color: "text.secondary", fontWeight: 600 }}
+            >
+              Named in your pack
+            </Typography>
+            <Stack component="ul" spacing={0.25} sx={{ m: 0, mt: 0.25, pl: 0, listStyle: "none" }}>
+              {entry.focusMaterialIds.map((id) => (
+                <Typography
+                  key={id}
+                  component="li"
+                  variant="caption"
+                  sx={{ fontFamily: "ui-monospace, monospace" }}
+                >
+                  {id}
+                </Typography>
+              ))}
+            </Stack>
+          </>
         ) : null}
         {atlasId && onFocusUpdated ? (
           <Box
@@ -129,6 +141,7 @@ export default function SpecimenTile({
   onEdit,
   atlasId,
   onFocusUpdated,
+  notInPack = false,
 }: Props) {
   const toggleRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -197,45 +210,56 @@ export default function SpecimenTile({
               image={hero}
               ratio={IMAGE_RATIO}
               sx={{
-                opacity: dimmed ? 0.45 : 1,
+                opacity: dimmed
+                  ? 0.45
+                  : notInPack
+                    ? NOT_IN_PACK_DIM.opacity
+                    : 1,
                 transition: "opacity 220ms ease",
               }}
             />
           </ViewTransition>
           <Box sx={{ px: 1.25, pt: 1, pb: 1.25, minWidth: 0 }}>
-            <Typography
-              sx={{
-                fontWeight: 600,
-                fontSize: "0.9rem",
-                lineHeight: 1.25,
-              }}
-            >
-              {titles.primary}
-            </Typography>
-            {titles.scientific ? (
+            <Box sx={notInPack ? NOT_IN_PACK_DIM : undefined}>
               <Typography
-                variant="body2"
-                noWrap
                 sx={{
-                  color: "text.secondary",
-                  fontSize: "0.75rem",
-                  mt: 0.15,
-                  fontStyle: "italic"
-                }}>
-                {titles.scientific}
+                  fontWeight: 600,
+                  fontSize: "0.9rem",
+                  lineHeight: 1.25,
+                }}
+              >
+                {titles.primary}
               </Typography>
-            ) : null}
-            {definitive ? (
-              <Typography
-                variant="body2"
-                noWrap
-                sx={{
-                  color: "text.secondary",
-                  fontSize: "0.8rem",
-                  mt: 0.25
-                }}>
-                {definitive}
-              </Typography>
+              {titles.scientific ? (
+                <Typography
+                  variant="body2"
+                  noWrap
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: "0.75rem",
+                    mt: 0.15,
+                    fontStyle: "italic"
+                  }}>
+                  {titles.scientific}
+                </Typography>
+              ) : null}
+              {definitive ? (
+                <Typography
+                  variant="body2"
+                  noWrap
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: "0.8rem",
+                    mt: 0.25
+                  }}>
+                  {definitive}
+                </Typography>
+              ) : null}
+            </Box>
+            {notInPack ? (
+              <Box sx={{ mt: 0.75 }}>
+                <NotInPackChip />
+              </Box>
             ) : null}
           </Box>
         </ButtonBase>
@@ -325,6 +349,7 @@ export default function SpecimenTile({
           {entry.editedAt ? (
             <Chip label="Edited" size="small" variant="outlined" />
           ) : null}
+          {notInPack ? <NotInPackChip /> : null}
         </Stack>
         {titles.scientific ? (
           <Typography

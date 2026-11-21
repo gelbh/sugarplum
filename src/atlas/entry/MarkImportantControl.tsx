@@ -11,6 +11,8 @@ type Props = {
   entry: AtlasEntryView;
   onUpdated: (entry: AtlasEntryView) => void;
   size?: "small" | "medium";
+  /** Pin button copy; the entry page says what a pin does for pack hiding. */
+  pinLabel?: string;
 };
 
 export default function MarkImportantControl({
@@ -18,6 +20,7 @@ export default function MarkImportantControl({
   entry,
   onUpdated,
   size = "small",
+  pinLabel = "Mark as important",
 }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +61,7 @@ export default function MarkImportantControl({
           disabled={busy}
           onClick={() => void run("key")}
         >
-          Mark as important
+          {pinLabel}
         </Button>
       )}
       {error ? (

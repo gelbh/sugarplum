@@ -15,7 +15,13 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import type { Theme } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import { entryTitles } from "../entry/entryTitles";
-import { browseSections, matchesSearch } from "../hub/filter";
+import {
+  browseSections,
+  matchesSearch,
+  packVisible,
+  revealsHidden,
+} from "../hub/filter";
+import NotInPackChip from "../hub/NotInPackChip";
 import type { AtlasEntryView } from "../types";
 import { shouldAutoFocusText } from "../../shared/lib/autoFocusText";
 
@@ -23,6 +29,9 @@ type Props = {
   open: boolean;
   entries: AtlasEntryView[];
   fixedA?: string;
+  /** Same pack hiding and search exception as the Cabinet. */
+  packHiddenIds: ReadonlySet<string>;
+  showHidden: boolean;
   onClose: () => void;
   onPick: (a: string, b: string) => void;
 };
@@ -31,6 +40,8 @@ export default function ComparePicker({
   open,
   entries,
   fixedA,
+  packHiddenIds,
+  showHidden,
   onClose,
   onPick,
 }: Props) {
@@ -41,13 +52,17 @@ export default function ComparePicker({
   const first = entries.find((e) => e.id === (fixedA ?? picked)) ?? null;
   const a = first?.id ?? null;
 
-  const rows = useMemo(
-    () =>
-      browseSections(
-        entries.filter((e) => e.id !== a && matchesSearch(e, query)),
+  const rows = useMemo(() => {
+    const revealHidden = revealsHidden(showHidden, query);
+    return browseSections(
+      entries.filter(
+        (e) =>
+          e.id !== a &&
+          matchesSearch(e, query) &&
+          packVisible(e, packHiddenIds, revealHidden),
       ),
-    [entries, a, query],
-  );
+    );
+  }, [entries, a, query, packHiddenIds, showHidden]);
 
   const reset = () => {
     setPicked(null);
@@ -153,6 +168,11 @@ export default function ComparePicker({
                             }}>
                             {titles.scientific}
                           </Typography>
+                        ) : null}
+                        {packHiddenIds.has(e.id) ? (
+                          <Box component="span" sx={{ ml: 1 }}>
+                            <NotInPackChip />
+                          </Box>
                         ) : null}
                       </ListItemButton>
                     );

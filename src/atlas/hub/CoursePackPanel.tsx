@@ -33,9 +33,15 @@ import PromotePackMaterialDialog from "../mutate/PromotePackMaterialDialog";
 type Props = {
   atlasId: string;
   onFocusChanged?: () => void;
+  /** Set while pack hiding is active: entries shown vs all entries. */
+  packSummary?: { shown: number; total: number } | null;
 };
 
-export default function CoursePackPanel({ atlasId, onFocusChanged }: Props) {
+export default function CoursePackPanel({
+  atlasId,
+  onFocusChanged,
+  packSummary,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [materials, setMaterials] = useState<AtlasPackMaterial[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -163,6 +169,12 @@ export default function CoursePackPanel({ atlasId, onFocusChanged }: Props) {
             Rank Focus from tutorials, practicals, and past papers. These files
             do not create flashcards.
           </Typography>
+          {packSummary ? (
+            <Typography variant="body2" sx={{ mt: 0.5 }}>
+              Showing {packSummary.shown} of {packSummary.total} parasites
+              named in your pack
+            </Typography>
+          ) : null}
         </Box>
         <IconButton
           aria-label={open ? "Collapse course pack" : "Expand course pack"}

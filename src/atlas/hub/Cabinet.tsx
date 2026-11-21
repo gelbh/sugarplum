@@ -11,6 +11,7 @@ import Button from "@mui/material/Button";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
+import Link from "@mui/material/Link";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
@@ -43,9 +44,12 @@ import {
   hostOptions,
   matchesSearch,
   organOptions,
+  packVisible,
   presentGroups,
+  revealsHidden,
   type AtlasFilters as Filters,
 } from "./filter";
+import { searchable } from "./nameMatch";
 import { readViewPref, writeViewPref, type AtlasViewMode } from "./viewPref";
 import type { AtlasEntryView } from "../types";
 
@@ -63,6 +67,10 @@ type Props = {
   onMakeCardsFromKey?: (entryKeys: string[]) => void;
   atlasId?: string;
   onFocusUpdated?: (entry: AtlasEntryView) => void;
+  /** Dataset entries the pack does not mention; see packHiddenIds. */
+  packHiddenIds: ReadonlySet<string>;
+  showHidden: boolean;
+  onShowHiddenChange: (on: boolean) => void;
   /** Test override for `breakpoints.down("md")`. */
   mobile?: boolean;
 };
@@ -82,6 +90,9 @@ export default function Cabinet({
   onMakeCardsFromKey,
   atlasId,
   onFocusUpdated,
+  packHiddenIds,
+  showHidden,
+  onShowHiddenChange,
   mobile: mobileProp,
 }: Props) {
   const mobileMq = useMediaQuery((t: Theme) => t.breakpoints.down("md"));
@@ -114,12 +125,16 @@ export default function Cabinet({
     }),
     [entries],
   );
+  const searching = searchable(query) !== "";
+  const revealHidden = revealsHidden(showHidden, query);
   const visible = useMemo(
     () =>
-      applyFilters(entries, shownFilters).filter((e) =>
-        matchesSearch(e, query),
+      applyFilters(entries, shownFilters).filter(
+        (e) =>
+          matchesSearch(e, query) &&
+          packVisible(e, packHiddenIds, revealHidden),
       ),
-    [entries, shownFilters, query],
+    [entries, shownFilters, query, packHiddenIds, revealHidden],
   );
   const keyEntries = useMemo(
     () =>
@@ -171,7 +186,19 @@ export default function Cabinet({
     return () => document.removeEventListener("keydown", onKey);
   }, [expanded]);
 
-  const narrowed = visible.length !== entries.length;
+  // Pack hiding is not user narrowing: "X of N" counts the pool hiding leaves.
+  const pool = revealHidden
+    ? entries.length
+    : entries.length - packHiddenIds.size;
+  const narrowed = visible.length !== pool;
+  const userNarrowed = filtersActive(filters) || searching;
+  const toggleHidden = () => onShowHiddenChange(!showHidden);
+  const hiddenMatches =
+    visible.length === 0 && !revealHidden
+      ? applyFilters(entries, shownFilters).filter((e) =>
+          packHiddenIds.has(e.id),
+        ).length
+      : 0;
   const clearAll = () => {
     setFilters(NO_FILTERS);
     setQuery("");
@@ -204,8 +231,23 @@ export default function Cabinet({
             }}
           >
             {narrowed
-              ? `${visible.length} of ${plural(entries.length)}`
-              : plural(entries.length)}
+              ? `${visible.length} of ${plural(pool)}`
+              : plural(pool)}
+            {packHiddenIds.size > 0 && !searching ? (
+              <>
+                {showHidden ? " · " : ` · ${packHiddenIds.size} hidden · `}
+                <Link
+                  component="button"
+                  type="button"
+                  variant="body2"
+                  onClick={toggleHidden}
+                >
+                  {showHidden
+                    ? `Hide ${packHiddenIds.size} not in pack`
+                    : "Show hidden"}
+                </Link>
+              </>
+            ) : null}
           </Typography>
         </Box>
         <Stack
@@ -431,13 +473,26 @@ export default function Cabinet({
           }}
         >
           <Typography sx={{ fontWeight: 600 }}>
-            No parasites match these filters
+            {userNarrowed || packHiddenIds.size === 0
+              ? "No parasites match these filters"
+              : "No parasites named in your pack"}
           </Typography>
-          {filtersActive(filters) || query ? (
-            <Button variant="outlined" size="small" onClick={clearAll}>
-              Clear filters
-            </Button>
-          ) : null}
+          <Stack direction="row" sx={{ gap: 1 }}>
+            {userNarrowed ? (
+              <Button variant="outlined" size="small" onClick={clearAll}>
+                Clear filters
+              </Button>
+            ) : null}
+            {hiddenMatches > 0 ? (
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => onShowHiddenChange(true)}
+              >
+                Show {hiddenMatches} hidden
+              </Button>
+            ) : null}
+          </Stack>
         </Stack>
       ) : view === "table" ? (
         <AtlasTable
@@ -445,6 +500,7 @@ export default function Cabinet({
           entryHref={entryHref}
           onOpen={onOpenEntry}
           focusActive={focusActive}
+          notInPackIds={packHiddenIds}
         />
       ) : (
         <Stack spacing={3}>
@@ -510,6 +566,7 @@ export default function Cabinet({
                       onEdit={onEditEntry ? () => onEditEntry(e) : undefined}
                       atlasId={atlasId}
                       onFocusUpdated={onFocusUpdated}
+                      notInPack={packHiddenIds.has(e.id)}
                     />
                   </ViewTransition>
                 ))}
@@ -521,6 +578,8 @@ export default function Cabinet({
       <ComparePicker
         open={comparing}
         entries={entries}
+        packHiddenIds={packHiddenIds}
+        showHidden={showHidden}
         onClose={() => setComparing(false)}
         onPick={(a, b) => {
           setComparing(false);
