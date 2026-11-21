@@ -189,7 +189,9 @@ export function assertCanonicalUnchanged(
 ): void {
   if (submitted === null) return;
   const name = normalizeParasiteName(submitted.trim())?.canonical;
-  if (name === base.canonicalName || name === row?.canonical_name) return;
+  if (name !== undefined && (name === base.canonicalName || name === row?.canonical_name)) {
+    return;
+  }
   bad(BUILT_IN_NAME_MESSAGE);
 }
 

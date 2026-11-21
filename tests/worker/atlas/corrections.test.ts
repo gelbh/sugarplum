@@ -3,10 +3,14 @@ import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
 import {
+  ADMIN_LIST_CORRECTIONS_SQL,
   computeCorrectionDiff,
   mergeSuggestionDiff,
   parseSuggestionBody,
   RESOLVE_CORRECTION_SQL,
+  SELECT_CORRECTION_STATUS_SQL,
+  SELECT_OPEN_SUGGESTION_SQL,
+  SUGGESTION_STATUS_BY_ATLAS_SQL,
   UPSERT_OPEN_SUGGESTION_SQL,
   type CurrentEntryState,
 } from "../../../worker/atlas/corrections";
@@ -98,6 +102,42 @@ describe("0043 atlas_correction_suggestions (real SQLite)", () => {
       ["s1", "accepted"],
       ["s2", "open"],
     ]);
+  });
+
+  it("runs the read queries against the real schema", () => {
+    const db = freshDb();
+    upsert(db, "s1", '{"a":1}', null, T0);
+    db.prepare(RESOLVE_CORRECTION_SQL).run("rejected", T1, "admin", "s1");
+    upsert(db, "s2", '{"b":2}', "n", T1);
+    expect({
+      ...(db.prepare(SELECT_OPEN_SUGGESTION_SQL).get("u1", "psoroptes-ovis") as object),
+    }).toEqual({ diff_json: '{"b":2}' });
+    expect({ ...(db.prepare(SELECT_CORRECTION_STATUS_SQL).get("s1") as object) }).toEqual({
+      status: "rejected",
+    });
+    expect(
+      db.prepare(SUGGESTION_STATUS_BY_ATLAS_SQL).all("a1").map((r) => ({ ...r })),
+    ).toEqual([
+      { origin_key: "psoroptes-ovis", status: "rejected" },
+      { origin_key: "psoroptes-ovis", status: "open" },
+    ]);
+    upsert(db, "s3", '{"c":3}', null, T0);
+    const open = db.prepare(ADMIN_LIST_CORRECTIONS_SQL).all("open", 10);
+    expect(open.map((r) => ({ ...r }))).toEqual([
+      {
+        id: "s2",
+        origin_key: "psoroptes-ovis",
+        dataset_version: 9,
+        diff_json: '{"c":3}',
+        note: "n",
+        source_url: null,
+        status: "open",
+        created_at: T1,
+        resolved_at: null,
+        student_email: "a@example.com",
+      },
+    ]);
+    expect(db.prepare(ADMIN_LIST_CORRECTIONS_SQL).all("rejected", 10)).toHaveLength(1);
   });
 
   it("rejects statuses outside open, accepted, rejected", () => {
