@@ -3,11 +3,13 @@ import {
   mergeOverlayFields,
   overlayOverrides,
   sameFieldValue,
+  storedCommonName,
   tryParseObject,
   viewFromOverlay,
   type OverlayRow,
 } from "./merge";
 import { type EntryRow } from "./entryOverlays";
+import { convertLegacyOverlay } from "./heal-fields";
 import {
   loadParasiteDataset,
   PARASITE_DATASET_VERSION,
@@ -106,14 +108,6 @@ export async function resolveEntry(
   return null;
 }
 
-/** NULL when the learner's name equals the dataset name (the read path falls back to it). */
-export function storedCommonName(
-  submitted: string,
-  datasetCommonName: string | null,
-): string | null {
-  return submitted === datasetCommonName ? null : submitted;
-}
-
 export type EntryWritePlan = {
   fieldsJson: string;
   overridesJson: string | null;
@@ -186,8 +180,11 @@ export function planEntryWrite(
       : submittedCommon;
 
   if (dataset) {
-    // overlayOverrides diffs a legacy full copy, so this write converts the row.
-    const current = overlayOverrides(dataset.fields, row);
+    // A legacy full copy is healed and converted by this write, as the backfill does.
+    const current =
+      row.field_overrides_json == null
+        ? (convertLegacyOverlay(row, dataset)?.overrides ?? {})
+        : overlayOverrides(dataset.fields, row);
     const next = nextFieldOverrides(dataset.fields, current, fieldsPatch, resetFields);
     return {
       fieldsJson: JSON.stringify(next.fields),

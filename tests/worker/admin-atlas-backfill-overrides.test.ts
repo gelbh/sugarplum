@@ -189,6 +189,29 @@ describe("POST /api/admin/atlas/backfill-field-overrides", () => {
     expect(view?.fields.lifecycleStages).toEqual(dataset.fields.lifecycleStages);
   });
 
+  it("heals wiped fields from the dataset before converting", async () => {
+    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
+    seed(env);
+    const dataset = fasciola();
+    expect(dataset.fields.distribution).not.toBeNull();
+    const atlasId = await atlasWithLegacyRow(env, {
+      fieldsJson: JSON.stringify({
+        ...dataset.fields,
+        significance: "Student text",
+        distribution: null,
+        lifecycleStages: [],
+      }),
+    });
+    const res = await post(env, "sess-admin", { atlasId, dry_run: false });
+    expect(await res.json()).toMatchObject({ converted: 1 });
+    expect(JSON.parse((await overridesOf(env)).field_overrides_json!)).toEqual({
+      significance: "Student text",
+    });
+    const view = await fasciolaView(env, atlasId);
+    expect(view?.fields.distribution).toBe(dataset.fields.distribution);
+    expect(view?.fields.lifecycleStages).toEqual(dataset.fields.lifecycleStages);
+  });
+
   it("skips and counts a row whose fields_json cannot be parsed", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seed(env);

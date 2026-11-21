@@ -296,6 +296,37 @@ describe("PATCH /entries/:entryId field overrides", () => {
     expect((await rawRow(env, "e-legacy"))?.common_name).toBeNull();
   });
 
+  it("heals wiped fields before converting a legacy row on PATCH", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const dataset = datasetEntry("fasciola-hepatica");
+    expect(dataset.fields.distribution).not.toBeNull();
+    expect(dataset.fields.lifecycleStages.length).toBeGreaterThan(0);
+    await seedOverlayRow(env, atlasId, {
+      id: "e-wiped",
+      originKey: "fasciola-hepatica",
+      fieldsJson: JSON.stringify({
+        ...dataset.fields,
+        significance: "Old copy",
+        distribution: null,
+        lifecycleStages: [],
+      }),
+    });
+    const res = await patchEntry(env, atlasId, "e-wiped", {
+      fields: { family: "Editedidae" },
+    });
+    expect(res.status).toBe(200);
+    const view = (await res.json()) as AtlasEntryView;
+    expect(view.fields.distribution).toBe(dataset.fields.distribution);
+    expect(view.fields.lifecycleStages).toEqual(dataset.fields.lifecycleStages);
+    expect(view.editedFields).toEqual(["family", "significance"]);
+    expect(JSON.parse((await rawRow(env, "e-wiped"))!.field_overrides_json!)).toEqual({
+      significance: "Old copy",
+      family: "Editedidae",
+    });
+  });
+
   it("stores empty overrides on a delete-only tombstone", async () => {
     const env = createTestEnv();
     seedOwner(env);

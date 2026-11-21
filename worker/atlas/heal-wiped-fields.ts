@@ -1,45 +1,9 @@
-import {
-  emptyParasiteFields,
-  PARASITE_FIELD_KEYS,
-  parasiteFieldsSchema,
-  type ParasiteFieldKey,
-  type ParasiteFields,
-} from "./templates/parasite";
+import { healOverlayFieldsFromDataset } from "./heal-fields";
+import { parasiteFieldsSchema, type ParasiteFields } from "./templates/parasite";
 import { loadParasiteDataset } from "./datasets/parasites/index";
 import { nowIso } from "./ownership";
 
-function deepEqual(a: unknown, b: unknown): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
-
-export function isEmptyDefaultField(
-  key: ParasiteFieldKey,
-  value: ParasiteFields[ParasiteFieldKey],
-): boolean {
-  return deepEqual(value, emptyParasiteFields()[key]);
-}
-
-/** Restore empty-default overlay keys from dataset; null when nothing changes. */
-export function healOverlayFieldsFromDataset(
-  overlay: ParasiteFields,
-  dataset: ParasiteFields,
-): ParasiteFields | null {
-  const empty = emptyParasiteFields();
-  let changed = false;
-  const next: ParasiteFields = { ...overlay };
-  for (const key of PARASITE_FIELD_KEYS) {
-    if (
-      deepEqual(overlay[key], empty[key]) &&
-      !deepEqual(dataset[key], empty[key])
-    ) {
-      (next as Record<ParasiteFieldKey, ParasiteFields[ParasiteFieldKey]>)[
-        key
-      ] = dataset[key];
-      changed = true;
-    }
-  }
-  return changed ? next : null;
-}
+export { healOverlayFieldsFromDataset, isEmptyDefaultField } from "./heal-fields";
 
 export type HealWipedFieldsOpts = {
   dry_run: boolean;

@@ -63,6 +63,14 @@ export function toEntryView(entry: DatasetEntry): AtlasEntryView {
   };
 }
 
+/** NULL when the learner's name equals the dataset name (the read path falls back to it). */
+export function storedCommonName(
+  submitted: string,
+  datasetCommonName: string | null,
+): string | null {
+  return submitted === datasetCommonName ? null : submitted;
+}
+
 export type OverlayFieldsRow = Pick<
   OverlayRow,
   "origin_key" | "fields_json" | "field_overrides_json"
