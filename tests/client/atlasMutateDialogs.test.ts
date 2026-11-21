@@ -6,10 +6,10 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AddEntryDialog,
-  EditEntryDialog,
   EditLifecycleDialog,
   RecentlyDeletedDialog,
 } from "../../src/atlas/mutate/AtlasMutateDialogs";
+import { EditEntryDialog } from "../../src/atlas/mutate/EditEntryDialog";
 import {
   DIAGNOSTIC_TEST_NAME_ERROR,
   PPP_ERROR,

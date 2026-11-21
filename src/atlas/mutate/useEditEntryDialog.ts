@@ -149,7 +149,6 @@ export function useEditEntryDialog({
     fieldErrors,
     busy,
     error,
-    // Older cached views and test fixtures may predate editedFields.
     editedFields: base?.editedFields ?? [],
     canReset: Boolean(base?.originKey && base?.editedAt),
     canEditCanonical: base !== null && base.originKey === null,
