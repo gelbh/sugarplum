@@ -34,3 +34,20 @@ export function textMentionsEntry(
     hay.includes(searchable(collapseSeparators(form))),
   );
 }
+
+export const ALIAS_MAX_ITEMS = 20;
+export const ALIAS_MAX_CHARS = 80;
+
+/** Trim, drop empties, and dedupe by searchable form (first spelling wins). */
+export function cleanAliasList(raw: readonly string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of raw) {
+    const alias = item.trim();
+    const key = searchable(alias);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(alias);
+  }
+  return out;
+}

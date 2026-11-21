@@ -334,6 +334,49 @@ describe("overlayAtlas", () => {
       focusMaterialIds: [],
     });
   });
+
+  it("unions dataset and learner aliases, deduped by searchable form", () => {
+    const demodex = datasetEntry({
+      key: "demodex-canis",
+      canonicalName: "Demodex canis",
+      commonName: "Canine demodex mite",
+      aliases: ["follicle mite"],
+      misspellings: ["Demodex cannis"],
+    });
+    const views = overlayAtlas(
+      [demodex],
+      [
+        overlayRow({
+          id: "row-alias",
+          origin_key: "demodex-canis",
+          canonical_name: "Demodex canis",
+          aliases_json: JSON.stringify(["Follicle Mite", "follicular mite"]),
+        }),
+      ],
+    );
+    expect(views[0].aliases).toEqual([
+      "follicle mite",
+      "Demodex cannis",
+      "follicular mite",
+    ]);
+    expect(views[0].learnerAliases).toEqual(["Follicle Mite", "follicular mite"]);
+  });
+
+  it("treats null or malformed aliases_json as no learner aliases", () => {
+    const views = overlayAtlas(
+      [fasciola],
+      [
+        overlayRow({
+          id: "row-bad",
+          origin_key: "fasciola-hepatica",
+          canonical_name: "Fasciola hepatica",
+          aliases_json: "{not json",
+        }),
+      ],
+    );
+    expect(views[0].aliases).toEqual(toEntryView(fasciola).aliases);
+    expect(views[0].learnerAliases).toEqual([]);
+  });
 });
 
 describe("mergeOverlayFields", () => {
