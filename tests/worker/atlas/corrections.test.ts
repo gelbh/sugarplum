@@ -443,3 +443,110 @@ describe("POST /api/atlas/:atlasId/entries/:entryId/suggestion", () => {
     });
   });
 });
+
+function seedAdmin(env: Env) {
+  env.seedUser({
+    id: "admin-u",
+    email: "ops@example.com",
+    password_hash: null,
+    oauth_subject: "google-admin",
+    created_at: "2026-01-01T00:00:00.000Z",
+  });
+  env.seedSession("sess-admin", "admin-u");
+}
+
+function adminList(env: Env, query = "?status=open", session = "sess-admin") {
+  return app.request(
+    `/api/admin/atlas/corrections${query}`,
+    { headers: headers(session) },
+    env,
+  );
+}
+
+function adminResolve(env: Env, id: string, status: unknown, session = "sess-admin") {
+  return app.request(
+    `/api/admin/atlas/corrections/${id}`,
+    { method: "POST", headers: headers(session, true), body: JSON.stringify({ status }) },
+    env,
+  );
+}
+
+type AdminRow = {
+  id: string;
+  originKey: string;
+  canonicalName: string;
+  diff: Record<string, { from: unknown; to: unknown }>;
+  note: string | null;
+  sourceUrl: string | null;
+  studentEmail: string;
+};
+
+async function openRows(env: Env): Promise<AdminRow[]> {
+  const res = await adminList(env);
+  expect(res.status).toBe(200);
+  return ((await res.json()) as { corrections: AdminRow[] }).corrections;
+}
+
+describe("admin atlas corrections", () => {
+  it("rejects non-admins on both routes", async () => {
+    const { env } = await studentSetup();
+    seedAdmin(env);
+    expect((await adminList(env, "?status=open", "sess-a")).status).toBe(403);
+    expect((await adminResolve(env, "x", "accepted", "sess-a")).status).toBe(403);
+  });
+
+  it("lists open suggestions with parasite, diff, note, link and email", async () => {
+    const { env, atlasId } = await studentSetup();
+    seedAdmin(env);
+    await editAndSuggest(
+      env,
+      atlasId,
+      { fields: { significance: "New" } },
+      { note: "Per lecture", sourceUrl: "https://example.org/scab" },
+    );
+    const [row, ...rest] = await openRows(env);
+    expect(rest).toEqual([]);
+    expect(row).toMatchObject({
+      originKey: "psoroptes-ovis",
+      canonicalName: "Psoroptes ovis",
+      diff: { significance: { from: psoroptes().fields.significance, to: "New" } },
+      note: "Per lecture",
+      sourceUrl: "https://example.org/scab",
+      studentEmail: "a@example.com",
+    });
+    expect((await adminList(env, "?status=bogus")).status).toBe(400);
+  });
+
+  it("accepts once, then 409; the student sees Accepted for review", async () => {
+    const { env, atlasId } = await studentSetup();
+    seedAdmin(env);
+    await editAndSuggest(env, atlasId, { fields: { significance: "New" } });
+    const [row] = await openRows(env);
+
+    expect((await adminResolve(env, row.id, "maybe")).status).toBe(400);
+    const accepted = await adminResolve(env, row.id, "accepted");
+    expect(accepted.status).toBe(200);
+    expect(await accepted.json()).toMatchObject({ id: row.id, status: "accepted" });
+    expect((await adminResolve(env, row.id, "rejected")).status).toBe(409);
+    expect((await adminResolve(env, "missing-id", "accepted")).status).toBe(404);
+
+    const entries = await listEntries(env, atlasId);
+    expect(entries.find((e) => e.originKey === "psoroptes-ovis")?.suggestionStatus).toBe(
+      "accepted",
+    );
+    expect(await openRows(env)).toEqual([]);
+  });
+
+  it("opens a fresh row after a resolved one", async () => {
+    const { env, atlasId } = await studentSetup();
+    seedAdmin(env);
+    await editAndSuggest(env, atlasId, { fields: { significance: "New" } });
+    const [first] = await openRows(env);
+    await adminResolve(env, first.id, "rejected");
+    await editAndSuggest(env, atlasId, { fields: { significance: "Newer" } });
+    const [second] = await openRows(env);
+    expect(second.id).not.toBe(first.id);
+    const entries = await listEntries(env, atlasId);
+    expect(entries.find((e) => e.originKey === "psoroptes-ovis")?.suggestionStatus).toBe("open");
+  });
+});
