@@ -27,7 +27,12 @@ type Scanned = {
 type NameParts = { genus: string; epithet: string | null; sppEntry: boolean };
 
 /** One entry's normalized match targets, built once per scan. */
-export type PackTargets = { forms: string[]; parts: NameParts | null };
+export type PackTargets = {
+  forms: string[];
+  parts: NameParts | null;
+  /** Atlas genera; rule 2 stops at any of them except the entry's own. */
+  stopGenera: ReadonlySet<string>;
+};
 
 /** Rule 5 never allows more than this many edits. */
 const MAX_EDITS = 2;
@@ -178,9 +183,24 @@ function hitsFor(scanned: Scanned, target: string): ReadonlySet<number> {
   return hits;
 }
 
+function genusOf(canonicalName: string): string {
+  const [first = ""] = searchable(canonicalName).split(" ");
+  return first.replace(/[^a-z]/g, "");
+}
+
+/** Normalized genus of every entry, for the rule 2 stop list. */
+export function atlasGenera(entries: readonly NameMatchEntry[]): Set<string> {
+  const out = new Set<string>();
+  for (const e of entries) {
+    const genus = genusOf(e.canonicalName);
+    if (genus !== "") out.add(genus);
+  }
+  return out;
+}
+
 function nameParts(canonicalName: string): NameParts | null {
-  const [first = "", second = ""] = searchable(canonicalName).split(" ");
-  const genus = first.replace(/[^a-z]/g, "");
+  const [, second = ""] = searchable(canonicalName).split(" ");
+  const genus = genusOf(canonicalName);
   if (genus === "") return null;
   const sppEntry = second === "spp." || second === "spp";
   const epithet = sppEntry ? null : second.replace(/[^a-z]/g, "") || null;
@@ -196,7 +216,11 @@ function isPluralMarker(hay: string, t: Token): boolean {
 }
 
 /** Rules 2 to 5 on one normalized text. */
-function lenientMention(scanned: Scanned, parts: NameParts): boolean {
+function lenientMention(
+  scanned: Scanned,
+  parts: NameParts,
+  stopGenera: ReadonlySet<string>,
+): boolean {
   const genusAt = hitsFor(scanned, parts.genus);
   if (genusAt.size === 0) return false;
   if (parts.sppEntry) return true;
@@ -211,6 +235,9 @@ function lenientMention(scanned: Scanned, parts: NameParts): boolean {
       if (gap > EPITHET_WINDOW) break;
       if (gap <= PLURAL_WINDOW && isPluralMarker(hay, tokens[j])) return true;
       if (epithetAt.has(j)) return true;
+      // Another entry's genus starts a new name; its epithet is not ours.
+      const t = tokens[j].text;
+      if (t !== parts.genus && stopGenera.has(t)) break;
     }
   }
   return false;
@@ -221,10 +248,14 @@ function strictMention(scanned: Scanned, forms: readonly string[]): boolean {
   return forms.some((f) => scanned.hay.includes(f));
 }
 
-export function packTargets(entry: NameMatchEntry): PackTargets {
+export function packTargets(
+  entry: NameMatchEntry,
+  genera: ReadonlySet<string> = new Set(),
+): PackTargets {
   return {
     forms: entryNameForms(entry).map((f) => searchable(collapseSeparators(f))),
     parts: nameParts(entry.canonicalName),
+    stopGenera: genera,
   };
 }
 
@@ -238,7 +269,7 @@ export function matchMaterialForPack(
   targets: PackTargets,
   material: FocusMaterial,
 ): PackMaterialMatch {
-  const { forms, parts } = targets;
+  const { forms, parts, stopGenera } = targets;
   const texts = material.pages.map(scanPage);
   if (material.filename) {
     texts.unshift(scanFilename(material, material.filename));
@@ -246,13 +277,14 @@ export function matchMaterialForPack(
   if (texts.some((t) => strictMention(t, forms))) {
     return { strict: true, lenient: true };
   }
-  const lenient = parts !== null && texts.some((t) => lenientMention(t, parts));
+  const lenient = parts !== null && texts.some((t) => lenientMention(t, parts, stopGenera));
   return { strict: false, lenient };
 }
 
 export function materialMentionsForPack(
   entry: NameMatchEntry,
   material: FocusMaterial,
+  genera?: ReadonlySet<string>,
 ): boolean {
-  return matchMaterialForPack(packTargets(entry), material).lenient;
+  return matchMaterialForPack(packTargets(entry, genera), material).lenient;
 }

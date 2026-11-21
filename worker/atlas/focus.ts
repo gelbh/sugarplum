@@ -1,6 +1,7 @@
 import type { Env } from "../env";
 import type { AtlasEntryView, AtlasTier } from "../../src/atlas/types";
 import { scanFocus } from "../../src/atlas/hub/focusScan";
+import { atlasGenera } from "../../src/atlas/hub/packMatch";
 import { loadParasiteDataset } from "./datasets/parasites/index";
 import { overlayAtlas, type OverlayRow } from "./merge";
 import {
@@ -268,6 +269,8 @@ export async function refreshAtlasFocus(
   }
 
   const entries = await loadMergedEntries(db, atlasId);
+  // Dataset genera only: a learner name like "Lungworm" would stop real matches.
+  const genera = atlasGenera(entries.filter((e) => e.originKey !== null));
   const keep = new Set<string>();
 
   for (const entry of entries) {
@@ -284,6 +287,7 @@ export async function refreshAtlasFocus(
       },
       focusMaterials,
       null,
+      genera,
     );
     await db
       .prepare(
