@@ -11,6 +11,7 @@ vi.mock("../../src/atlas/corrections/apiCorrections", () => ({
   postEntrySuggestion: vi.fn(),
 }));
 
+import { ApiError } from "../../src/api/client";
 import { postEntrySuggestion } from "../../src/atlas/corrections/apiCorrections";
 import { useCorrectionSuggestion } from "../../src/atlas/corrections/useCorrectionSuggestion";
 
@@ -54,10 +55,12 @@ function entry(originKey: string | null): AtlasEntryView {
 }
 
 let afterSave: (patch: EntryPatch) => Promise<void> = async () => {};
+let saveBlocked = false;
 
 function Harness(props: { entry: AtlasEntryView; onSent: () => void }) {
   const hook = useCorrectionSuggestion({ atlasId: "atlas-1", ...props });
   afterSave = hook.afterSave;
+  saveBlocked = hook.saveBlocked;
   return createElement(Fragment, null, hook.footerExtra, hook.toast);
 }
 
@@ -164,5 +167,43 @@ describe("useCorrectionSuggestion", () => {
       vi.mocked(postEntrySuggestion).mock.calls[0],
     );
     expect(onSent).toHaveBeenCalledTimes(1);
+  });
+
+  it("blocks Save and never POSTs while the link is not http(s)", async () => {
+    await render(entry("psoroptes-ovis"));
+    await tick();
+    const link = document.body.querySelector(
+      'input[type="url"]',
+    ) as HTMLInputElement;
+    await act(async () => {
+      setInput(link, "ftp://example.org/scab");
+    });
+    expect(saveBlocked).toBe(true);
+    await act(async () => {
+      await afterSave(PATCH);
+    });
+    expect(postEntrySuggestion).not.toHaveBeenCalled();
+    await act(async () => {
+      setInput(link, "https://example.org/scab");
+    });
+    expect(saveBlocked).toBe(false);
+  });
+
+  it("shows the server reason and no Retry when the request is rejected", async () => {
+    vi.mocked(postEntrySuggestion).mockRejectedValueOnce(
+      new ApiError(400, "No changes from the dataset"),
+    );
+    await render(entry("psoroptes-ovis"));
+    await tick();
+    await act(async () => {
+      await afterSave(PATCH);
+    });
+    const text = document.body.textContent ?? "";
+    expect(text).toContain("Saved for you; the suggestion did not send");
+    expect(text).toContain("No changes from the dataset");
+    const retry = [...document.body.querySelectorAll("button")].find(
+      (b) => b.textContent === "Retry",
+    );
+    expect(retry).toBeUndefined();
   });
 });

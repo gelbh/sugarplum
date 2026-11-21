@@ -494,6 +494,7 @@ export default function AtlasPage({
             }}
             afterSave={suggestion.afterSave}
             footerExtra={suggestion.footerExtra}
+            saveBlocked={suggestion.saveBlocked}
           />
           {suggestion.toast}
           <EditLifecycleDialog

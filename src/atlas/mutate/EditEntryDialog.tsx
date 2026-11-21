@@ -61,6 +61,8 @@ type Props = {
   afterSave?: (patch: EntryPatch) => Promise<void>;
   /** Phase 4 seam: rendered inside the form, above the dialog actions. */
   footerExtra?: ReactNode;
+  /** Phase 4 seam: footerExtra holds invalid input, so Save stays disabled. */
+  saveBlocked?: boolean;
 };
 
 const HOST_HELP = "Comma-separated host terms";
@@ -273,6 +275,7 @@ export function EditEntryDialog({
   onEditLifecycle,
   afterSave,
   footerExtra,
+  saveBlocked = false,
 }: Props) {
   const {
     draft,
@@ -578,7 +581,7 @@ export function EditEntryDialog({
             <Button onClick={onClose} disabled={busy}>
               Cancel
             </Button>
-            <Button type="submit" variant="contained" disabled={busy || !ready}>
+            <Button type="submit" variant="contained" disabled={busy || !ready || saveBlocked}>
               {busy ? "Saving…" : "Save"}
             </Button>
           </Stack>

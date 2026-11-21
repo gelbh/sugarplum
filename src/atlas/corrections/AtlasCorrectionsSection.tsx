@@ -48,6 +48,12 @@ export default function AtlasCorrectionsSection() {
     }
   }
 
+  useEffect(() => {
+    if (copiedId === null) return;
+    const timer = setTimeout(() => setCopiedId(null), 2000);
+    return () => clearTimeout(timer);
+  }, [copiedId]);
+
   async function copy(row: AdminAtlasCorrection) {
     try {
       await navigator.clipboard.writeText(correctionExportJson(row));
