@@ -21,7 +21,7 @@ export function levelFromXp(xpTotal: number): number {
   return Math.floor(Math.sqrt(xpTotal / 100)) + 1;
 }
 
-/** Cap 2; Duolingo softens habit if freezes stack too high. */
+/** Cap keeps freezes from stacking into a soft habit. */
 export const STREAK_FREEZE = {
   maxStored: 2,
   earnEveryDays: 7,

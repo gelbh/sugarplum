@@ -109,8 +109,6 @@ function main() {
        updated_at = ${sqlLiteral(createdAt)};`,
   );
 
-  // Seed XP so "XP today" can show after today's review_day / review awards;
-  // also a small historical ledger row.
   lines.push(
     `INSERT INTO xp_ledger (id, user_id, amount, reason, idempotency_key, created_at)
      VALUES (
@@ -172,7 +170,6 @@ function main() {
     );
   }
 
-  // Partial daily goal progress (still open).
   for (let i = 0; i < REVIEWS_TODAY; i++) {
     const cardId = `${PREFIX}card-${String(i).padStart(3, "0")}`;
     const logId = `${PREFIX}log-today-${String(i).padStart(2, "0")}`;

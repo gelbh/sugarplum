@@ -182,7 +182,6 @@ export async function reconcileStreakWithFreeze(
   return { consumedFreeze: false, consumedCount: 0 };
 }
 
-/** Earn one freeze when crossing a multiple of earnEveryDays, up to maxStored. */
 export async function maybeEarnStreakFreeze(
   db: D1Database,
   userId: string,

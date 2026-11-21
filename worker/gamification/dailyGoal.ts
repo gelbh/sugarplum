@@ -56,7 +56,7 @@ export async function getDailyGoalProgress(
   return { goal, current: Math.min(current, goal), met };
 }
 
-/** Award once when review count hits the goal. Independent of streak. */
+/** Once per UTC day when reviews hit the goal; independent of streak. */
 export async function afterReviewMaybeCompleteDailyGoal(
   db: D1Database,
   userId: string,
