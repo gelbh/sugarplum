@@ -49,6 +49,8 @@ type Props = {
   onEdit?: (section?: EditSectionId) => void;
   /** Drop one per-field override (glance "Reset"). */
   onResetField?: (field: FieldKey) => void;
+  /** Fields whose Reset request is in flight. */
+  resettingFields?: ReadonlySet<FieldKey>;
   onReset?: () => void;
   onMakeCards?: () => void;
   atlasId?: string;
@@ -86,6 +88,7 @@ export default function EntryFacts({
   taxonomyActive,
   onEdit,
   onResetField,
+  resettingFields,
   onReset,
   onMakeCards,
   atlasId,
@@ -133,6 +136,7 @@ export default function EntryFacts({
               variant="text"
               aria-label={`Reset ${FIELD_LABELS[key]}`}
               onClick={() => onResetField(key)}
+              disabled={resettingFields?.has(key) ?? false}
               sx={{ minWidth: 0 }}
             >
               Reset

@@ -61,6 +61,7 @@ type Props = {
   onStep: (id: string) => void;
   onEdit?: (section?: EditSectionId) => void;
   onResetField?: (field: FieldKey) => void;
+  resettingFields?: ReadonlySet<FieldKey>;
   onEditLifecycle?: () => void;
   onReset?: () => void;
   onMakeCards?: () => void;
@@ -88,6 +89,7 @@ export default function EntryView({
   onStep,
   onEdit,
   onResetField,
+  resettingFields,
   onEditLifecycle,
   onReset,
   onMakeCards,
@@ -368,6 +370,7 @@ export default function EntryView({
           taxonomyActive={taxonomy}
           onEdit={onEdit}
           onResetField={onResetField}
+          resettingFields={resettingFields}
           onReset={onReset}
           onMakeCards={onMakeCards}
           atlasId={atlasId}

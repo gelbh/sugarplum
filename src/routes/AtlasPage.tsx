@@ -127,6 +127,12 @@ export default function AtlasPage({
   const { user } = useSession();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Glance Reset failures stay inline so the Atlas itself keeps rendering.
+  const [resetError, setResetError] = useState<string | null>(null);
+  /** `${entryId}:${field}` keys with a Reset request in flight. */
+  const [resetting, setResetting] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
   const [addOpen, setAddOpen] = useState(false);
   const [deletedOpen, setDeletedOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<{
@@ -207,6 +213,11 @@ export default function AtlasPage({
     };
   }, [loadApiEntries, user]);
 
+  const routeEntryKey = route.kind === "entry" ? route.key : null;
+  useEffect(() => {
+    setResetError(null);
+  }, [routeEntryKey]);
+
   const home = atlasHref(atlasId);
   const crumb =
     route.kind === "cabinet" ? null : (
@@ -233,13 +244,42 @@ export default function AtlasPage({
   }
 
   async function onResetField(entry: AtlasEntryView, field: FieldKey) {
+    const key = `${entry.id}:${field}`;
+    const toggle = (on: boolean) =>
+      setResetting((prev) => {
+        const next = new Set(prev);
+        if (on) next.add(key);
+        else next.delete(key);
+        return next;
+      });
+    setResetError(null);
+    toggle(true);
     try {
-      await resetEntryFields(atlasId, entry.id, [field]);
-      await reloadEntries();
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Could not reset field",
-      );
+      try {
+        await resetEntryFields(atlasId, entry.id, [field]);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.assign("/login");
+          return;
+        }
+        setResetError(
+          err instanceof ApiError ? err.message : "Could not reset the field",
+        );
+        return;
+      }
+      try {
+        await reloadEntries();
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.assign("/login");
+          return;
+        }
+        setResetError(
+          "Field reset, but the Atlas could not refresh. Reload to see it.",
+        );
+      }
+    } finally {
+      toggle(false);
     }
   }
 
@@ -316,6 +356,11 @@ export default function AtlasPage({
       loaded.entries.find((e) => e.id === route.key) ??
       loaded.entries.find((e) => e.originKey === route.key) ??
       null;
+    const resettingFields = new Set<FieldKey>();
+    for (const k of resetting) {
+      if (entry && k.startsWith(`${entry.id}:`))
+        resettingFields.add(k.slice(entry.id.length + 1) as FieldKey);
+    }
     body = entry ? (
       <EntryView
         entry={entry}
@@ -333,6 +378,7 @@ export default function AtlasPage({
             ? (field) => void onResetField(entry, field)
             : undefined
         }
+        resettingFields={resettingFields}
         onEditLifecycle={
           canMutate ? () => setEditLifecycle(entry) : undefined
         }
@@ -401,6 +447,15 @@ export default function AtlasPage({
           <Link href={`/jobs/${queueNotice.jobId}/drafts`} underline="hover">
             Open Draft Review
           </Link>
+        </Alert>
+      ) : null}
+      {resetError && route.kind === "entry" && !error ? (
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          onClose={() => setResetError(null)}
+        >
+          {resetError}
         </Alert>
       ) : null}
       {body}
