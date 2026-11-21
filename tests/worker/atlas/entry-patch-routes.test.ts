@@ -275,6 +275,27 @@ describe("PATCH /entries/:entryId field overrides", () => {
     });
   });
 
+  it("nulls a copied dataset common name when a fields-only PATCH converts a legacy row", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const dataset = datasetEntry("fasciola-hepatica");
+    await seedOverlayRow(env, atlasId, {
+      id: "e-legacy",
+      originKey: "fasciola-hepatica",
+      fieldsJson: JSON.stringify({ ...dataset.fields, significance: "Old copy" }),
+    });
+    expect((await rawRow(env, "e-legacy"))?.common_name).toBe(dataset.commonName);
+    const res = await patchEntry(env, atlasId, "e-legacy", {
+      fields: { family: "Editedidae" },
+    });
+    expect(res.status).toBe(200);
+    const view = (await res.json()) as AtlasEntryView;
+    expect(view.commonNameEdited).toBe(false);
+    expect(view.commonName).toBe(dataset.commonName);
+    expect((await rawRow(env, "e-legacy"))?.common_name).toBeNull();
+  });
+
   it("stores empty overrides on a delete-only tombstone", async () => {
     const env = createTestEnv();
     seedOwner(env);

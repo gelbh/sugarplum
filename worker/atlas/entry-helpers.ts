@@ -176,12 +176,13 @@ export function planEntryWrite(
     requireReadable(row.fields_json, "fields_json", row.id);
   }
 
+  // On a dataset-origin row a name equal to the dataset name is stored as
+  // NULL, including a legacy copy this write converts (same rule as the backfill).
+  const submittedCommon = commonName ?? row.common_name;
   const nextCommon =
-    commonName === undefined
-      ? row.common_name
-      : dataset
-        ? storedCommonName(commonName, dataset.commonName)
-        : commonName;
+    dataset && submittedCommon !== null
+      ? storedCommonName(submittedCommon, dataset.commonName)
+      : submittedCommon;
 
   if (dataset) {
     // overlayOverrides diffs a legacy full copy, so this write converts the row.

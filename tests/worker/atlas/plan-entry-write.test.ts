@@ -154,6 +154,26 @@ describe("planEntryWrite", () => {
     expect(plan.commonName).toBeNull();
   });
 
+  it("nulls a copied dataset name when converting a legacy row without a name", () => {
+    const plan = planEntryWrite(
+      row({
+        common_name: dataset.commonName,
+        field_overrides_json: null,
+        fields_json: JSON.stringify(dataset.fields),
+      }),
+      dataset,
+      { fieldsPatch: { family: "Editedidae" } },
+    );
+    expect(plan.commonName).toBeNull();
+  });
+
+  it("keeps a learner's own common name on a fields-only write", () => {
+    const plan = planEntryWrite(row({ common_name: "Sheep fluke" }), dataset, {
+      fieldsPatch: { family: "Editedidae" },
+    });
+    expect(plan.commonName).toBe("Sheep fluke");
+  });
+
   it("refuses to plan from an unreadable overrides column", () => {
     expect(() =>
       planEntryWrite(row({ field_overrides_json: "{not json" }), dataset, {
