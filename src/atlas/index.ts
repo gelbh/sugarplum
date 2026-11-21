@@ -8,7 +8,7 @@ export {
   matchAtlasPath,
   type AtlasRoute,
 } from "./paths";
-export type { AtlasEntryView, AtlasSource } from "./types";
+export type { AtlasEntryView, AtlasSource, FieldKey } from "./types";
 export { default as EntryView } from "./entry/EntryView";
 export { default as CompareView } from "./compare/CompareView";
 export { default as Cabinet } from "./hub/Cabinet";
@@ -19,12 +19,14 @@ export {
   RecentlyDeletedDialog,
 } from "./mutate/AtlasMutateDialogs";
 export { EditEntryDialog } from "./mutate/EditEntryDialog";
+export type { EditSectionId } from "./mutate/entryPatch";
 export { default as MakeCardsDeckDialog } from "./mutate/MakeCardsDeckDialog";
 export {
   apiAtlasSource,
   listAtlases,
   listAtlasEntries,
   resetEntry,
+  resetEntryFields,
   createAtlas,
   ensureAtlas,
   findParasiteAtlas,

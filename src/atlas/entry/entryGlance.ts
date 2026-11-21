@@ -1,6 +1,7 @@
 import { FIELD_LABELS } from "./entryFields";
 import { pppLabel, termLabel } from "../hub/filter";
-import type { DatasetFields } from "../types";
+import type { EditSectionId } from "../mutate/entryPatch";
+import type { DatasetFields, FieldKey } from "../types";
 
 export type GlanceKey =
   | "taxonomy"
@@ -40,7 +41,72 @@ export type GlanceSection = {
   id: GlanceSectionId;
   title: string;
   rows: GlanceRow[];
+  /** Fields whose "Edited" mark and Reset show on this band. */
+  fields: FieldKey[];
+  /** Edit dialog section the band pencil opens. */
+  editSection: EditSectionId;
 };
+
+type GlanceBandMeta = Pick<GlanceSection, "title" | "fields" | "editSection">;
+
+const GLANCE_BANDS: Record<GlanceSectionId, GlanceBandMeta> = {
+  taxonomy: {
+    title: "Taxonomy",
+    fields: ["phylum", "order", "family", "group"],
+    editSection: "taxonomy",
+  },
+  hosts: {
+    title: "Hosts",
+    fields: ["definitiveHosts", "intermediateHosts", "paratenicHosts"],
+    editSection: "hosts",
+  },
+  body: {
+    title: "Body & course",
+    fields: [
+      "majorOrgan",
+      "onHostStages",
+      "pppDays",
+      "lifecycleType",
+      "lifecycleStages",
+    ],
+    editSection: "biology",
+  },
+  detection: {
+    title: "Detection & risk",
+    fields: ["diagnosticStage", "diagnosticTests", "zoonotic", "vectorRole"],
+    editSection: "diagnosis",
+  },
+  range: {
+    title: "Range",
+    fields: [
+      "distribution",
+      "distributionWorldwide",
+      "distributionRegions",
+      "climateBands",
+    ],
+    editSection: "distribution",
+  },
+  notes: {
+    title: "Notes",
+    fields: ["significance"],
+    editSection: "clinical",
+  },
+};
+
+/** Significance renders in the lead paragraph, or in Notes when the lead is truncated. */
+export const SIGNIFICANCE_GLANCE: Pick<
+  GlanceSection,
+  "fields" | "editSection"
+> = {
+  fields: GLANCE_BANDS.notes.fields,
+  editSection: GLANCE_BANDS.notes.editSection,
+};
+
+const band = (id: GlanceSectionId, rows: GlanceRow[]): GlanceSection => ({
+  id,
+  rows,
+  ...GLANCE_BANDS[id],
+});
 
 export function entryMetaLine(fields: DatasetFields): string | null {
   const parts = [
@@ -256,18 +322,11 @@ export function glanceSections(fields: DatasetFields): GlanceSection[] {
     });
 
   const sections: GlanceSection[] = [];
-  if (taxonomy.length)
-    sections.push({ id: "taxonomy", title: "Taxonomy", rows: taxonomy });
-  if (hosts.length) sections.push({ id: "hosts", title: "Hosts", rows: hosts });
-  if (body.length)
-    sections.push({ id: "body", title: "Body & course", rows: body });
-  if (detection.length)
-    sections.push({
-      id: "detection",
-      title: "Detection & risk",
-      rows: detection,
-    });
-  if (range.length) sections.push({ id: "range", title: "Range", rows: range });
+  if (taxonomy.length) sections.push(band("taxonomy", taxonomy));
+  if (hosts.length) sections.push(band("hosts", hosts));
+  if (body.length) sections.push(band("body", body));
+  if (detection.length) sections.push(band("detection", detection));
+  if (range.length) sections.push(band("range", range));
   return sections;
 }
 

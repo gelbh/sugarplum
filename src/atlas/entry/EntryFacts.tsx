@@ -12,12 +12,15 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import type { Theme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import AtlasImage from "../hub/AtlasImage";
+import type { EditSectionId } from "../mutate/entryPatch";
 import EntryPersonalNotes from "./EntryPersonalNotes";
 import { FIELD_LABELS, type EntryRefs } from "./entryFields";
 import {
   entryLead,
   glanceSections,
+  SIGNIFICANCE_GLANCE,
   significanceFullRow,
   splitGlanceForMobile,
   taxonomyTree,
@@ -42,7 +45,12 @@ type Props = {
   /** Browse related parasites by taxonomy rank in the entry rail. */
   onTaxonomyBrowse?: (filter: TaxonomyFilter) => void;
   taxonomyActive?: TaxonomyFilter | null;
-  onEdit?: () => void;
+  /** No section: the Edit button. A section: a glance band pencil. */
+  onEdit?: (section?: EditSectionId) => void;
+  /** Drop one per-field override (glance "Reset"). */
+  onResetField?: (field: FieldKey) => void;
+  /** Fields whose Reset request is in flight. */
+  resettingFields?: ReadonlySet<FieldKey>;
   onReset?: () => void;
   onMakeCards?: () => void;
   atlasId?: string;
@@ -64,6 +72,14 @@ const IMAGE_ROLE_LABELS: Record<
   other: "Image",
 };
 
+const SECTION_LABEL_SX = {
+  color: "text.secondary",
+  fontSize: "0.78rem",
+  fontWeight: 700,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+} as const;
+
 export default function EntryFacts({
   entry,
   refs,
@@ -71,6 +87,8 @@ export default function EntryFacts({
   onTaxonomyBrowse,
   taxonomyActive,
   onEdit,
+  onResetField,
+  resettingFields,
   onReset,
   onMakeCards,
   atlasId,
@@ -91,22 +109,70 @@ export default function EntryFacts({
   const [lightbox, setLightbox] = useState<AtlasImageView | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
 
+  // Older cached views and test fixtures may predate editedFields.
+  const editedSet = new Set(entry.editedFields ?? []);
+  // Edited fields whose band does not render still need a Reset on the page.
+  const shownFields = new Set<FieldKey>(allSections.flatMap((s) => s.fields));
+  if (lead) SIGNIFICANCE_GLANCE.fields.forEach((k) => shownFields.add(k));
+  const orphanEdited = [...editedSet].filter((k) => !shownFields.has(k));
+
+  const editedMarks = (fields: FieldKey[]): ReactNode =>
+    fields
+      .filter((k) => editedSet.has(k))
+      .map((key) => (
+        <Stack
+          key={key}
+          direction="row"
+          sx={{ alignItems: "center", gap: 0.25 }}
+        >
+          <Chip
+            size="small"
+            variant="outlined"
+            label={`Edited: ${FIELD_LABELS[key]}`}
+          />
+          {onResetField ? (
+            <Button
+              size="small"
+              variant="text"
+              aria-label={`Reset ${FIELD_LABELS[key]}`}
+              onClick={() => onResetField(key)}
+              disabled={resettingFields?.has(key) ?? false}
+              sx={{ minWidth: 0 }}
+            >
+              Reset
+            </Button>
+          ) : null}
+        </Stack>
+      ));
+
+  const sectionHeading = (
+    title: string,
+    meta: Pick<GlanceSection, "fields" | "editSection">,
+  ) => (
+    <Stack
+      direction="row"
+      sx={{ alignItems: "center", gap: 0.75, mb: 1, flexWrap: "wrap" }}
+    >
+      <Typography sx={SECTION_LABEL_SX}>{title}</Typography>
+      {editedMarks(meta.fields)}
+      {onEdit ? (
+        <IconButton
+          size="small"
+          aria-label={`Edit ${title}`}
+          onClick={() => onEdit(meta.editSection)}
+          sx={{ ml: "auto" }}
+        >
+          <EditOutlinedIcon fontSize="small" />
+        </IconButton>
+      ) : null}
+    </Stack>
+  );
+
   const renderSection = (section: GlanceSection): ReactNode => {
     const tree = section.id === "taxonomy" ? taxonomyTree(entry.fields) : null;
     return (
       <Box key={section.id} component="section" aria-label={section.title}>
-        <Typography
-          sx={{
-            color: "text.secondary",
-            fontSize: "0.78rem",
-            fontWeight: 700,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            mb: 1,
-          }}
-        >
-          {section.title}
-        </Typography>
+        {sectionHeading(section.title, section)}
         {tree && tree.length > 0 ? (
           <TaxonomyTreeCard
             nodes={tree}
@@ -166,7 +232,7 @@ export default function EntryFacts({
             </Button>
           ) : null}
           {onEdit ? (
-            <Button variant="text" size="small" onClick={onEdit}>
+            <Button variant="text" size="small" onClick={() => onEdit()}>
               Edit
             </Button>
           ) : null}
@@ -177,16 +243,35 @@ export default function EntryFacts({
           ) : null}
         </Stack>
       ) : null}
+      {orphanEdited.length > 0 ? (
+        <Stack
+          aria-label="Edited fields"
+          direction="row"
+          sx={{ alignItems: "center", gap: 0.75, flexWrap: "wrap" }}
+        >
+          {editedMarks(orphanEdited)}
+        </Stack>
+      ) : null}
       {lead ? (
-        <Typography sx={{ fontSize: "1.12rem", lineHeight: 1.55 }}>
-          {lead.preview}
-          <CiteSup
-            field="significance"
-            label={FIELD_LABELS.significance}
-            refs={refs}
-            onCite={onCite}
-          />
-        </Typography>
+        <Box component="section" aria-label="Summary">
+          <Typography sx={{ fontSize: "1.12rem", lineHeight: 1.55 }}>
+            {lead.preview}
+            <CiteSup
+              field="significance"
+              label={FIELD_LABELS.significance}
+              refs={refs}
+              onCite={onCite}
+            />
+          </Typography>
+          {!fullSig && editedSet.has("significance") ? (
+            <Stack
+              direction="row"
+              sx={{ alignItems: "center", gap: 0.75, flexWrap: "wrap" }}
+            >
+              {editedMarks(SIGNIFICANCE_GLANCE.fields)}
+            </Stack>
+          ) : null}
+        </Box>
       ) : null}
       {primary.map(renderSection)}
       {more.length > 0 ? (
@@ -208,18 +293,7 @@ export default function EntryFacts({
       ) : null}
       {fullSig ? (
         <Box component="section" aria-label="Notes">
-          <Typography
-            sx={{
-              color: "text.secondary",
-              fontSize: "0.78rem",
-              fontWeight: 700,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              mb: 1,
-            }}
-          >
-            Notes
-          </Typography>
+          {sectionHeading("Notes", SIGNIFICANCE_GLANCE)}
           <Box component="dl" sx={{ m: 0 }}>
             <GlanceFact row={fullSig} refs={refs} onCite={onCite} />
           </Box>
