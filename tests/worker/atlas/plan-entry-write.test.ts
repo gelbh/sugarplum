@@ -237,15 +237,28 @@ describe("planEntryWrite aliases", () => {
 describe("parseAliasesPatch", () => {
   it("returns undefined when absent and a cleaned list otherwise", () => {
     expect(parseAliasesPatch(undefined)).toBeUndefined();
-    expect(parseAliasesPatch([" a ", "", "A", "b"])).toEqual(["a", "b"]);
+    expect(parseAliasesPatch([" fluke ", "", "FLUKE", "worm"])).toEqual([
+      "fluke",
+      "worm",
+    ]);
+  });
+
+  it("drops separator-only and too-short aliases", () => {
+    expect(parseAliasesPatch(["-", "_", "- _", "ab", "F_hepatica", "F hepatica"])).toEqual([
+      "F_hepatica",
+    ]);
   });
 
   it("checks limits after cleaning", () => {
-    const padded = [...Array.from({ length: 20 }, (_, i) => `x${i}`), " ", "X0"];
+    const padded = [
+      ...Array.from({ length: 20 }, (_, i) => `alias ${i}`),
+      " ",
+      "ALIAS 0",
+    ];
     expect(parseAliasesPatch(padded)).toHaveLength(20);
     expect(() => parseAliasesPatch(["a".repeat(81)])).toThrow(/80 characters/);
     expect(() =>
-      parseAliasesPatch(Array.from({ length: 21 }, (_, i) => `x${i}`)),
+      parseAliasesPatch(Array.from({ length: 21 }, (_, i) => `alias ${i}`)),
     ).toThrow(/At most 20 aliases/);
     expect(() => parseAliasesPatch([1])).toThrow(HTTPException);
     expect(() => parseAliasesPatch(null)).toThrow(/list of strings/);

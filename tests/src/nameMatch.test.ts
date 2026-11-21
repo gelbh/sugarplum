@@ -22,6 +22,18 @@ describe("nameMatch separator normalization", () => {
   });
 });
 
+describe("entryNameForms backstop", () => {
+  it("ignores a stored alias that normalises to nothing", () => {
+    const forms = entryNameForms({
+      canonicalName: "Fasciola hepatica",
+      commonName: null,
+      aliases: ["- _", "  "],
+    });
+    expect(forms).not.toContain("");
+    expect(textMentionsEntry("Toxocara canis lab notes", forms)).toBe(false);
+  });
+});
+
 describe("cleanAliasList", () => {
   it("trims, drops empties and dedupes by searchable form", () => {
     expect(
@@ -35,8 +47,22 @@ describe("cleanAliasList", () => {
     ).toEqual(["follicular mite", "ear mite"]);
   });
 
+  it("drops aliases that normalise to nothing or fewer than 3 letters", () => {
+    expect(cleanAliasList(["-", "_", "- _", "ab", "a-b", "1-2-3", "ox"])).toEqual([]);
+    expect(cleanAliasList(["fox"])).toEqual(["fox"]);
+  });
+
+  it("dedupes underscore and hyphen spellings against spaced ones", () => {
+    expect(
+      cleanAliasList(["F hepatica", "F_hepatica", "f-hepatica"]),
+    ).toEqual(["F hepatica"]);
+  });
+
   it("does not truncate; limits are the caller's job", () => {
-    const many = Array.from({ length: ALIAS_MAX_ITEMS + 1 }, (_, i) => `a${i}`);
+    const many = Array.from(
+      { length: ALIAS_MAX_ITEMS + 1 },
+      (_, i) => `alias ${i}`,
+    );
     expect(cleanAliasList(many)).toHaveLength(ALIAS_MAX_ITEMS + 1);
     expect(ALIAS_MAX_CHARS).toBe(80);
   });
