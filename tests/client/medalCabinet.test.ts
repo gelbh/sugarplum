@@ -184,7 +184,8 @@ describe("MedalCabinet", () => {
     expect(text()).toContain("Full bushel");
     expect(text()).toContain("180 / 500");
     expect(text()).toContain("Golden apple");
-    expect(text().split("Orchard regular").length - 1).toBe(1);
+    // Header title + stem node both name the held medal.
+    expect(text().split("Orchard regular").length - 1).toBe(2);
     clickButton(0);
     expect(text()).not.toContain("Full bushel");
   });
@@ -229,31 +230,32 @@ describe("MedalCabinet", () => {
     expect(button?.querySelector("span")?.textContent).toContain("Orchard regular");
   });
 
-  it("moves an open right-column tile to the start of its row", () => {
+  it("expands a right-column tile in place", () => {
     render([...apple, ...lemon]);
     clickButton(1);
     const tiles = host.querySelectorAll(".medal-tile");
-    expect(tiles[0]?.textContent).toContain("First zest");
-    expect(tiles[1]?.textContent).toContain("Orchard regular");
+    expect(tiles[0]?.textContent).toContain("Orchard regular");
+    expect(tiles[1]?.textContent).toContain("First zest");
+    expect(tiles[1]?.textContent).toContain("Lemon grove");
   });
 
-  it("moves an open third tile to the start of its row", () => {
+  it("expands a third-column tile in place", () => {
     render([...apple, ...lemon, ...strawberry]);
     clickButton(2);
     const tiles = host.querySelectorAll(".medal-tile");
-    expect(tiles[0]?.textContent).toContain("First berry");
-    expect(tiles[1]?.textContent).toContain("Orchard regular");
-    expect(tiles[2]?.textContent).toContain("First zest");
+    expect(tiles[0]?.textContent).toContain("Orchard regular");
+    expect(tiles[1]?.textContent).toContain("First zest");
+    expect(tiles[2]?.textContent).toContain("First berry");
   });
 
-  it("shows the first medal when none are unlocked, and the next plum's bars", () => {
+  it("shows the first medal when none are unlocked, and the next plum's stem goals", () => {
     render(plum);
     expect(text()).toContain("Plum bud");
-    expect(text()).toContain("0 of 2");
-    expect(text()).not.toContain("Best streak 4 / 5");
+    const button = host.querySelector("button");
+    expect(button?.getAttribute("aria-label")).toContain("0 of 2");
+    expect(text()).not.toContain("4/5");
     clickButton(0);
-    expect(text()).toContain("Best streak 4 / 5");
-    expect(text()).toContain("Reviews 40 / 50");
-    expect(text().split("Plum bud").length - 1).toBe(1);
+    expect(text()).toContain("4/5 · 40/50");
+    expect(text().split("Plum bud").length - 1).toBe(2);
   });
 });

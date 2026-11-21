@@ -95,7 +95,7 @@ const LEARNER_NAV: NavItem[] = [
   },
   {
     id: "achievements",
-    label: "Medals",
+    label: "Fruits",
     href: "/achievements",
     icon: <MilitaryTechIcon fontSize="small" />,
     match: (path) => path === "/achievements",

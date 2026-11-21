@@ -222,6 +222,15 @@ export function getWeeklyLeaderboard() {
   return api<LeaderboardResponse>("/api/leaderboard/weekly");
 }
 
+export function getAllTimeLeaderboard() {
+  if (isGuest()) guestUnsupported("view the leaderboard");
+  return api<LeaderboardResponse>("/api/leaderboard/all-time");
+}
+
+export function getLeaderboard(period: "week" | "all" = "week") {
+  return period === "all" ? getAllTimeLeaderboard() : getWeeklyLeaderboard();
+}
+
 export function patchGamificationSettings(body: {
   boardOptIn?: boolean;
   displayName?: string | null;

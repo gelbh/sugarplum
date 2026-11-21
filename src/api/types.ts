@@ -349,13 +349,28 @@ export type GamificationResponse = {
   boardOptIn: boolean;
 };
 
+export type LeaderboardPeriod = "week" | "all";
+
 export type LeaderboardResponse = {
-  weekKey: string;
+  period: LeaderboardPeriod;
+  weekKey: string | null;
   entries: Array<{
     userId: string;
     displayName: string | null;
     xp: number;
   }>;
+  me: {
+    optedIn: boolean;
+    rank: number | null;
+    xp: number;
+    neighbors: Array<{
+      userId: string;
+      displayName: string | null;
+      xp: number;
+      rank: number;
+    }>;
+    xpLastWeek: number;
+  };
 };
 
 export type OcclusionFrontView = {
