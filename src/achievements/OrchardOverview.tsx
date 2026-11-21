@@ -158,7 +158,7 @@ export default function OrchardOverview({ gamification }: Props) {
           />
 
           <Stack spacing={0.6} sx={{ flex: 1, minWidth: 0 }}>
-            <Stack direction="row" alignItems="center" spacing={0.25}>
+            <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
               <Typography
                 component="h2"
                 sx={{

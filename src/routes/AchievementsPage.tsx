@@ -202,11 +202,14 @@ export default function AchievementsPage() {
             >
               <Stack
                 direction="row"
-                alignItems="baseline"
-                justifyContent="space-between"
-                gap={1}
-                flexWrap="wrap"
-                sx={{ mb: 1.25, minHeight: 52 }}
+                sx={{
+                  mb: 1.25,
+                  minHeight: 52,
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  gap: 1,
+                  flexWrap: "wrap",
+                }}
               >
                 <Typography
                   component="h2"
@@ -244,11 +247,14 @@ export default function AchievementsPage() {
             <Box sx={{ order: { xs: 2, md: 2 }, minWidth: 0, width: "100%" }}>
               <Stack
                 direction="row"
-                alignItems="baseline"
-                justifyContent="space-between"
-                gap={1}
-                flexWrap="wrap"
-                sx={{ mb: 1.25, minHeight: 52 }}
+                sx={{
+                  mb: 1.25,
+                  minHeight: 52,
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  gap: 1,
+                  flexWrap: "wrap",
+                }}
               >
                 <Typography
                   component="h2"

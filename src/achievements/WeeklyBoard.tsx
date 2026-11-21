@@ -196,8 +196,8 @@ function PodiumSlot({
   return (
     <Stack
       spacing={1}
-      alignItems="center"
       sx={{
+        alignItems: "center",
         flex: 1,
         minWidth: 0,
         alignSelf: "flex-end",
@@ -222,7 +222,7 @@ function PodiumSlot({
           mb: 0.15,
         }}
       />
-      <Stack spacing={0.2} alignItems="center" sx={{ width: "100%", px: 0.25 }}>
+      <Stack spacing={0.2} sx={{ width: "100%", px: 0.25, alignItems: "center" }}>
         <Typography
           variant="body2"
           title={you ? `${name} · you` : name}
@@ -444,11 +444,13 @@ export default function WeeklyBoard({
       <Paper elevation={0} sx={orchardBoardSx}>
         <Stack
           direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-          gap={1}
-          flexWrap="wrap"
-          sx={{ mb: 1.5 }}
+          sx={{
+            mb: 1.5,
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 1,
+            flexWrap: "wrap",
+          }}
         >
           <Typography
             component="h3"
@@ -469,9 +471,7 @@ export default function WeeklyBoard({
           direction="row"
           spacing={1}
           useFlexGap
-          flexWrap="wrap"
-          alignItems="center"
-          sx={{ mb: 1.5 }}
+          sx={{ mb: 1.5, flexWrap: "wrap", alignItems: "center" }}
         >
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
             {isWeek
@@ -495,9 +495,7 @@ export default function WeeklyBoard({
               direction="row"
               spacing={1}
               useFlexGap
-              flexWrap="wrap"
-              alignItems="center"
-              sx={{ mb: 2.5 }}
+              sx={{ mb: 2.5, flexWrap: "wrap", alignItems: "center" }}
             >
               <RankChip
                 label={
@@ -560,8 +558,8 @@ export default function WeeklyBoard({
                   <Stack
                     direction="row"
                     spacing={1.25}
-                    alignItems="flex-end"
                     sx={{
+                      alignItems: "flex-end",
                       minHeight: 188,
                       position: "relative",
                       zIndex: 1,
