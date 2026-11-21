@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -34,17 +34,235 @@ import { navigate } from "../shared/nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { useSession } from "../session/SessionContext";
 import { shouldAutoFocusText } from "../shared/lib/autoFocusText";
+import {
+  formatAdminCount,
+  formatAdminDate,
+  formatAdminDateShort,
+} from "./adminFormat";
 
-const RETENTION_NOTE =
-  "No automatic deletion; wipe inactive accounts manually.";
+const headSx = {
+  color: "secondary.main",
+  fontWeight: 600,
+  fontSize: "0.6875rem",
+  letterSpacing: "0.05em",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+  borderBottomColor: "divider",
+  bgcolor: "background.paper",
+  py: 1.25,
+  px: 1.25,
+  lineHeight: 1.2,
+} as const;
 
-function formatCreated(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+const cellSx = {
+  py: 1.25,
+  px: 1.25,
+  borderBottomColor: "divider",
+  verticalAlign: "middle",
+  fontSize: "0.875rem",
+} as const;
+
+const mutedCellSx = {
+  ...cellSx,
+  color: "text.secondary",
+  fontSize: "0.8125rem",
+  whiteSpace: "nowrap",
+} as const;
+
+const numCellSx = {
+  ...cellSx,
+  fontVariantNumeric: "tabular-nums",
+  whiteSpace: "nowrap",
+  textAlign: "right",
+  fontWeight: 500,
+} as const;
+
+const chipSx = {
+  height: 20,
+  fontWeight: 600,
+  fontSize: "0.6875rem",
+} as const;
+
+const sectionTitleSx = {
+  fontFamily: "h6.fontFamily",
+  fontWeight: 600,
+  letterSpacing: "-0.01em",
+} as const;
+
+const paperSx = {
+  overflow: "hidden",
+  borderColor: "divider",
+} as const;
+
+function MetricTile({ label, value }: { label: string; value: string }) {
+  return (
+    <Box
+      sx={{
+        px: 1.75,
+        py: 1.25,
+        minWidth: 108,
+        borderRadius: 2,
+        border: "1px solid",
+        borderColor: "divider",
+        bgcolor: "background.paper",
+        backgroundImage: (t) =>
+          t.palette.mode === "dark"
+            ? "linear-gradient(160deg, rgba(206,147,216,0.12) 0%, transparent 55%)"
+            : "linear-gradient(160deg, rgba(91,44,111,0.08) 0%, transparent 55%)",
+      }}
+    >
+      <Typography
+        variant="caption"
+        sx={{
+          display: "block",
+          color: "secondary.main",
+          fontWeight: 600,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          mb: 0.5,
+        }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        variant="h6"
+        component="p"
+        sx={{
+          m: 0,
+          fontFamily: "h6.fontFamily",
+          fontWeight: 600,
+          lineHeight: 1.1,
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        {value}
+      </Typography>
+    </Box>
+  );
+}
+
+function ProfileField({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <Box sx={{ minWidth: 0 }}>
+      <Typography
+        variant="caption"
+        sx={{
+          display: "block",
+          color: "secondary.main",
+          fontWeight: 600,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          mb: 0.5,
+        }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.primary",
+          fontWeight: 500,
+          wordBreak: "break-word",
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        {value}
+      </Typography>
+    </Box>
+  );
+}
+
+function Section({
+  title,
+  children,
+  action,
+}: {
+  title: string;
+  children: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <Paper variant="outlined" sx={paperSx}>
+      <Stack
+        direction="row"
+        spacing={1}
+        useFlexGap
+        sx={{
+          px: 1.75,
+          py: 1.25,
+          alignItems: "center",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          bgcolor: (t) =>
+            t.palette.mode === "dark"
+              ? "rgba(232,216,199,0.04)"
+              : "rgba(91,44,111,0.03)",
+        }}
+      >
+        <Typography variant="h6" component="h2" sx={sectionTitleSx}>
+          {title}
+        </Typography>
+        {action ? <Box sx={{ ml: "auto" }}>{action}</Box> : null}
+      </Stack>
+      <Box sx={{ p: 1.75 }}>{children}</Box>
+    </Paper>
+  );
+}
+
+function DataTable({
+  ariaLabel,
+  headers,
+  empty,
+  colSpan,
+  children,
+}: {
+  ariaLabel: string;
+  headers: ReactNode;
+  empty?: boolean;
+  colSpan: number;
+  children: ReactNode;
+}) {
+  return (
+    <TableContainer sx={{ mx: -1.75, mb: -1.75, width: "auto" }}>
+      <Table size="small" aria-label={ariaLabel}>
+        <TableHead>
+          <TableRow>{headers}</TableRow>
+        </TableHead>
+        <TableBody>
+          {empty ? (
+            <TableRow>
+              <TableCell colSpan={colSpan} align="center" sx={cellSx}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "text.secondary", py: 2 }}
+                >
+                  No rows.
+                </Typography>
+              </TableCell>
+            </TableRow>
+          ) : (
+            children
+          )}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+}
+
+function stripeRowSx(index: number) {
+  return {
+    bgcolor: (t: { palette: { mode: string } }) =>
+      index % 2 === 1
+        ? t.palette.mode === "dark"
+          ? "rgba(232,216,199,0.03)"
+          : "rgba(91,44,111,0.03)"
+        : "transparent",
+    "&:last-of-type td": { borderBottom: 0 },
+  };
+}
+
+function shortId(id: string): string {
+  return id.length > 12 ? `${id.slice(0, 8)}…` : id;
 }
 
 function handleAdminAuthError(err: unknown): "401" | "403" | "other" {
@@ -224,36 +442,73 @@ export default function AdminUserPage({ userId }: Props) {
     wipeEmail.trim().toLowerCase() === detail.email.toLowerCase();
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 4, md: 5 } }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
       {!ready ? (
-        <Typography sx={{
-          color: "text.secondary"
-        }}>Loading user…</Typography>
+        <Typography sx={{ color: "text.secondary" }}>Loading user…</Typography>
       ) : (
-        <Stack spacing={3}>
-          <Box>
+        <Stack spacing={2.5}>
+          <Box
+            sx={{
+              pb: 2,
+              borderBottom: "1px solid",
+              borderColor: "divider",
+            }}
+          >
             <Link
               component="button"
               type="button"
               variant="body2"
               onClick={() => navigate("/admin")}
-              sx={{ mb: 1, display: "inline-block" }}
+              sx={{
+                mb: 1.25,
+                display: "inline-block",
+                color: "secondary.main",
+                fontWeight: 600,
+              }}
             >
               ← Back to Admin
             </Link>
-            <Typography
-              variant="h4"
-              component="h1"
-              gutterBottom
-              sx={{ color: "text.primary", fontWeight: 600 }}
+            <Stack
+              direction="row"
+              spacing={1.25}
+              useFlexGap
+              sx={{ alignItems: "center", flexWrap: "wrap" }}
             >
-              {detail?.email ?? "User"}
-            </Typography>
-            <Typography variant="body2" sx={{
-              color: "text.secondary"
-            }}>
-              {RETENTION_NOTE}
-            </Typography>
+              <Typography
+                variant="h3"
+                component="h1"
+                sx={{
+                  color: "text.primary",
+                  fontWeight: 600,
+                  fontFamily: "h6.fontFamily",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                {detail?.email ?? "User"}
+              </Typography>
+              {detail ? (
+                <Stack direction="row" spacing={0.75} useFlexGap>
+                  <Chip
+                    size="small"
+                    label={
+                      detail.disabled_at == null ? "Active" : "Disabled"
+                    }
+                    color={
+                      detail.disabled_at == null ? "success" : "default"
+                    }
+                    variant="outlined"
+                    sx={chipSx}
+                  />
+                  <Chip
+                    size="small"
+                    label={detail.google_linked ? "Google" : "Password"}
+                    color={detail.google_linked ? "secondary" : "default"}
+                    variant="outlined"
+                    sx={chipSx}
+                  />
+                </Stack>
+              ) : null}
+            </Stack>
           </Box>
 
           {forbidden ? <Alert severity="warning">Forbidden</Alert> : null}
@@ -263,9 +518,12 @@ export default function AdminUserPage({ userId }: Props) {
 
           {detail ? (
             <>
-              <Stack direction="row" spacing={1} useFlexGap sx={{
-                flexWrap: "wrap"
-              }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                useFlexGap
+                sx={{ flexWrap: "wrap" }}
+              >
                 <Button
                   variant="contained"
                   disabled={actionBusy || detail.id === user?.id}
@@ -307,276 +565,287 @@ export default function AdminUserPage({ userId }: Props) {
                 </Button>
               </Stack>
 
-              <Stack spacing={1}>
-                <Typography variant="h6" component="h2">
-                  Profile
-                </Typography>
-                <Typography variant="body2" sx={{
-                  color: "text.secondary"
-                }}>
-                  Id: {detail.id}
-                </Typography>
-                <Typography variant="body2" sx={{
-                  color: "text.secondary"
-                }}>
-                  Created: {formatCreated(detail.created_at)}
-                </Typography>
-                <Typography variant="body2" sx={{
-                  color: "text.secondary"
-                }}>
-                  Google linked: {detail.google_linked ? "Yes" : "No"}
-                </Typography>
-                <Typography variant="body2" sx={{
-                  color: "text.secondary"
-                }}>
-                  Disabled:{" "}
-                  {detail.disabled_at
-                    ? formatCreated(detail.disabled_at)
-                    : "No"}
-                </Typography>
-              </Stack>
-
-              <Stack direction="row" spacing={1} useFlexGap sx={{
-                flexWrap: "wrap"
-              }}>
-                <Chip
-                  label={`Decks: ${detail.counts.decks}`}
-                  variant="outlined"
+              <Stack
+                direction="row"
+                spacing={1.25}
+                useFlexGap
+                sx={{ flexWrap: "wrap" }}
+              >
+                <MetricTile
+                  label="Decks"
+                  value={formatAdminCount(detail.counts.decks)}
                 />
-                <Chip
-                  label={`Cards: ${detail.counts.cards}`}
-                  variant="outlined"
+                <MetricTile
+                  label="Cards"
+                  value={formatAdminCount(detail.counts.cards)}
                 />
-                <Chip
-                  label={`Jobs: ${detail.counts.jobs}`}
-                  variant="outlined"
+                <MetricTile
+                  label="Jobs"
+                  value={formatAdminCount(detail.counts.jobs)}
                 />
-                <Chip
-                  label={`Materials: ${detail.counts.materials}`}
-                  variant="outlined"
+                <MetricTile
+                  label="Materials"
+                  value={formatAdminCount(detail.counts.materials)}
                 />
-                {detail.usage ? (
-                  <>
-                    <Chip
-                      label={`Tokens (all): ${detail.usage.tokensAllTime}`}
-                      variant="outlined"
-                    />
-                    <Chip
-                      label={`Tokens (30d): ${detail.usage.tokens30d}`}
-                      variant="outlined"
-                    />
-                    <Chip
-                      label={`Free (30d): ${detail.usage.freeJobs30d}`}
-                      variant="outlined"
-                    />
-                    <Chip
-                      label={`BYO (30d): ${detail.usage.byoJobs30d}`}
-                      variant="outlined"
-                    />
-                  </>
-                ) : null}
+                <MetricTile
+                  label="Tokens all"
+                  value={formatAdminCount(detail.usage.tokensAllTime)}
+                />
+                <MetricTile
+                  label="Tokens 30d"
+                  value={formatAdminCount(detail.usage.tokens30d)}
+                />
+                <MetricTile
+                  label="Free 30d"
+                  value={formatAdminCount(detail.usage.freeJobs30d)}
+                />
+                <MetricTile
+                  label="BYO 30d"
+                  value={formatAdminCount(detail.usage.byoJobs30d)}
+                />
                 {detail.freeGenToday ? (
-                  <Chip
-                    label={`Free gen today: ${detail.freeGenToday.used}/${detail.freeGenToday.cap}`}
-                    variant="outlined"
+                  <MetricTile
+                    label="Free gen today"
+                    value={`${detail.freeGenToday.used}/${detail.freeGenToday.cap}`}
                   />
                 ) : null}
               </Stack>
 
-              <Typography variant="body2" sx={{
-                color: "text.secondary"
-              }}>
-                Export JSON still has full card and material text.
-              </Typography>
+              <Section title="Profile">
+                <Box
+                  sx={{
+                    display: "grid",
+                    gap: 2,
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      sm: "1fr 1fr",
+                    },
+                  }}
+                >
+                  <ProfileField label="Id" value={detail.id} />
+                  <ProfileField
+                    label="Created"
+                    value={formatAdminDate(detail.created_at)}
+                  />
+                  <ProfileField
+                    label="Auth"
+                    value={detail.google_linked ? "Google" : "Password"}
+                  />
+                  <ProfileField
+                    label="Status"
+                    value={
+                      detail.disabled_at
+                        ? `Disabled · ${formatAdminDate(detail.disabled_at)}`
+                        : "Active"
+                    }
+                  />
+                </Box>
+              </Section>
 
               {detail.studyPrefs ? (
-                <Stack spacing={1}>
-                  <Typography variant="h6" component="h2">
-                    Study prefs
-                  </Typography>
-                  <Typography variant="body2" sx={{
-                    color: "text.secondary"
-                  }}>
-                    Intro budget: {detail.studyPrefs.intro_budget}; review:{" "}
-                    {detail.studyPrefs.review_budget}; r_floor:{" "}
-                    {detail.studyPrefs.r_floor}
-                  </Typography>
-                </Stack>
+                <Section title="Study prefs">
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gap: 2,
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        sm: "repeat(3, 1fr)",
+                      },
+                    }}
+                  >
+                    <ProfileField
+                      label="Intro budget"
+                      value={detail.studyPrefs.intro_budget}
+                    />
+                    <ProfileField
+                      label="Review budget"
+                      value={detail.studyPrefs.review_budget}
+                    />
+                    <ProfileField
+                      label="R floor"
+                      value={detail.studyPrefs.r_floor}
+                    />
+                  </Box>
+                </Section>
               ) : null}
 
               {detail.subjects && detail.subjects.length > 0 ? (
-                <Stack spacing={1}>
-                  <Typography variant="h6" component="h2">
-                    Subjects
-                  </Typography>
-                  <Typography variant="body2" sx={{
-                    color: "text.secondary"
-                  }}>
-                    {detail.subjects.map((s) => s.title).join(", ")}
-                  </Typography>
-                </Stack>
+                <Section title="Subjects">
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    useFlexGap
+                    sx={{ flexWrap: "wrap" }}
+                  >
+                    {detail.subjects.map((s) => (
+                      <Chip
+                        key={s.id}
+                        label={s.title}
+                        variant="outlined"
+                        size="small"
+                        sx={{ borderColor: "divider" }}
+                      />
+                    ))}
+                  </Stack>
+                </Section>
               ) : null}
 
               {detail.decks && detail.decks.length > 0 ? (
-                <Stack spacing={1}>
-                  <Typography variant="h6" component="h2">
-                    Decks
-                  </Typography>
-                  <Typography variant="body2" sx={{
-                    color: "text.secondary"
-                  }}>
-                    {detail.decks.map((d) => d.title).join(", ")}
-                  </Typography>
-                </Stack>
+                <Section title="Decks">
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    useFlexGap
+                    sx={{ flexWrap: "wrap" }}
+                  >
+                    {detail.decks.map((d) => (
+                      <Chip
+                        key={d.id}
+                        label={d.title}
+                        variant="outlined"
+                        size="small"
+                        sx={{ borderColor: "divider" }}
+                      />
+                    ))}
+                  </Stack>
+                </Section>
               ) : null}
 
               {detail.materials && detail.materials.length > 0 ? (
-                <Stack spacing={1}>
-                  <Typography variant="h6" component="h2">
-                    Materials
-                  </Typography>
-                  <TableContainer component={Paper} variant="outlined">
-                    <Table size="small" aria-label="User materials">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Kind</TableCell>
-                          <TableCell>Filename</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell>Created</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {detail.materials.map((m) => (
-                          <TableRow key={m.id}>
-                            <TableCell>{m.kind}</TableCell>
-                            <TableCell>{m.filename ?? "-"}</TableCell>
-                            <TableCell>{m.status}</TableCell>
-                            <TableCell>{formatCreated(m.created_at)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Stack>
+                <Section title="Materials">
+                  <DataTable
+                    ariaLabel="User materials"
+                    colSpan={4}
+                    headers={
+                      <>
+                        <TableCell sx={headSx}>Kind</TableCell>
+                        <TableCell sx={headSx}>Filename</TableCell>
+                        <TableCell sx={headSx}>Status</TableCell>
+                        <TableCell sx={headSx}>Created</TableCell>
+                      </>
+                    }
+                  >
+                    {detail.materials.map((m, index) => (
+                      <TableRow key={m.id} sx={stripeRowSx(index)}>
+                        <TableCell sx={cellSx}>{m.kind}</TableCell>
+                        <TableCell sx={cellSx}>{m.filename ?? "-"}</TableCell>
+                        <TableCell sx={cellSx}>{m.status}</TableCell>
+                        <TableCell sx={mutedCellSx}>
+                          {formatAdminDateShort(m.created_at)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </DataTable>
+                </Section>
               ) : null}
 
               {detail.cardSample && detail.cardSample.length > 0 ? (
-                <Stack spacing={1}>
-                  <Typography variant="h6" component="h2">
-                    Card sample
-                  </Typography>
-                  <TableContainer component={Paper} variant="outlined">
-                    <Table size="small" aria-label="Card sample">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Type</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell>Front</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {detail.cardSample.map((card) => (
-                          <TableRow key={card.id}>
-                            <TableCell>{card.type}</TableCell>
-                            <TableCell>{card.status}</TableCell>
-                            <TableCell>{card.frontPreview}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Stack>
+                <Section title="Card sample">
+                  <DataTable
+                    ariaLabel="Card sample"
+                    colSpan={3}
+                    headers={
+                      <>
+                        <TableCell sx={headSx}>Type</TableCell>
+                        <TableCell sx={headSx}>Status</TableCell>
+                        <TableCell sx={headSx}>Front</TableCell>
+                      </>
+                    }
+                  >
+                    {detail.cardSample.map((card, index) => (
+                      <TableRow key={card.id} sx={stripeRowSx(index)}>
+                        <TableCell sx={cellSx}>{card.type}</TableCell>
+                        <TableCell sx={cellSx}>{card.status}</TableCell>
+                        <TableCell
+                          sx={{
+                            ...cellSx,
+                            color: "text.secondary",
+                            fontFamily: "ui-monospace, monospace",
+                            fontSize: "0.8125rem",
+                          }}
+                        >
+                          {card.frontPreview}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </DataTable>
+                </Section>
               ) : null}
 
-              <Stack spacing={1}>
-                <Typography variant="h6" component="h2">
-                  Recent jobs
-                </Typography>
-                <TableContainer component={Paper} variant="outlined">
-                  <Table size="small" aria-label="Recent generation jobs">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Id</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell>Path</TableCell>
-                        <TableCell align="right">Tokens</TableCell>
-                        <TableCell>Created</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {detail.recentJobs.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={5} align="center">
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                color: "text.secondary",
-                                py: 2
-                              }}>
-                              No generation jobs.
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        detail.recentJobs.map((job) => (
-                          <TableRow key={job.id}>
-                            <TableCell>{job.id}</TableCell>
-                            <TableCell>{job.status}</TableCell>
-                            <TableCell>{job.path ?? "-"}</TableCell>
-                            <TableCell align="right">
-                              {job.tokens_used ?? "-"}
-                            </TableCell>
-                            <TableCell>
-                              {formatCreated(job.created_at)}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Stack>
+              <Section title="Recent jobs">
+                <DataTable
+                  ariaLabel="Recent generation jobs"
+                  colSpan={5}
+                  empty={detail.recentJobs.length === 0}
+                  headers={
+                    <>
+                      <TableCell sx={headSx}>Id</TableCell>
+                      <TableCell sx={headSx}>Status</TableCell>
+                      <TableCell sx={headSx}>Path</TableCell>
+                      <TableCell sx={{ ...headSx, textAlign: "right" }}>
+                        Tokens
+                      </TableCell>
+                      <TableCell sx={headSx}>Created</TableCell>
+                    </>
+                  }
+                >
+                  {detail.recentJobs.map((job, index) => (
+                    <TableRow key={job.id} sx={stripeRowSx(index)}>
+                      <TableCell
+                        sx={{
+                          ...cellSx,
+                          fontFamily: "ui-monospace, monospace",
+                          fontSize: "0.8125rem",
+                        }}
+                        title={job.id}
+                      >
+                        {shortId(job.id)}
+                      </TableCell>
+                      <TableCell sx={cellSx}>{job.status}</TableCell>
+                      <TableCell sx={cellSx}>{job.path ?? "-"}</TableCell>
+                      <TableCell sx={numCellSx}>
+                        {job.tokens_used != null
+                          ? formatAdminCount(job.tokens_used)
+                          : "-"}
+                      </TableCell>
+                      <TableCell sx={mutedCellSx}>
+                        {formatAdminDateShort(job.created_at)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </DataTable>
+              </Section>
 
-              <Stack spacing={1}>
-                <Typography variant="h6" component="h2">
-                  Recent study days
-                </Typography>
-                <TableContainer component={Paper} variant="outlined">
-                  <Table size="small" aria-label="Recent study days">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Day</TableCell>
-                        <TableCell align="right">Intros used</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {detail.recentStudyDays.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={2} align="center">
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                color: "text.secondary",
-                                py: 2
-                              }}>
-                              No study day rows.
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        detail.recentStudyDays.map((day) => (
-                          <TableRow key={day.day}>
-                            <TableCell>{day.day}</TableCell>
-                            <TableCell align="right">
-                              {day.intros_used}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Stack>
+              <Section title="Recent study days">
+                <DataTable
+                  ariaLabel="Recent study days"
+                  colSpan={2}
+                  empty={detail.recentStudyDays.length === 0}
+                  headers={
+                    <>
+                      <TableCell sx={headSx}>Day</TableCell>
+                      <TableCell sx={{ ...headSx, textAlign: "right" }}>
+                        Intros used
+                      </TableCell>
+                    </>
+                  }
+                >
+                  {detail.recentStudyDays.map((day, index) => (
+                    <TableRow key={day.day} sx={stripeRowSx(index)}>
+                      <TableCell sx={mutedCellSx}>{day.day}</TableCell>
+                      <TableCell sx={numCellSx}>{day.intros_used}</TableCell>
+                    </TableRow>
+                  ))}
+                </DataTable>
+              </Section>
+
+              <Typography
+                variant="caption"
+                sx={{ color: "text.secondary", display: "block" }}
+              >
+                Export JSON still includes full card and material text.
+              </Typography>
 
               <Dialog
                 open={wipeOpen}

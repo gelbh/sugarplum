@@ -1,4 +1,4 @@
-export const ADMIN_OVERVIEW_CACHE_KEY = "cache:admin:overview:v1";
+export const ADMIN_OVERVIEW_CACHE_KEY = "cache:admin:overview:v2";
 export const ADMIN_OVERVIEW_CACHE_TTL_SECONDS = 120;
 
 export async function cacheGetJson<T>(

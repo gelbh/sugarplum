@@ -335,6 +335,30 @@ describe("admin view-as impersonation", () => {
     expect(body.users.some((u) => u.id === "u-alice")).toBe(true);
   });
 
+  it("401 GET /api/admin/users when actor disabled mid-impersonation", async () => {
+    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
+    seedAdminAndLearner(env);
+    await app.request(
+      "/api/admin/users/u-alice/impersonate",
+      { method: "POST", headers: adminHeaders },
+      env,
+    );
+    env.seedUser({
+      id: "admin-u",
+      email: ADMIN_EMAIL,
+      password_hash: null,
+      oauth_subject: "google-admin",
+      created_at: "2025-01-01T00:00:00.000Z",
+      disabled_at: "2026-11-21T12:00:00.000Z",
+    });
+    const res = await app.request(
+      "/api/admin/users",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(res.status).toBe(401);
+  });
+
   it("logout clears session and leaves source user intact", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearner(env);

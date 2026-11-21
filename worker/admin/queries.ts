@@ -1,21 +1,3 @@
-export const LIST_USERS_SQL = `
-SELECT u.id, u.email, u.created_at, u.oauth_subject, u.disabled_at
-FROM users u
-WHERE u.sandbox_of IS NULL
-ORDER BY u.created_at DESC
-LIMIT ?
-`.replace(/\s+/g, " ");
-
-/** Email substring search (leading wildcard; admin-only, expects full scan). */
-export const LIST_USERS_SEARCH_SQL = `
-SELECT u.id, u.email, u.created_at, u.oauth_subject, u.disabled_at
-FROM users u
-WHERE u.sandbox_of IS NULL
-  AND lower(u.email) LIKE '%' || lower(?) || '%'
-ORDER BY u.created_at DESC
-LIMIT ?
-`.replace(/\s+/g, " ");
-
 export const USER_DETAIL_SQL = `
 SELECT u.id, u.email, u.created_at, u.oauth_subject, u.disabled_at,
   (SELECT COUNT(*) FROM decks d WHERE d.user_id = u.id) AS deck_count,
@@ -95,6 +77,72 @@ export function parseUserListLimit(raw: string | undefined): number {
   const n = Number.parseInt(raw, 10);
   if (!Number.isFinite(n) || n < 1) return 50;
   return Math.min(n, 100);
+}
+
+export type AdminListStatusFilter = "all" | "active" | "disabled";
+export type AdminListGoogleFilter = "all" | "yes" | "no";
+export type AdminListSort =
+  | "created_at"
+  | "last_activity"
+  | "tokens_30d"
+  | "email"
+  | "decks";
+export type AdminListDir = "asc" | "desc";
+
+export function parseAdminListStatus(
+  raw: string | undefined,
+): AdminListStatusFilter {
+  if (raw === "active" || raw === "disabled" || raw === "all") return raw;
+  return "all";
+}
+
+export function parseAdminListGoogle(
+  raw: string | undefined,
+): AdminListGoogleFilter {
+  if (raw === "yes" || raw === "no" || raw === "all") return raw;
+  return "all";
+}
+
+export function parseAdminListSort(raw: string | undefined): AdminListSort {
+  if (
+    raw === "created_at" ||
+    raw === "last_activity" ||
+    raw === "tokens_30d" ||
+    raw === "email" ||
+    raw === "decks"
+  ) {
+    return raw;
+  }
+  return "created_at";
+}
+
+export function parseAdminListDir(raw: string | undefined): AdminListDir {
+  if (raw === "asc" || raw === "desc") return raw;
+  return "desc";
+}
+
+export function buildAdminListWhere(opts: {
+  q: string;
+  status: AdminListStatusFilter;
+  google: AdminListGoogleFilter;
+}): { whereSql: string; whereBinds: (string | number)[] } {
+  const where: string[] = ["u.sandbox_of IS NULL"];
+  const whereBinds: (string | number)[] = [];
+  if (opts.q !== "") {
+    where.push("lower(u.email) LIKE '%' || lower(?) || '%'");
+    whereBinds.push(opts.q);
+  }
+  if (opts.status === "active") {
+    where.push("u.disabled_at IS NULL");
+  } else if (opts.status === "disabled") {
+    where.push("u.disabled_at IS NOT NULL");
+  }
+  if (opts.google === "yes") {
+    where.push("u.oauth_subject IS NOT NULL");
+  } else if (opts.google === "no") {
+    where.push("u.oauth_subject IS NULL");
+  }
+  return { whereSql: where.join(" AND "), whereBinds };
 }
 
 export const CREATED_LAST_7D_MS = 7 * 864e5;
