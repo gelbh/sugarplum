@@ -1,3 +1,12 @@
+import { HTTPException } from "hono/http-exception";
+import type { DatasetEntry } from "./datasets/schema";
+import { sameFieldValue } from "./merge";
+import {
+  PARASITE_FIELD_KEYS,
+  type ParasiteFields,
+} from "./templates/parasite";
+import type { CorrectionDiff } from "../../src/atlas/types";
+
 // Single-line SQL so the fake D1 in tests/worker matches these exact strings.
 
 export const SELECT_OPEN_SUGGESTION_SQL =
@@ -18,3 +27,146 @@ export const SELECT_CORRECTION_STATUS_SQL =
 
 export const RESOLVE_CORRECTION_SQL =
   "UPDATE atlas_correction_suggestions SET status = ?, resolved_at = ?, resolved_by = ? WHERE id = ? AND status = 'open'";
+
+export const SUGGESTION_NOTE_MAX = 1000;
+
+/** Keys this save touched; values always come from storage. */
+export type SuggestionInput = {
+  keys: string[];
+  /** Raw submitted scientific name; the route refuses one that differs. */
+  canonicalName: string | null;
+  note: string | null;
+  sourceUrl: string | null;
+};
+
+/** What the student has stored for the entry, read after the overlay PATCH. */
+export type CurrentEntryState = {
+  commonName: string | null;
+  fields: ParasiteFields;
+  learnerAliases: string[];
+};
+
+function bad(message: string): never {
+  throw new HTTPException(400, { message });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function parseNote(raw: unknown): string | null {
+  if (raw === undefined || raw === null) return null;
+  if (typeof raw !== "string") bad("note must be text");
+  const note = raw.trim();
+  if (note.length > SUGGESTION_NOTE_MAX) {
+    bad(`note must be at most ${SUGGESTION_NOTE_MAX} characters`);
+  }
+  return note || null;
+}
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function parseSourceUrl(raw: unknown): string | null {
+  if (raw === undefined || raw === null) return null;
+  if (typeof raw !== "string") bad("sourceUrl must be an http or https link");
+  const value = raw.trim();
+  if (!value) return null;
+  if (!isHttpUrl(value)) bad("sourceUrl must be an http or https link");
+  return value;
+}
+
+const FIELD_KEYS = new Set<string>(PARASITE_FIELD_KEYS);
+
+/** The patch selects keys only; unknown field names are ignored. */
+export function parseSuggestionBody(raw: unknown): SuggestionInput {
+  if (!isRecord(raw)) bad("Invalid JSON body");
+  const patch = raw.patch;
+  if (!isRecord(patch)) bad("patch required");
+  const keys = new Set<string>();
+  if (isRecord(patch.fields)) {
+    for (const key of Object.keys(patch.fields)) {
+      if (FIELD_KEYS.has(key)) keys.add(key);
+    }
+  }
+  if ("commonName" in patch) keys.add("commonName");
+  if ("aliases" in patch) keys.add("aliases");
+  return {
+    keys: [...keys],
+    canonicalName:
+      typeof patch.canonicalName === "string" ? patch.canonicalName : null,
+    note: parseNote(raw.note),
+    sourceUrl: parseSourceUrl(raw.sourceUrl),
+  };
+}
+
+function withLearnerAliases(dataset: string[], learner: string[]): string[] {
+  const seen = new Set(dataset.map((a) => a.toLowerCase()));
+  const out = [...dataset];
+  for (const alias of learner) {
+    const key = alias.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(alias);
+  }
+  return out;
+}
+
+function fromTo(
+  base: DatasetEntry,
+  current: CurrentEntryState,
+  key: string,
+): [unknown, unknown] | null {
+  if (key === "commonName") {
+    return [base.commonName, current.commonName ?? base.commonName];
+  }
+  if (key === "aliases") {
+    return [base.aliases, withLearnerAliases(base.aliases, current.learnerAliases)];
+  }
+  if (!FIELD_KEYS.has(key)) return null;
+  const field = key as keyof ParasiteFields;
+  return [(base.fields as ParasiteFields)[field], current.fields[field]];
+}
+
+export function computeCorrectionDiff(
+  base: DatasetEntry,
+  current: CurrentEntryState,
+  keys: readonly string[],
+): CorrectionDiff {
+  const diff: CorrectionDiff = {};
+  for (const key of keys) {
+    const pair = fromTo(base, current, key);
+    if (!pair) continue;
+    const from = pair[0] ?? null;
+    const to = pair[1] ?? null;
+    if (!sameFieldValue(from, to)) diff[key] = { from, to };
+  }
+  return diff;
+}
+
+/**
+ * Repeat submission: this save's keys replace the same keys, earlier keys
+ * keep their values, and keys now stored at the dataset value drop out.
+ */
+export function mergeSuggestionDiff(
+  existingJson: string | null,
+  base: DatasetEntry,
+  current: CurrentEntryState,
+  keys: readonly string[],
+): CorrectionDiff {
+  const prior: CorrectionDiff = existingJson
+    ? (JSON.parse(existingJson) as CorrectionDiff)
+    : {};
+  const merged = { ...prior, ...computeCorrectionDiff(base, current, keys) };
+  const stillEdited = computeCorrectionDiff(base, current, Object.keys(merged));
+  for (const key of Object.keys(merged)) {
+    if (!(key in stillEdited)) delete merged[key];
+  }
+  return merged;
+}
