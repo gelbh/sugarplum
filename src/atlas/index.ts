@@ -15,10 +15,10 @@ export { default as Cabinet } from "./hub/Cabinet";
 export { default as CoursePackPanel } from "./hub/CoursePackPanel";
 export {
   AddEntryDialog,
-  EditEntryDialog,
   EditLifecycleDialog,
   RecentlyDeletedDialog,
 } from "./mutate/AtlasMutateDialogs";
+export { EditEntryDialog } from "./mutate/EditEntryDialog";
 export { default as MakeCardsDeckDialog } from "./mutate/MakeCardsDeckDialog";
 export {
   apiAtlasSource,

@@ -1,5 +1,11 @@
 import { api, ApiError } from "../../api/client";
-import type { AtlasEntryView, AtlasSource, DatasetFields } from "../types";
+import type {
+  AtlasEntryView,
+  AtlasSource,
+  DatasetFields,
+  EntryPatchBody,
+  FieldKey,
+} from "../types";
 
 export type AtlasMeta = {
   id: string;
@@ -95,15 +101,21 @@ export function createEntry(
 export function patchEntry(
   atlasId: string,
   entryId: string,
-  body: {
-    commonName?: string | null;
-    fields?: Partial<DatasetFields>;
-  },
+  body: EntryPatchBody,
 ) {
   return api<AtlasEntryView>(entryPath(atlasId, entryId), {
     method: "PATCH",
     json: body,
   });
+}
+
+/** Drop per-field overrides so those fields read from the dataset again. */
+export function resetEntryFields(
+  atlasId: string,
+  entryId: string,
+  fields: FieldKey[],
+) {
+  return patchEntry(atlasId, entryId, { resetFields: fields });
 }
 
 export function softDeleteEntry(atlasId: string, entryId: string) {

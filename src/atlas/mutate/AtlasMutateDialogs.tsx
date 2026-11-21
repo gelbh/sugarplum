@@ -16,7 +16,6 @@ import { GROUP_LABELS } from "../hub/filter";
 import StageListEditor from "../lifecycle/StageListEditor";
 import type { AtlasEntryView, ParasiteGroup } from "../types";
 import { useAddEntryDialog } from "./useAddEntryDialog";
-import { useEditEntryDialog } from "./useEditEntryDialog";
 import { useEditLifecycleDialog } from "../lifecycle/useEditLifecycleDialog";
 import { useRecentlyDeletedDialog } from "./useRecentlyDeletedDialog";
 import { shouldAutoFocusText } from "../../shared/lib/autoFocusText";
@@ -112,102 +111,6 @@ export function AddEntryDialog({ open, atlasId, onClose, onDone }: AddProps) {
           <Button type="submit" variant="contained" disabled={busy}>
             {busy ? "Adding…" : "Add"}
           </Button>
-        </DialogActions>
-      </form>
-    </Dialog>
-  );
-}
-
-type EditProps = {
-  open: boolean;
-  atlasId: string;
-  entry: AtlasEntryView | null;
-  onClose: () => void;
-  onDone: () => void;
-};
-
-export function EditEntryDialog({
-  open,
-  atlasId,
-  entry,
-  onClose,
-  onDone,
-}: EditProps) {
-  const {
-    commonName,
-    setCommonName,
-    definitiveHosts,
-    setDefinitiveHosts,
-    busy,
-    error,
-    canReset,
-    onSubmit,
-    onSoftDelete,
-    onReset,
-  } = useEditEntryDialog({ open, atlasId, entry, onClose, onDone });
-
-  return (
-    <Dialog
-      open={open}
-      onClose={() => !busy && onClose()}
-      fullWidth
-      maxWidth="xs"
-    >
-      <form onSubmit={onSubmit}>
-        <DialogTitle>
-          Edit {entry ? entryTitles(entry).primary : "entry"}
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={1.5} sx={{ pt: 0.5 }}>
-            {error ? <Alert severity="error">{error}</Alert> : null}
-            <TextField
-              autoFocus={shouldAutoFocusText()}
-              label="Common name"
-              value={commonName}
-              onChange={(ev) => setCommonName(ev.target.value)}
-              disabled={busy}
-              fullWidth
-              required
-            />
-            <TextField
-              label="Definitive hosts"
-              value={definitiveHosts}
-              onChange={(ev) => setDefinitiveHosts(ev.target.value)}
-              disabled={busy}
-              fullWidth
-              helperText="Comma-separated host terms"
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions
-          sx={{ justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}
-        >
-          <Stack direction="row" sx={{
-            gap: 1
-          }}>
-            <Button
-              color="error"
-              onClick={() => void onSoftDelete()}
-              disabled={busy}
-            >
-              Delete
-            </Button>
-            {canReset ? (
-              <Button onClick={() => void onReset()} disabled={busy}>
-                Reset to original
-              </Button>
-            ) : null}
-          </Stack>
-          <Stack direction="row" sx={{
-            gap: 1
-          }}>
-            <Button onClick={onClose} disabled={busy}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="contained" disabled={busy}>
-              {busy ? "Saving…" : "Save"}
-            </Button>
-          </Stack>
         </DialogActions>
       </form>
     </Dialog>
