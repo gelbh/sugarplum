@@ -113,6 +113,7 @@ export const PPP_ERROR =
   "Enter whole-number min and max days, with max at least min";
 export const DIAGNOSTIC_OWNED_ERROR =
   "The lifecycle editor sets the diagnostic stage";
+export const DIAGNOSTIC_TEST_NAME_ERROR = "Name each test or remove the row";
 
 const joinList = (items: readonly string[]) => items.join(", ");
 const splitList = (raw: string) =>
@@ -183,8 +184,15 @@ function fieldsFromDraft(d: EntryDraft): Partial<ParasiteFields> {
     significance: textOrNull(d.significance),
     vectorRole: textOrNull(d.vectorRole),
     diagnosticStage: textOrNull(d.diagnosticStage),
+    // Entirely empty rows drop out; a row with any data but no name stays so validation can flag it.
     diagnosticTests: d.diagnosticTests
-      .filter((t) => t.name.trim())
+      .filter(
+        (t) =>
+          t.name.trim() ||
+          t.sample.trim() ||
+          t.windowStartWeek !== null ||
+          t.windowEndWeek !== null,
+      )
       .map((t) => ({
         name: t.name.trim(),
         sample: textOrNull(t.sample),
@@ -288,6 +296,9 @@ export function validateEntryPatch(
     }
   }
   if (patch.fields) {
+    if (patch.fields.diagnosticTests?.some((t) => !t.name)) {
+      errors.diagnosticTests = DIAGNOSTIC_TEST_NAME_ERROR;
+    }
     const parsed = parasiteFieldsPatchSchema.safeParse(patch.fields);
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {

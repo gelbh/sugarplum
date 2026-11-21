@@ -453,6 +453,9 @@ export function EditEntryDialog({
                     <TextField
                       label="Test"
                       value={t.name}
+                      error={
+                        Boolean(fieldErrors.diagnosticTests) && !t.name.trim()
+                      }
                       onChange={(ev) =>
                         update(
                           "diagnosticTests",

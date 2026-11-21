@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ALIAS_MAX_ITEMS } from "../../src/atlas/hub/nameMatch";
 import {
   DIAGNOSTIC_OWNED_ERROR,
+  DIAGNOSTIC_TEST_NAME_ERROR,
   PPP_ERROR,
   diffEntryPatch,
   draftFromEntry,
@@ -106,14 +107,14 @@ describe("diffEntryPatch", () => {
     expect(diffEntryPatch(e, cleared)).toEqual({ fields: { pppDays: null } });
   });
 
-  it("keeps diagnostic test windows and drops blank rows", () => {
+  it("keeps diagnostic test windows and drops entirely empty rows", () => {
     const e = entry();
     const base = draftFromEntry(e);
     const draft = {
       ...base,
       diagnosticTests: [
         { ...base.diagnosticTests[0], sample: "" },
-        { name: "  ", sample: "x", windowStartWeek: null, windowEndWeek: null },
+        { name: "  ", sample: " ", windowStartWeek: null, windowEndWeek: null },
         { name: "PCR", sample: "", windowStartWeek: null, windowEndWeek: null },
       ],
     };
@@ -124,6 +125,28 @@ describe("diffEntryPatch", () => {
           { name: "PCR", sample: null, windowStartWeek: null, windowEndWeek: null },
         ],
       },
+    });
+  });
+
+  it("flags a diagnostic test row that has data but no name", () => {
+    const e = entry();
+    const base = draftFromEntry(e);
+    const sampleOnly = {
+      ...base,
+      diagnosticTests: [
+        ...base.diagnosticTests,
+        { name: "  ", sample: "faeces", windowStartWeek: null, windowEndWeek: null },
+      ],
+    };
+    expect(validateEntryPatch(e, diffEntryPatch(e, sampleOnly))).toEqual({
+      diagnosticTests: DIAGNOSTIC_TEST_NAME_ERROR,
+    });
+    const nameCleared = {
+      ...base,
+      diagnosticTests: [{ ...base.diagnosticTests[0], name: "" }],
+    };
+    expect(validateEntryPatch(e, diffEntryPatch(e, nameCleared))).toEqual({
+      diagnosticTests: DIAGNOSTIC_TEST_NAME_ERROR,
     });
   });
 });

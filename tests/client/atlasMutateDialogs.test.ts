@@ -10,7 +10,10 @@ import {
   EditLifecycleDialog,
   RecentlyDeletedDialog,
 } from "../../src/atlas/mutate/AtlasMutateDialogs";
-import { PPP_ERROR } from "../../src/atlas/mutate/entryPatch";
+import {
+  DIAGNOSTIC_TEST_NAME_ERROR,
+  PPP_ERROR,
+} from "../../src/atlas/mutate/entryPatch";
 import type { AtlasEntryView } from "../../src/atlas/types";
 import {
   emptyParasiteFields,
@@ -640,6 +643,19 @@ describe("EditEntryDialog sections", () => {
     expect(biology().textContent).not.toContain(PPP_ERROR);
     expect(document.body.textContent).not.toContain("Could not reset field");
     expect(fieldByLabel("PPP min (days)").value).toBe("3");
+  });
+
+  it("flags an added test row with a sample but no name instead of dropping it", async () => {
+    await render(editDialog());
+    await act(async () => {
+      buttonNamed("Add test").click();
+    });
+    await typeInto(fieldByLabel("Sample (optional)"), "faeces");
+    await submitForm();
+    expect(patchEntry).not.toHaveBeenCalled();
+    expect(document.getElementById("atlas-edit-diagnosis")?.textContent).toContain(
+      DIAGNOSTIC_TEST_NAME_ERROR,
+    );
   });
 
   it("runs afterSave after patchEntry with the sent patch and renders footerExtra", async () => {
