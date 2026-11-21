@@ -77,10 +77,25 @@ export function adminOverview() {
   return api<AdminOverview>("/api/admin/overview");
 }
 
-export function adminListUsers(q?: string, limit?: number) {
+export type AdminListUsersOpts = {
+  q?: string;
+  limit?: number;
+  status?: "all" | "active" | "disabled";
+  google?: "all" | "yes" | "no";
+  sort?: "created_at" | "last_activity" | "tokens_30d" | "email" | "decks";
+  dir?: "asc" | "desc";
+};
+
+export function adminListUsers(opts: AdminListUsersOpts | string = {}) {
+  const normalized =
+    typeof opts === "string" ? { q: opts } : (opts ?? {});
   const params = new URLSearchParams();
-  if (q?.trim()) params.set("q", q.trim());
-  if (limit != null) params.set("limit", String(limit));
+  if (normalized.q?.trim()) params.set("q", normalized.q.trim());
+  if (normalized.limit != null) params.set("limit", String(normalized.limit));
+  if (normalized.status) params.set("status", normalized.status);
+  if (normalized.google) params.set("google", normalized.google);
+  if (normalized.sort) params.set("sort", normalized.sort);
+  if (normalized.dir) params.set("dir", normalized.dir);
   const qs = params.toString();
   return api<{ users: AdminUserListItem[] }>(
     `/api/admin/users${qs ? `?${qs}` : ""}`,

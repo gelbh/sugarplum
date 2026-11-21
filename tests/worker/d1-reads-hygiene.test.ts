@@ -23,13 +23,14 @@ describe("struggling SQL hygiene", () => {
 });
 
 describe("admin list SQL hygiene", () => {
-  it("LIST_USERS_SQL has no correlated deck_count subquery", () => {
-    const src = readFileSync("worker/admin/queries.ts", "utf8");
-    const listBlock = src.slice(
-      src.indexOf("export const LIST_USERS_SQL"),
-      src.indexOf("export const USER_DETAIL_SQL"),
+  it("admin list avoids per-row correlated deck_count probes", () => {
+    const listSrc = readFileSync("worker/admin/list-users.ts", "utf8");
+    expect(listSrc).not.toMatch(
+      /SELECT COUNT\(\*\) FROM decks d WHERE d\.user_id = u\.id/,
     );
-    expect(listBlock).not.toMatch(/SELECT COUNT\(\*\) FROM decks/);
+    expect(listSrc).toMatch(/sugarplum:admin-list-lean/);
+    expect(listSrc).toMatch(/sugarplum:admin-list-metrics/);
+    expect(listSrc).toMatch(/GROUP BY user_id/);
   });
 
   it("overview route does not sum all usage_events unbounded", () => {

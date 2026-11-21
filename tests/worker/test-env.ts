@@ -668,12 +668,19 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.startsWith(
+            "SELECT email, oauth_subject, disabled_at FROM users WHERE id =",
+          ) ||
+          normalized.startsWith(
             "SELECT email, oauth_subject FROM users WHERE id =",
           )
         ) {
           const u = users.get(bound[0] as string);
           return u
-            ? ({ email: u.email, oauth_subject: u.oauth_subject } as T)
+            ? ({
+                email: u.email,
+                oauth_subject: u.oauth_subject,
+                disabled_at: u.disabled_at ?? null,
+              } as T)
             : null;
         }
         if (normalized.startsWith("SELECT email FROM users WHERE id =")) {
@@ -1994,33 +2001,177 @@ export function createTestEnv(opts?: {
             }));
           return { results: rows as T[] };
         }
-        if (
-          normalized.includes("FROM users u") &&
-          normalized.includes("sandbox_of IS NULL") &&
-          normalized.includes("ORDER BY u.created_at DESC") &&
-          normalized.includes("LIMIT ?") &&
-          !normalized.includes("AS deck_count")
-        ) {
-          const hasSearch = normalized.includes("lower(u.email) LIKE");
-          const q = hasSearch ? String(bound[0] ?? "") : "";
-          const limitRaw = hasSearch ? bound[1] : bound[0];
-          let rows = [...users.values()].filter(
-            (u) => (u.sandbox_of ?? null) == null,
+        const enrichAdminUser = (
+          u: {
+            id: string;
+            email: string;
+            oauth_subject: string | null;
+            created_at: string;
+            disabled_at?: string | null;
+          },
+          cutoff30: string,
+        ) => {
+          const userDeckIds = new Set(
+            [...decks.values()]
+              .filter((d) => d.user_id === u.id)
+              .map((d) => d.id),
           );
-          if (hasSearch && q !== "") {
-            rows = rows.filter((u) => emailMatchesAdminListQuery(u.email, q));
-          }
-          rows.sort((a, b) => b.created_at.localeCompare(a.created_at));
-          const limit = Number(limitRaw);
-          rows = rows.slice(0, Number.isFinite(limit) ? limit : 50);
-          const results = rows.map((u) => ({
+          const events = [...usageEvents.values()].filter(
+            (e) => e.user_id === u.id,
+          );
+          const recent = events.filter((e) => e.created_at >= cutoff30);
+          const lastUsage = events.reduce<string | null>((max, e) => {
+            if (max == null || e.created_at > max) return e.created_at;
+            return max;
+          }, null);
+          const lastStudy = [...userStudyDay.values()]
+            .filter((s) => s.user_id === u.id)
+            .reduce<string | null>((max, s) => {
+              if (max == null || s.day > max) return s.day;
+              return max;
+            }, null);
+          const lastStudyIso =
+            lastStudy != null ? `${lastStudy}T23:59:59.999Z` : null;
+          const activityCandidates = [
+            lastUsage,
+            lastStudyIso,
+            u.created_at,
+          ].filter((v): v is string => v != null);
+          const last_activity_at = activityCandidates.reduce((max, v) =>
+            v > max ? v : max,
+          );
+          return {
             id: u.id,
             email: u.email,
             created_at: u.created_at,
             oauth_subject: u.oauth_subject,
             disabled_at: u.disabled_at ?? null,
-          }));
+            deck_count: userDeckIds.size,
+            card_count: [...cards.values()].filter((c) =>
+              userDeckIds.has(c.deck_id),
+            ).length,
+            job_count: [...generationJobs.values()].filter((j) => {
+              const material = materials.get(j.material_id);
+              if (!material) return false;
+              return userDeckIds.has(material.deck_id);
+            }).length,
+            material_count: [...materials.values()].filter((m) =>
+              userDeckIds.has(m.deck_id),
+            ).length,
+            tokens_all_time: events.reduce(
+              (sum, e) => sum + (e.tokens_total ?? 0),
+              0,
+            ),
+            tokens_30d: recent.reduce(
+              (sum, e) => sum + (e.tokens_total ?? 0),
+              0,
+            ),
+            free_jobs_30d: recent.filter(
+              (e) => e.path === "free" && e.kind === "generation",
+            ).length,
+            byo_jobs_30d: recent.filter(
+              (e) => e.path === "byo" && e.kind === "generation",
+            ).length,
+            last_activity_at,
+          };
+        };
+
+        const filterAdminListUsers = (sqlNorm: string, q: string) => {
+          let rows = [...users.values()].filter(
+            (u) => (u.sandbox_of ?? null) == null,
+          );
+          if (sqlNorm.includes("lower(u.email) LIKE") && q !== "") {
+            rows = rows.filter((u) => emailMatchesAdminListQuery(u.email, q));
+          }
+          if (sqlNorm.includes("u.disabled_at IS NULL")) {
+            rows = rows.filter((u) => (u.disabled_at ?? null) == null);
+          } else if (sqlNorm.includes("u.disabled_at IS NOT NULL")) {
+            rows = rows.filter((u) => (u.disabled_at ?? null) != null);
+          }
+          if (sqlNorm.includes("u.oauth_subject IS NOT NULL")) {
+            rows = rows.filter((u) => u.oauth_subject != null);
+          } else if (sqlNorm.includes("u.oauth_subject IS NULL")) {
+            rows = rows.filter((u) => u.oauth_subject == null);
+          }
+          return rows;
+        };
+
+        if (normalized.includes("sugarplum:admin-list-lean")) {
+          const hasSearch = normalized.includes("lower(u.email) LIKE");
+          const q = hasSearch ? String(bound[0] ?? "") : "";
+          const limitRaw = hasSearch ? bound[1] : bound[0];
+          let rows = filterAdminListUsers(normalized, q);
+          const dirAsc = normalized.includes(" ASC LIMIT");
+          if (normalized.includes("ORDER BY lower(u.email)")) {
+            rows.sort((a, b) =>
+              dirAsc
+                ? a.email.toLowerCase().localeCompare(b.email.toLowerCase())
+                : b.email.toLowerCase().localeCompare(a.email.toLowerCase()),
+            );
+          } else {
+            rows.sort((a, b) =>
+              dirAsc
+                ? a.created_at.localeCompare(b.created_at)
+                : b.created_at.localeCompare(a.created_at),
+            );
+          }
+          const limit = Number(limitRaw);
+          rows = rows.slice(0, Number.isFinite(limit) ? limit : 50);
+          return {
+            results: rows.map((u) => ({
+              id: u.id,
+              email: u.email,
+              created_at: u.created_at,
+              oauth_subject: u.oauth_subject,
+              disabled_at: u.disabled_at ?? null,
+            })) as T[],
+          };
+        }
+
+        if (normalized.includes("sugarplum:admin-list-metrics")) {
+          const idSet = new Set(bound.filter((b) => typeof b === "string"));
+          const cutoff30 = String(
+            bound.find(
+              (b) => typeof b === "string" && /^\d{4}-\d{2}-\d{2}T/.test(b),
+            ) ?? "",
+          );
+          const results = [...users.values()]
+            .filter((u) => idSet.has(u.id))
+            .map((u) => enrichAdminUser(u, cutoff30));
           return { results: results as T[] };
+        }
+
+        if (normalized.includes("sugarplum:admin-list-join")) {
+          const cutoff30 = String(bound[0] ?? "");
+          const hasSearch = normalized.includes("lower(u.email) LIKE");
+          const q = hasSearch ? String(bound[3] ?? "") : "";
+          const limitRaw = hasSearch ? bound[4] : bound[3];
+          let enriched = filterAdminListUsers(normalized, q).map((u) =>
+            enrichAdminUser(u, cutoff30),
+          );
+          const dirAsc = normalized.includes(" ASC LIMIT");
+          const cmp = (a: string | number, b: string | number) => {
+            if (typeof a === "number" && typeof b === "number") {
+              return dirAsc ? a - b : b - a;
+            }
+            const as = String(a);
+            const bs = String(b);
+            return dirAsc ? as.localeCompare(bs) : bs.localeCompare(as);
+          };
+          if (normalized.includes("ORDER BY last_activity_at")) {
+            enriched.sort((a, b) =>
+              cmp(a.last_activity_at, b.last_activity_at),
+            );
+          } else if (normalized.includes("ORDER BY tokens_30d")) {
+            enriched.sort((a, b) => cmp(a.tokens_30d, b.tokens_30d));
+          } else if (normalized.includes("ORDER BY deck_count")) {
+            enriched.sort((a, b) => cmp(a.deck_count, b.deck_count));
+          } else {
+            enriched.sort((a, b) => cmp(a.created_at, b.created_at));
+          }
+          const limit = Number(limitRaw);
+          enriched = enriched.slice(0, Number.isFinite(limit) ? limit : 50);
+          return { results: enriched as T[] };
         }
         if (
           normalized.includes("FROM subjects WHERE user_id =") &&

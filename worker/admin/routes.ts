@@ -9,7 +9,7 @@ import {
 import { requireAdmin } from "./requireAdmin";
 import { runProvenanceBackfill } from "./provenance-backfill";
 import { runHealWipedFields } from "../atlas/heal-wiped-fields";
-import type { AppEnv, AdminUserDetail, AdminUserListItem } from "./types";
+import type { AppEnv, AdminUserDetail } from "./types";
 import {
   collectUserR2Keys,
   loadAdminUser,
@@ -19,8 +19,6 @@ import {
 import { exitImpersonation, startImpersonation } from "./impersonation";
 import { EXPORT_MAX_CHARS, buildUserExportPayload } from "./export";
 import {
-  LIST_USERS_SQL,
-  LIST_USERS_SEARCH_SQL,
   USER_DETAIL_SQL,
   RECENT_JOBS_SQL,
   RECENT_STUDY_DAYS_SQL,
@@ -31,10 +29,15 @@ import {
   CARD_SAMPLE_SQL,
   USER_USAGE_SQL,
   parseUserListLimit,
+  parseAdminListStatus,
+  parseAdminListGoogle,
+  parseAdminListSort,
+  parseAdminListDir,
   createdLast7dCutoffIso,
   usage30dCutoffIso,
   frontPreviewFromJson,
 } from "./queries";
+import { fetchAdminUserList } from "./list-users";
 import {
   ADMIN_OVERVIEW_CACHE_KEY,
   ADMIN_OVERVIEW_CACHE_TTL_SECONDS,
@@ -113,26 +116,20 @@ adminRoutes.get("/users", async (c) => {
   await requireAdmin(c);
   const q = (c.req.query("q") ?? "").trim();
   const limit = parseUserListLimit(c.req.query("limit"));
-  const db = getDb(c.env);
-  const stmt =
-    q === ""
-      ? db.prepare(LIST_USERS_SQL).bind(limit)
-      : db.prepare(LIST_USERS_SEARCH_SQL).bind(q, limit);
-  const { results } = await stmt.all<{
-    id: string;
-    email: string;
-    created_at: string;
-    oauth_subject: string | null;
-    disabled_at: string | null;
-  }>();
-
-  const users: AdminUserListItem[] = (results ?? []).map((row) => ({
-    id: row.id,
-    email: row.email,
-    created_at: row.created_at,
-    google_linked: row.oauth_subject != null,
-    disabled_at: row.disabled_at ?? null,
-  }));
+  const status = parseAdminListStatus(c.req.query("status"));
+  const google = parseAdminListGoogle(c.req.query("google"));
+  const sort = parseAdminListSort(c.req.query("sort"));
+  const dir = parseAdminListDir(c.req.query("dir"));
+  const cutoff30 = usage30dCutoffIso();
+  const users = await fetchAdminUserList(getDb(c.env), {
+    q,
+    status,
+    google,
+    sort,
+    dir,
+    limit,
+    cutoff30,
+  });
   return c.json({ users });
 });
 

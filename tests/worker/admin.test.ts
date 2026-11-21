@@ -326,9 +326,21 @@ describe("GET /api/admin/users (allowlisted)", () => {
     vi.useRealTimers();
   });
 
-  it("200 with lean user rows", async () => {
+  it("200 with heavy user rows", async () => {
     const env = createTestEnv({ adminEmails: "ops@example.com" });
     seedAdminMonitorFixture(env);
+    env.seedUsageEvent({
+      id: "ue-alice",
+      user_id: "u-alice",
+      created_at: "2026-10-29T08:00:00.000Z",
+      tokens_total: 100,
+      tokens_prompt: null,
+      tokens_completion: null,
+      path: "free",
+      kind: "generation",
+      job_id: null,
+      provider: null,
+    });
     const res = await app.request(
       "/api/admin/users",
       { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
@@ -340,7 +352,12 @@ describe("GET /api/admin/users (allowlisted)", () => {
         id: string;
         email: string;
         google_linked: boolean;
-        deckCount?: number;
+        decks: number;
+        cards: number;
+        jobs: number;
+        materials: number;
+        tokens30d: number;
+        last_activity_at: string;
       }[];
     };
     expect(body.users).toHaveLength(3);
@@ -348,12 +365,98 @@ describe("GET /api/admin/users (allowlisted)", () => {
     expect(alice).toMatchObject({
       id: "u-alice",
       google_linked: true,
+      decks: 1,
+      cards: 2,
+      jobs: 1,
+      materials: 1,
+      tokens30d: 100,
+      last_activity_at: "2026-10-29T08:00:00.000Z",
     });
-    expect(alice).not.toHaveProperty("deckCount");
     const bob = body.users.find((u) => u.email === "bob@example.com");
     expect(bob).toMatchObject({
       google_linked: false,
+      decks: 0,
     });
+  });
+
+  it("filters by status and google", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedAdminMonitorFixture(env);
+    env.seedUser({
+      id: "u-disabled",
+      email: "disabled@example.com",
+      password_hash: null,
+      oauth_subject: "google-disabled",
+      created_at: "2026-10-27T00:00:00.000Z",
+      disabled_at: "2026-10-28T00:00:00.000Z",
+    });
+    const disabledRes = await app.request(
+      "/api/admin/users?status=disabled",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(disabledRes.status).toBe(200);
+    const disabledBody = (await disabledRes.json()) as {
+      users: { email: string }[];
+    };
+    expect(disabledBody.users.map((u) => u.email)).toEqual([
+      "disabled@example.com",
+    ]);
+
+    const googleRes = await app.request(
+      "/api/admin/users?google=no",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(googleRes.status).toBe(200);
+    const googleBody = (await googleRes.json()) as {
+      users: { email: string }[];
+    };
+    expect(googleBody.users.map((u) => u.email)).toEqual(["bob@example.com"]);
+  });
+
+  it("sorts by tokens_30d ascending", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedAdminMonitorFixture(env);
+    env.seedUsageEvent({
+      id: "ue-alice-2",
+      user_id: "u-alice",
+      created_at: "2026-10-29T08:00:00.000Z",
+      tokens_total: 50,
+      tokens_prompt: null,
+      tokens_completion: null,
+      path: "free",
+      kind: "generation",
+      job_id: null,
+      provider: null,
+    });
+    env.seedUsageEvent({
+      id: "ue-bob-2",
+      user_id: "u-bob",
+      created_at: "2026-10-29T09:00:00.000Z",
+      tokens_total: 200,
+      tokens_prompt: null,
+      tokens_completion: null,
+      path: "free",
+      kind: "generation",
+      job_id: null,
+      provider: null,
+    });
+    const res = await app.request(
+      "/api/admin/users?sort=tokens_30d&dir=asc",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      users: { email: string; tokens30d: number }[];
+    };
+    expect(body.users.map((u) => u.email)).toEqual([
+      "ops@example.com",
+      "alice@example.com",
+      "bob@example.com",
+    ]);
+    expect(body.users.map((u) => u.tokens30d)).toEqual([0, 50, 200]);
   });
 
   it("filters by q on email", async () => {
