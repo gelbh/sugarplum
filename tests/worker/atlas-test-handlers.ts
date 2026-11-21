@@ -540,10 +540,9 @@ export function atlasRun(
       field_overrides_json,
       edited_at,
       updated_at,
-      canonical_name,
-      aliases_json,
       id,
       atlas_id,
+      expected_updated_at,
     ] = bound as [
       string | null,
       string,
@@ -551,24 +550,16 @@ export function atlasRun(
       string,
       string,
       string,
-      string | null,
       string,
       string,
     ];
     const row = state.entries.get(id);
-    if (!row || row.atlas_id !== atlas_id) {
+    if (
+      !row ||
+      row.atlas_id !== atlas_id ||
+      row.updated_at !== expected_updated_at
+    ) {
       return { success: true, meta: { changes: 0 } } as D1Result;
-    }
-    for (const other of state.entries.values()) {
-      if (
-        other.id !== id &&
-        other.atlas_id === atlas_id &&
-        other.canonical_name === canonical_name
-      ) {
-        throw new Error(
-          "UNIQUE constraint failed: atlas_entries.atlas_id, canonical_name",
-        );
-      }
     }
     state.entries.set(id, {
       ...row,
@@ -577,8 +568,6 @@ export function atlasRun(
       field_overrides_json,
       edited_at,
       updated_at,
-      canonical_name,
-      aliases_json,
       status: "accepted",
     });
     return { success: true, meta: { changes: 1 } } as D1Result;

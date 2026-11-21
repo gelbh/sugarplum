@@ -530,6 +530,52 @@ describe("PATCH /entries/:entryId field overrides", () => {
     expect(res.status).toBe(400);
   });
 
+  it("returns 409 and keeps the other write when the row changed mid-request", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    await seedOverlayRow(env, atlasId, {
+      id: "e-race",
+      originKey: "fasciola-hepatica",
+      fieldsJson: "{}",
+      overridesJson: JSON.stringify({ significance: "First" }),
+    });
+    const concurrent = JSON.stringify({ significance: "Other tab snapshot" });
+    const realPrepare = env.DB.prepare.bind(env.DB);
+    let raced = false;
+    env.DB.prepare = ((sql: string) => {
+      if (raced || !/UPDATE atlas_entries\s+SET common_name/.test(sql)) {
+        return realPrepare(sql);
+      }
+      raced = true;
+      return {
+        bind: (...args: unknown[]) => ({
+          run: async () => {
+            // Another tab's write lands between our read and our UPDATE.
+            await realPrepare(
+              "UPDATE atlas_entries SET fields_json = ?, updated_at = ? WHERE id = ? AND atlas_id = ?",
+            ).bind(concurrent, "2026-03-01T00:00:00.000Z", "e-race", atlasId).run();
+            env.DB.prepare = realPrepare;
+            return realPrepare(sql).bind(...args).run();
+          },
+        }),
+      } as unknown as D1PreparedStatement;
+    }) as D1Database["prepare"];
+
+    const res = await patchEntry(env, atlasId, "e-race", {
+      fields: { family: "Editedidae" },
+    });
+    expect(raced).toBe(true);
+    expect(res.status).toBe(409);
+    expect(await res.text()).toContain("Entry changed, reload and try again");
+    const row = await env.DB.prepare("SELECT * FROM atlas_entries WHERE id = ?")
+      .bind("e-race")
+      .first<{ updated_at: string; fields_json: string; field_overrides_json: string }>();
+    expect(row?.updated_at).toBe("2026-03-01T00:00:00.000Z");
+    expect(row?.fields_json).toBe(concurrent);
+    expect(JSON.parse(row!.field_overrides_json)).toEqual({ significance: "First" });
+  });
+
   it("refuses to overwrite an unparseable overrides column", async () => {
     const env = createTestEnv();
     seedOwner(env);

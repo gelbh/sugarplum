@@ -368,12 +368,13 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
       ? (datasetByKey().get(resolved.row.origin_key) ?? null)
       : null;
     const plan = planEntryWrite(resolved.row, dataset, input);
-    await db
+    // Optimistic guard: the plan was built from this read of the row.
+    const result = await db
       .prepare(
         `UPDATE atlas_entries
          SET common_name = ?, fields_json = ?, field_overrides_json = ?, edited_at = ?, updated_at = ?,
-             status = 'accepted', canonical_name = ?, aliases_json = ?
-         WHERE id = ? AND atlas_id = ?`,
+             status = 'accepted'
+         WHERE id = ? AND atlas_id = ? AND updated_at = ?`,
       )
       .bind(
         plan.commonName,
@@ -381,12 +382,16 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
         plan.overridesJson,
         ts,
         ts,
-        resolved.row.canonical_name,
-        resolved.row.aliases_json ?? null,
         resolved.row.id,
         atlas.id,
+        resolved.row.updated_at,
       )
       .run();
+    if (result.meta.changes === 0) {
+      throw new HTTPException(409, {
+        message: "Entry changed, reload and try again",
+      });
+    }
     const updated = await findEntryById(db, atlas.id, resolved.row.id);
     if (!updated) throw new HTTPException(404, { message: "Entry not found" });
     row = updated;
