@@ -362,6 +362,28 @@ describe("overlayAtlas", () => {
     expect(views[0].learnerAliases).toEqual(["Follicle Mite", "follicular mite"]);
   });
 
+  it("dedupes learner aliases by separator-collapsed form and drops short ones", () => {
+    const demodex = datasetEntry({
+      key: "demodex-canis",
+      canonicalName: "Demodex canis",
+      commonName: "Canine demodex mite",
+      aliases: ["follicle mite"],
+      misspellings: [],
+    });
+    const views = overlayAtlas(
+      [demodex],
+      [
+        overlayRow({
+          id: "row-alias",
+          origin_key: "demodex-canis",
+          canonical_name: "Demodex canis",
+          aliases_json: JSON.stringify(["follicle_mite", "- _", "dc"]),
+        }),
+      ],
+    );
+    expect(views[0].aliases).toEqual(["follicle mite"]);
+  });
+
   it("treats null or malformed aliases_json as no learner aliases", () => {
     const views = overlayAtlas(
       [fasciola],

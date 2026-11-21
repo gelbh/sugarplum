@@ -13,7 +13,7 @@ import {
   type ParasiteFieldKey,
   type ParasiteFields,
 } from "./templates/parasite";
-import { searchable } from "../../src/atlas/hub/nameMatch";
+import { cleanAliasList } from "../../src/atlas/hub/nameMatch";
 
 /** D1 atlas_entries row shape used by overlay (refs/images optional joins). */
 export type OverlayRow = {
@@ -247,19 +247,6 @@ export function parseLearnerAliases(json: string | null | undefined): string[] {
   }
 }
 
-/** Dataset aliases first, then learner aliases; duplicates by searchable form dropped. */
-function unionAliases(dataset: string[], learner: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const alias of [...dataset, ...learner]) {
-    const key = searchable(alias);
-    if (!key || seen.has(key)) continue;
-    seen.add(key);
-    out.push(alias);
-  }
-  return out;
-}
-
 export function viewFromOverlay(
   row: OverlayRow,
   base: DatasetEntry | null,
@@ -274,7 +261,8 @@ export function viewFromOverlay(
     canonicalName: base?.canonicalName ?? row.canonical_name,
     // NULL means "use the dataset name", so dataset fixes to the name show through.
     commonName: row.common_name ?? base?.commonName ?? null,
-    aliases: unionAliases(fromDataset?.aliases ?? [], learnerAliases),
+    // Dataset aliases first, so their spelling wins a duplicate.
+    aliases: cleanAliasList([...(fromDataset?.aliases ?? []), ...learnerAliases]),
     learnerAliases,
     fields: merged.fields,
     refs: media.refs,
