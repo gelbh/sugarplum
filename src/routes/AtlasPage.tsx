@@ -18,6 +18,7 @@ import {
   EditEntryDialog,
   EditLifecycleDialog,
   RecentlyDeletedDialog,
+  useCorrectionSuggestion,
 } from "../atlas";
 import {
   apiAtlasSource,
@@ -185,6 +186,14 @@ export default function AtlasPage({
     const next = await loadApiEntries();
     setLoaded((prev) => (prev ? { ...prev, ...next } : prev));
   }, [loadApiEntries]);
+
+  const suggestion = useCorrectionSuggestion({
+    atlasId,
+    entry: editTarget?.entry ?? null,
+    onSent: () => {
+      void reloadEntries();
+    },
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -483,7 +492,11 @@ export default function AtlasPage({
               setEditTarget(null);
               if (target) setEditLifecycle(target.entry);
             }}
+            afterSave={suggestion.afterSave}
+            footerExtra={suggestion.footerExtra}
+            saveBlocked={suggestion.saveBlocked}
           />
+          {suggestion.toast}
           <EditLifecycleDialog
             open={editLifecycle !== null}
             atlasId={atlasId}

@@ -13,6 +13,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import type { Theme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import { correctionStatusLabel } from "../corrections/correctionCopy";
 import AtlasImage from "../hub/AtlasImage";
 import type { EditSectionId } from "../mutate/entryPatch";
 import EntryPersonalNotes from "./EntryPersonalNotes";
@@ -106,6 +107,7 @@ export default function EntryFacts({
   const heroId = entry.images.find((i) => i.isHero)?.id;
   const gallery = entry.images.filter((i) => i.id !== heroId);
   const showActions = Boolean(onEdit || onReset || onMakeCards);
+  const suggestionLabel = correctionStatusLabel(entry.suggestionStatus);
   const [lightbox, setLightbox] = useState<AtlasImageView | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -214,7 +216,7 @@ export default function EntryFacts({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-      {showActions || entry.editedAt ? (
+      {showActions || entry.editedAt || suggestionLabel ? (
         <Stack
           direction="row"
           sx={{
@@ -225,6 +227,9 @@ export default function EntryFacts({
         >
           {entry.editedAt ? (
             <Chip label="Edited" size="small" variant="outlined" />
+          ) : null}
+          {suggestionLabel ? (
+            <Chip label={suggestionLabel} size="small" variant="outlined" />
           ) : null}
           {onMakeCards ? (
             <Button variant="contained" size="small" onClick={onMakeCards}>
