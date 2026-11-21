@@ -2,9 +2,15 @@ import type {
   AtlasEntryView,
   AtlasImageView,
   DatasetFields,
+  FieldKey,
 } from "../../src/atlas/types";
 import type { DatasetEntry } from "./datasets/schema";
 import { syncDiagnosticOwnership } from "./lifecycleDiagnostic";
+import {
+  emptyParasiteFields,
+  PARASITE_FIELD_KEYS,
+  type ParasiteFields,
+} from "./templates/parasite";
 
 /** D1 atlas_entries row shape used by overlay (refs/images optional joins). */
 export type OverlayRow = {
@@ -16,6 +22,10 @@ export type OverlayRow = {
   fields_json: string;
   edited_at: string | null;
   deleted_at: string | null;
+  /** Dataset-origin rows: changed keys only. NULL on an origin row means a legacy full copy. */
+  field_overrides_json?: string | null;
+  /** JSON string array of learner aliases; null or absent means none. */
+  aliases_json?: string | null;
   refs?: AtlasEntryView["refs"];
   images?: AtlasImageView[];
 };
@@ -46,11 +56,47 @@ export function toEntryView(entry: DatasetEntry): AtlasEntryView {
     override: null,
     focusMaterialIds: [],
     inPack: null,
+    editedFields: [],
+    commonNameEdited: false,
   };
 }
 
-function parseFields(fieldsJson: string): DatasetFields {
-  const fields = JSON.parse(fieldsJson) as DatasetFields;
+export type OverlayFieldsRow = Pick<
+  OverlayRow,
+  "origin_key" | "fields_json" | "field_overrides_json"
+>;
+
+function canonicalJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalJson);
+  if (value !== null && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.keys(record)
+        .sort()
+        .map((k) => [k, canonicalJson(record[k])]),
+    );
+  }
+  return value;
+}
+
+/** Deep equality for field values; object key order does not matter. */
+export function sameFieldValue(a: unknown, b: unknown): boolean {
+  return JSON.stringify(canonicalJson(a)) === JSON.stringify(canonicalJson(b));
+}
+
+function parseObject(json: string | null | undefined): Record<string, unknown> {
+  if (!json) return {};
+  try {
+    const parsed: unknown = JSON.parse(json);
+    return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function syncFields(fields: DatasetFields): DatasetFields {
   const synced = syncDiagnosticOwnership(
     fields.lifecycleStages,
     fields.diagnosticStage,
@@ -60,6 +106,49 @@ function parseFields(fieldsJson: string): DatasetFields {
     lifecycleStages: synced.stages,
     diagnosticStage: synced.diagnosticStage,
   };
+}
+
+/**
+ * The learner's overrides on a dataset-origin row. Legacy rows (NULL
+ * overrides) hold a full copy, so their overrides are whatever differs from
+ * today's dataset. A stored value equal to the dataset is a no-op.
+ */
+export function overlayOverrides(
+  datasetFields: DatasetFields,
+  row: OverlayFieldsRow,
+): Partial<ParasiteFields> {
+  const stored = parseObject(
+    row.field_overrides_json != null ? row.field_overrides_json : row.fields_json,
+  );
+  const out: Partial<ParasiteFields> = {};
+  for (const key of PARASITE_FIELD_KEYS) {
+    if (!(key in stored)) continue;
+    if (sameFieldValue(stored[key], datasetFields[key])) continue;
+    Object.assign(out, { [key]: stored[key] });
+  }
+  return out;
+}
+
+/** The one place merged overlay fields are built (views, Focus, PATCH base). */
+export function mergeOverlayFields(
+  datasetFields: DatasetFields | null,
+  row: OverlayFieldsRow,
+): DatasetFields {
+  const empty = emptyParasiteFields() as DatasetFields;
+  if (row.origin_key === null) {
+    return syncFields({ ...empty, ...parseObject(row.fields_json) } as DatasetFields);
+  }
+  if (datasetFields === null) {
+    return syncFields({
+      ...empty,
+      ...parseObject(row.fields_json),
+      ...parseObject(row.field_overrides_json),
+    } as DatasetFields);
+  }
+  return syncFields({
+    ...datasetFields,
+    ...overlayOverrides(datasetFields, row),
+  } as DatasetFields);
 }
 
 /** Dataset refs/images first, then learner overlay refs/images. */
@@ -80,14 +169,18 @@ export function viewFromOverlay(
 ): AtlasEntryView {
   const fromDataset = base ? toEntryView(base) : null;
   const media = concatOverlayMedia(base, row);
+  const editedFields =
+    base && row.origin_key !== null
+      ? (Object.keys(overlayOverrides(base.fields, row)) as FieldKey[])
+      : [];
   return {
     id: row.id,
     originKey: row.origin_key,
     canonicalName: base?.canonicalName ?? row.canonical_name,
-    // Null overlay names are stale pre-backfill copies; inherit dataset.
+    // NULL means "use the dataset name", so dataset fixes to the name show through.
     commonName: row.common_name ?? base?.commonName ?? null,
     aliases: fromDataset?.aliases ?? [],
-    fields: parseFields(row.fields_json),
+    fields: mergeOverlayFields(base?.fields ?? null, row),
     refs: media.refs,
     images: media.images,
     editedAt: row.edited_at,
@@ -97,6 +190,12 @@ export function viewFromOverlay(
     override: null,
     focusMaterialIds: [],
     inPack: null,
+    editedFields,
+    commonNameEdited:
+      base !== null &&
+      row.origin_key !== null &&
+      row.common_name !== null &&
+      row.common_name !== base.commonName,
   };
 }
 
