@@ -157,17 +157,17 @@ export function learnerCanonicalName(raw: unknown): string {
 
 /**
  * The stored scientific name after a patch. Built-in (dataset-origin) entries
- * never rename; submitting their current name is a no-op.
+ * never rename; submitting the stored or shown (dataset) name is a no-op.
  */
 function plannedCanonicalName(
   originKey: string | null,
   currentName: string,
+  shownName: string,
   raw: string,
 ): string {
   if (originKey === null) return learnerCanonicalName(raw);
-  if (normalizeParasiteName(raw.trim())?.canonical === currentName) {
-    return currentName;
-  }
+  const submitted = normalizeParasiteName(raw.trim())?.canonical;
+  if (submitted === currentName || submitted === shownName) return currentName;
   throw new HTTPException(400, { message: BUILT_IN_NAME_MESSAGE });
 }
 
@@ -208,6 +208,7 @@ export function planEntryWrite(
       : plannedCanonicalName(
           row ? row.origin_key : (dataset?.key ?? null),
           currentName,
+          dataset?.canonicalName ?? currentName,
           input.canonicalName,
         );
   return {

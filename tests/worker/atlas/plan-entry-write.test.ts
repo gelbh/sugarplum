@@ -338,6 +338,21 @@ describe("planEntryWrite canonicalName", () => {
     ).not.toThrow();
   });
 
+  it("accepts every built-in's own name, and the shown name on a stale row", () => {
+    for (const e of loadParasiteDataset().entries) {
+      expect(() => planEntryWrite(null, e, { canonicalName: e.canonicalName })).not.toThrow();
+      expect(() =>
+        planEntryWrite(row({ origin_key: e.key, canonical_name: e.canonicalName }), e, {
+          canonicalName: e.canonicalName,
+        }),
+      ).not.toThrow();
+    }
+    // The view shows the dataset name even when the row stored an older one.
+    const stale = row({ canonical_name: "Fasciola hepaticus" });
+    const plan = planEntryWrite(stale, dataset, { canonicalName: dataset.canonicalName });
+    expect(plan.canonicalName).toBe("Fasciola hepaticus");
+  });
+
   it("returns 400 for an empty name and 409 for a dataset name", () => {
     expect(status(() => planEntryWrite(learner(), null, { canonicalName: "" }))).toBe(
       400,
