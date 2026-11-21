@@ -337,6 +337,12 @@ export type GamificationResponse = {
   streakCurrent: number;
   streakBest: number;
   streakDay: string | null;
+  streakFreezes: number;
+  streakDayMet: boolean;
+  dailyGoalReviews: number;
+  dailyGoalProgress: number;
+  dailyGoalMet: boolean;
+  xpToday: number;
   xpTotal: number;
   level: number;
   displayName: string | null;

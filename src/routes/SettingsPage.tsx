@@ -123,6 +123,7 @@ export default function SettingsPage() {
   );
   const [displayNameInput, setDisplayNameInput] = useState("");
   const [boardOptIn, setBoardOptIn] = useState(false);
+  const [dailyGoalInput, setDailyGoalInput] = useState("20");
   const [achieveError, setAchieveError] = useState<string | null>(null);
   const [achieveNotice, setAchieveNotice] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -162,6 +163,7 @@ export default function SettingsPage() {
     setGamification,
     setDisplayNameInput,
     setBoardOptIn,
+    setDailyGoalInput,
     setHeldIntroCount,
     setError,
     setReady,
@@ -205,6 +207,7 @@ export default function SettingsPage() {
     guest,
     boardOptIn,
     displayNameInput,
+    dailyGoalInput,
     beginAchieve,
     endAchieve,
     setAchieveError,
@@ -212,6 +215,7 @@ export default function SettingsPage() {
     setGamification,
     setDisplayNameInput,
     setBoardOptIn,
+    setDailyGoalInput,
   });
 
   const { onDisconnectCalendar } = useSettingsCalendar({
@@ -532,6 +536,21 @@ export default function SettingsPage() {
                     fullWidth
                     helperText="Shown on the weekly board when opted in."
                   />
+                  <TextField
+                    label="Daily review goal"
+                    type="number"
+                    value={dailyGoalInput}
+                    onChange={(ev) => setDailyGoalInput(ev.target.value)}
+                    fullWidth
+                    slotProps={{ htmlInput: { min: 5, max: 100, step: 1 } }}
+                    helperText="Optional volume target (5–100). Does not control your streak."
+                  />
+                  {gamification ? (
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      Streak freezes: {gamification.streakFreezes} (each preserves
+                      one missed day; max 2).
+                    </Typography>
+                  ) : null}
                   <FormControlLabel
                     control={
                       <Switch

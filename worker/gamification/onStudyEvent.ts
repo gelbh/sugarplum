@@ -1,5 +1,6 @@
 import type { UnlockView } from "../../src/achievements/wire";
 import { utcDay, XP } from "./constants";
+import { afterReviewMaybeCompleteDailyGoal } from "./dailyGoal";
 import { evaluateAfterAccept, evaluateAfterReview } from "./evaluate";
 import { applyStudyDayStreak } from "./streak";
 import { creditXp } from "./xp";
@@ -81,6 +82,7 @@ export async function onReviewGraded(
       args.reviewLogId,
       streak.isFirstReviewOfDay,
     );
+    await afterReviewMaybeCompleteDailyGoal(db, userId, day);
     const { unlocks } = await evaluateAfterReview(db, userId, args);
     return unlocks;
   } catch (err) {

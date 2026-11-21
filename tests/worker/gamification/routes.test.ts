@@ -55,6 +55,12 @@ type GamificationBody = {
   streakCurrent: number;
   streakBest: number;
   streakDay: string | null;
+  streakFreezes: number;
+  streakDayMet: boolean;
+  dailyGoalReviews: number;
+  dailyGoalProgress: number;
+  dailyGoalMet: boolean;
+  xpToday: number;
   xpTotal: number;
   level: number;
   displayName: string | null;
@@ -418,11 +424,46 @@ describe("gamification read APIs", () => {
       streakCurrent: 0,
       streakBest: 0,
       streakDay: null,
+      streakFreezes: 0,
+      streakDayMet: false,
+      dailyGoalReviews: 20,
+      dailyGoalProgress: 0,
+      dailyGoalMet: false,
+      xpToday: 0,
       xpTotal: 0,
       level: 1,
       displayName: null,
       boardOptIn: false,
     });
+  });
+
+  it("PATCH /api/gamification/settings clamps dailyGoalReviews", async () => {
+    const env = createTestEnv();
+    const { session } = seedAuthedUser(env);
+
+    const patch = await app.request(
+      "/api/gamification/settings",
+      {
+        method: "PATCH",
+        headers: cookie(session),
+        body: JSON.stringify({ dailyGoalReviews: 200 }),
+      },
+      env,
+    );
+    expect(patch.status).toBe(200);
+    const patched = (await patch.json()) as GamificationBody;
+    expect(patched.dailyGoalReviews).toBe(100);
+
+    const bad = await app.request(
+      "/api/gamification/settings",
+      {
+        method: "PATCH",
+        headers: cookie(session),
+        body: JSON.stringify({ dailyGoalReviews: "nope" }),
+      },
+      env,
+    );
+    expect(bad.status).toBe(400);
   });
 
   it("PATCH /api/gamification/settings updates boardOptIn and displayName", async () => {

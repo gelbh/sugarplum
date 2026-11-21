@@ -10,11 +10,17 @@ import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { backfillUser } from "./backfill";
 import type { Rarity } from "./constants";
+import { DAILY_GOAL_REVIEWS, utcDay } from "./constants";
+import {
+  clampDailyGoalReviews,
+  getDailyGoalProgress,
+} from "./dailyGoal";
 import {
   compositeParts,
   loadCompositeMetrics,
   type TriggerKind,
 } from "./evaluate";
+import { reconcileStreakWithFreeze } from "./streak";
 import { traitsForAchievement } from "./traits";
 import { ensureUserGamification } from "./xp";
 
@@ -28,6 +34,8 @@ type UserGamificationRow = {
   level: number;
   display_name: string | null;
   board_opt_in: number;
+  streak_freezes: number;
+  daily_goal_reviews: number;
 };
 
 type AchievementListRow = {
@@ -56,6 +64,12 @@ export type GamificationResponse = {
   streakCurrent: number;
   streakBest: number;
   streakDay: string | null;
+  streakFreezes: number;
+  streakDayMet: boolean;
+  dailyGoalReviews: number;
+  dailyGoalProgress: number;
+  dailyGoalMet: boolean;
+  xpToday: number;
   xpTotal: number;
   level: number;
   displayName: string | null;
@@ -99,13 +113,37 @@ export function isoWeekWindow(d = new Date()): {
   return { weekKey, startIso, endIso };
 }
 
-function toGamificationResponse(
+async function xpTodayForUser(db: D1Database, userId: string, day: string) {
+  const row = await db
+    .prepare(
+      `SELECT COALESCE(SUM(amount), 0) AS xp
+       FROM xp_ledger
+       WHERE user_id = ?
+         AND created_at >= ?
+         AND created_at <= ?`,
+    )
+    .bind(userId, `${day}T00:00:00.000Z`, `${day}T23:59:59.999Z`)
+    .first<{ xp: number }>();
+  return Number(row?.xp ?? 0);
+}
+
+async function toGamificationResponse(
+  db: D1Database,
+  userId: string,
   row: UserGamificationRow,
-): GamificationResponse {
+): Promise<GamificationResponse> {
+  const day = utcDay();
+  const goal = await getDailyGoalProgress(db, userId, day);
   return {
     streakCurrent: row.streak_current,
     streakBest: row.streak_best,
     streakDay: row.streak_day,
+    streakFreezes: row.streak_freezes ?? 0,
+    streakDayMet: row.streak_day === day,
+    dailyGoalReviews: goal.goal,
+    dailyGoalProgress: goal.current,
+    dailyGoalMet: goal.met,
+    xpToday: await xpTodayForUser(db, userId, day),
     xpTotal: row.xp_total,
     level: row.level,
     displayName: row.display_name,
@@ -118,14 +156,19 @@ async function loadGamification(
   userId: string,
   opts?: { readOnly?: boolean },
 ): Promise<UserGamificationRow> {
-  if (!opts?.readOnly) await ensureUserGamification(db, userId);
+  if (!opts?.readOnly) {
+    await ensureUserGamification(db, userId);
+    await reconcileStreakWithFreeze(db, userId);
+  }
   const row = await db
     .prepare(
       `SELECT streak_current, streak_best, streak_day, xp_total, level,
-              display_name, board_opt_in
+              display_name, board_opt_in,
+              COALESCE(streak_freezes, 0) AS streak_freezes,
+              COALESCE(daily_goal_reviews, ?) AS daily_goal_reviews
        FROM user_gamification WHERE user_id = ?`,
     )
-    .bind(userId)
+    .bind(DAILY_GOAL_REVIEWS.default, userId)
     .first<UserGamificationRow>();
   if (!row) {
     if (opts?.readOnly) {
@@ -137,6 +180,8 @@ async function loadGamification(
         level: 1,
         display_name: null,
         board_opt_in: 0,
+        streak_freezes: 0,
+        daily_goal_reviews: DAILY_GOAL_REVIEWS.default,
       };
     }
     throw new HTTPException(500, { message: "Gamification row missing" });
@@ -229,10 +274,13 @@ gamificationRoutes.get("/achievements", async (c) => {
 
 gamificationRoutes.get("/gamification", async (c) => {
   const userId = await requireUser(c);
-  const row = await loadGamification(getDb(c.env), userId, {
+  const db = getDb(c.env);
+  const row = await loadGamification(db, userId, {
     readOnly: Boolean(c.get("viewingAs")),
   });
-  return c.json(toGamificationResponse(row) satisfies GamificationResponse);
+  return c.json(
+    (await toGamificationResponse(db, userId, row)) satisfies GamificationResponse,
+  );
 });
 
 gamificationRoutes.get("/leaderboard/weekly", async (c) => {
@@ -271,7 +319,11 @@ gamificationRoutes.patch("/gamification/settings", async (c) => {
   const db = getDb(c.env);
   await ensureUserGamification(db, userId);
 
-  let body: { boardOptIn?: unknown; displayName?: unknown };
+  let body: {
+    boardOptIn?: unknown;
+    displayName?: unknown;
+    dailyGoalReviews?: unknown;
+  };
   try {
     body = await c.req.json();
   } catch {
@@ -280,7 +332,8 @@ gamificationRoutes.patch("/gamification/settings", async (c) => {
 
   const hasBoard = "boardOptIn" in body;
   const hasName = "displayName" in body;
-  if (!hasBoard && !hasName) {
+  const hasGoal = "dailyGoalReviews" in body;
+  if (!hasBoard && !hasName && !hasGoal) {
     throw new HTTPException(400, { message: "No settings to update" });
   }
 
@@ -305,36 +358,46 @@ gamificationRoutes.patch("/gamification/settings", async (c) => {
         : body.displayName.trim().slice(0, 32) || null;
   }
 
-  const now = new Date().toISOString();
-  if (hasBoard && hasName) {
-    await db
-      .prepare(
-        `UPDATE user_gamification
-         SET board_opt_in = ?, display_name = ?, updated_at = ?
-         WHERE user_id = ?`,
-      )
-      .bind(boardOptIn, displayName, now, userId)
-      .run();
-  } else if (hasBoard) {
-    await db
-      .prepare(
-        `UPDATE user_gamification
-         SET board_opt_in = ?, updated_at = ?
-         WHERE user_id = ?`,
-      )
-      .bind(boardOptIn, now, userId)
-      .run();
-  } else {
-    await db
-      .prepare(
-        `UPDATE user_gamification
-         SET display_name = ?, updated_at = ?
-         WHERE user_id = ?`,
-      )
-      .bind(displayName, now, userId)
-      .run();
+  let dailyGoalReviews: number | undefined;
+  if (hasGoal) {
+    if (
+      typeof body.dailyGoalReviews !== "number" ||
+      !Number.isFinite(body.dailyGoalReviews)
+    ) {
+      throw new HTTPException(400, {
+        message: "dailyGoalReviews must be a number",
+      });
+    }
+    dailyGoalReviews = clampDailyGoalReviews(body.dailyGoalReviews);
   }
 
+  const now = new Date().toISOString();
+  const sets: string[] = [];
+  const binds: unknown[] = [];
+  if (hasBoard) {
+    sets.push("board_opt_in = ?");
+    binds.push(boardOptIn);
+  }
+  if (hasName) {
+    sets.push("display_name = ?");
+    binds.push(displayName);
+  }
+  if (hasGoal) {
+    sets.push("daily_goal_reviews = ?");
+    binds.push(dailyGoalReviews);
+  }
+  sets.push("updated_at = ?");
+  binds.push(now, userId);
+
+  await db
+    .prepare(
+      `UPDATE user_gamification SET ${sets.join(", ")} WHERE user_id = ?`,
+    )
+    .bind(...binds)
+    .run();
+
   const row = await loadGamification(db, userId);
-  return c.json(toGamificationResponse(row) satisfies GamificationResponse);
+  return c.json(
+    (await toGamificationResponse(db, userId, row)) satisfies GamificationResponse,
+  );
 });
