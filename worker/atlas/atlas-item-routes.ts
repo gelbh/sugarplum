@@ -319,6 +319,14 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
 
   const fieldsPatch = parseFieldsPatch(body.fields);
   const resetFields = parseResetFields(body.resetFields);
+  const setAndReset = (resetFields ?? []).filter(
+    (key) => fieldsPatch !== undefined && key in fieldsPatch,
+  );
+  if (setAndReset.length > 0) {
+    throw new HTTPException(400, {
+      message: `Cannot set and reset the same field: ${setAndReset.join(", ")}`,
+    });
+  }
   const commonNameProvided = "commonName" in body;
   let commonName: string | undefined;
   if (commonNameProvided) {

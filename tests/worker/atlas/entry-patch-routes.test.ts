@@ -239,6 +239,24 @@ describe("PATCH /entries/:entryId field overrides", () => {
     expect(res.status).toBe(400);
   });
 
+  it("rejects a PATCH that both sets and resets the same field", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const res = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      fields: { family: "Editedidae", significance: "Mine" },
+      resetFields: ["family"],
+    });
+    expect(res.status).toBe(400);
+    expect(await res.text()).toContain("family");
+    const row = await env.DB.prepare(
+      "SELECT * FROM atlas_entries WHERE atlas_id = ? AND origin_key = ?",
+    )
+      .bind(atlasId, "fasciola-hepatica")
+      .first();
+    expect(row).toBeNull();
+  });
+
   it("writes nothing for a reset-only PATCH on an unedited dataset entry", async () => {
     const env = createTestEnv();
     seedOwner(env);
