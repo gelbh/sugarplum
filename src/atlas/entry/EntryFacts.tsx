@@ -20,11 +20,11 @@ import { FIELD_LABELS, type EntryRefs } from "./entryFields";
 import {
   entryLead,
   glanceSections,
+  SIGNIFICANCE_GLANCE,
   significanceFullRow,
   splitGlanceForMobile,
   taxonomyTree,
   type GlanceSection,
-  type GlanceSectionId,
 } from "./entryGlance";
 import {
   BandSheetPanel,
@@ -70,42 +70,6 @@ const IMAGE_ROLE_LABELS: Record<
   other: "Image",
 };
 
-const GLANCE_EDIT_SECTION: Record<GlanceSectionId, EditSectionId> = {
-  taxonomy: "taxonomy",
-  hosts: "hosts",
-  body: "biology",
-  detection: "clinical",
-  range: "distribution",
-  notes: "clinical",
-};
-
-/** Overridden fields whose "Edited" mark shows on each glance band. */
-const GLANCE_BAND_FIELDS: Record<GlanceSectionId, FieldKey[]> = {
-  taxonomy: ["phylum", "order", "family", "group"],
-  hosts: ["definitiveHosts", "intermediateHosts", "paratenicHosts"],
-  body: [
-    "majorOrgan",
-    "onHostStages",
-    "pppDays",
-    "lifecycleType",
-    "lifecycleStages",
-  ],
-  detection: [
-    "diagnosticStage",
-    "diagnosticTests",
-    "zoonotic",
-    "vectorRole",
-    "significance",
-  ],
-  range: [
-    "distribution",
-    "distributionWorldwide",
-    "distributionRegions",
-    "climateBands",
-  ],
-  notes: [],
-};
-
 const SECTION_LABEL_SX = {
   color: "text.secondary",
   fontSize: "0.78rem",
@@ -145,59 +109,62 @@ export default function EntryFacts({
   // Older cached views and test fixtures may predate editedFields.
   const editedSet = new Set(entry.editedFields ?? []);
 
-  const sectionHeading = (title: string, sectionId: GlanceSectionId) => {
-    const edited = GLANCE_BAND_FIELDS[sectionId].filter((k) =>
-      editedSet.has(k),
-    );
-    return (
-      <Stack
-        direction="row"
-        sx={{ alignItems: "center", gap: 0.75, mb: 1, flexWrap: "wrap" }}
-      >
-        <Typography sx={SECTION_LABEL_SX}>{title}</Typography>
-        {edited.map((key) => (
-          <Stack
-            key={key}
-            direction="row"
-            sx={{ alignItems: "center", gap: 0.25 }}
-          >
-            <Chip
-              size="small"
-              variant="outlined"
-              label={`Edited: ${FIELD_LABELS[key]}`}
-            />
-            {onResetField ? (
-              <Button
-                size="small"
-                variant="text"
-                aria-label={`Reset ${FIELD_LABELS[key]}`}
-                onClick={() => onResetField?.(key)}
-                sx={{ minWidth: 0 }}
-              >
-                Reset
-              </Button>
-            ) : null}
-          </Stack>
-        ))}
-        {onEdit ? (
-          <IconButton
+  const editedMarks = (fields: FieldKey[]): ReactNode =>
+    fields
+      .filter((k) => editedSet.has(k))
+      .map((key) => (
+        <Stack
+          key={key}
+          direction="row"
+          sx={{ alignItems: "center", gap: 0.25 }}
+        >
+          <Chip
             size="small"
-            aria-label={`Edit ${title}`}
-            onClick={() => onEdit?.(GLANCE_EDIT_SECTION[sectionId])}
-            sx={{ ml: "auto" }}
-          >
-            <EditOutlinedIcon fontSize="small" />
-          </IconButton>
-        ) : null}
-      </Stack>
-    );
-  };
+            variant="outlined"
+            label={`Edited: ${FIELD_LABELS[key]}`}
+          />
+          {onResetField ? (
+            <Button
+              size="small"
+              variant="text"
+              aria-label={`Reset ${FIELD_LABELS[key]}`}
+              onClick={() => onResetField(key)}
+              sx={{ minWidth: 0 }}
+            >
+              Reset
+            </Button>
+          ) : null}
+        </Stack>
+      ));
+
+  const sectionHeading = (
+    title: string,
+    meta: Pick<GlanceSection, "fields" | "editSection">,
+  ) => (
+    <Stack
+      direction="row"
+      sx={{ alignItems: "center", gap: 0.75, mb: 1, flexWrap: "wrap" }}
+    >
+      <Typography sx={SECTION_LABEL_SX}>{title}</Typography>
+      {editedMarks(meta.fields)}
+      {onEdit ? (
+        <IconButton
+          size="small"
+          aria-label={`Edit ${title}`}
+          onClick={() => onEdit(meta.editSection)}
+          sx={{ ml: "auto" }}
+        >
+          <EditOutlinedIcon fontSize="small" />
+        </IconButton>
+      ) : null}
+    </Stack>
+  );
 
   const renderSection = (section: GlanceSection): ReactNode => {
     const tree = section.id === "taxonomy" ? taxonomyTree(entry.fields) : null;
     return (
       <Box key={section.id} component="section" aria-label={section.title}>
-        {sectionHeading(section.title, section.id)}
+        {sectionHeading(section.title, section)}
         {tree && tree.length > 0 ? (
           <TaxonomyTreeCard
             nodes={tree}
@@ -257,7 +224,7 @@ export default function EntryFacts({
             </Button>
           ) : null}
           {onEdit ? (
-            <Button variant="text" size="small" onClick={() => onEdit?.()}>
+            <Button variant="text" size="small" onClick={() => onEdit()}>
               Edit
             </Button>
           ) : null}
@@ -269,15 +236,25 @@ export default function EntryFacts({
         </Stack>
       ) : null}
       {lead ? (
-        <Typography sx={{ fontSize: "1.12rem", lineHeight: 1.55 }}>
-          {lead.preview}
-          <CiteSup
-            field="significance"
-            label={FIELD_LABELS.significance}
-            refs={refs}
-            onCite={onCite}
-          />
-        </Typography>
+        <Box component="section" aria-label="Summary">
+          <Typography sx={{ fontSize: "1.12rem", lineHeight: 1.55 }}>
+            {lead.preview}
+            <CiteSup
+              field="significance"
+              label={FIELD_LABELS.significance}
+              refs={refs}
+              onCite={onCite}
+            />
+          </Typography>
+          {!fullSig && editedSet.has("significance") ? (
+            <Stack
+              direction="row"
+              sx={{ alignItems: "center", gap: 0.75, flexWrap: "wrap" }}
+            >
+              {editedMarks(SIGNIFICANCE_GLANCE.fields)}
+            </Stack>
+          ) : null}
+        </Box>
       ) : null}
       {primary.map(renderSection)}
       {more.length > 0 ? (
@@ -299,7 +276,7 @@ export default function EntryFacts({
       ) : null}
       {fullSig ? (
         <Box component="section" aria-label="Notes">
-          {sectionHeading("Notes", "notes")}
+          {sectionHeading("Notes", SIGNIFICANCE_GLANCE)}
           <Box component="dl" sx={{ m: 0 }}>
             <GlanceFact row={fullSig} refs={refs} onCite={onCite} />
           </Box>

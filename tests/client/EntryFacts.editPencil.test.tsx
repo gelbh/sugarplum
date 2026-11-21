@@ -26,8 +26,10 @@ afterEach(() => {
 
 function richEntry(
   editedFields: AtlasEntryView["editedFields"] = [],
+  significance = "Major cause of ostertagiosis in grazing sheep.",
 ): AtlasEntryView {
   const fields = emptyParasiteFields();
+  fields.significance = significance;
   fields.phylum = "Nematoda";
   fields.family = "Trichostrongylidae";
   fields.definitiveHosts = ["sheep"];
@@ -107,7 +109,7 @@ describe("EntryFacts edit pencils", () => {
       "taxonomy",
       "hosts",
       "biology",
-      "clinical",
+      "diagnosis",
       "distribution",
     ]);
   });
@@ -145,6 +147,35 @@ describe("EntryFacts glance Edited marks", () => {
       "definitiveHosts",
       "significance",
     ]);
+  });
+
+  it("marks significance beside the lead, not on Detection", async () => {
+    const host = await renderFacts({
+      entry: richEntry(["significance"]),
+      onResetField: () => undefined,
+    });
+    const summary = host.querySelector('[aria-label="Summary"]')!;
+    const detection = host.querySelector('[aria-label="Detection & risk"]')!;
+    expect(summary.textContent).toContain("Edited: Significance");
+    expect(detection.textContent).not.toContain("Edited: Significance");
+    expect(host.querySelector('[aria-label="Notes"]')).toBeNull();
+    expect(
+      host.querySelectorAll('button[aria-label="Reset Significance"]'),
+    ).toHaveLength(1);
+  });
+
+  it("marks significance on Notes when the lead is truncated", async () => {
+    const host = await renderFacts({
+      entry: richEntry(["significance"], "Long significance text. ".repeat(20)),
+      onResetField: () => undefined,
+    });
+    const notes = host.querySelector('[aria-label="Notes"]')!;
+    const summary = host.querySelector('[aria-label="Summary"]')!;
+    expect(notes.textContent).toContain("Edited: Significance");
+    expect(summary.textContent).not.toContain("Edited: Significance");
+    expect(
+      host.querySelectorAll('button[aria-label="Reset Significance"]'),
+    ).toHaveLength(1);
   });
 
   it("shows the mark without a Reset button when resets are not allowed", async () => {
