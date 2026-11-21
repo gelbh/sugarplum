@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { HTTPException } from "hono/http-exception";
-import { planEntryWrite } from "../../../worker/atlas/entry-helpers";
+import {
+  aliasesJson,
+  learnerCanonicalName,
+  parseAliasesPatch,
+  parseCanonicalNamePatch,
+  planEntryWrite,
+} from "../../../worker/atlas/entry-helpers";
 import type { EntryRow } from "../../../worker/atlas/entryOverlays";
 import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites/index";
 import { emptyParasiteFields } from "../../../worker/atlas/templates/parasite";
@@ -206,5 +212,189 @@ describe("planEntryWrite", () => {
         resetFields: ["family"],
       }),
     ).toThrow(/Only built-in parasites/);
+  });
+});
+
+describe("planEntryWrite aliases", () => {
+  it("carries stored aliases forward when the patch omits them", () => {
+    expect(planEntryWrite(null, dataset, {}).aliasesJson).toBeNull();
+    expect(
+      planEntryWrite(row({ aliases_json: '["kept"]' }), dataset, {
+        commonName: "Mine",
+      }).aliasesJson,
+    ).toBe('["kept"]');
+  });
+
+  it("stores a JSON list, or null for an empty list", () => {
+    expect(
+      planEntryWrite(null, dataset, { aliases: ["big liver fluke"] }).aliasesJson,
+    ).toBe('["big liver fluke"]');
+    expect(
+      planEntryWrite(row({ aliases_json: '["old"]' }), dataset, { aliases: [] })
+        .aliasesJson,
+    ).toBeNull();
+  });
+});
+
+describe("parseAliasesPatch", () => {
+  it("returns undefined when absent and a cleaned list otherwise", () => {
+    expect(parseAliasesPatch(undefined)).toBeUndefined();
+    expect(parseAliasesPatch([" fluke ", "", "FLUKE", "worm"])).toEqual([
+      "fluke",
+      "worm",
+    ]);
+  });
+
+  it("drops separator-only and too-short aliases", () => {
+    expect(parseAliasesPatch(["-", "_", "- _", "ab", "F_hepatica", "F hepatica"])).toEqual([
+      "F_hepatica",
+    ]);
+  });
+
+  it("rejects a raw list over 200 items before cleaning", () => {
+    expect(() => parseAliasesPatch(Array.from({ length: 201 }, () => ""))).toThrow(
+      /At most 200 raw aliases/,
+    );
+    expect(parseAliasesPatch(Array.from({ length: 200 }, () => "fluke"))).toEqual([
+      "fluke",
+    ]);
+  });
+
+  it("checks limits after cleaning", () => {
+    const padded = [
+      ...Array.from({ length: 20 }, (_, i) => `alias ${i}`),
+      " ",
+      "ALIAS 0",
+    ];
+    expect(parseAliasesPatch(padded)).toHaveLength(20);
+    expect(() => parseAliasesPatch(["a".repeat(81)])).toThrow(/80 characters/);
+    expect(() =>
+      parseAliasesPatch(Array.from({ length: 21 }, (_, i) => `alias ${i}`)),
+    ).toThrow(/At most 20 aliases/);
+    expect(() => parseAliasesPatch([1])).toThrow(HTTPException);
+    expect(() => parseAliasesPatch(null)).toThrow(/list of strings/);
+  });
+
+  it("aliasesJson stores null for an empty list", () => {
+    expect(aliasesJson([])).toBeNull();
+    expect(aliasesJson(["a"])).toBe('["a"]');
+  });
+});
+
+describe("planEntryWrite canonicalName", () => {
+  const learner = () =>
+    row({
+      origin_key: null,
+      origin_version: null,
+      canonical_name: "Madeupius fictus",
+      fields_json: JSON.stringify({ ...emptyParasiteFields(), group: "nematode" }),
+      field_overrides_json: null,
+    });
+
+  function status(fn: () => unknown): number | undefined {
+    try {
+      fn();
+    } catch (e) {
+      return e instanceof HTTPException ? e.status : undefined;
+    }
+    return undefined;
+  }
+
+  it("carries the stored name forward when the patch omits it", () => {
+    expect(planEntryWrite(learner(), null, {}).canonicalName).toBe("Madeupius fictus");
+    expect(planEntryWrite(null, dataset, {}).canonicalName).toBe(
+      dataset.canonicalName,
+    );
+  });
+
+  it("normalizes a learner rename", () => {
+    expect(
+      planEntryWrite(learner(), null, { canonicalName: "  madeupius renamus " })
+        .canonicalName,
+    ).toBe("Madeupius renamus");
+  });
+
+  it("refuses to rename any dataset-origin entry", () => {
+    expect(() =>
+      planEntryWrite(null, dataset, { canonicalName: "Fasciola gigantica" }),
+    ).toThrow(/built-in parasite cannot change/);
+    expect(() =>
+      planEntryWrite(row({}), dataset, { canonicalName: "Fasciola gigantica" }),
+    ).toThrow(/built-in parasite cannot change/);
+    // Origin row whose dataset entry left the bundle is still built-in.
+    expect(() =>
+      planEntryWrite(row({ origin_key: "gone" }), null, {
+        canonicalName: "Fasciola gigantica",
+      }),
+    ).toThrow(/built-in parasite cannot change/);
+  });
+
+  it("treats a built-in entry's own name as a no-op", () => {
+    expect(() =>
+      planEntryWrite(null, dataset, { canonicalName: ` ${dataset.canonicalName.toLowerCase()} ` }),
+    ).not.toThrow();
+    expect(() =>
+      planEntryWrite(row({}), dataset, { canonicalName: dataset.canonicalName }),
+    ).not.toThrow();
+  });
+
+  it("accepts every built-in's own name, and the shown name on a stale row", () => {
+    for (const e of loadParasiteDataset().entries) {
+      expect(() => planEntryWrite(null, e, { canonicalName: e.canonicalName })).not.toThrow();
+      expect(() =>
+        planEntryWrite(row({ origin_key: e.key, canonical_name: e.canonicalName }), e, {
+          canonicalName: e.canonicalName,
+        }),
+      ).not.toThrow();
+    }
+    // The view shows the dataset name even when the row stored an older one.
+    const stale = row({ canonical_name: "Fasciola hepaticus" });
+    const plan = planEntryWrite(stale, dataset, { canonicalName: dataset.canonicalName });
+    expect(plan.canonicalName).toBe("Fasciola hepaticus");
+  });
+
+  it("returns 400 for an empty name and 409 for a dataset name", () => {
+    expect(status(() => planEntryWrite(learner(), null, { canonicalName: "" }))).toBe(
+      400,
+    );
+    expect(
+      status(() =>
+        planEntryWrite(learner(), null, { canonicalName: dataset.canonicalName }),
+      ),
+    ).toBe(409);
+  });
+});
+
+describe("learnerCanonicalName", () => {
+  function status(fn: () => unknown): number | undefined {
+    try {
+      fn();
+    } catch (e) {
+      return e instanceof HTTPException ? e.status : undefined;
+    }
+    return undefined;
+  }
+
+  it("trims and normalizes", () => {
+    expect(learnerCanonicalName("  madeupius fictus ")).toBe("Madeupius fictus");
+  });
+
+  it("returns 400 for a missing or unparseable name and 409 for a dataset name", () => {
+    expect(status(() => learnerCanonicalName(undefined))).toBe(400);
+    expect(status(() => learnerCanonicalName(7))).toBe(400);
+    expect(status(() => learnerCanonicalName("  "))).toBe(400);
+    expect(status(() => learnerCanonicalName(dataset.canonicalName))).toBe(409);
+  });
+});
+
+describe("parseCanonicalNamePatch", () => {
+  it("returns undefined when absent and the raw string otherwise", () => {
+    expect(parseCanonicalNamePatch(undefined)).toBeUndefined();
+    expect(parseCanonicalNamePatch(" Madeupius fictus ")).toBe(" Madeupius fictus ");
+  });
+
+  it("rejects a non-string", () => {
+    expect(() => parseCanonicalNamePatch(null)).toThrow(/canonicalName must be a string/);
+    expect(() => parseCanonicalNamePatch(3)).toThrow(HTTPException);
   });
 });

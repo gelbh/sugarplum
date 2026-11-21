@@ -29,6 +29,12 @@ import {
 } from "./templates/parasite";
 import type { AtlasEntryView, AtlasTier } from "../../src/atlas/types";
 import { newId, nowIso } from "./ownership";
+import { normalizeParasiteName } from "./names";
+import {
+  ALIAS_MAX_CHARS,
+  ALIAS_MAX_ITEMS,
+  cleanAliasList,
+} from "../../src/atlas/hub/nameMatch";
 
 export function datasetByKey(): Map<string, DatasetEntry> {
   return new Map(loadParasiteDataset().entries.map((e) => [e.key, e]));
@@ -108,17 +114,62 @@ export async function resolveEntry(
   return null;
 }
 
+/** Every column one entry write stores; untouched columns carry the stored value. */
 export type EntryWritePlan = {
   fieldsJson: string;
   overridesJson: string | null;
   commonName: string | null;
+  aliasesJson: string | null;
+  canonicalName: string;
 };
 
 export type EntryWriteInput = {
   fieldsPatch?: Partial<ParasiteFields>;
   resetFields?: ParasiteFieldKey[];
   commonName?: string;
+  /** Already cleaned by `parseAliasesPatch`. */
+  aliases?: string[];
+  /** Raw submitted scientific name; validated by the plan. */
+  canonicalName?: string;
 };
+
+const BUILT_IN_NAME_MESSAGE =
+  "Scientific name of a built-in parasite cannot change; add an alias instead";
+
+/**
+ * The stored scientific name of a learner-added entry (create or rename).
+ * A learner entry may not take a dataset name. Uniqueness among the atlas's
+ * own rows is the UNIQUE constraint's job.
+ */
+export function learnerCanonicalName(raw: unknown): string {
+  const normalized =
+    typeof raw === "string" ? normalizeParasiteName(raw.trim()) : null;
+  if (!normalized) {
+    throw new HTTPException(400, { message: "canonicalName required" });
+  }
+  if (datasetByCanonical().has(normalized.canonical)) {
+    throw new HTTPException(409, {
+      message: "Entry already exists in the dataset",
+    });
+  }
+  return normalized.canonical;
+}
+
+/**
+ * The stored scientific name after a patch. Built-in (dataset-origin) entries
+ * never rename; submitting the stored or shown (dataset) name is a no-op.
+ */
+function plannedCanonicalName(
+  originKey: string | null,
+  currentName: string,
+  shownName: string,
+  raw: string,
+): string {
+  if (originKey === null) return learnerCanonicalName(raw);
+  const submitted = normalizeParasiteName(raw.trim())?.canonical;
+  if (submitted === currentName || submitted === shownName) return currentName;
+  throw new HTTPException(400, { message: BUILT_IN_NAME_MESSAGE });
+}
 
 /** Refuse to rebuild a row from a column we cannot read; saving would erase the learner's edits. */
 function requireReadable(
@@ -146,6 +197,38 @@ export function planEntryWrite(
   dataset: DatasetEntry | null,
   input: EntryWriteInput,
 ): EntryWritePlan {
+  const currentName = row ? row.canonical_name : dataset?.canonicalName;
+  if (currentName === undefined) {
+    throw new Error("planEntryWrite: no row and no dataset entry");
+  }
+  // Checked first so a rejected rename never creates an overlay row.
+  const canonicalName =
+    input.canonicalName === undefined
+      ? currentName
+      : plannedCanonicalName(
+          row ? row.origin_key : (dataset?.key ?? null),
+          currentName,
+          dataset?.canonicalName ?? currentName,
+          input.canonicalName,
+        );
+  return {
+    ...planFieldColumns(row, dataset, input),
+    aliasesJson:
+      input.aliases === undefined
+        ? (row?.aliases_json ?? null)
+        : aliasesJson(input.aliases),
+    canonicalName,
+  };
+}
+
+type FieldColumns = Pick<EntryWritePlan, "fieldsJson" | "overridesJson" | "commonName">;
+
+/** `fields_json`, `field_overrides_json` and `common_name` for one write. */
+function planFieldColumns(
+  row: EntryRow | null,
+  dataset: DatasetEntry | null,
+  input: EntryWriteInput,
+): FieldColumns {
   const { fieldsPatch, resetFields, commonName } = input;
   if (row === null) {
     if (!dataset) throw new Error("planEntryWrite: no row and no dataset entry");
@@ -228,7 +311,6 @@ export async function insertOverlayFromDataset(
     plan?: EntryWritePlan;
     deletedAt?: string | null;
     editedAt?: string | null;
-    aliasesJson?: string | null;
   },
 ): Promise<EntryRow> {
   const id = newId();
@@ -255,7 +337,7 @@ export async function insertOverlayFromDataset(
       patch.editedAt ?? null,
       patch.deletedAt ?? null,
       plan.overridesJson,
-      patch.aliasesJson ?? null,
+      plan.aliasesJson,
     )
     .run();
   const row = await findEntryById(db, atlasId, id);
@@ -286,6 +368,49 @@ export function parseResetFields(raw: unknown): ParasiteFieldKey[] | undefined {
     });
   }
   return [...new Set(raw as ParasiteFieldKey[])];
+}
+
+/** Bounds the cleaning work on a hostile body; the real limit applies after dedupe. */
+const ALIAS_MAX_RAW_ITEMS = 200;
+
+export function parseAliasesPatch(raw: unknown): string[] | undefined {
+  if (raw === undefined) return undefined;
+  if (!Array.isArray(raw) || raw.some((a) => typeof a !== "string")) {
+    throw new HTTPException(400, {
+      message: "aliases must be a list of strings",
+    });
+  }
+  if (raw.length > ALIAS_MAX_RAW_ITEMS) {
+    throw new HTTPException(400, {
+      message: `At most ${ALIAS_MAX_RAW_ITEMS} raw aliases`,
+    });
+  }
+  const aliases = cleanAliasList(raw as string[]);
+  if (aliases.length > ALIAS_MAX_ITEMS) {
+    throw new HTTPException(400, {
+      message: `At most ${ALIAS_MAX_ITEMS} aliases`,
+    });
+  }
+  if (aliases.some((a) => a.length > ALIAS_MAX_CHARS)) {
+    throw new HTTPException(400, {
+      message: `Each alias must be ${ALIAS_MAX_CHARS} characters or fewer`,
+    });
+  }
+  return aliases;
+}
+
+/** Raw scientific name from a PATCH body; the plan validates it. */
+export function parseCanonicalNamePatch(raw: unknown): string | undefined {
+  if (raw === undefined) return undefined;
+  if (typeof raw !== "string") {
+    throw new HTTPException(400, { message: "canonicalName must be a string" });
+  }
+  return raw;
+}
+
+/** Stored form: null when the learner has no aliases. */
+export function aliasesJson(aliases: string[]): string | null {
+  return aliases.length > 0 ? JSON.stringify(aliases) : null;
 }
 
 /**

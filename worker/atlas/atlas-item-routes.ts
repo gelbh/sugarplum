@@ -24,7 +24,6 @@ import {
   type EntryRow,
 } from "./entryOverlays";
 import { loadParasiteDataset } from "./datasets/parasites/index";
-import { normalizeParasiteName } from "./names";
 import { emptyParasiteFields } from "./templates/parasite";
 import { applySandboxKeyPrefix, sandboxWriteUserId } from "../admin/sandbox-r2";
 import { createR2PutUrl } from "../materials/r2-presign";
@@ -32,6 +31,7 @@ import { sha256Hex } from "../materials/content-hash";
 import { requireOwnedDeck } from "../materials/routes";
 import { enqueueGeneration } from "../generation/enqueue";
 import type { AppEnv } from "./types";
+import { isUniqueViolation } from "../db/client";
 import {
   atlasMeta,
   newId,
@@ -40,13 +40,15 @@ import {
   requireParam,
 } from "./ownership";
 import {
-  datasetByCanonical,
   datasetByKey,
   deletedEntryViews,
   findEntryById,
   findEntryByOrigin,
   insertOverlayFromDataset,
+  learnerCanonicalName,
   mergeFields,
+  parseAliasesPatch,
+  parseCanonicalNamePatch,
   parseFieldsPatch,
   parseFocusOverride,
   parseResetFields,
@@ -231,18 +233,7 @@ atlasItemRoutes.post("/entries", async (c) => {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const rawName =
-    typeof body.canonicalName === "string" ? body.canonicalName.trim() : "";
-  const normalized = normalizeParasiteName(rawName);
-  if (!normalized) {
-    throw new HTTPException(400, { message: "canonicalName required" });
-  }
-
-  if (datasetByCanonical().has(normalized.canonical)) {
-    throw new HTTPException(409, {
-      message: "Entry already exists in the dataset",
-    });
-  }
+  const canonicalName = learnerCanonicalName(body.canonicalName);
 
   const fields = mergeFields(
     emptyParasiteFields(),
@@ -270,7 +261,7 @@ atlasItemRoutes.post("/entries", async (c) => {
       .bind(
         id,
         atlas.id,
-        normalized.canonical,
+        canonicalName,
         commonName,
         JSON.stringify(fields),
         ts,
@@ -281,8 +272,11 @@ atlasItemRoutes.post("/entries", async (c) => {
         null,
       )
       .run();
-  } catch {
-    throw new HTTPException(409, { message: "Entry already exists" });
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      throw new HTTPException(409, { message: "Entry already exists" });
+    }
+    throw err;
   }
 
   const row = await findEntryById(db, atlas.id, id);
@@ -303,12 +297,24 @@ atlasItemRoutes.post("/entries", async (c) => {
   return c.json(view, 201);
 });
 
+type StoredNames = Pick<EntryRow, "canonical_name" | "common_name" | "aliases_json">;
+
+function storedNamesChanged(before: StoredNames, after: StoredNames): boolean {
+  return (
+    before.canonical_name !== after.canonical_name ||
+    before.common_name !== after.common_name ||
+    before.aliases_json !== after.aliases_json
+  );
+}
+
 atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
   let body: {
     commonName?: unknown;
     resetFields?: unknown;
+    aliases?: unknown;
+    canonicalName?: unknown;
     fields?: unknown;
   };
   try {
@@ -319,6 +325,8 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
 
   const fieldsPatch = parseFieldsPatch(body.fields);
   const resetFields = parseResetFields(body.resetFields);
+  const aliases = parseAliasesPatch(body.aliases);
+  const canonicalName = parseCanonicalNamePatch(body.canonicalName);
   const setAndReset = (resetFields ?? []).filter(
     (key) => fieldsPatch !== undefined && key in fieldsPatch,
   );
@@ -327,20 +335,22 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
       message: `Cannot set and reset the same field: ${setAndReset.join(", ")}`,
     });
   }
-  const commonNameProvided = "commonName" in body;
   let commonName: string | undefined;
-  if (commonNameProvided) {
+  if ("commonName" in body) {
     if (typeof body.commonName !== "string" || !body.commonName.trim()) {
       throw new HTTPException(400, { message: "commonName required" });
     }
     commonName = body.commonName.trim();
   }
 
-  if (
-    fieldsPatch === undefined &&
-    !commonNameProvided &&
-    resetFields === undefined
-  ) {
+  // What this patch touches, decided once from the parsed body. A built-in's
+  // scientific name never changes, so only `writesColumns` counts canonicalName.
+  const touchesNames =
+    commonName !== undefined || aliases !== undefined || canonicalName !== undefined;
+  const writesOverlay =
+    fieldsPatch !== undefined || commonName !== undefined || aliases !== undefined;
+  const writesColumns = writesOverlay || canonicalName !== undefined;
+  if (!writesColumns && resetFields === undefined) {
     throw new HTTPException(400, { message: "No changes" });
   }
 
@@ -348,19 +358,28 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
 
   const ts = nowIso();
-  const input = { fieldsPatch, resetFields, commonName };
+  const input = { fieldsPatch, resetFields, commonName, aliases, canonicalName };
   let row: EntryRow | null = null;
+  let namesBefore: StoredNames;
 
   if (resolved.kind === "dataset") {
-    // A reset on an entry with no overlay has nothing to remove; do not create a row.
-    const onlyReset = fieldsPatch === undefined && !commonNameProvided;
-    if (!onlyReset) {
+    namesBefore = {
+      canonical_name: resolved.entry.canonicalName,
+      common_name: null,
+      aliases_json: null,
+    };
+    // Planned even when nothing is stored, so a different built-in name is refused.
+    const plan = planEntryWrite(null, resolved.entry, input);
+    // A reset has nothing to remove, and a built-in keeps its name (the plan
+    // refused any other), so neither creates a row on its own.
+    if (writesOverlay) {
       row = await insertOverlayFromDataset(db, atlas.id, resolved.entry, {
-        plan: planEntryWrite(null, resolved.entry, input),
+        plan,
         editedAt: ts,
       });
     }
   } else {
+    namesBefore = resolved.row;
     if (resolved.row.deleted_at) {
       throw new HTTPException(409, { message: "Entry is deleted" });
     }
@@ -369,11 +388,11 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
       : null;
     const plan = planEntryWrite(resolved.row, dataset, input);
     // Optimistic guard: the plan was built from this read of the row.
-    const result = await db
+    const update = db
       .prepare(
         `UPDATE atlas_entries
          SET common_name = ?, fields_json = ?, field_overrides_json = ?, edited_at = ?, updated_at = ?,
-             status = 'accepted'
+             status = 'accepted', canonical_name = ?, aliases_json = ?
          WHERE id = ? AND atlas_id = ? AND updated_at = ?`,
       )
       .bind(
@@ -382,11 +401,22 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
         plan.overridesJson,
         ts,
         ts,
+        plan.canonicalName,
+        plan.aliasesJson,
         resolved.row.id,
         atlas.id,
         resolved.row.updated_at,
-      )
-      .run();
+      );
+    let result: D1Result;
+    try {
+      result = await update.run();
+    } catch (err) {
+      // UNIQUE (atlas_id, canonical_name): another row already has the new name.
+      if (isUniqueViolation(err)) {
+        throw new HTTPException(409, { message: "Entry already exists" });
+      }
+      throw err;
+    }
     if (result.meta.changes === 0) {
       throw new HTTPException(409, {
         message: "Entry changed, reload and try again",
@@ -397,8 +427,8 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
     row = updated;
   }
 
-  // Names feed scanFocus and course-pack matching.
-  if (commonNameProvided) {
+  // Names and aliases feed scanFocus and course-pack matching.
+  if (touchesNames && row !== null && storedNamesChanged(namesBefore, row)) {
     await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
   }
   const overlays = row ? await toOverlayRows(db, atlas.id, [row]) : [];

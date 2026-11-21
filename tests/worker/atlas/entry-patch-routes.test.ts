@@ -1,10 +1,20 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { app } from "../../../worker/index";
+import { refreshFocusBestEffort } from "../../../worker/atlas/focus";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
 import { createTestEnv } from "../test-env";
 import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites/index";
 import type { AtlasEntryView } from "../../../src/atlas/types";
+import { searchable } from "../../../src/atlas/hub/nameMatch";
 import arthropods from "../../../worker/atlas/datasets/parasites/arthropods.json";
+
+vi.mock("../../../worker/atlas/focus", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../worker/atlas/focus")>();
+  return {
+    ...actual,
+    refreshFocusBestEffort: vi.fn(actual.refreshFocusBestEffort),
+  };
+});
 
 type Env = ReturnType<typeof createTestEnv>;
 
@@ -593,5 +603,310 @@ describe("PATCH /entries/:entryId field overrides", () => {
     const row = await rawRow(env, "e-corrupt");
     expect(row?.field_overrides_json).toBe("{not json");
     expect(row?.fields_json).toBe("{}");
+  });
+});
+
+const demodex = loadParasiteDataset().entries.find(
+  (e) => e.key === "demodex-canis",
+)!;
+const datasetAliases = [...demodex.aliases, ...demodex.misspellings];
+
+describe("PATCH /entries/:entryId aliases", () => {
+  it("saves trimmed learner aliases and unions them with dataset aliases", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+
+    const res = await patchEntry(env, atlasId, "demodex-canis", {
+      aliases: ["  follicular mite ", "", "Follicle Mite", "follicular  mite"],
+    });
+    expect(res.status).toBe(200);
+    const view = (await res.json()) as AtlasEntryView;
+    expect(view.learnerAliases).toEqual(["follicular mite", "Follicle Mite"]);
+    expect(view.aliases).toEqual(expect.arrayContaining(datasetAliases));
+    expect(view.aliases.at(-1)).toBe("follicular mite");
+    expect(
+      view.aliases.filter((a) => searchable(a) === "follicle mite"),
+    ).toHaveLength(1);
+    expect(view.editedFields).toEqual([]);
+
+    const listed = (await listEntries(env, atlasId)).find(
+      (e) => e.originKey === "demodex-canis",
+    );
+    expect(listed?.learnerAliases).toEqual(["follicular mite", "Follicle Mite"]);
+  });
+
+  it("replaces aliases on an existing overlay row and clears them with []", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const first = await patchEntry(env, atlasId, "demodex-canis", {
+      aliases: ["follicular mite"],
+    });
+    const edited = (await first.json()) as AtlasEntryView;
+
+    const cleared = await patchEntry(env, atlasId, edited.id, { aliases: [] });
+    expect(cleared.status).toBe(200);
+    const view = (await cleared.json()) as AtlasEntryView;
+    expect(view.learnerAliases).toEqual([]);
+    expect(view.aliases).not.toContain("follicular mite");
+  });
+
+  it("rejects more than 20 aliases, long aliases and non-lists", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+
+    const tooMany = await patchEntry(env, atlasId, "demodex-canis", {
+      aliases: Array.from({ length: 21 }, (_, i) => `alias ${i}`),
+    });
+    expect(tooMany.status).toBe(400);
+    expect(((await tooMany.json()) as { message: string }).message).toMatch(
+      /At most 20 aliases/,
+    );
+    const tooLong = await patchEntry(env, atlasId, "demodex-canis", {
+      aliases: ["a".repeat(81)],
+    });
+    expect(tooLong.status).toBe(400);
+    expect(((await tooLong.json()) as { message: string }).message).toMatch(
+      /80 characters/,
+    );
+    const notList = await patchEntry(env, atlasId, "demodex-canis", {
+      aliases: "follicular mite",
+    });
+    expect(notList.status).toBe(400);
+    const twenty = await patchEntry(env, atlasId, "demodex-canis", {
+      aliases: Array.from({ length: 20 }, (_, i) => `alias ${i}`),
+    });
+    expect(twenty.status).toBe(200);
+  });
+
+  it("reset to dataset clears learner aliases and overrides", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const res = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      aliases: ["big liver fluke"],
+      fields: { significance: "Mine" },
+    });
+    const edited = (await res.json()) as AtlasEntryView;
+
+    const reset = await app.request(
+      `/api/atlas/${atlasId}/entries/${edited.id}/reset`,
+      { method: "POST", headers: authHeaders() },
+      env,
+    );
+    expect(reset.status).toBe(204);
+
+    const view = (await listEntries(env, atlasId)).find(
+      (e) => e.id === "fasciola-hepatica",
+    );
+    expect(view?.editedAt).toBeNull();
+    expect(view?.aliases).not.toContain("big liver fluke");
+    expect(view?.learnerAliases).toEqual([]);
+    expect(view?.editedFields).toEqual([]);
+  });
+
+  it("refreshes Focus so a learner alias counts as a mention", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const paste = await app.request(
+      `/api/atlas/${atlasId}/materials/paste`,
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          text: "Follicular mite notes",
+          filename: "Follicular_mite_TUTORIAL.pdf",
+        }),
+      },
+      env,
+    );
+    expect(paste.status).toBe(201);
+
+    const before = (await listEntries(env, atlasId)).find(
+      (e) => e.originKey === "demodex-canis",
+    );
+    expect(before?.tier).not.toBe("key");
+
+    const res = await patchEntry(env, atlasId, "demodex-canis", {
+      aliases: ["follicular mite"],
+    });
+    expect(res.status).toBe(200);
+
+    const after = (await listEntries(env, atlasId)).find(
+      (e) => e.originKey === "demodex-canis",
+    );
+    expect(after?.tier).toBe("key");
+  });
+});
+
+const BUILT_IN_MESSAGE =
+  "Scientific name of a built-in parasite cannot change; add an alias instead";
+
+describe("PATCH /entries/:entryId canonicalName", () => {
+  it("returns 400 for a dataset entry and writes no overlay", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const res = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      canonicalName: "Fasciola gigantica",
+    });
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { message: string }).message).toBe(
+      BUILT_IN_MESSAGE,
+    );
+    const view = (await listEntries(env, atlasId)).find(
+      (e) => e.id === "fasciola-hepatica",
+    );
+    expect(view?.editedAt).toBeNull();
+  });
+
+  it("returns 400 for an edited dataset overlay row", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const first = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      commonName: "Edited fluke",
+    });
+    const edited = (await first.json()) as AtlasEntryView;
+    const res = await patchEntry(env, atlasId, edited.id, {
+      canonicalName: "Fasciola gigantica",
+    });
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { message: string }).message).toBe(
+      BUILT_IN_MESSAGE,
+    );
+  });
+
+  it("renames a learner entry with normalization", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const added = await createLearnerEntry(env, atlasId, "Madeupius fictus");
+    const res = await patchEntry(env, atlasId, added.id, {
+      canonicalName: "  madeupius renamus ",
+    });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as AtlasEntryView).canonicalName).toBe(
+      "Madeupius renamus",
+    );
+    const listed = (await listEntries(env, atlasId)).find(
+      (e) => e.id === added.id,
+    );
+    expect(listed?.canonicalName).toBe("Madeupius renamus");
+  });
+
+  it("returns 409 for a duplicate learner or dataset name, and accepts its own name", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    await createLearnerEntry(env, atlasId, "Madeupius renamus");
+    const other = await createLearnerEntry(env, atlasId, "Madeupius alter");
+    const dupLearner = await patchEntry(env, atlasId, other.id, {
+      canonicalName: "Madeupius renamus",
+    });
+    expect(dupLearner.status).toBe(409);
+    const dupDataset = await patchEntry(env, atlasId, other.id, {
+      canonicalName: "Fasciola hepatica",
+    });
+    expect(dupDataset.status).toBe(409);
+    const same = await patchEntry(env, atlasId, other.id, {
+      canonicalName: "Madeupius alter",
+    });
+    expect(same.status).toBe(200);
+  });
+
+  it("returns 400 for an empty or unparseable name", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const added = await createLearnerEntry(env, atlasId, "Madeupius fictus");
+    const res = await patchEntry(env, atlasId, added.id, { canonicalName: "" });
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { message: string }).message).toMatch(
+      /canonicalName required/,
+    );
+    const notString = await patchEntry(env, atlasId, added.id, { canonicalName: 5 });
+    expect(notString.status).toBe(400);
+    expect(((await notString.json()) as { message: string }).message).toMatch(
+      /canonicalName must be a string/,
+    );
+  });
+
+  it("accepts a built-in entry's own name alongside another edit", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const res = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      canonicalName: "Fasciola hepatica",
+      commonName: "My fluke",
+    });
+    expect(res.status).toBe(200);
+    const view = (await res.json()) as AtlasEntryView;
+    expect(view.canonicalName).toBe("Fasciola hepatica");
+    expect(view.commonName).toBe("My fluke");
+  });
+});
+
+describe("PATCH /entries/:entryId Focus refresh", () => {
+  const refresh = vi.mocked(refreshFocusBestEffort);
+  beforeEach(() => {
+    refresh.mockClear();
+  });
+
+  it("does not refresh when the names stay the same", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    refresh.mockClear();
+    const first = await patchEntry(env, atlasId, "demodex-canis", {
+      aliases: ["follicular mite"],
+    });
+    const edited = (await first.json()) as AtlasEntryView;
+    expect(refresh).toHaveBeenCalledTimes(1);
+    refresh.mockClear();
+
+    const fieldsOnly = await patchEntry(env, atlasId, edited.id, {
+      fields: { significance: "Mine" },
+    });
+    expect(fieldsOnly.status).toBe(200);
+    const sameNames = await patchEntry(env, atlasId, edited.id, {
+      aliases: ["follicular mite"],
+      commonName: edited.commonName,
+      canonicalName: edited.canonicalName,
+    });
+    expect(sameNames.status).toBe(200);
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("refreshes after a common name change or a learner rename", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    refresh.mockClear();
+    await patchEntry(env, atlasId, "fasciola-hepatica", { commonName: "My fluke" });
+    expect(refresh).toHaveBeenCalledTimes(1);
+
+    const added = await createLearnerEntry(env, atlasId, "Madeupius fictus");
+    refresh.mockClear();
+    await patchEntry(env, atlasId, added.id, { canonicalName: "Madeupius renamus" });
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("writes no overlay for a built-in entry's own name alone", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    refresh.mockClear();
+    const res = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      canonicalName: "Fasciola hepatica",
+    });
+    expect(res.status).toBe(200);
+    const view = (await res.json()) as AtlasEntryView;
+    expect(view.id).toBe("fasciola-hepatica");
+    expect(view.editedAt).toBeNull();
+    expect(refresh).not.toHaveBeenCalled();
   });
 });

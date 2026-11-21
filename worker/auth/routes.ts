@@ -35,6 +35,7 @@ import {
   type AuthVariables,
 } from "./session";
 import { verifyTurnstileToken } from "./turnstile";
+import { isUniqueViolation } from "../db/client";
 
 type AuthEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -124,8 +125,7 @@ authRoutes.post("/register", async (c) => {
       .bind(id, email, passwordHash, null, createdAt)
       .run();
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    if (/unique|constraint|already exists/i.test(message)) {
+    if (isUniqueViolation(err)) {
       throw new HTTPException(409, { message: "Email already registered" });
     }
     throw err;
