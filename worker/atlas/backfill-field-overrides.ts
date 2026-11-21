@@ -1,5 +1,5 @@
 import { loadParasiteDataset } from "./datasets/parasites/index";
-import { overlayOverrides, tryParseObject } from "./merge";
+import { mergeOverlayFields, overlayOverrides, tryParseObject } from "./merge";
 import { nowIso } from "./ownership";
 
 export type BackfillFieldOverridesOpts = {
@@ -28,7 +28,7 @@ type LegacyRow = {
 
 const BATCH = 50;
 
-/** Persist the read-path legacy diff into field_overrides_json (fields_json kept). */
+/** Persist the read-path legacy diff into field_overrides_json; fields_json keeps the merged snapshot. */
 export async function runBackfillFieldOverrides(
   db: D1Database,
   opts: BackfillFieldOverridesOpts,
@@ -95,16 +95,28 @@ export async function runBackfillFieldOverrides(
       fields_json: row.fields_json,
       field_overrides_json: null,
     });
+    const snapshot = mergeOverlayFields(dataset.fields, {
+      origin_key: row.origin_key,
+      fields_json: "{}",
+      field_overrides_json: JSON.stringify(overrides),
+    }).fields;
     // Legacy rows copied the dataset name on first edit; NULL lets dataset fixes through.
     const commonName =
       row.common_name === dataset.commonName ? null : row.common_name;
     statements.push(
       db
         .prepare(
-          `UPDATE atlas_entries SET field_overrides_json = ?, common_name = ?, updated_at = ?
+          `UPDATE atlas_entries SET field_overrides_json = ?, fields_json = ?, common_name = ?, updated_at = ?
            WHERE id = ? AND atlas_id = ? AND field_overrides_json IS NULL`,
         )
-        .bind(JSON.stringify(overrides), commonName, ts, row.id, row.atlas_id),
+        .bind(
+          JSON.stringify(overrides),
+          JSON.stringify(snapshot),
+          commonName,
+          ts,
+          row.id,
+          row.atlas_id,
+        ),
     );
   }
 

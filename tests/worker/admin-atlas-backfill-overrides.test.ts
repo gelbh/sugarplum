@@ -136,7 +136,11 @@ describe("POST /api/admin/atlas/backfill-field-overrides", () => {
     expect(JSON.parse(row.field_overrides_json!)).toEqual({
       significance: "Student text",
     });
-    expect(JSON.parse(row.fields_json).significance).toBe("Student text");
+    // fields_json keeps the merged snapshot.
+    expect(JSON.parse(row.fields_json)).toEqual({
+      ...fasciola().fields,
+      significance: "Student text",
+    });
     // The legacy row copied the dataset name; the backfill nulls it.
     expect(row.common_name).toBeNull();
 

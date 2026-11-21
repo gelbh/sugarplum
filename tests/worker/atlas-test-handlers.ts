@@ -613,13 +613,19 @@ export function atlasRun(
   }
 
   if (normalized.startsWith("UPDATE atlas_entries SET field_overrides_json =")) {
-    const [field_overrides_json, common_name, updated_at, id, atlas_id] =
-      bound as [string, string | null, string, string, string];
+    const [field_overrides_json, fields_json, common_name, updated_at, id, atlas_id] =
+      bound as [string, string, string | null, string, string, string];
     const row = state.entries.get(id);
     if (!row || row.atlas_id !== atlas_id || row.field_overrides_json != null) {
       return { success: true, meta: { changes: 0 } } as D1Result;
     }
-    state.entries.set(id, { ...row, field_overrides_json, common_name, updated_at });
+    state.entries.set(id, {
+      ...row,
+      field_overrides_json,
+      fields_json,
+      common_name,
+      updated_at,
+    });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
 

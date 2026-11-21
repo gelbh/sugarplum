@@ -87,9 +87,14 @@ async function seedOverlayRow(
     originKey: string;
     fieldsJson: string;
     overridesJson?: string;
+    updatedAt?: string;
   },
 ) {
-  const dataset = datasetEntry(opts.originKey);
+  // A key missing from the bundle stands for a retired dataset entry.
+  const dataset = loadParasiteDataset().entries.find(
+    (e) => e.key === opts.originKey,
+  ) ?? { canonicalName: `Retiredus ${opts.id}`, commonName: null };
+  const updatedAt = opts.updatedAt ?? TS;
   if (opts.overridesJson === undefined) {
     await env.DB.prepare(
       `INSERT INTO atlas_entries (
@@ -98,7 +103,7 @@ async function seedOverlayRow(
        ) VALUES (?, ?, ?, ?, ?, 'accepted', ?, ?, ?, ?, ?, NULL)`,
     )
       .bind(opts.id, atlasId, dataset.canonicalName, dataset.commonName,
-        opts.fieldsJson, TS, TS, opts.originKey, 1, TS)
+        opts.fieldsJson, TS, updatedAt, opts.originKey, 1, TS)
       .run();
     return;
   }
@@ -110,7 +115,7 @@ async function seedOverlayRow(
      ) VALUES (?, ?, ?, ?, ?, 'accepted', ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(opts.id, atlasId, dataset.canonicalName, dataset.commonName,
-      opts.fieldsJson, TS, TS, opts.originKey, 1, TS, null,
+      opts.fieldsJson, TS, updatedAt, opts.originKey, 1, TS, null,
       opts.overridesJson, null)
     .run();
 }
@@ -181,7 +186,8 @@ describe("PATCH /entries/:entryId field overrides", () => {
     expect(view.editedFields).toEqual(["significance"]);
     expect(view.fields.family).toBe(datasetEntry("fasciola-hepatica").fields.family);
     const row = await rawRow(env, view.id);
-    expect(row?.fields_json).toBe("{}");
+    // fields_json keeps the full merged snapshot for a later dataset removal.
+    expect(JSON.parse(row!.fields_json)).toEqual(view.fields);
     expect(JSON.parse(row!.field_overrides_json!)).toEqual({ significance: "Mine" });
   });
 
@@ -260,8 +266,9 @@ describe("PATCH /entries/:entryId field overrides", () => {
       fields: { family: "Editedidae" },
     });
     expect(res.status).toBe(200);
+    const view = (await res.json()) as AtlasEntryView;
     const row = await rawRow(env, "e-legacy");
-    expect(row?.fields_json).toBe("{}");
+    expect(JSON.parse(row!.fields_json)).toEqual(view.fields);
     expect(JSON.parse(row!.field_overrides_json!)).toEqual({
       significance: "Old copy",
       family: "Editedidae",
@@ -287,7 +294,9 @@ describe("PATCH /entries/:entryId field overrides", () => {
         field_overrides_json: string | null;
         common_name: string | null;
       }>();
-    expect(row?.fields_json).toBe("{}");
+    expect(JSON.parse(row!.fields_json)).toEqual(
+      datasetEntry("fasciola-hepatica").fields,
+    );
     expect(row?.field_overrides_json).toBe("{}");
     expect(row?.common_name).toBeNull();
   });
@@ -383,6 +392,37 @@ describe("PATCH /entries/:entryId field overrides", () => {
     } finally {
       json.fields.distribution = before;
     }
+  });
+
+  it("keeps a retired dataset row an override row and updates its snapshot", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const snapshot = {
+      ...datasetEntry("fasciola-hepatica").fields,
+      significance: "Snapshot text",
+    };
+    await seedOverlayRow(env, atlasId, {
+      id: "e-retired",
+      originKey: "no-such-parasite",
+      fieldsJson: JSON.stringify(snapshot),
+      overridesJson: JSON.stringify({ significance: "Snapshot text" }),
+    });
+    const res = await patchEntry(env, atlasId, "e-retired", {
+      fields: { family: "Editedidae" },
+    });
+    expect(res.status).toBe(200);
+    const view = (await res.json()) as AtlasEntryView;
+    expect(view.fields.significance).toBe("Snapshot text");
+    expect(view.fields.family).toBe("Editedidae");
+    // Nothing to reset to once the dataset entry is gone.
+    expect(view.editedFields).toEqual([]);
+    const row = await rawRow(env, "e-retired");
+    expect(JSON.parse(row!.field_overrides_json!)).toEqual({
+      significance: "Snapshot text",
+      family: "Editedidae",
+    });
+    expect(JSON.parse(row!.fields_json)).toEqual(view.fields);
   });
 
   it("refuses to overwrite an unparseable overrides column", async () => {

@@ -36,7 +36,52 @@ describe("planEntryWrite", () => {
       fieldsPatch: { significance: "Mine" },
     });
     expect(JSON.parse(plan.overridesJson!)).toEqual({ significance: "Mine" });
+    expect(JSON.parse(plan.fieldsJson)).toEqual({
+      ...dataset.fields,
+      significance: "Mine",
+    });
     expect(plan.commonName).toBeNull();
+  });
+
+  it("plans the plain dataset snapshot for an insert with no edits", () => {
+    const plan = planEntryWrite(null, dataset, {});
+    expect(plan.overridesJson).toBe("{}");
+    expect(JSON.parse(plan.fieldsJson)).toEqual(dataset.fields);
+  });
+
+  it("keeps a retired origin override row an override row", () => {
+    const snapshot = { ...dataset.fields, significance: "Old" };
+    const plan = planEntryWrite(
+      row({
+        origin_key: "no-such-parasite",
+        fields_json: JSON.stringify(snapshot),
+        field_overrides_json: JSON.stringify({ significance: "Old" }),
+      }),
+      null,
+      { fieldsPatch: { family: "Editedidae" } },
+    );
+    expect(JSON.parse(plan.overridesJson!)).toEqual({
+      significance: "Old",
+      family: "Editedidae",
+    });
+    expect(JSON.parse(plan.fieldsJson)).toEqual({ ...snapshot, family: "Editedidae" });
+  });
+
+  it("keeps a retired legacy row a legacy full copy", () => {
+    const plan = planEntryWrite(
+      row({
+        origin_key: "no-such-parasite",
+        fields_json: JSON.stringify({ ...dataset.fields, significance: "Old" }),
+        field_overrides_json: null,
+      }),
+      null,
+      { fieldsPatch: { family: "Editedidae" } },
+    );
+    expect(plan.overridesJson).toBeNull();
+    expect(JSON.parse(plan.fieldsJson)).toMatchObject({
+      significance: "Old",
+      family: "Editedidae",
+    });
   });
 
   it("merges a patch into stored overrides and drops values equal to the dataset", () => {

@@ -141,6 +141,10 @@ function requireReadable(
 /**
  * The columns one entry write stores. `row` is null for the first write to a
  * dataset entry (an overlay insert). Pure: no I/O.
+ *
+ * Every dataset-origin write keeps the full merged snapshot in `fields_json`,
+ * so a parasite later removed from the bundle still shows the learner's last
+ * view. Reads ignore that snapshot while the dataset entry exists.
  */
 export function planEntryWrite(
   row: EntryRow | null,
@@ -150,11 +154,10 @@ export function planEntryWrite(
   const { fieldsPatch, resetFields, commonName } = input;
   if (row === null) {
     if (!dataset) throw new Error("planEntryWrite: no row and no dataset entry");
+    const next = nextFieldOverrides(dataset.fields, {}, fieldsPatch, resetFields);
     return {
-      fieldsJson: "{}",
-      overridesJson: JSON.stringify(
-        nextFieldOverrides(dataset.fields, {}, fieldsPatch, resetFields),
-      ),
+      fieldsJson: JSON.stringify(next.fields),
+      overridesJson: JSON.stringify(next.overrides),
       // NULL inherits the dataset name, so later dataset fixes still show.
       commonName:
         commonName === undefined
@@ -183,20 +186,36 @@ export function planEntryWrite(
   if (dataset) {
     // overlayOverrides diffs a legacy full copy, so this write converts the row.
     const current = overlayOverrides(dataset.fields, row);
+    const next = nextFieldOverrides(dataset.fields, current, fieldsPatch, resetFields);
     return {
-      fieldsJson: "{}",
-      overridesJson: JSON.stringify(
-        nextFieldOverrides(dataset.fields, current, fieldsPatch, resetFields),
-      ),
+      fieldsJson: JSON.stringify(next.fields),
+      overridesJson: JSON.stringify(next.overrides),
       commonName: nextCommon,
     };
   }
-  // Learner-added rows, and origin rows whose dataset entry is gone, keep full fields.
+
+  const fields = mergeFields(mergeOverlayFields(null, row).fields, fieldsPatch);
+  if (row.origin_key === null || row.field_overrides_json == null) {
+    // Learner-added rows keep full fields. A legacy origin row whose dataset
+    // entry is gone stays a legacy full copy, so its edits survive if the
+    // entry returns to the bundle.
+    return {
+      fieldsJson: JSON.stringify(fields),
+      overridesJson: null,
+      commonName: nextCommon,
+    };
+  }
+  // Origin row whose dataset entry is gone: still an override row. Nothing to
+  // diff against, so the patched keys join the stored overrides.
+  const overrides: Record<string, unknown> = {
+    ...tryParseObject(row.field_overrides_json),
+  };
+  for (const key of Object.keys(fieldsPatch ?? {}) as ParasiteFieldKey[]) {
+    overrides[key] = fields[key];
+  }
   return {
-    fieldsJson: JSON.stringify(
-      mergeFields(mergeOverlayFields(null, row).fields, fieldsPatch),
-    ),
-    overridesJson: null,
+    fieldsJson: JSON.stringify(fields),
+    overridesJson: JSON.stringify(overrides),
     commonName: nextCommon,
   };
 }
@@ -273,23 +292,22 @@ export function parseResetFields(raw: unknown): ParasiteFieldKey[] | undefined {
 /**
  * Overrides after a write: the merged result diffed against today's dataset,
  * so a value equal to the dataset clears its override. Reset wins over patch.
+ * `fields` is the merged snapshot.
  */
-export function nextFieldOverrides(
+function nextFieldOverrides(
   dataset: ParasiteFields,
   current: Partial<ParasiteFields>,
   patch: Partial<ParasiteFields> | undefined,
   resetFields: ParasiteFieldKey[] | undefined,
-): Partial<ParasiteFields> {
+): { overrides: Partial<ParasiteFields>; fields: ParasiteFields } {
   const pending: Partial<ParasiteFields> = { ...current, ...patch };
   for (const key of resetFields ?? []) delete pending[key];
-  const merged = mergeFields(dataset, pending);
-  const out: Partial<ParasiteFields> = {};
+  const fields = mergeFields(dataset, pending);
+  const overrides: Record<string, unknown> = {};
   for (const key of PARASITE_FIELD_KEYS) {
-    if (!sameFieldValue(merged[key], dataset[key])) {
-      Object.assign(out, { [key]: merged[key] });
-    }
+    if (!sameFieldValue(fields[key], dataset[key])) overrides[key] = fields[key];
   }
-  return out;
+  return { overrides: overrides as Partial<ParasiteFields>, fields };
 }
 
 export function parseFocusOverride(raw: unknown): AtlasTier | null {
