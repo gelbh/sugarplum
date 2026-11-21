@@ -249,6 +249,15 @@ describe("parseAliasesPatch", () => {
     ]);
   });
 
+  it("rejects a raw list over 200 items before cleaning", () => {
+    expect(() => parseAliasesPatch(Array.from({ length: 201 }, () => ""))).toThrow(
+      /At most 200 raw aliases/,
+    );
+    expect(parseAliasesPatch(Array.from({ length: 200 }, () => "fluke"))).toEqual([
+      "fluke",
+    ]);
+  });
+
   it("checks limits after cleaning", () => {
     const padded = [
       ...Array.from({ length: 20 }, (_, i) => `alias ${i}`),

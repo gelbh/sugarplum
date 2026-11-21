@@ -345,11 +345,19 @@ export function parseResetFields(raw: unknown): ParasiteFieldKey[] | undefined {
   return [...new Set(raw as ParasiteFieldKey[])];
 }
 
+/** Bounds the cleaning work on a hostile body; the real limit applies after dedupe. */
+const ALIAS_MAX_RAW_ITEMS = 200;
+
 export function parseAliasesPatch(raw: unknown): string[] | undefined {
   if (raw === undefined) return undefined;
   if (!Array.isArray(raw) || raw.some((a) => typeof a !== "string")) {
     throw new HTTPException(400, {
       message: "aliases must be a list of strings",
+    });
+  }
+  if (raw.length > ALIAS_MAX_RAW_ITEMS) {
+    throw new HTTPException(400, {
+      message: `At most ${ALIAS_MAX_RAW_ITEMS} raw aliases`,
     });
   }
   const aliases = cleanAliasList(raw as string[]);
