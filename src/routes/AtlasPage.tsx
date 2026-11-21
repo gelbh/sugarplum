@@ -25,6 +25,7 @@ import {
   packHiddenIds as computePackHiddenIds,
   packIsActive,
   resetEntry,
+  resetEntryFields,
   useShowHiddenPref,
 } from "../atlas";
 import "../atlas/hub/atlasMotion.css";
@@ -40,7 +41,12 @@ import {
   atlasHref,
   type AtlasRoute,
 } from "../atlas";
-import type { AtlasEntryView, AtlasSource } from "../atlas";
+import type {
+  AtlasEntryView,
+  AtlasSource,
+  EditSectionId,
+  FieldKey,
+} from "../atlas";
 import { isGuest } from "../guest/session";
 import { isPlainClick, navigate, navigateReplace } from "../shared/nav/navigate";
 import { useSession } from "../session/SessionContext";
@@ -123,7 +129,10 @@ export default function AtlasPage({
   const [error, setError] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [deletedOpen, setDeletedOpen] = useState(false);
-  const [editEntry, setEditEntry] = useState<AtlasEntryView | null>(null);
+  const [editTarget, setEditTarget] = useState<{
+    entry: AtlasEntryView;
+    section?: EditSectionId;
+  } | null>(null);
   const [editLifecycle, setEditLifecycle] = useState<AtlasEntryView | null>(
     null,
   );
@@ -223,6 +232,17 @@ export default function AtlasPage({
     }
   }
 
+  async function onResetField(entry: AtlasEntryView, field: FieldKey) {
+    try {
+      await resetEntryFields(atlasId, entry.id, [field]);
+      await reloadEntries();
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Could not reset field",
+      );
+    }
+  }
+
   function onFocusUpdated(next: AtlasEntryView) {
     setLoaded((prev) =>
       prev
@@ -274,7 +294,7 @@ export default function AtlasPage({
           onShowHiddenChange={setShowHidden}
           onAddEntry={canMutate ? () => setAddOpen(true) : undefined}
           onRecentlyDeleted={canMutate ? () => setDeletedOpen(true) : undefined}
-          onEditEntry={canMutate ? (entry) => setEditEntry(entry) : undefined}
+          onEditEntry={canMutate ? (entry) => setEditTarget({ entry }) : undefined}
           onMakeCardsFromKey={
             canMutate
               ? (keys) => {
@@ -305,7 +325,14 @@ export default function AtlasPage({
         onStep={(id) => navigateReplace(atlasEntryHref(atlasId, id))}
         packHiddenIds={packHiddenIds}
         showHidden={showHidden}
-        onEdit={canMutate ? () => setEditEntry(entry) : undefined}
+        onEdit={
+          canMutate ? (section) => setEditTarget({ entry, section }) : undefined
+        }
+        onResetField={
+          canMutate && entry.originKey
+            ? (field) => void onResetField(entry, field)
+            : undefined
+        }
         onEditLifecycle={
           canMutate ? () => setEditLifecycle(entry) : undefined
         }
@@ -390,12 +417,18 @@ export default function AtlasPage({
             }}
           />
           <EditEntryDialog
-            open={editEntry !== null}
+            open={editTarget !== null}
             atlasId={atlasId}
-            entry={editEntry}
-            onClose={() => setEditEntry(null)}
+            entry={editTarget?.entry ?? null}
+            initialSection={editTarget?.section}
+            onClose={() => setEditTarget(null)}
             onDone={() => {
               void reloadEntries();
+            }}
+            onEditLifecycle={() => {
+              const target = editTarget;
+              setEditTarget(null);
+              if (target) setEditLifecycle(target.entry);
             }}
           />
           <EditLifecycleDialog

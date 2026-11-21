@@ -12,7 +12,9 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import type { Theme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import AtlasImage from "../hub/AtlasImage";
+import type { EditSectionId } from "../mutate/entryPatch";
 import EntryPersonalNotes from "./EntryPersonalNotes";
 import { FIELD_LABELS, type EntryRefs } from "./entryFields";
 import {
@@ -22,6 +24,7 @@ import {
   splitGlanceForMobile,
   taxonomyTree,
   type GlanceSection,
+  type GlanceSectionId,
 } from "./entryGlance";
 import {
   BandSheetPanel,
@@ -42,7 +45,10 @@ type Props = {
   /** Browse related parasites by taxonomy rank in the entry rail. */
   onTaxonomyBrowse?: (filter: TaxonomyFilter) => void;
   taxonomyActive?: TaxonomyFilter | null;
-  onEdit?: () => void;
+  /** No section: the Edit button. A section: a glance band pencil. */
+  onEdit?: (section?: EditSectionId) => void;
+  /** Drop one per-field override (glance "Reset"). */
+  onResetField?: (field: FieldKey) => void;
   onReset?: () => void;
   onMakeCards?: () => void;
   atlasId?: string;
@@ -64,6 +70,50 @@ const IMAGE_ROLE_LABELS: Record<
   other: "Image",
 };
 
+const GLANCE_EDIT_SECTION: Record<GlanceSectionId, EditSectionId> = {
+  taxonomy: "taxonomy",
+  hosts: "hosts",
+  body: "biology",
+  detection: "clinical",
+  range: "distribution",
+  notes: "clinical",
+};
+
+/** Overridden fields whose "Edited" mark shows on each glance band. */
+const GLANCE_BAND_FIELDS: Record<GlanceSectionId, FieldKey[]> = {
+  taxonomy: ["phylum", "order", "family", "group"],
+  hosts: ["definitiveHosts", "intermediateHosts", "paratenicHosts"],
+  body: [
+    "majorOrgan",
+    "onHostStages",
+    "pppDays",
+    "lifecycleType",
+    "lifecycleStages",
+  ],
+  detection: [
+    "diagnosticStage",
+    "diagnosticTests",
+    "zoonotic",
+    "vectorRole",
+    "significance",
+  ],
+  range: [
+    "distribution",
+    "distributionWorldwide",
+    "distributionRegions",
+    "climateBands",
+  ],
+  notes: [],
+};
+
+const SECTION_LABEL_SX = {
+  color: "text.secondary",
+  fontSize: "0.78rem",
+  fontWeight: 700,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+} as const;
+
 export default function EntryFacts({
   entry,
   refs,
@@ -71,6 +121,7 @@ export default function EntryFacts({
   onTaxonomyBrowse,
   taxonomyActive,
   onEdit,
+  onResetField,
   onReset,
   onMakeCards,
   atlasId,
@@ -91,22 +142,62 @@ export default function EntryFacts({
   const [lightbox, setLightbox] = useState<AtlasImageView | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
 
+  // Older cached views and test fixtures may predate editedFields.
+  const editedSet = new Set(entry.editedFields ?? []);
+
+  const sectionHeading = (title: string, sectionId: GlanceSectionId) => {
+    const edited = GLANCE_BAND_FIELDS[sectionId].filter((k) =>
+      editedSet.has(k),
+    );
+    return (
+      <Stack
+        direction="row"
+        sx={{ alignItems: "center", gap: 0.75, mb: 1, flexWrap: "wrap" }}
+      >
+        <Typography sx={SECTION_LABEL_SX}>{title}</Typography>
+        {edited.map((key) => (
+          <Stack
+            key={key}
+            direction="row"
+            sx={{ alignItems: "center", gap: 0.25 }}
+          >
+            <Chip
+              size="small"
+              variant="outlined"
+              label={`Edited: ${FIELD_LABELS[key]}`}
+            />
+            {onResetField ? (
+              <Button
+                size="small"
+                variant="text"
+                aria-label={`Reset ${FIELD_LABELS[key]}`}
+                onClick={() => onResetField?.(key)}
+                sx={{ minWidth: 0 }}
+              >
+                Reset
+              </Button>
+            ) : null}
+          </Stack>
+        ))}
+        {onEdit ? (
+          <IconButton
+            size="small"
+            aria-label={`Edit ${title}`}
+            onClick={() => onEdit?.(GLANCE_EDIT_SECTION[sectionId])}
+            sx={{ ml: "auto" }}
+          >
+            <EditOutlinedIcon fontSize="small" />
+          </IconButton>
+        ) : null}
+      </Stack>
+    );
+  };
+
   const renderSection = (section: GlanceSection): ReactNode => {
     const tree = section.id === "taxonomy" ? taxonomyTree(entry.fields) : null;
     return (
       <Box key={section.id} component="section" aria-label={section.title}>
-        <Typography
-          sx={{
-            color: "text.secondary",
-            fontSize: "0.78rem",
-            fontWeight: 700,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            mb: 1,
-          }}
-        >
-          {section.title}
-        </Typography>
+        {sectionHeading(section.title, section.id)}
         {tree && tree.length > 0 ? (
           <TaxonomyTreeCard
             nodes={tree}
@@ -166,7 +257,7 @@ export default function EntryFacts({
             </Button>
           ) : null}
           {onEdit ? (
-            <Button variant="text" size="small" onClick={onEdit}>
+            <Button variant="text" size="small" onClick={() => onEdit?.()}>
               Edit
             </Button>
           ) : null}
@@ -208,18 +299,7 @@ export default function EntryFacts({
       ) : null}
       {fullSig ? (
         <Box component="section" aria-label="Notes">
-          <Typography
-            sx={{
-              color: "text.secondary",
-              fontSize: "0.78rem",
-              fontWeight: 700,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              mb: 1,
-            }}
-          >
-            Notes
-          </Typography>
+          {sectionHeading("Notes", "notes")}
           <Box component="dl" sx={{ m: 0 }}>
             <GlanceFact row={fullSig} refs={refs} onCite={onCite} />
           </Box>

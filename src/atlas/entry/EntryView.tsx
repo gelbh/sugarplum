@@ -45,6 +45,7 @@ import { isShortcutTarget } from "../hub/keys";
 import { atlasHeroName } from "../paths";
 import { atlasBottomSheetPaperSx } from "../hub/atlasOperateSx";
 import MarkImportantControl from "./MarkImportantControl";
+import type { EditSectionId } from "../mutate/entryPatch";
 import type { AtlasEntryView, DatasetFields } from "../types";
 
 type FieldKey = keyof DatasetFields;
@@ -58,7 +59,8 @@ type Props = {
   onOpen: (id: string) => void;
   /** Moves to a neighbour without growing history (j/k). */
   onStep: (id: string) => void;
-  onEdit?: () => void;
+  onEdit?: (section?: EditSectionId) => void;
+  onResetField?: (field: FieldKey) => void;
   onEditLifecycle?: () => void;
   onReset?: () => void;
   onMakeCards?: () => void;
@@ -85,6 +87,7 @@ export default function EntryView({
   onOpen,
   onStep,
   onEdit,
+  onResetField,
   onEditLifecycle,
   onReset,
   onMakeCards,
@@ -364,6 +367,7 @@ export default function EntryView({
           onTaxonomyBrowse={onTaxonomyBrowse}
           taxonomyActive={taxonomy}
           onEdit={onEdit}
+          onResetField={onResetField}
           onReset={onReset}
           onMakeCards={onMakeCards}
           atlasId={atlasId}
