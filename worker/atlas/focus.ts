@@ -1,6 +1,7 @@
 import type { Env } from "../env";
 import type { AtlasEntryView, AtlasTier } from "../../src/atlas/types";
 import { scanFocus } from "../../src/atlas/hub/focusScan";
+import { atlasGenera } from "../../src/atlas/hub/packMatch";
 import { loadParasiteDataset } from "./datasets/parasites/index";
 import { overlayAtlas, type OverlayRow } from "./merge";
 import {
@@ -198,7 +199,9 @@ export async function isFocusPackFresh(
   db: D1Database,
   atlasId: string,
 ): Promise<boolean> {
-  const current = focusPackFingerprint(await loadAtlasMaterialRows(db, atlasId));
+  const current = focusPackFingerprint(
+    await loadAtlasMaterialRows(db, atlasId),
+  );
   return (await loadStoredFocusPackFingerprint(db, atlasId)) === current;
 }
 
@@ -268,6 +271,7 @@ export async function refreshAtlasFocus(
   }
 
   const entries = await loadMergedEntries(db, atlasId);
+  const genera = atlasGenera(entries);
   const keep = new Set<string>();
 
   for (const entry of entries) {
@@ -284,6 +288,7 @@ export async function refreshAtlasFocus(
       },
       focusMaterials,
       null,
+      genera,
     );
     await db
       .prepare(

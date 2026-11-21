@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  atlasGenera,
   damerauLevenshtein,
   materialMentionsForPack,
   tokenMatches,
@@ -59,7 +60,9 @@ describe("materialMentionsForPack", () => {
 
   it("rule 1: matches filename separators", () => {
     const file = material("", "Week2_Fasciola_hepatica.pdf");
-    expect(materialMentionsForPack(named("Fasciola hepatica"), file)).toBe(true);
+    expect(materialMentionsForPack(named("Fasciola hepatica"), file)).toBe(
+      true,
+    );
   });
 
   it("rule 2: genus with the epithet nearby", () => {
@@ -94,9 +97,7 @@ describe("materialMentionsForPack", () => {
     expect(hits(named("Ixodes ricinus"), text)).toBe(true);
     expect(hits(named("Ixodes hexagonus"), text)).toBe(true);
     expect(hits(named("Ixodes ricinus"), "Ixodes sp. on a dog")).toBe(true);
-    expect(hits(named("Ixodes ricinus"), "Ixodes species overview")).toBe(
-      true,
-    );
+    expect(hits(named("Ixodes ricinus"), "Ixodes species overview")).toBe(true);
   });
 
   it("rule 3: the plural marker must start within 8 characters", () => {
@@ -155,5 +156,47 @@ describe("materialMentionsForPack window boundaries", () => {
     expect(hits(demodex, "Demodex sp, mites")).toBe(false);
     expect(hits(demodex, "Demodex sp")).toBe(false);
     expect(hits(demodex, "Demodex sp. here")).toBe(true);
+  });
+});
+
+describe("rule 2 stops at another atlas genus", () => {
+  const genera = atlasGenera([
+    named("Ctenocephalides canis"),
+    named("Pulex irritans"),
+    named("Trichodectes canis"),
+    named("Demodex canis"),
+    named("Ixodes hexagonus"),
+    named("Ixodes ricinus"),
+  ]);
+  const hitsWith = (entry: NameMatchEntry, text: string) =>
+    materialMentionsForPack(entry, material(text), genera);
+
+  it("does not borrow the epithet of a later binomial", () => {
+    const text = "Ctenocephalides and Pulex; also Trichodectes canis";
+    expect(hits(named("Ctenocephalides canis"), text)).toBe(true);
+    expect(hitsWith(named("Ctenocephalides canis"), text)).toBe(false);
+  });
+
+  it("keeps an epithet list after the genus", () => {
+    expect(hitsWith(named("Demodex canis"), "Demodex (canis, bovis)")).toBe(
+      true,
+    );
+  });
+
+  it("does not stop at the entry's own genus", () => {
+    expect(
+      hitsWith(
+        named("Ixodes hexagonus"),
+        "Ixodes, mainly Ixodes ricinus, and hexagonus",
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("atlasGenera", () => {
+  it("returns lower-case genera without punctuation", () => {
+    expect(
+      atlasGenera([named("Eimeria spp."), named("Fasciola hepatica")]),
+    ).toEqual(new Set(["eimeria", "fasciola"]));
   });
 });

@@ -1,4 +1,7 @@
-import { SOURCE_ROLE_LABELS, type SourceRole } from "../../materials/sourceRole";
+import {
+  SOURCE_ROLE_LABELS,
+  type SourceRole,
+} from "../../materials/sourceRole";
 import { matchMaterialForPack, packTargets } from "./packMatch";
 import type { AtlasTier } from "../types";
 
@@ -35,8 +38,9 @@ export function scanFocus(
   entry: FocusEntry,
   materials: FocusMaterial[],
   manualOverride?: FocusManualOverride,
+  genera?: ReadonlySet<string>,
 ): FocusScanResult {
-  const targets = packTargets(entry);
+  const targets = packTargets(entry, genera);
   const matches = materials.map((material) => ({
     material,
     ...matchMaterialForPack(targets, material),
