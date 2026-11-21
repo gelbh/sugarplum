@@ -370,30 +370,19 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
       ? (datasetByKey().get(resolved.row.origin_key) ?? null)
       : null;
     const plan = planEntryWrite(resolved.row, dataset, input);
-    // Columns the patch did not touch are left out of the SET.
-    const renaming =
-      plan.canonicalName !== undefined &&
-      plan.canonicalName !== resolved.row.canonical_name;
+    const renaming = plan.canonicalName !== resolved.row.canonical_name;
     if (
       renaming &&
-      (await canonicalNameTaken(db, atlas.id, plan.canonicalName!, resolved.row.id))
+      (await canonicalNameTaken(db, atlas.id, plan.canonicalName, resolved.row.id))
     ) {
       throw new HTTPException(409, { message: "Entry already exists" });
     }
-    const optional: { column: string; value: string | null }[] = [];
-    if (renaming) {
-      optional.push({ column: "canonical_name", value: plan.canonicalName! });
-    }
-    if (plan.aliasesJson !== undefined) {
-      optional.push({ column: "aliases_json", value: plan.aliasesJson });
-    }
-    const optionalSet = optional.map((o) => `, ${o.column} = ?`).join("");
     // Optimistic guard: the plan was built from this read of the row.
     const update = db
       .prepare(
         `UPDATE atlas_entries
          SET common_name = ?, fields_json = ?, field_overrides_json = ?, edited_at = ?, updated_at = ?,
-             status = 'accepted'${optionalSet}
+             status = 'accepted', canonical_name = ?, aliases_json = ?
          WHERE id = ? AND atlas_id = ? AND updated_at = ?`,
       )
       .bind(
@@ -402,7 +391,8 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
         plan.overridesJson,
         ts,
         ts,
-        ...optional.map((o) => o.value),
+        plan.canonicalName,
+        plan.aliasesJson,
         resolved.row.id,
         atlas.id,
         resolved.row.updated_at,

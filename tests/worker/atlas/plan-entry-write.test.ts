@@ -216,13 +216,13 @@ describe("planEntryWrite", () => {
 });
 
 describe("planEntryWrite aliases", () => {
-  it("leaves aliases unwritten when the patch omits them", () => {
-    expect(planEntryWrite(null, dataset, {}).aliasesJson).toBeUndefined();
+  it("carries stored aliases forward when the patch omits them", () => {
+    expect(planEntryWrite(null, dataset, {}).aliasesJson).toBeNull();
     expect(
       planEntryWrite(row({ aliases_json: '["kept"]' }), dataset, {
         commonName: "Mine",
       }).aliasesJson,
-    ).toBeUndefined();
+    ).toBe('["kept"]');
   });
 
   it("stores a JSON list, or null for an empty list", () => {
@@ -300,8 +300,11 @@ describe("planEntryWrite canonicalName", () => {
     return undefined;
   }
 
-  it("leaves the name unwritten when the patch omits it", () => {
-    expect(planEntryWrite(learner(), null, {}).canonicalName).toBeUndefined();
+  it("carries the stored name forward when the patch omits it", () => {
+    expect(planEntryWrite(learner(), null, {}).canonicalName).toBe("Madeupius fictus");
+    expect(planEntryWrite(null, dataset, {}).canonicalName).toBe(
+      dataset.canonicalName,
+    );
   });
 
   it("normalizes a learner rename", () => {

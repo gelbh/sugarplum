@@ -114,14 +114,13 @@ export async function resolveEntry(
   return null;
 }
 
+/** Every column one entry write stores; untouched columns carry the stored value. */
 export type EntryWritePlan = {
   fieldsJson: string;
   overridesJson: string | null;
   commonName: string | null;
-  /** Present only when the patch sets aliases; absent means leave the column alone. */
-  aliasesJson?: string | null;
-  /** Normalized rename of a learner-added entry; absent means no rename. */
-  canonicalName?: string;
+  aliasesJson: string | null;
+  canonicalName: string;
 };
 
 export type EntryWriteInput = {
@@ -198,27 +197,37 @@ export function planEntryWrite(
   dataset: DatasetEntry | null,
   input: EntryWriteInput,
 ): EntryWritePlan {
+  const currentName = row ? row.canonical_name : dataset?.canonicalName;
+  if (currentName === undefined) {
+    throw new Error("planEntryWrite: no row and no dataset entry");
+  }
   // Checked first so a rejected rename never creates an overlay row.
   const canonicalName =
     input.canonicalName === undefined
-      ? undefined
+      ? currentName
       : plannedCanonicalName(
           row ? row.origin_key : (dataset?.key ?? null),
-          row ? row.canonical_name : (dataset?.canonicalName ?? ""),
+          currentName,
           input.canonicalName,
         );
-  const plan = planFieldColumns(row, dataset, input);
-  if (input.aliases !== undefined) plan.aliasesJson = aliasesJson(input.aliases);
-  if (canonicalName !== undefined) plan.canonicalName = canonicalName;
-  return plan;
+  return {
+    ...planFieldColumns(row, dataset, input),
+    aliasesJson:
+      input.aliases === undefined
+        ? (row?.aliases_json ?? null)
+        : aliasesJson(input.aliases),
+    canonicalName,
+  };
 }
+
+type FieldColumns = Pick<EntryWritePlan, "fieldsJson" | "overridesJson" | "commonName">;
 
 /** `fields_json`, `field_overrides_json` and `common_name` for one write. */
 function planFieldColumns(
   row: EntryRow | null,
   dataset: DatasetEntry | null,
   input: EntryWriteInput,
-): EntryWritePlan {
+): FieldColumns {
   const { fieldsPatch, resetFields, commonName } = input;
   if (row === null) {
     if (!dataset) throw new Error("planEntryWrite: no row and no dataset entry");
@@ -327,7 +336,7 @@ export async function insertOverlayFromDataset(
       patch.editedAt ?? null,
       patch.deletedAt ?? null,
       plan.overridesJson,
-      plan.aliasesJson ?? null,
+      plan.aliasesJson,
     )
     .run();
   const row = await findEntryById(db, atlasId, id);

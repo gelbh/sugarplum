@@ -511,24 +511,29 @@ export function atlasRun(
     normalized.startsWith("UPDATE atlas_entries") &&
     normalized.includes("SET common_name =")
   ) {
-    const [common_name, fields_json, field_overrides_json, edited_at, updated_at] =
-      bound.slice(0, 5) as [string | null, string, string | null, string, string];
-    const [id, atlas_id, expected_updated_at] = bound.slice(-3) as [
+    const [
+      common_name,
+      fields_json,
+      field_overrides_json,
+      edited_at,
+      updated_at,
+      canonical_name,
+      aliases_json,
+      id,
+      atlas_id,
+      expected_updated_at,
+    ] = bound as [
+      string | null,
+      string,
+      string | null,
+      string,
+      string,
+      string,
+      string | null,
       string,
       string,
       string,
     ];
-    // Optional SET columns follow `status = 'accepted'`, bound in SQL order.
-    const optionalColumns = [
-      ...normalized.matchAll(/, (canonical_name|aliases_json) = \?/g),
-    ].map((m) => m[1] as "canonical_name" | "aliases_json");
-    const optionalValues = bound.slice(5, -3) as (string | null)[];
-    if (optionalValues.length !== optionalColumns.length) {
-      throw new Error("PATCH UPDATE: optional SET bind count mismatch");
-    }
-    const optional = Object.fromEntries(
-      optionalColumns.map((column, i) => [column, optionalValues[i]]),
-    );
     const row = state.entries.get(id);
     if (
       !row ||
@@ -545,7 +550,8 @@ export function atlasRun(
       edited_at,
       updated_at,
       status: "accepted",
-      ...optional,
+      canonical_name,
+      aliases_json,
     });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
