@@ -108,6 +108,10 @@ export default function EntryFacts({
 
   // Older cached views and test fixtures may predate editedFields.
   const editedSet = new Set(entry.editedFields ?? []);
+  // Edited fields whose band does not render still need a Reset on the page.
+  const shownFields = new Set<FieldKey>(allSections.flatMap((s) => s.fields));
+  if (lead) SIGNIFICANCE_GLANCE.fields.forEach((k) => shownFields.add(k));
+  const orphanEdited = [...editedSet].filter((k) => !shownFields.has(k));
 
   const editedMarks = (fields: FieldKey[]): ReactNode =>
     fields
@@ -233,6 +237,15 @@ export default function EntryFacts({
               Reset to original
             </Button>
           ) : null}
+        </Stack>
+      ) : null}
+      {orphanEdited.length > 0 ? (
+        <Stack
+          aria-label="Edited fields"
+          direction="row"
+          sx={{ alignItems: "center", gap: 0.75, flexWrap: "wrap" }}
+        >
+          {editedMarks(orphanEdited)}
         </Stack>
       ) : null}
       {lead ? (

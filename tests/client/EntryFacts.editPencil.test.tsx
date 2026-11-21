@@ -178,6 +178,31 @@ describe("EntryFacts glance Edited marks", () => {
     ).toHaveLength(1);
   });
 
+  it("keeps a fallback Reset for edited fields whose band is hidden", async () => {
+    const onResetField = vi.fn();
+    const entry = richEntry(["definitiveHosts", "significance"], "");
+    entry.fields.definitiveHosts = [];
+    const host = await renderFacts({ entry, onResetField });
+    expect(host.querySelector('[aria-label="Hosts"]')).toBeNull();
+    const fallback = host.querySelector('[aria-label="Edited fields"]')!;
+    expect(fallback.textContent).toContain("Edited: Definitive hosts");
+    expect(fallback.textContent).toContain("Edited: Significance");
+    await click(host, "Reset Definitive hosts");
+    await click(host, "Reset Significance");
+    expect(onResetField.mock.calls.map((c) => c[0])).toEqual([
+      "definitiveHosts",
+      "significance",
+    ]);
+  });
+
+  it("shows no fallback row when every edited band renders", async () => {
+    const host = await renderFacts({
+      entry: richEntry(["definitiveHosts", "significance"]),
+      onResetField: () => undefined,
+    });
+    expect(host.querySelector('[aria-label="Edited fields"]')).toBeNull();
+  });
+
   it("shows the mark without a Reset button when resets are not allowed", async () => {
     const host = await renderFacts({ entry: richEntry(["definitiveHosts"]) });
     expect(host.textContent).toContain("Edited: Definitive hosts");
