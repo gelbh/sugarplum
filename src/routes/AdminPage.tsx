@@ -461,7 +461,6 @@ export default function AdminPage() {
                 sx={{
                   maxHeight: { md: "70vh" },
                   overflowX: "auto",
-                  // Keep the horizontal scrollbar visible on overlay-scroll OS.
                   "&::-webkit-scrollbar": { height: 8 },
                   "&::-webkit-scrollbar-thumb": {
                     bgcolor: "divider",
@@ -578,7 +577,6 @@ export default function AdminPage() {
                                   ? "rgba(206,147,216,0.1)"
                                   : "rgba(91,44,111,0.07)",
                             },
-                            // Keep sticky user opaque; wash via backgroundImage only.
                             "& td:first-of-type": {
                               bgcolor: "background.paper",
                               backgroundImage:

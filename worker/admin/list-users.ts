@@ -231,11 +231,7 @@ LIMIT ?
   return { sql, binds: [...whereBinds, opts.limit] };
 }
 
-/**
- * Admin user list with heavy metrics.
- * Cheap sorts: lean LIMIT then batch aggregates for that page only.
- * Expensive sorts: one JOIN/GROUP BY pass then LIMIT (ponytail: full aggregate scan).
- */
+/** Cheap sorts: lean+batch; expensive: JOIN then LIMIT (ponytail: full aggregate scan). */
 export async function fetchAdminUserList(
   db: D1Database,
   opts: AdminListQueryOpts,

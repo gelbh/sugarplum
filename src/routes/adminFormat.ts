@@ -7,7 +7,6 @@ export function formatAdminDate(iso: string): string {
   });
 }
 
-/** Compact table dates (e.g. 21 Nov, 13:06). */
 export function formatAdminDateShort(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -19,7 +18,6 @@ export function formatAdminDateShort(iso: string): string {
   });
 }
 
-/** Compact ints for admin metrics (e.g. 1371687 → 1.4M). */
 export function formatAdminCount(n: number): string {
   if (!Number.isFinite(n)) return "0";
   const abs = Math.abs(n);
