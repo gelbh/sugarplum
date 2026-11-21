@@ -31,6 +31,7 @@ import { sha256Hex } from "../materials/content-hash";
 import { requireOwnedDeck } from "../materials/routes";
 import { enqueueGeneration } from "../generation/enqueue";
 import type { AppEnv } from "./types";
+import { isUniqueViolation } from "../db/client";
 import {
   atlasMeta,
   newId,
@@ -39,7 +40,6 @@ import {
   requireParam,
 } from "./ownership";
 import {
-  canonicalNameTaken,
   datasetByKey,
   deletedEntryViews,
   findEntryById,
@@ -272,8 +272,11 @@ atlasItemRoutes.post("/entries", async (c) => {
         null,
       )
       .run();
-  } catch {
-    throw new HTTPException(409, { message: "Entry already exists" });
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      throw new HTTPException(409, { message: "Entry already exists" });
+    }
+    throw err;
   }
 
   const row = await findEntryById(db, atlas.id, id);
@@ -370,13 +373,6 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
       ? (datasetByKey().get(resolved.row.origin_key) ?? null)
       : null;
     const plan = planEntryWrite(resolved.row, dataset, input);
-    const renaming = plan.canonicalName !== resolved.row.canonical_name;
-    if (
-      renaming &&
-      (await canonicalNameTaken(db, atlas.id, plan.canonicalName, resolved.row.id))
-    ) {
-      throw new HTTPException(409, { message: "Entry already exists" });
-    }
     // Optimistic guard: the plan was built from this read of the row.
     const update = db
       .prepare(
@@ -401,8 +397,8 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
     try {
       result = await update.run();
     } catch (err) {
-      // UNIQUE (atlas_id, canonical_name) race after the pre-check.
-      if (renaming && String(err).includes("UNIQUE constraint failed")) {
+      // UNIQUE (atlas_id, canonical_name): another row already has the new name.
+      if (isUniqueViolation(err)) {
         throw new HTTPException(409, { message: "Entry already exists" });
       }
       throw err;

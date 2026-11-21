@@ -486,20 +486,3 @@ export function mergeFields(
     diagnosticStage: synced.diagnosticStage,
   };
 }
-
-/** True when another row in the atlas (deleted or not) already uses the name. */
-export async function canonicalNameTaken(
-  db: D1Database,
-  atlasId: string,
-  canonicalName: string,
-  exceptId: string,
-): Promise<boolean> {
-  const hit = await db
-    .prepare(
-      `SELECT id FROM atlas_entries
-       WHERE atlas_id = ? AND canonical_name = ? AND id <> ?`,
-    )
-    .bind(atlasId, canonicalName, exceptId)
-    .first<{ id: string }>();
-  return hit !== null;
-}

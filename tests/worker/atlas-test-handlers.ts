@@ -118,24 +118,6 @@ export function atlasFirst<T>(
   bound: unknown[],
 ): T | null {
   if (
-    normalized.includes("FROM atlas_entries WHERE atlas_id =") &&
-    normalized.includes("AND canonical_name =") &&
-    normalized.includes("AND id <>")
-  ) {
-    const [atlasId, canonicalName, exceptId] = bound as [string, string, string];
-    for (const row of state.entries.values()) {
-      if (
-        row.atlas_id === atlasId &&
-        row.canonical_name === canonicalName &&
-        row.id !== exceptId
-      ) {
-        return { id: row.id } as T;
-      }
-    }
-    return null;
-  }
-
-  if (
     normalized.startsWith(
       "SELECT id, user_id, template_key, created_at FROM atlases WHERE id =",
     )
@@ -541,6 +523,17 @@ export function atlasRun(
       row.updated_at !== expected_updated_at
     ) {
       return { success: true, meta: { changes: 0 } } as D1Result;
+    }
+    for (const other of state.entries.values()) {
+      if (
+        other.id !== id &&
+        other.atlas_id === atlas_id &&
+        other.canonical_name === canonical_name
+      ) {
+        throw new Error(
+          "UNIQUE constraint failed: atlas_entries.atlas_id, canonical_name",
+        );
+      }
     }
     state.entries.set(id, {
       ...row,
