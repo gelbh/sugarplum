@@ -24,7 +24,6 @@ import {
   type EntryRow,
 } from "./entryOverlays";
 import { loadParasiteDataset } from "./datasets/parasites/index";
-import { normalizeParasiteName } from "./names";
 import { emptyParasiteFields } from "./templates/parasite";
 import { applySandboxKeyPrefix, sandboxWriteUserId } from "../admin/sandbox-r2";
 import { createR2PutUrl } from "../materials/r2-presign";
@@ -41,14 +40,15 @@ import {
 } from "./ownership";
 import {
   canonicalNameTaken,
-  datasetByCanonical,
   datasetByKey,
   deletedEntryViews,
   findEntryById,
   findEntryByOrigin,
   insertOverlayFromDataset,
+  learnerCanonicalName,
   mergeFields,
   parseAliasesPatch,
+  parseCanonicalNamePatch,
   parseFieldsPatch,
   parseFocusOverride,
   parseResetFields,
@@ -233,18 +233,7 @@ atlasItemRoutes.post("/entries", async (c) => {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const rawName =
-    typeof body.canonicalName === "string" ? body.canonicalName.trim() : "";
-  const normalized = normalizeParasiteName(rawName);
-  if (!normalized) {
-    throw new HTTPException(400, { message: "canonicalName required" });
-  }
-
-  if (datasetByCanonical().has(normalized.canonical)) {
-    throw new HTTPException(409, {
-      message: "Entry already exists in the dataset",
-    });
-  }
+  const canonicalName = learnerCanonicalName(body.canonicalName);
 
   const fields = mergeFields(
     emptyParasiteFields(),
@@ -272,7 +261,7 @@ atlasItemRoutes.post("/entries", async (c) => {
       .bind(
         id,
         atlas.id,
-        normalized.canonical,
+        canonicalName,
         commonName,
         JSON.stringify(fields),
         ts,
@@ -324,13 +313,8 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   const fieldsPatch = parseFieldsPatch(body.fields);
   const resetFields = parseResetFields(body.resetFields);
   const aliases = parseAliasesPatch(body.aliases);
-  const canonicalProvided = "canonicalName" in body;
-  // A non-string reads as empty, so the plan rejects it as "canonicalName required".
-  const canonicalName = canonicalProvided
-    ? typeof body.canonicalName === "string"
-      ? body.canonicalName
-      : ""
-    : undefined;
+  const canonicalName = parseCanonicalNamePatch(body.canonicalName);
+  const canonicalProvided = canonicalName !== undefined;
   const setAndReset = (resetFields ?? []).filter(
     (key) => fieldsPatch !== undefined && key in fieldsPatch,
   );

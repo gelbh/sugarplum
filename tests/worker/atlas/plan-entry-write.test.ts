@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { HTTPException } from "hono/http-exception";
 import {
   aliasesJson,
+  learnerCanonicalName,
   parseAliasesPatch,
+  parseCanonicalNamePatch,
   planEntryWrite,
 } from "../../../worker/atlas/entry-helpers";
 import type { EntryRow } from "../../../worker/atlas/entryOverlays";
@@ -324,6 +326,15 @@ describe("planEntryWrite canonicalName", () => {
     ).toThrow(/built-in parasite cannot change/);
   });
 
+  it("treats a built-in entry's own name as a no-op", () => {
+    expect(() =>
+      planEntryWrite(null, dataset, { canonicalName: ` ${dataset.canonicalName.toLowerCase()} ` }),
+    ).not.toThrow();
+    expect(() =>
+      planEntryWrite(row({}), dataset, { canonicalName: dataset.canonicalName }),
+    ).not.toThrow();
+  });
+
   it("returns 400 for an empty name and 409 for a dataset name", () => {
     expect(status(() => planEntryWrite(learner(), null, { canonicalName: "" }))).toBe(
       400,
@@ -333,5 +344,39 @@ describe("planEntryWrite canonicalName", () => {
         planEntryWrite(learner(), null, { canonicalName: dataset.canonicalName }),
       ),
     ).toBe(409);
+  });
+});
+
+describe("learnerCanonicalName", () => {
+  function status(fn: () => unknown): number | undefined {
+    try {
+      fn();
+    } catch (e) {
+      return e instanceof HTTPException ? e.status : undefined;
+    }
+    return undefined;
+  }
+
+  it("trims and normalizes", () => {
+    expect(learnerCanonicalName("  madeupius fictus ")).toBe("Madeupius fictus");
+  });
+
+  it("returns 400 for a missing or unparseable name and 409 for a dataset name", () => {
+    expect(status(() => learnerCanonicalName(undefined))).toBe(400);
+    expect(status(() => learnerCanonicalName(7))).toBe(400);
+    expect(status(() => learnerCanonicalName("  "))).toBe(400);
+    expect(status(() => learnerCanonicalName(dataset.canonicalName))).toBe(409);
+  });
+});
+
+describe("parseCanonicalNamePatch", () => {
+  it("returns undefined when absent and the raw string otherwise", () => {
+    expect(parseCanonicalNamePatch(undefined)).toBeUndefined();
+    expect(parseCanonicalNamePatch(" Madeupius fictus ")).toBe(" Madeupius fictus ");
+  });
+
+  it("rejects a non-string", () => {
+    expect(() => parseCanonicalNamePatch(null)).toThrow(/canonicalName must be a string/);
+    expect(() => parseCanonicalNamePatch(3)).toThrow(HTTPException);
   });
 });

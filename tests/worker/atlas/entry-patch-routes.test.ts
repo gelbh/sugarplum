@@ -819,5 +819,24 @@ describe("PATCH /entries/:entryId canonicalName", () => {
     expect(((await res.json()) as { message: string }).message).toMatch(
       /canonicalName required/,
     );
+    const notString = await patchEntry(env, atlasId, added.id, { canonicalName: 5 });
+    expect(notString.status).toBe(400);
+    expect(((await notString.json()) as { message: string }).message).toMatch(
+      /canonicalName must be a string/,
+    );
+  });
+
+  it("accepts a built-in entry's own name alongside another edit", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const res = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      canonicalName: "Fasciola hepatica",
+      commonName: "My fluke",
+    });
+    expect(res.status).toBe(200);
+    const view = (await res.json()) as AtlasEntryView;
+    expect(view.canonicalName).toBe("Fasciola hepatica");
+    expect(view.commonName).toBe("My fluke");
   });
 });

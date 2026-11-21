@@ -138,15 +138,13 @@ const BUILT_IN_NAME_MESSAGE =
   "Scientific name of a built-in parasite cannot change; add an alias instead";
 
 /**
- * The stored scientific name for a rename. Built-in (dataset-origin) entries
- * never rename; a learner entry may not take a dataset name. Uniqueness among
- * the atlas's own rows needs the DB and is the route's job.
+ * The stored scientific name of a learner-added entry (create or rename).
+ * A learner entry may not take a dataset name. Uniqueness among the atlas's
+ * own rows is the UNIQUE constraint's job.
  */
-function plannedCanonicalName(originKey: string | null, raw: string): string {
-  if (originKey !== null) {
-    throw new HTTPException(400, { message: BUILT_IN_NAME_MESSAGE });
-  }
-  const normalized = normalizeParasiteName(raw.trim());
+export function learnerCanonicalName(raw: unknown): string {
+  const normalized =
+    typeof raw === "string" ? normalizeParasiteName(raw.trim()) : null;
   if (!normalized) {
     throw new HTTPException(400, { message: "canonicalName required" });
   }
@@ -156,6 +154,22 @@ function plannedCanonicalName(originKey: string | null, raw: string): string {
     });
   }
   return normalized.canonical;
+}
+
+/**
+ * The stored scientific name after a patch. Built-in (dataset-origin) entries
+ * never rename; submitting their current name is a no-op.
+ */
+function plannedCanonicalName(
+  originKey: string | null,
+  currentName: string,
+  raw: string,
+): string {
+  if (originKey === null) return learnerCanonicalName(raw);
+  if (normalizeParasiteName(raw.trim())?.canonical === currentName) {
+    return currentName;
+  }
+  throw new HTTPException(400, { message: BUILT_IN_NAME_MESSAGE });
 }
 
 /** Refuse to rebuild a row from a column we cannot read; saving would erase the learner's edits. */
@@ -190,6 +204,7 @@ export function planEntryWrite(
       ? undefined
       : plannedCanonicalName(
           row ? row.origin_key : (dataset?.key ?? null),
+          row ? row.canonical_name : (dataset?.canonicalName ?? ""),
           input.canonicalName,
         );
   const plan = planFieldColumns(row, dataset, input);
@@ -372,6 +387,15 @@ export function parseAliasesPatch(raw: unknown): string[] | undefined {
     });
   }
   return aliases;
+}
+
+/** Raw scientific name from a PATCH body; the plan validates it. */
+export function parseCanonicalNamePatch(raw: unknown): string | undefined {
+  if (raw === undefined) return undefined;
+  if (typeof raw !== "string") {
+    throw new HTTPException(400, { message: "canonicalName must be a string" });
+  }
+  return raw;
 }
 
 /** Stored form: null when the learner has no aliases. */
