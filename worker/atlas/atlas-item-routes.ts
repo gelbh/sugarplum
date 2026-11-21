@@ -397,7 +397,7 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
     row = updated;
   }
 
-  // Names feed scanFocus (and Phase 2 pack matching).
+  // Names feed scanFocus and course-pack matching.
   if (commonNameProvided) {
     await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
   }
