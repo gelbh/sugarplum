@@ -29,6 +29,11 @@ import {
 } from "./templates/parasite";
 import type { AtlasEntryView, AtlasTier } from "../../src/atlas/types";
 import { newId, nowIso } from "./ownership";
+import {
+  ALIAS_MAX_CHARS,
+  ALIAS_MAX_ITEMS,
+  cleanAliasList,
+} from "../../src/atlas/hub/nameMatch";
 
 export function datasetByKey(): Map<string, DatasetEntry> {
   return new Map(loadParasiteDataset().entries.map((e) => [e.key, e]));
@@ -112,12 +117,16 @@ export type EntryWritePlan = {
   fieldsJson: string;
   overridesJson: string | null;
   commonName: string | null;
+  /** Present only when the patch sets aliases; absent means leave the column alone. */
+  aliasesJson?: string | null;
 };
 
 export type EntryWriteInput = {
   fieldsPatch?: Partial<ParasiteFields>;
   resetFields?: ParasiteFieldKey[];
   commonName?: string;
+  /** Already cleaned by `parseAliasesPatch`. */
+  aliases?: string[];
 };
 
 /** Refuse to rebuild a row from a column we cannot read; saving would erase the learner's edits. */
@@ -142,6 +151,17 @@ function requireReadable(
  * view. Reads ignore that snapshot while the dataset entry exists.
  */
 export function planEntryWrite(
+  row: EntryRow | null,
+  dataset: DatasetEntry | null,
+  input: EntryWriteInput,
+): EntryWritePlan {
+  const plan = planFieldColumns(row, dataset, input);
+  if (input.aliases !== undefined) plan.aliasesJson = aliasesJson(input.aliases);
+  return plan;
+}
+
+/** `fields_json`, `field_overrides_json` and `common_name` for one write. */
+function planFieldColumns(
   row: EntryRow | null,
   dataset: DatasetEntry | null,
   input: EntryWriteInput,
@@ -228,7 +248,6 @@ export async function insertOverlayFromDataset(
     plan?: EntryWritePlan;
     deletedAt?: string | null;
     editedAt?: string | null;
-    aliasesJson?: string | null;
   },
 ): Promise<EntryRow> {
   const id = newId();
@@ -255,7 +274,7 @@ export async function insertOverlayFromDataset(
       patch.editedAt ?? null,
       patch.deletedAt ?? null,
       plan.overridesJson,
-      patch.aliasesJson ?? null,
+      plan.aliasesJson ?? null,
     )
     .run();
   const row = await findEntryById(db, atlasId, id);
@@ -286,6 +305,32 @@ export function parseResetFields(raw: unknown): ParasiteFieldKey[] | undefined {
     });
   }
   return [...new Set(raw as ParasiteFieldKey[])];
+}
+
+export function parseAliasesPatch(raw: unknown): string[] | undefined {
+  if (raw === undefined) return undefined;
+  if (!Array.isArray(raw) || raw.some((a) => typeof a !== "string")) {
+    throw new HTTPException(400, {
+      message: "aliases must be a list of strings",
+    });
+  }
+  const aliases = cleanAliasList(raw as string[]);
+  if (aliases.length > ALIAS_MAX_ITEMS) {
+    throw new HTTPException(400, {
+      message: `At most ${ALIAS_MAX_ITEMS} aliases`,
+    });
+  }
+  if (aliases.some((a) => a.length > ALIAS_MAX_CHARS)) {
+    throw new HTTPException(400, {
+      message: `Each alias must be ${ALIAS_MAX_CHARS} characters or fewer`,
+    });
+  }
+  return aliases;
+}
+
+/** Stored form: null when the learner has no aliases. */
+export function aliasesJson(aliases: string[]): string | null {
+  return aliases.length > 0 ? JSON.stringify(aliases) : null;
 }
 
 /**

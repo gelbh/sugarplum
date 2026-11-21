@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { HTTPException } from "hono/http-exception";
-import { planEntryWrite } from "../../../worker/atlas/entry-helpers";
+import {
+  aliasesJson,
+  parseAliasesPatch,
+  planEntryWrite,
+} from "../../../worker/atlas/entry-helpers";
 import type { EntryRow } from "../../../worker/atlas/entryOverlays";
 import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites/index";
 import { emptyParasiteFields } from "../../../worker/atlas/templates/parasite";
@@ -206,5 +210,49 @@ describe("planEntryWrite", () => {
         resetFields: ["family"],
       }),
     ).toThrow(/Only built-in parasites/);
+  });
+});
+
+describe("planEntryWrite aliases", () => {
+  it("leaves aliases unwritten when the patch omits them", () => {
+    expect(planEntryWrite(null, dataset, {}).aliasesJson).toBeUndefined();
+    expect(
+      planEntryWrite(row({ aliases_json: '["kept"]' }), dataset, {
+        commonName: "Mine",
+      }).aliasesJson,
+    ).toBeUndefined();
+  });
+
+  it("stores a JSON list, or null for an empty list", () => {
+    expect(
+      planEntryWrite(null, dataset, { aliases: ["big liver fluke"] }).aliasesJson,
+    ).toBe('["big liver fluke"]');
+    expect(
+      planEntryWrite(row({ aliases_json: '["old"]' }), dataset, { aliases: [] })
+        .aliasesJson,
+    ).toBeNull();
+  });
+});
+
+describe("parseAliasesPatch", () => {
+  it("returns undefined when absent and a cleaned list otherwise", () => {
+    expect(parseAliasesPatch(undefined)).toBeUndefined();
+    expect(parseAliasesPatch([" a ", "", "A", "b"])).toEqual(["a", "b"]);
+  });
+
+  it("checks limits after cleaning", () => {
+    const padded = [...Array.from({ length: 20 }, (_, i) => `x${i}`), " ", "X0"];
+    expect(parseAliasesPatch(padded)).toHaveLength(20);
+    expect(() => parseAliasesPatch(["a".repeat(81)])).toThrow(/80 characters/);
+    expect(() =>
+      parseAliasesPatch(Array.from({ length: 21 }, (_, i) => `x${i}`)),
+    ).toThrow(/At most 20 aliases/);
+    expect(() => parseAliasesPatch([1])).toThrow(HTTPException);
+    expect(() => parseAliasesPatch(null)).toThrow(/list of strings/);
+  });
+
+  it("aliasesJson stores null for an empty list", () => {
+    expect(aliasesJson([])).toBeNull();
+    expect(aliasesJson(["a"])).toBe('["a"]');
   });
 });

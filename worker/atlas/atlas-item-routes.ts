@@ -47,6 +47,7 @@ import {
   findEntryByOrigin,
   insertOverlayFromDataset,
   mergeFields,
+  parseAliasesPatch,
   parseFieldsPatch,
   parseFocusOverride,
   parseResetFields,
@@ -309,6 +310,7 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   let body: {
     commonName?: unknown;
     resetFields?: unknown;
+    aliases?: unknown;
     fields?: unknown;
   };
   try {
@@ -319,6 +321,7 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
 
   const fieldsPatch = parseFieldsPatch(body.fields);
   const resetFields = parseResetFields(body.resetFields);
+  const aliases = parseAliasesPatch(body.aliases);
   const setAndReset = (resetFields ?? []).filter(
     (key) => fieldsPatch !== undefined && key in fieldsPatch,
   );
@@ -339,7 +342,8 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   if (
     fieldsPatch === undefined &&
     !commonNameProvided &&
-    resetFields === undefined
+    resetFields === undefined &&
+    aliases === undefined
   ) {
     throw new HTTPException(400, { message: "No changes" });
   }
@@ -348,12 +352,13 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
 
   const ts = nowIso();
-  const input = { fieldsPatch, resetFields, commonName };
+  const input = { fieldsPatch, resetFields, commonName, aliases };
   let row: EntryRow | null = null;
 
   if (resolved.kind === "dataset") {
     // A reset on an entry with no overlay has nothing to remove; do not create a row.
-    const onlyReset = fieldsPatch === undefined && !commonNameProvided;
+    const onlyReset =
+      fieldsPatch === undefined && !commonNameProvided && aliases === undefined;
     if (!onlyReset) {
       row = await insertOverlayFromDataset(db, atlas.id, resolved.entry, {
         plan: planEntryWrite(null, resolved.entry, input),
@@ -368,12 +373,18 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
       ? (datasetByKey().get(resolved.row.origin_key) ?? null)
       : null;
     const plan = planEntryWrite(resolved.row, dataset, input);
+    // Columns the patch did not touch are left out of the SET.
+    const optional: { column: string; value: string | null }[] = [];
+    if (plan.aliasesJson !== undefined) {
+      optional.push({ column: "aliases_json", value: plan.aliasesJson });
+    }
+    const optionalSet = optional.map((o) => `, ${o.column} = ?`).join("");
     // Optimistic guard: the plan was built from this read of the row.
     const result = await db
       .prepare(
         `UPDATE atlas_entries
          SET common_name = ?, fields_json = ?, field_overrides_json = ?, edited_at = ?, updated_at = ?,
-             status = 'accepted'
+             status = 'accepted'${optionalSet}
          WHERE id = ? AND atlas_id = ? AND updated_at = ?`,
       )
       .bind(
@@ -382,6 +393,7 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
         plan.overridesJson,
         ts,
         ts,
+        ...optional.map((o) => o.value),
         resolved.row.id,
         atlas.id,
         resolved.row.updated_at,
@@ -397,8 +409,8 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
     row = updated;
   }
 
-  // Names feed scanFocus and course-pack matching.
-  if (commonNameProvided) {
+  // Names and aliases feed scanFocus and course-pack matching.
+  if (commonNameProvided || aliases !== undefined) {
     await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
   }
   const overlays = row ? await toOverlayRows(db, atlas.id, [row]) : [];
