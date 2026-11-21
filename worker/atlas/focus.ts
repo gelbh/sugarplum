@@ -16,6 +16,8 @@ export type FocusRow = {
   material_ids_json: string;
   override: AtlasTier | null;
   updated_at: string;
+  /** 1 when any pack material mentions the entry (lenient match). */
+  in_pack: number;
 };
 
 export type FocusMap = Map<
@@ -25,6 +27,7 @@ export type FocusMap = Map<
     reason: string;
     override: AtlasTier | null;
     materialIds: string[];
+    inPack: boolean;
   }
 >;
 
@@ -67,9 +70,15 @@ export function overrideFocusView(override: AtlasTier): {
   };
 }
 
+/**
+ * `packFresh: false` (rows from an older scan version) reports every entry as
+ * unscanned for pack hiding, so stale `in_pack` never hides anything.
+ * Callers pass `isFocusPackFresh` read after any inline refresh.
+ */
 export function enrichEntriesWithFocus(
   entries: AtlasEntryView[],
   focus: FocusMap | null,
+  packFresh: boolean,
 ): AtlasEntryView[] {
   if (!focus) {
     return entries.map((e) => ({
@@ -78,6 +87,7 @@ export function enrichEntriesWithFocus(
       reason: null,
       override: null,
       focusMaterialIds: [],
+      inPack: null,
     }));
   }
   return entries.map((e) => {
@@ -89,8 +99,10 @@ export function enrichEntriesWithFocus(
         reason: null,
         override: null,
         focusMaterialIds: [],
+        inPack: null,
       };
     }
+    const inPack = packFresh ? row.inPack : null;
     if (row.override) {
       const pinned = overrideFocusView(row.override);
       return {
@@ -99,6 +111,7 @@ export function enrichEntriesWithFocus(
         reason: pinned.reason,
         override: row.override,
         focusMaterialIds: [],
+        inPack,
       };
     }
     return {
@@ -107,6 +120,7 @@ export function enrichEntriesWithFocus(
       reason: row.reason,
       override: null,
       focusMaterialIds: row.materialIds,
+      inPack,
     };
   });
 }
@@ -117,7 +131,8 @@ export async function loadFocusMap(
 ): Promise<FocusMap> {
   const { results } = await db
     .prepare(
-      `SELECT entry_key, tier, reason, material_ids_json, override, updated_at
+      `SELECT entry_key, tier, reason, material_ids_json, override, updated_at,
+              in_pack
        FROM atlas_entry_focus WHERE atlas_id = ?`,
     )
     .bind(atlasId)
@@ -129,6 +144,7 @@ export async function loadFocusMap(
       reason: row.reason,
       override: row.override,
       materialIds: parseMaterialIds(row.material_ids_json),
+      inPack: row.in_pack === 1,
     });
   }
   return map;
@@ -170,6 +186,18 @@ async function loadStoredFocusPackFingerprint(
   return row?.focus_pack_fingerprint ?? null;
 }
 
+/**
+ * True when the stored scan matches the current pack. A `refreshing:` lease
+ * never equals a versioned fingerprint, so a lease reads as stale.
+ */
+export async function isFocusPackFresh(
+  db: D1Database,
+  atlasId: string,
+): Promise<boolean> {
+  const current = focusPackFingerprint(await loadAtlasMaterialRows(db, atlasId));
+  return (await loadStoredFocusPackFingerprint(db, atlasId)) === current;
+}
+
 async function saveFocusPackFingerprint(
   db: D1Database,
   atlasId: string,
@@ -207,8 +235,8 @@ export async function refreshAtlasFocus(
         await db
           .prepare(
             `INSERT OR REPLACE INTO atlas_entry_focus (
-               atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+               atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at, in_pack
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
           )
           .bind(
             atlasId,
@@ -218,6 +246,8 @@ export async function refreshAtlasFocus(
             "[]",
             row.override,
             now,
+            // Never hides: an empty pack never activates pack hiding.
+            0,
           )
           .run();
         continue;
@@ -254,8 +284,8 @@ export async function refreshAtlasFocus(
     await db
       .prepare(
         `INSERT OR REPLACE INTO atlas_entry_focus (
-           atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+           atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at, in_pack
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         atlasId,
@@ -265,6 +295,7 @@ export async function refreshAtlasFocus(
         JSON.stringify(result.materialIds),
         override,
         now,
+        result.inPack ? 1 : 0,
       )
       .run();
   }
@@ -346,20 +377,25 @@ export async function listEntriesWithFocus(
   },
 ): Promise<ListEntriesWithFocusResult> {
   let focus = await loadFocusMap(db, opts.atlasId);
-  if (opts.skipMutatingRefresh) {
-    return {
-      entries: enrichEntriesWithFocus(opts.entries, focus),
-      focusRefreshPending: false,
-    };
-  }
-  const missing = opts.entries.some((e) => !focus.has(focusEntryKey(e)));
   const materialRows = await loadAtlasMaterialRows(db, opts.atlasId);
-  const readyCount = materialRows.length;
   const currentFingerprint = focusPackFingerprint(materialRows);
   const storedFingerprint = await loadStoredFocusPackFingerprint(
     db,
     opts.atlasId,
   );
+  if (opts.skipMutatingRefresh) {
+    // View-as never rescans, so rows from an older scan must not hide entries.
+    return {
+      entries: enrichEntriesWithFocus(
+        opts.entries,
+        focus,
+        storedFingerprint === currentFingerprint,
+      ),
+      focusRefreshPending: false,
+    };
+  }
+  const missing = opts.entries.some((e) => !focus.has(focusEntryKey(e)));
+  const readyCount = materialRows.length;
   const refreshInFlight = focusRefreshLeaseActive(storedFingerprint);
   const fingerprintStale =
     !refreshInFlight && storedFingerprint !== currentFingerprint;
@@ -372,14 +408,18 @@ export async function listEntriesWithFocus(
     await refreshFocusBestEffort(db, env, { atlasId: opts.atlasId });
     focus = await loadFocusMap(db, opts.atlasId);
     return {
-      entries: enrichEntriesWithFocus(opts.entries, focus),
+      entries: enrichEntriesWithFocus(
+        opts.entries,
+        focus,
+        await isFocusPackFresh(db, opts.atlasId),
+      ),
       focusRefreshPending: false,
     };
   }
 
   if (refreshInFlight) {
     return {
-      entries: enrichEntriesWithFocus(opts.entries, focus),
+      entries: enrichEntriesWithFocus(opts.entries, focus, false),
       focusRefreshPending: true,
     };
   }
@@ -412,16 +452,29 @@ export async function listEntriesWithFocus(
         })(),
       );
       return {
-        entries: enrichEntriesWithFocus(opts.entries, focus),
+        entries: enrichEntriesWithFocus(opts.entries, focus, false),
         focusRefreshPending: true,
       };
     }
     await refreshFocusBestEffort(db, env, { atlasId: opts.atlasId });
     focus = await loadFocusMap(db, opts.atlasId);
+    // A failed best-effort refresh leaves the old fingerprint and old rows.
+    return {
+      entries: enrichEntriesWithFocus(
+        opts.entries,
+        focus,
+        await isFocusPackFresh(db, opts.atlasId),
+      ),
+      focusRefreshPending: false,
+    };
   }
 
   return {
-    entries: enrichEntriesWithFocus(opts.entries, focus),
+    entries: enrichEntriesWithFocus(
+      opts.entries,
+      focus,
+      storedFingerprint === currentFingerprint,
+    ),
     focusRefreshPending: false,
   };
 }
@@ -435,7 +488,7 @@ export async function setFocusOverride(
   const now = new Date().toISOString();
   const existing = await db
     .prepare(
-      `SELECT entry_key, tier, reason, material_ids_json, override
+      `SELECT entry_key, tier, reason, material_ids_json, override, in_pack
        FROM atlas_entry_focus WHERE atlas_id = ? AND entry_key = ?`,
     )
     .bind(atlasId, entryKey)
@@ -448,13 +501,15 @@ export async function setFocusOverride(
   const tier = existing?.tier ?? pinned?.tier ?? "standard";
   const reason = existing?.reason ?? pinned?.reason ?? "Standard";
   const materialIds = existing?.material_ids_json ?? "[]";
+  // INSERT OR REPLACE rewrites the row; carry in_pack or it resets to 0.
+  const inPack = existing?.in_pack ?? 0;
 
   await db
     .prepare(
       `INSERT OR REPLACE INTO atlas_entry_focus (
-         atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at, in_pack
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .bind(atlasId, entryKey, tier, reason, materialIds, override, now)
+    .bind(atlasId, entryKey, tier, reason, materialIds, override, now, inPack)
     .run();
 }

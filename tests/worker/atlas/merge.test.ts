@@ -291,7 +291,7 @@ describe("overlayAtlas", () => {
         },
       ],
     ]);
-    const enriched = enrichEntriesWithFocus(views, focus);
+    const enriched = enrichEntriesWithFocus(views, focus, true);
     expect(enriched.find((e) => e.id === "fasciola-hepatica")).toMatchObject({
       tier: "key",
       reason: 'Named in tutorial "Week2.pdf"',
@@ -319,7 +319,7 @@ describe("overlayAtlas", () => {
         },
       ],
     ]);
-    const enriched = enrichEntriesWithFocus(views, focus);
+    const enriched = enrichEntriesWithFocus(views, focus, true);
     expect(enriched[0]).toMatchObject({
       tier: "standard",
       reason: "Manual demote",

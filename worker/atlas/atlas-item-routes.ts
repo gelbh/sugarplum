@@ -4,6 +4,7 @@ import { overlayAtlas } from "./merge";
 import {
   enrichEntriesWithFocus,
   focusEntryKey,
+  isFocusPackFresh,
   listEntriesWithFocus,
   loadFocusMap,
   refreshFocusBestEffort,
@@ -290,6 +291,7 @@ atlasItemRoutes.post("/entries", async (c) => {
   const focused = enrichEntriesWithFocus(
     overlayAtlas(loadParasiteDataset().entries, overlays),
     focus,
+    await isFocusPackFresh(db, atlas.id),
   );
   const view = (await entryViewsWithNotes(db, atlas.id, focused)).find(
     (e) => e.id === row.id,
@@ -374,6 +376,7 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
     enrichEntriesWithFocus(
       overlayAtlas(loadParasiteDataset().entries, overlays),
       focus,
+      await isFocusPackFresh(db, atlas.id),
     ),
   );
   const view = views.find((v) => v.id === row.id) ?? views[0];
@@ -419,6 +422,7 @@ atlasItemRoutes.patch("/entries/:entryId/focus", async (c) => {
     enrichEntriesWithFocus(
       overlayAtlas(loadParasiteDataset().entries, overlays),
       focus,
+      await isFocusPackFresh(db, atlas.id),
     ),
   );
   const view = entries.find((e) => focusEntryKey(e) === entryKey);
@@ -465,6 +469,7 @@ atlasItemRoutes.put("/entries/:entryId/note", async (c) => {
     enrichEntriesWithFocus(
       overlayAtlas(loadParasiteDataset().entries, overlays),
       focus,
+      await isFocusPackFresh(db, atlas.id),
     ),
   );
   const view = entries.find((e) => focusEntryKey(e) === entryKey);
@@ -493,6 +498,7 @@ atlasItemRoutes.delete("/entries/:entryId/note", async (c) => {
     enrichEntriesWithFocus(
       overlayAtlas(loadParasiteDataset().entries, overlays),
       focus,
+      await isFocusPackFresh(db, atlas.id),
     ),
   );
   const view = entries.find((e) => focusEntryKey(e) === entryKey);

@@ -45,6 +45,7 @@ export function toEntryView(entry: DatasetEntry): AtlasEntryView {
     reason: null,
     override: null,
     focusMaterialIds: [],
+    inPack: null,
   };
 }
 
@@ -95,6 +96,7 @@ export function viewFromOverlay(
     reason: null,
     override: null,
     focusMaterialIds: [],
+    inPack: null,
   };
 }
 

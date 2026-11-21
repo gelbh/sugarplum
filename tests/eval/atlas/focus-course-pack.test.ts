@@ -71,4 +71,46 @@ describe("atlas Focus course-pack eval", () => {
       expect(scanFocus(entry!, materials).tier, name).not.toBe("key");
     }
   });
+
+  it("keeps every tier unchanged under lenient pack matching", () => {
+    const tiers = Object.fromEntries(
+      fixture.entries.map((e) => [e.canonicalName, scanFocus(e, materials).tier]),
+    );
+    expect(tiers).toEqual({
+      "Fasciola hepatica": "key",
+      "Toxoplasma gondii": "key",
+      "Ctenocephalides felis": "key",
+      "Dipylidium caninum": "key",
+      "Calicophoron daubneyi": "standard",
+      "Anoplocephala perfoliata": "key",
+      "Echinococcus granulosus": "standard",
+      "Neospora caninum": "key",
+      "Haematobia irritans": "key",
+      "Toxocara canis": "frequent",
+    });
+  });
+
+  it("marks lecture-only mentions in pack with their material ids", () => {
+    const find = (name: string) =>
+      scanFocus(fixture.entries.find((e) => e.canonicalName === name)!, materials);
+    expect(find("Calicophoron daubneyi")).toMatchObject({
+      tier: "standard",
+      inPack: true,
+      materialIds: ["lec-pa12"],
+    });
+    expect(find("Echinococcus granulosus")).toMatchObject({
+      tier: "standard",
+      inPack: true,
+      materialIds: ["lec-pa11", "notes-ascarids"],
+    });
+  });
+
+  it("never leaves a Key or Frequent entry out of the pack", () => {
+    for (const entry of fixture.entries) {
+      const result = scanFocus(entry, materials);
+      if (result.tier !== "standard") {
+        expect(result.inPack, entry.canonicalName).toBe(true);
+      }
+    }
+  });
 });

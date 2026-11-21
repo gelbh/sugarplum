@@ -966,7 +966,7 @@ async function cloneAtlases(
 
     const { results: focusRows } = await db
       .prepare(
-        "SELECT atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at FROM atlas_entry_focus WHERE atlas_id = ?",
+        "SELECT atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at, in_pack FROM atlas_entry_focus WHERE atlas_id = ?",
       )
       .bind(atlas.id)
       .all<{
@@ -977,6 +977,7 @@ async function cloneAtlases(
         material_ids_json: string;
         override: string | null;
         updated_at: string;
+        in_pack: number;
       }>();
     const focusStmts: D1PreparedStatement[] = [];
     for (const focus of focusRows ?? []) {
@@ -1001,8 +1002,8 @@ async function cloneAtlases(
         db
           .prepare(
             `INSERT INTO atlas_entry_focus (
-               atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?)`.replace(/\s+/g, " "),
+               atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at, in_pack
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`.replace(/\s+/g, " "),
           )
           .bind(
             atlasId,
@@ -1012,6 +1013,7 @@ async function cloneAtlases(
             materialIdsJson,
             focus.override,
             focus.updated_at,
+            focus.in_pack,
           ),
       );
     }

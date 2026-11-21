@@ -1,5 +1,5 @@
 import { SOURCE_ROLE_LABELS, type SourceRole } from "../../materials/sourceRole";
-import { entryNameForms, textMentionsEntry } from "./nameMatch";
+import { matchMaterialForPack, packTargets } from "./packMatch";
 import type { AtlasTier } from "../types";
 
 const KEY_ROLES: ReadonlySet<SourceRole> = new Set([
@@ -26,7 +26,9 @@ export type FocusManualOverride = AtlasTier | null;
 export type FocusScanResult = {
   tier: AtlasTier;
   reason: string;
+  /** Every material that mentions the entry under lenient pack matching. */
   materialIds: string[];
+  inPack: boolean;
 };
 
 export function scanFocus(
@@ -34,59 +36,49 @@ export function scanFocus(
   materials: FocusMaterial[],
   manualOverride?: FocusManualOverride,
 ): FocusScanResult {
+  const targets = packTargets(entry);
+  const matches = materials.map((material) => ({
+    material,
+    ...matchMaterialForPack(targets, material),
+  }));
+  const materialIds = matches
+    .filter((m) => m.lenient)
+    .map((m) => m.material.id);
+  const inPack = materialIds.length > 0;
+
   if (manualOverride) {
     return {
       tier: manualOverride,
       reason: manualOverride === "key" ? "Manual pin" : "Manual demote",
-      materialIds: [],
+      materialIds,
+      inPack,
     };
   }
 
-  const forms = entryNameForms(entry);
-  const keyHits = materials.filter(
-    (m) => KEY_ROLES.has(m.sourceRole) && materialKeysEntry(m, forms),
-  );
-  if (keyHits.length > 0) {
-    const hit = keyHits[0];
-    const label = SOURCE_ROLE_LABELS[hit.sourceRole].toLowerCase();
-    const title = hit.filename ?? hit.id;
+  // Tiers keep the strict matcher so ranking does not change.
+  const keyHit = matches.find(
+    (m) => m.strict && KEY_ROLES.has(m.material.sourceRole),
+  )?.material;
+  if (keyHit) {
+    const label = SOURCE_ROLE_LABELS[keyHit.sourceRole].toLowerCase();
+    const title = keyHit.filename ?? keyHit.id;
     return {
       tier: "key",
       reason: `Named in ${label} "${title}"`,
-      materialIds: keyHits.map((m) => m.id),
+      materialIds,
+      inPack,
     };
   }
 
-  const mentionIds = materials
-    .filter((m) => materialMentionsEntry(m, forms))
-    .map((m) => m.id);
-  if (mentionIds.length >= 3) {
+  const mentionCount = matches.filter((m) => m.strict).length;
+  if (mentionCount >= 3) {
     return {
       tier: "frequent",
-      reason: `Mentioned in ${mentionIds.length} materials`,
-      materialIds: mentionIds,
+      reason: `Mentioned in ${mentionCount} materials`,
+      materialIds,
+      inPack,
     };
   }
 
-  return { tier: "standard", reason: "Standard", materialIds: [] };
-}
-
-function materialKeysEntry(
-  material: FocusMaterial,
-  forms: readonly string[],
-): boolean {
-  if (material.filename && textMentionsEntry(material.filename, forms)) {
-    return true;
-  }
-  return material.pages.some((p) => textMentionsEntry(p.text, forms));
-}
-
-function materialMentionsEntry(
-  material: FocusMaterial,
-  forms: readonly string[],
-): boolean {
-  if (material.filename && textMentionsEntry(material.filename, forms)) {
-    return true;
-  }
-  return material.pages.some((p) => textMentionsEntry(p.text, forms));
+  return { tier: "standard", reason: "Standard", materialIds, inPack };
 }

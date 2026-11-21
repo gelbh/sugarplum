@@ -1,0 +1,1 @@
+ALTER TABLE atlas_entry_focus ADD COLUMN in_pack INTEGER NOT NULL DEFAULT 0;

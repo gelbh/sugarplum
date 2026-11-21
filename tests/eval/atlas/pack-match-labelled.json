@@ -1,0 +1,447 @@
+[
+  {
+    "id": "typo-otodectes",
+    "text": "Ear canal mites: Otodectes cyanosis in cats and dogs.",
+    "shouldMatch": [
+      "otodectes-cynotis"
+    ],
+    "shouldNotMatch": [
+      "demodex-canis",
+      "sarcoptes-scabiei"
+    ]
+  },
+  {
+    "id": "typo-amblyomma-free",
+    "text": "Hard ticks of the UK: Ixodes ricinus, Dermacentor reticulatis, Haemaphysalis punctata.",
+    "shouldMatch": [
+      "ixodes-ricinus",
+      "dermacentor-reticulatus",
+      "haemaphysalis-punctata"
+    ],
+    "shouldNotMatch": [
+      "rhipicephalus-sanguineus"
+    ]
+  },
+  {
+    "id": "typo-haemonchus",
+    "text": "Haemonchus contortis causes anaemia and bottle jaw in lambs.",
+    "shouldMatch": [
+      "haemonchus-contortus"
+    ],
+    "shouldNotMatch": [
+      "teladorsagia-circumcincta",
+      "trichostrongylus-spp"
+    ]
+  },
+  {
+    "id": "typo-dictyo",
+    "text": "Husk in calves: Dictyocaulus vivparus larvae on pasture.",
+    "shouldMatch": [
+      "dictyocaulus-viviparus"
+    ],
+    "shouldNotMatch": [
+      "dictyocaulus-filaria",
+      "dictyocaulus-arnfieldi"
+    ]
+  },
+  {
+    "id": "typo-cyathostomin",
+    "text": "Ostertagia ostertagii type II disease in yearlings.",
+    "shouldMatch": [
+      "ostertagia-ostertagi"
+    ],
+    "shouldNotMatch": [
+      "teladorsagia-circumcincta"
+    ]
+  },
+  {
+    "id": "typo-sarcoptes",
+    "text": "Sarcoptes scabei: intense pruritus, zoonotic.",
+    "shouldMatch": [
+      "sarcoptes-scabiei"
+    ],
+    "shouldNotMatch": [
+      "psoroptes-ovis",
+      "chorioptes-bovis"
+    ]
+  },
+  {
+    "id": "typo-genus-swap",
+    "text": "Toxacara canis eggs persist in soil for years.",
+    "shouldMatch": [
+      "toxocara-canis"
+    ],
+    "shouldNotMatch": [
+      "toxocara-cati",
+      "toxascaris-leonina"
+    ]
+  },
+  {
+    "id": "split-psoroptes",
+    "text": "Sheep scab is caused by Psoroptes\novis, a non-burrowing mite.",
+    "shouldMatch": [
+      "psoroptes-ovis"
+    ],
+    "shouldNotMatch": [
+      "sarcoptes-scabiei",
+      "chorioptes-bovis"
+    ]
+  },
+  {
+    "id": "split-fasciola",
+    "text": "Liver fluke lifecycle: Fasciola\nhepatica uses Galba truncatula.",
+    "shouldMatch": [
+      "fasciola-hepatica"
+    ],
+    "shouldNotMatch": [
+      "fasciola-gigantica",
+      "dicrocoelium-dendriticum"
+    ]
+  },
+  {
+    "id": "split-paren",
+    "text": "Demodex (canis, bovis, etc.) live in hair follicles.",
+    "shouldMatch": [
+      "demodex-canis"
+    ],
+    "shouldNotMatch": [
+      "sarcoptes-scabiei",
+      "toxocara-canis"
+    ]
+  },
+  {
+    "id": "split-angio",
+    "text": "Angiostrongylus\n\nvasorum: slugs and snails as intermediate hosts.",
+    "shouldMatch": [
+      "angiostrongylus-vasorum"
+    ],
+    "shouldNotMatch": [
+      "aelurostrongylus-abstrusus",
+      "crenosoma-vulpis"
+    ]
+  },
+  {
+    "id": "split-listing",
+    "text": "Equine large strongyles: Strongylus (vulgaris, edentatus, equinus).",
+    "shouldMatch": [
+      "strongylus-vulgaris",
+      "strongylus-edentatus",
+      "strongylus-equinus"
+    ],
+    "shouldNotMatch": [
+      "strongyloides-westeri",
+      "cylicostephanus-longibursatus"
+    ]
+  },
+  {
+    "id": "genus-spp-ixodes",
+    "text": "Ixodes spp. transmit Borrelia and Anaplasma.",
+    "shouldMatch": [
+      "ixodes-ricinus",
+      "ixodes-hexagonus"
+    ],
+    "shouldNotMatch": [
+      "dermacentor-reticulatus"
+    ]
+  },
+  {
+    "id": "genus-spp-taenia",
+    "text": "Taenia spp. in dogs: segments around the anus.",
+    "shouldMatch": [
+      "taenia-hydatigena",
+      "taenia-ovis",
+      "taenia-multiceps",
+      "taenia-saginata",
+      "taenia-solium"
+    ],
+    "shouldNotMatch": [
+      "echinococcus-granulosus",
+      "dipylidium-caninum"
+    ]
+  },
+  {
+    "id": "genus-sp-dot",
+    "text": "A Strongyloides sp. was found in the foal faecal sample.",
+    "shouldMatch": [
+      "strongyloides-westeri",
+      "strongyloides-stercoralis",
+      "strongyloides-ransomi",
+      "strongyloides-papillosus"
+    ],
+    "shouldNotMatch": [
+      "strongylus-vulgaris"
+    ]
+  },
+  {
+    "id": "genus-species-word",
+    "text": "Echinococcus species differ in host range.",
+    "shouldMatch": [
+      "echinococcus-granulosus",
+      "echinococcus-multilocularis"
+    ],
+    "shouldNotMatch": [
+      "taenia-hydatigena"
+    ]
+  },
+  {
+    "id": "genus-only-spp-entry",
+    "text": "Babesia in cattle: redwater, transmitted by ticks.",
+    "shouldMatch": [
+      "babesia-spp"
+    ],
+    "shouldNotMatch": [
+      "theileria-spp"
+    ]
+  },
+  {
+    "id": "genus-only-spp-entry2",
+    "text": "Eimeria oocysts sporulate in the environment.",
+    "shouldMatch": [
+      "eimeria-spp"
+    ],
+    "shouldNotMatch": [
+      "cryptosporidium-spp",
+      "toxoplasma-gondii"
+    ]
+  },
+  {
+    "id": "genus-only-binomial",
+    "text": "Dirofilaria in imported dogs: check travel history.",
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      "dirofilaria-immitis",
+      "dirofilaria-repens"
+    ]
+  },
+  {
+    "id": "genus-only-trichuris",
+    "text": "Trichuris eggs are lemon shaped with bipolar plugs.",
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      "trichuris-vulpis",
+      "trichuris-suis",
+      "trichuris-ovis"
+    ]
+  },
+  {
+    "id": "taxonomy-ticks",
+    "text": "Class Arachnida, Subclass Acari, Order Ixodida, Family Ixodidae.",
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      "ixodes-ricinus",
+      "ixodes-hexagonus",
+      "dermacentor-reticulatus"
+    ]
+  },
+  {
+    "id": "taxonomy-nematodes",
+    "text": "Phylum Nematoda, Order Strongylida, Superfamily Trichostrongyloidea.",
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      "strongylus-vulgaris",
+      "trichostrongylus-spp",
+      "strongyloides-westeri"
+    ]
+  },
+  {
+    "id": "taxonomy-cestodes",
+    "text": "Class Cestoda, Order Cyclophyllidea, Family Taeniidae.",
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      "taenia-ovis",
+      "taenia-saginata",
+      "echinococcus-granulosus"
+    ]
+  },
+  {
+    "id": "taxonomy-protozoa",
+    "text": "Phylum Apicomplexa, Class Conoidasida, Subclass Coccidia.",
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      "eimeria-spp",
+      "toxoplasma-gondii",
+      "neospora-caninum",
+      "cryptosporidium-spp"
+    ]
+  },
+  {
+    "id": "nearmiss-ixodid",
+    "text": "Ixodid ticks feed for days; argasid ticks feed for minutes.",
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      "ixodes-ricinus",
+      "ixodes-hexagonus"
+    ]
+  },
+  {
+    "id": "nearmiss-psoroptic",
+    "text": "Psoroptic mange in cattle is rare in the UK.",
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      "psoroptes-ovis"
+    ]
+  },
+  {
+    "id": "nearmiss-demodicosis",
+    "text": "Juvenile demodicosis often resolves without treatment.",
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      "demodex-canis"
+    ]
+  },
+  {
+    "id": "nearmiss-toxocariasis",
+    "text": "Toxocariasis in children: visceral larva migrans.",
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      "toxocara-canis",
+      "toxocara-cati"
+    ]
+  },
+  {
+    "id": "nearmiss-taeniid",
+    "text": "Taeniid eggs cannot be told apart by microscopy.",
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      "taenia-ovis",
+      "taenia-hydatigena",
+      "echinococcus-granulosus"
+    ]
+  },
+  {
+    "id": "nearmiss-oestrus",
+    "text": "The oestrus cycle of the ewe (Ovis aries) sets lambing dates.",
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      "oestrus-ovis"
+    ]
+  },
+  {
+    "id": "nearmiss-babesiosis",
+    "text": "Babesiosis and theileriosis cause haemolytic anaemia.",
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      "babesia-spp",
+      "theileria-spp"
+    ]
+  },
+  {
+    "id": "nearmiss-musca",
+    "text": "Musca domestica, the house fly, carries Habronema larvae.",
+    "shouldMatch": [
+      "habronema-spp"
+    ],
+    "shouldNotMatch": [
+      "musca-autumnalis"
+    ]
+  },
+  {
+    "id": "common-kennel",
+    "text": "The kennel tick survives indoors in heated buildings.",
+    "shouldMatch": [
+      "rhipicephalus-sanguineus"
+    ],
+    "shouldNotMatch": [
+      "ixodes-ricinus"
+    ]
+  },
+  {
+    "id": "common-barber",
+    "text": "Barber's pole worm: FAMACHA scoring guides treatment.",
+    "shouldMatch": [
+      "haemonchus-contortus"
+    ],
+    "shouldNotMatch": [
+      "ostertagia-ostertagi"
+    ]
+  },
+  {
+    "id": "common-mixed",
+    "text": "Red mite in laying hens; the ear mite in kittens.",
+    "shouldMatch": [
+      "dermanyssus-gallinae",
+      "otodectes-cynotis"
+    ],
+    "shouldNotMatch": [
+      "demodex-canis",
+      "psoroptes-ovis"
+    ]
+  },
+  {
+    "id": "common-flea",
+    "text": "Cat flea larvae eat adult flea faeces.",
+    "shouldMatch": [
+      "ctenocephalides-felis"
+    ],
+    "shouldNotMatch": [
+      "ctenocephalides-canis",
+      "pulex-irritans"
+    ]
+  },
+  {
+    "id": "common-lancet",
+    "text": "Lancet fluke: ants as second intermediate host.",
+    "shouldMatch": [
+      "dicrocoelium-dendriticum"
+    ],
+    "shouldNotMatch": [
+      "fasciola-hepatica",
+      "calicophoron-daubneyi"
+    ]
+  },
+  {
+    "id": "abbrev-p-ovis",
+    "text": "P. ovis mites survive off the host for about 2 weeks.",
+    "shouldMatch": [
+      "psoroptes-ovis"
+    ],
+    "shouldNotMatch": [
+      "bovicola-ovis",
+      "taenia-ovis",
+      "oestrus-ovis"
+    ]
+  },
+  {
+    "id": "abbrev-h-contortus",
+    "text": "H. contortus has a high biotic potential.",
+    "shouldMatch": [
+      "haemonchus-contortus"
+    ],
+    "shouldNotMatch": [
+      "teladorsagia-circumcincta"
+    ]
+  },
+  {
+    "id": "abbrev-t-canis",
+    "text": "T. canis and T. cati: transplacental versus transmammary.",
+    "shouldMatch": [
+      "toxocara-canis",
+      "toxocara-cati"
+    ],
+    "shouldNotMatch": [
+      "toxascaris-leonina",
+      "trichuris-vulpis"
+    ]
+  },
+  {
+    "id": "abbrev-d-immitis",
+    "text": "D. immitis microfilariae seen on a blood smear.",
+    "shouldMatch": [
+      "dirofilaria-immitis"
+    ],
+    "shouldNotMatch": [
+      "dirofilaria-repens"
+    ]
+  },
+  {
+    "id": "abbrev-f-hepatica",
+    "text": "F hepatica and rumen fluke share the snail host.",
+    "shouldMatch": [
+      "fasciola-hepatica",
+      "calicophoron-daubneyi"
+    ],
+    "shouldNotMatch": [
+      "fasciola-gigantica"
+    ]
+  }
+]
