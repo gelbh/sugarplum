@@ -1,9 +1,9 @@
 import { api, ApiError } from "../../api/client";
-import type { EntryPatchBody } from "../mutate/entryPatch";
 import type {
   AtlasEntryView,
   AtlasSource,
   DatasetFields,
+  EntryPatchBody,
   FieldKey,
 } from "../types";
 

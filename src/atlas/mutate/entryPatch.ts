@@ -8,20 +8,14 @@ import {
   ALIAS_MAX_ITEMS,
   cleanAliasList,
 } from "../hub/nameMatch";
-import type { AtlasEntryView, DatasetFields, FieldKey } from "../types";
+import type {
+  AtlasEntryView,
+  DatasetFields,
+  EntryPatch,
+  FieldKey,
+} from "../types";
 
-/** Sparse PATCH /entries/:entryId body: only keys the learner changed. */
-export type EntryPatch = {
-  commonName?: string;
-  /** Learner-added entries only; the server rejects it for dataset origins. */
-  canonicalName?: string;
-  /** Full learner alias list; it replaces aliases_json. Dataset aliases are never sent. */
-  aliases?: string[];
-  fields?: Partial<DatasetFields>;
-};
-
-/** Wire body: an edit, a per-field reset, or both. Resets never reach afterSave. */
-export type EntryPatchBody = EntryPatch & { resetFields?: FieldKey[] };
+export type { EntryPatch, EntryPatchBody } from "../types";
 
 export const EDIT_SECTIONS = [
   "names",
