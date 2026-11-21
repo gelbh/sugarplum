@@ -30,11 +30,9 @@ type NameParts = { genus: string; epithet: string | null; sppEntry: boolean };
 export type PackTargets = {
   forms: string[];
   parts: NameParts | null;
-  /** Genera of other atlas entries; rule 2 stops scanning at any of them. */
+  /** Atlas genera; rule 2 stops at any of them except the entry's own. */
   stopGenera: ReadonlySet<string>;
 };
-
-const NO_GENERA: ReadonlySet<string> = new Set();
 
 /** Rule 5 never allows more than this many edits. */
 const MAX_EDITS = 2;
@@ -238,7 +236,8 @@ function lenientMention(
       if (gap <= PLURAL_WINDOW && isPluralMarker(hay, tokens[j])) return true;
       if (epithetAt.has(j)) return true;
       // Another entry's genus starts a new name; its epithet is not ours.
-      if (stopGenera.has(tokens[j].text)) break;
+      const t = tokens[j].text;
+      if (t !== parts.genus && stopGenera.has(t)) break;
     }
   }
   return false;
@@ -251,15 +250,12 @@ function strictMention(scanned: Scanned, forms: readonly string[]): boolean {
 
 export function packTargets(
   entry: NameMatchEntry,
-  genera: ReadonlySet<string> = NO_GENERA,
+  genera: ReadonlySet<string> = new Set(),
 ): PackTargets {
-  const parts = nameParts(entry.canonicalName);
-  const stopGenera = new Set(genera);
-  if (parts) stopGenera.delete(parts.genus);
   return {
     forms: entryNameForms(entry).map((f) => searchable(collapseSeparators(f))),
-    parts,
-    stopGenera,
+    parts: nameParts(entry.canonicalName),
+    stopGenera: genera,
   };
 }
 
@@ -281,8 +277,7 @@ export function matchMaterialForPack(
   if (texts.some((t) => strictMention(t, forms))) {
     return { strict: true, lenient: true };
   }
-  const lenient =
-    parts !== null && texts.some((t) => lenientMention(t, parts, stopGenera));
+  const lenient = parts !== null && texts.some((t) => lenientMention(t, parts, stopGenera));
   return { strict: false, lenient };
 }
 

@@ -177,7 +177,7 @@ export async function countReadyAtlasMaterials(
 /** Bump when Focus scan rules or fingerprint inputs change so complete maps rescan. */
 export const FOCUS_PACK_FINGERPRINT_VERSION = "v4";
 
-/** Includes the dataset version so new dataset entries get focus rows. */
+/** Dataset changes (names, misspellings, genera) also need a rescan. */
 export function focusPackFingerprint(
   rows: ReadonlyArray<{
     id: string;
@@ -187,7 +187,9 @@ export function focusPackFingerprint(
   datasetVersion: number = PARASITE_DATASET_VERSION,
 ): string {
   const markers = rows
-    .map((r) => `${r.id}:${r.content_hash ?? "nochash"}:${r.source_role}`)
+    .map(
+      (r) => `${r.id}:${r.content_hash ?? "nochash"}:${r.source_role}`,
+    )
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   return `${FOCUS_PACK_FINGERPRINT_VERSION}:d${datasetVersion}:${markers.join("|")}`;
 }

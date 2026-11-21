@@ -38,16 +38,13 @@ const MIN_PRECISION = 0.85;
 function matches(key: string, text: string): boolean {
   const entry = entries.get(key);
   if (!entry) throw new Error(`Unknown atlas key in fixture: ${key}`);
-  return materialMentionsForPack(
-    entry,
-    {
-      id: "snippet",
-      filename: null,
-      sourceRole: "lecture",
-      pages: [{ page: 1, text }],
-    },
-    genera,
-  );
+  const material = {
+    id: "snippet",
+    filename: null,
+    sourceRole: "lecture" as const,
+    pages: [{ page: 1, text }],
+  };
+  return materialMentionsForPack(entry, material, genera);
 }
 
 describe("labelled pack-match eval", () => {

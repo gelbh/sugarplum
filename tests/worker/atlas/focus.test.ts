@@ -132,9 +132,9 @@ describe("listEntriesWithFocus skipMutatingRefresh", () => {
     });
     expect(scheduled).toBe(false);
     expect(result.focusRefreshPending).toBe(false);
-    expect(result.entries.find((e) => e.id === "fasciola-hepatica")?.tier).toBe(
-      "standard",
-    );
+    expect(
+      result.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
+    ).toBe("standard");
     const fp = await env.DB.prepare(
       "SELECT focus_pack_fingerprint FROM atlases WHERE id = ?",
     )
@@ -988,12 +988,8 @@ describe("atlas focus in_pack", () => {
     const demodex = result.entries.find((e) => e.id === "demodex-canis");
     expect(demodex?.tier).toBe("standard");
     expect(demodex?.focusMaterialIds).toHaveLength(1);
-    expect((await storedInPack(env, atlasId, "psoroptes-ovis"))?.in_pack).toBe(
-      1,
-    );
-    expect((await storedInPack(env, atlasId, "toxocara-canis"))?.in_pack).toBe(
-      0,
-    );
+    expect((await storedInPack(env, atlasId, "psoroptes-ovis"))?.in_pack).toBe(1);
+    expect((await storedInPack(env, atlasId, "toxocara-canis"))?.in_pack).toBe(0);
   });
 
   it("rescans rows written under the previous fingerprint version", async () => {
@@ -1011,15 +1007,7 @@ describe("atlas focus in_pack", () => {
          atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at
        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
     )
-      .bind(
-        atlasId,
-        "psoroptes-ovis",
-        "standard",
-        "Standard",
-        "[]",
-        null,
-        "2026-01-01T00:00:00.000Z",
-      )
+      .bind(atlasId, "psoroptes-ovis", "standard", "Standard", "[]", null, "2026-01-01T00:00:00.000Z")
       .run();
     await env.DB.prepare(
       "UPDATE atlases SET focus_pack_fingerprint = ? WHERE id = ?",
@@ -1029,22 +1017,16 @@ describe("atlas focus in_pack", () => {
 
     const result = await list(env, atlasId);
     expect(inPackOf(result.entries, "psoroptes-ovis")).toBe(true);
-    expect((await storedInPack(env, atlasId, "psoroptes-ovis"))?.in_pack).toBe(
-      1,
-    );
+    expect((await storedInPack(env, atlasId, "psoroptes-ovis"))?.in_pack).toBe(1);
   });
 
   it("keeps in_pack when a pin is set and cleared", async () => {
     const { env, atlasId } = await packAtlas();
     await list(env, atlasId);
     await setFocusOverride(env.DB, atlasId, "psoroptes-ovis", "key");
-    expect((await storedInPack(env, atlasId, "psoroptes-ovis"))?.in_pack).toBe(
-      1,
-    );
+    expect((await storedInPack(env, atlasId, "psoroptes-ovis"))?.in_pack).toBe(1);
     await setFocusOverride(env.DB, atlasId, "psoroptes-ovis", null);
-    expect((await storedInPack(env, atlasId, "psoroptes-ovis"))?.in_pack).toBe(
-      1,
-    );
+    expect((await storedInPack(env, atlasId, "psoroptes-ovis"))?.in_pack).toBe(1);
   });
 
   it("reports inPack null on read-only view-as when rows are from an older scan", async () => {
@@ -1064,10 +1046,7 @@ describe("atlas focus in_pack", () => {
     expect(result.entries.every((e) => e.inPack === null)).toBe(true);
   });
 
-  async function markStale(
-    env: ReturnType<typeof createTestEnv>,
-    atlasId: string,
-  ) {
+  async function markStale(env: ReturnType<typeof createTestEnv>, atlasId: string) {
     await env.DB.prepare(
       "UPDATE atlases SET focus_pack_fingerprint = ? WHERE id = ?",
     )
@@ -1078,9 +1057,7 @@ describe("atlas focus in_pack", () => {
   it("reports inPack null while a background rescan is scheduled or leased", async () => {
     const { env, atlasId } = await packAtlas();
     await list(env, atlasId);
-    expect((await storedInPack(env, atlasId, "psoroptes-ovis"))?.in_pack).toBe(
-      1,
-    );
+    expect((await storedInPack(env, atlasId, "psoroptes-ovis"))?.in_pack).toBe(1);
     await markStale(env, atlasId);
     const entries = overlayAtlas(loadParasiteDataset().entries, []);
 
@@ -1149,13 +1126,7 @@ describe("atlas focus in_pack", () => {
 
   it("enrich maps unscanned entries to inPack null", () => {
     const views = overlayAtlas(loadParasiteDataset().entries, []);
-    expect(
-      enrichEntriesWithFocus(views, null, true).every((e) => e.inPack === null),
-    ).toBe(true);
-    expect(
-      enrichEntriesWithFocus(views, new Map(), true).every(
-        (e) => e.inPack === null,
-      ),
-    ).toBe(true);
+    expect(enrichEntriesWithFocus(views, null, true).every((e) => e.inPack === null)).toBe(true);
+    expect(enrichEntriesWithFocus(views, new Map(), true).every((e) => e.inPack === null)).toBe(true);
   });
 });

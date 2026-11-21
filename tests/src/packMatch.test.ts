@@ -60,9 +60,7 @@ describe("materialMentionsForPack", () => {
 
   it("rule 1: matches filename separators", () => {
     const file = material("", "Week2_Fasciola_hepatica.pdf");
-    expect(materialMentionsForPack(named("Fasciola hepatica"), file)).toBe(
-      true,
-    );
+    expect(materialMentionsForPack(named("Fasciola hepatica"), file)).toBe(true);
   });
 
   it("rule 2: genus with the epithet nearby", () => {
@@ -97,7 +95,9 @@ describe("materialMentionsForPack", () => {
     expect(hits(named("Ixodes ricinus"), text)).toBe(true);
     expect(hits(named("Ixodes hexagonus"), text)).toBe(true);
     expect(hits(named("Ixodes ricinus"), "Ixodes sp. on a dog")).toBe(true);
-    expect(hits(named("Ixodes ricinus"), "Ixodes species overview")).toBe(true);
+    expect(hits(named("Ixodes ricinus"), "Ixodes species overview")).toBe(
+      true,
+    );
   });
 
   it("rule 3: the plural marker must start within 8 characters", () => {
@@ -175,6 +175,12 @@ describe("rule 2 stops at another atlas genus", () => {
     const text = "Ctenocephalides and Pulex; also Trichodectes canis";
     expect(hits(named("Ctenocephalides canis"), text)).toBe(true);
     expect(hitsWith(named("Ctenocephalides canis"), text)).toBe(false);
+  });
+
+  it("checks the plural marker and epithet before the stop", () => {
+    const flea = named("Ctenocephalides canis");
+    expect(hitsWith(flea, "Ctenocephalides spp., Pulex")).toBe(true);
+    expect(hitsWith(flea, "Ctenocephalides (canis), Pulex")).toBe(true);
   });
 
   it("keeps an epithet list after the genus", () => {

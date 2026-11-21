@@ -1,7 +1,4 @@
-import {
-  SOURCE_ROLE_LABELS,
-  type SourceRole,
-} from "../../materials/sourceRole";
+import { SOURCE_ROLE_LABELS, type SourceRole } from "../../materials/sourceRole";
 import { matchMaterialForPack, packTargets } from "./packMatch";
 import type { AtlasTier } from "../types";
 
