@@ -564,6 +564,35 @@ describe("EditEntryDialog sections", () => {
     });
   });
 
+  it("keeps an out-of-vocabulary-order region list stable on tick then untick", async () => {
+    const onClose = vi.fn();
+    await render(
+      editDialog({
+        onClose,
+        entry: entry({
+          fields: {
+            ...emptyParasiteFields(),
+            group: "nematode",
+            distributionRegions: ["asia", "europe"],
+          },
+        }),
+      }),
+    );
+    const africa = [...document.body.querySelectorAll("label")]
+      .find((l) => l.textContent === "Africa")!
+      .querySelector("input")!;
+    await act(async () => {
+      africa.click();
+    });
+    expect(africa.checked).toBe(true);
+    await act(async () => {
+      africa.click();
+    });
+    await submitForm();
+    expect(patchEntry).not.toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
+  });
+
   it("runs afterSave after patchEntry with the sent patch and renders footerExtra", async () => {
     vi.mocked(patchEntry).mockResolvedValueOnce(entry());
     const afterSave = vi.fn().mockResolvedValue(undefined);

@@ -132,7 +132,7 @@ function TermChecks<T extends string>({
                 onChange={(ev) =>
                   onChange(
                     ev.target.checked
-                      ? options.filter((o) => o === term || selected.includes(o))
+                      ? [...selected, term]
                       : selected.filter((s) => s !== term),
                   )
                 }
