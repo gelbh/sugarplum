@@ -133,7 +133,7 @@ export type EntryWriteInput = {
   canonicalName?: string;
 };
 
-const BUILT_IN_NAME_MESSAGE =
+export const BUILT_IN_NAME_MESSAGE =
   "Scientific name of a built-in parasite cannot change; add an alias instead";
 
 /**

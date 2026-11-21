@@ -1,11 +1,18 @@
 import { HTTPException } from "hono/http-exception";
 import type { DatasetEntry } from "./datasets/schema";
-import { sameFieldValue } from "./merge";
+import type { EntryRow } from "./entryOverlays";
+import { BUILT_IN_NAME_MESSAGE } from "./entry-helpers";
+import { mergeOverlayFields, parseLearnerAliases, sameFieldValue } from "./merge";
+import { normalizeParasiteName } from "./names";
 import {
   PARASITE_FIELD_KEYS,
   type ParasiteFields,
 } from "./templates/parasite";
-import type { CorrectionDiff } from "../../src/atlas/types";
+import type {
+  AtlasEntryView,
+  CorrectionDiff,
+  CorrectionStatus,
+} from "../../src/atlas/types";
 
 // Single-line SQL so the fake D1 in tests/worker matches these exact strings.
 
@@ -169,4 +176,93 @@ export function mergeSuggestionDiff(
     if (!(key in stillEdited)) delete merged[key];
   }
   return merged;
+}
+
+/**
+ * A built-in parasite keeps its scientific name. Submitting the stored or
+ * dataset name is a no-op, matching the overlay PATCH.
+ */
+export function assertCanonicalUnchanged(
+  submitted: string | null,
+  base: DatasetEntry,
+  row: EntryRow | null,
+): void {
+  if (submitted === null) return;
+  const name = normalizeParasiteName(submitted.trim())?.canonical;
+  if (name === base.canonicalName || name === row?.canonical_name) return;
+  bad(BUILT_IN_NAME_MESSAGE);
+}
+
+/** Stored state after the overlay PATCH; a NULL common_name means the dataset name. */
+export function currentEntryState(
+  base: DatasetEntry,
+  row: EntryRow | null,
+): CurrentEntryState {
+  return {
+    commonName: row?.common_name ?? base.commonName,
+    fields: row
+      ? (mergeOverlayFields(base.fields, row).fields as ParasiteFields)
+      : (base.fields as ParasiteFields),
+    learnerAliases: parseLearnerAliases(row?.aliases_json),
+  };
+}
+
+export async function loadOpenSuggestionDiff(
+  db: D1Database,
+  userId: string,
+  originKey: string,
+): Promise<string | null> {
+  const row = await db
+    .prepare(SELECT_OPEN_SUGGESTION_SQL)
+    .bind(userId, originKey)
+    .first<{ diff_json: string }>();
+  return row?.diff_json ?? null;
+}
+
+export async function upsertOpenSuggestion(
+  db: D1Database,
+  args: {
+    id: string;
+    userId: string;
+    atlasId: string;
+    originKey: string;
+    datasetVersion: number;
+    diff: CorrectionDiff;
+    note: string | null;
+    sourceUrl: string | null;
+    now: string;
+  },
+): Promise<void> {
+  await db
+    .prepare(UPSERT_OPEN_SUGGESTION_SQL)
+    .bind(
+      args.id,
+      args.userId,
+      args.atlasId,
+      args.originKey,
+      args.datasetVersion,
+      JSON.stringify(args.diff),
+      args.note,
+      args.sourceUrl,
+      args.now,
+    )
+    .run();
+}
+
+export async function enrichAtlasEntriesWithSuggestions(
+  db: D1Database,
+  atlasId: string,
+  entries: AtlasEntryView[],
+): Promise<AtlasEntryView[]> {
+  const { results } = await db
+    .prepare(SUGGESTION_STATUS_BY_ATLAS_SQL)
+    .bind(atlasId)
+    .all<{ origin_key: string; status: CorrectionStatus }>();
+  const statuses = new Map<string, CorrectionStatus>();
+  // ORDER BY created_at ASC: the latest row per parasite wins.
+  for (const row of results ?? []) statuses.set(row.origin_key, row.status);
+  return entries.map((e) => ({
+    ...e,
+    suggestionStatus: e.originKey ? (statuses.get(e.originKey) ?? null) : null,
+  }));
 }

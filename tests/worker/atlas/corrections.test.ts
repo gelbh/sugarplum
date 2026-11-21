@@ -12,6 +12,10 @@ import {
 } from "../../../worker/atlas/corrections";
 import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites/index";
 import type { ParasiteFields } from "../../../worker/atlas/templates/parasite";
+import { app } from "../../../worker/index";
+import { SESSION_COOKIE } from "../../../worker/auth/session";
+import { createTestEnv } from "../test-env";
+import type { AtlasEntryView } from "../../../src/atlas/types";
 
 const MIGRATIONS_DIR = fileURLToPath(
   new URL("../../../migrations/", import.meta.url),
@@ -238,5 +242,204 @@ describe("parseSuggestionBody", () => {
       parseSuggestionBody({ patch: {}, sourceUrl: "ftp://example.org/x" }),
     ).toThrow(/http or https/);
     expect(() => parseSuggestionBody({ note: "x" })).toThrow(/patch required/);
+  });
+});
+
+type Env = ReturnType<typeof createTestEnv>;
+
+function seedStudent(env: Env) {
+  env.seedUser({
+    id: "user-a",
+    email: "a@example.com",
+    password_hash: null,
+    oauth_subject: null,
+    created_at: "2026-01-01T00:00:00.000Z",
+  });
+  env.seedSession("sess-a", "user-a");
+  env.seedSubject({
+    id: "sub-1",
+    user_id: "user-a",
+    title: "Parasitology",
+    created_at: "2026-01-01T00:00:00.000Z",
+  });
+}
+
+function headers(session: string, json = false): HeadersInit {
+  return {
+    cookie: `${SESSION_COOKIE}=${session}`,
+    ...(json ? { "content-type": "application/json" } : {}),
+  };
+}
+
+async function createAtlas(env: Env): Promise<string> {
+  const res = await app.request(
+    "/api/atlas",
+    { method: "POST", headers: headers("sess-a") },
+    env,
+  );
+  expect(res.status).toBe(201);
+  return ((await res.json()) as { id: string }).id;
+}
+
+function suggest(env: Env, atlasId: string, entryId: string, body: unknown) {
+  return app.request(
+    `/api/atlas/${atlasId}/entries/${entryId}/suggestion`,
+    { method: "POST", headers: headers("sess-a", true), body: JSON.stringify(body) },
+    env,
+  );
+}
+
+/** A save with the box unticked: overlay PATCH only. */
+async function patchOnly(env: Env, atlasId: string, patch: Record<string, unknown>) {
+  const res = await app.request(
+    `/api/atlas/${atlasId}/entries/psoroptes-ovis`,
+    { method: "PATCH", headers: headers("sess-a", true), body: JSON.stringify(patch) },
+    env,
+  );
+  expect(res.status).toBe(200);
+}
+
+/** Real client order with the box ticked: PATCH first, then the same patch. */
+async function editAndSuggest(
+  env: Env,
+  atlasId: string,
+  patch: Record<string, unknown>,
+  extra: { note?: string; sourceUrl?: string } = {},
+) {
+  await patchOnly(env, atlasId, patch);
+  return suggest(env, atlasId, "psoroptes-ovis", { patch, ...extra });
+}
+
+async function listEntries(env: Env, atlasId: string): Promise<AtlasEntryView[]> {
+  const res = await app.request(
+    `/api/atlas/${atlasId}/entries`,
+    { headers: headers("sess-a") },
+    env,
+  );
+  return ((await res.json()) as { entries: AtlasEntryView[] }).entries;
+}
+
+async function studentSetup() {
+  const env = createTestEnv({ adminEmails: "ops@example.com" });
+  seedStudent(env);
+  const atlasId = await createAtlas(env);
+  return { env, atlasId };
+}
+
+describe("POST /api/atlas/:atlasId/entries/:entryId/suggestion", () => {
+  it("stores this save's diff after the personal PATCH", async () => {
+    const { env, atlasId } = await studentSetup();
+    const base = psoroptes();
+    const res = await editAndSuggest(
+      env,
+      atlasId,
+      { fields: { significance: "Causes sheep scab." } },
+      { note: "Shorter wording", sourceUrl: "https://example.org/scab" },
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      status: "open",
+      diff: { significance: { from: base.fields.significance, to: "Causes sheep scab." } },
+    });
+
+    const entries = await listEntries(env, atlasId);
+    expect(entries.find((e) => e.originKey === "psoroptes-ovis")?.suggestionStatus).toBe("open");
+    expect(entries.find((e) => e.originKey === "fasciola-hepatica")?.suggestionStatus).toBeNull();
+  });
+
+  it("returns 400 when nothing is stored that differs from the dataset", async () => {
+    const { env, atlasId } = await studentSetup();
+    const res = await suggest(env, atlasId, "psoroptes-ovis", {
+      patch: { fields: { significance: "Never saved" } },
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("includes stored learner aliases when the save touched aliases", async () => {
+    const { env, atlasId } = await studentSetup();
+    const base = psoroptes();
+    const res = await editAndSuggest(env, atlasId, { aliases: ["Scab mite"] });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { diff: object }).diff).toEqual({
+      aliases: { from: base.aliases, to: [...base.aliases, "Scab mite"] },
+    });
+  });
+
+  it("accepts the unchanged scientific name and refuses a different one", async () => {
+    const { env, atlasId } = await studentSetup();
+    const same = await editAndSuggest(env, atlasId, {
+      canonicalName: "Psoroptes ovis",
+      fields: { significance: "New" },
+    });
+    expect(same.status).toBe(200);
+    const renamed = await suggest(env, atlasId, "psoroptes-ovis", {
+      patch: { canonicalName: "Psoroptes cuniculi", fields: { significance: "New" } },
+    });
+    expect(renamed.status).toBe(400);
+    expect(await renamed.text()).toMatch(/add an alias instead/);
+  });
+
+  it("returns 400 for learner-added entries and 404 for unknown ones", async () => {
+    const { env, atlasId } = await studentSetup();
+    const created = await app.request(
+      `/api/atlas/${atlasId}/entries`,
+      {
+        method: "POST",
+        headers: headers("sess-a", true),
+        body: JSON.stringify({
+          canonicalName: "Madeupius fictus",
+          commonName: "Custom",
+          fields: { group: "nematode" },
+        }),
+      },
+      env,
+    );
+    expect(created.status).toBe(201);
+    const { id } = (await created.json()) as AtlasEntryView;
+    const learner = await suggest(env, atlasId, id, { patch: { fields: { significance: "x" } } });
+    expect(learner.status).toBe(400);
+    const unknown = await suggest(env, atlasId, "no-such-key", {
+      patch: { fields: { significance: "x" } },
+    });
+    expect(unknown.status).toBe(404);
+  });
+
+  it("merges two ticked saves into one open diff", async () => {
+    const { env, atlasId } = await studentSetup();
+    const base = psoroptes();
+    await editAndSuggest(env, atlasId, { fields: { significance: "New" } });
+    const second = await editAndSuggest(env, atlasId, {
+      fields: { majorOrgan: "skin of the back" },
+    });
+    expect(((await second.json()) as { diff: object }).diff).toEqual({
+      significance: { from: base.fields.significance, to: "New" },
+      majorOrgan: { from: base.fields.majorOrgan, to: "skin of the back" },
+    });
+  });
+
+  it("does not send an earlier edit saved without the box ticked", async () => {
+    const { env, atlasId } = await studentSetup();
+    const base = psoroptes();
+    await patchOnly(env, atlasId, { fields: { significance: "Private wording" } });
+    const res = await editAndSuggest(env, atlasId, {
+      fields: { majorOrgan: "skin of the back" },
+    });
+    expect(((await res.json()) as { diff: object }).diff).toEqual({
+      majorOrgan: { from: base.fields.majorOrgan, to: "skin of the back" },
+    });
+  });
+
+  it("removes a key from the open diff once it is reset to the dataset", async () => {
+    const { env, atlasId } = await studentSetup();
+    const base = psoroptes();
+    await editAndSuggest(env, atlasId, { fields: { significance: "New" } });
+    await editAndSuggest(env, atlasId, { fields: { majorOrgan: "skin of the back" } });
+    const reset = await editAndSuggest(env, atlasId, {
+      fields: { significance: base.fields.significance },
+    });
+    expect(reset.status).toBe(200);
+    expect(((await reset.json()) as { diff: object }).diff).toEqual({
+      majorOrgan: { from: base.fields.majorOrgan, to: "skin of the back" },
+    });
   });
 });
