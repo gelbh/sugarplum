@@ -1,5 +1,5 @@
 import { HTTPException } from "hono/http-exception";
-import { viewFromOverlay, type OverlayRow } from "./merge";
+import { sameFieldValue, viewFromOverlay, type OverlayRow } from "./merge";
 import { type EntryRow } from "./entryOverlays";
 import {
   loadParasiteDataset,
@@ -11,8 +11,10 @@ import {
   syncDiagnosticOwnership,
 } from "./lifecycleDiagnostic";
 import {
+  PARASITE_FIELD_KEYS,
   parasiteFieldsPatchSchema,
   parasiteFieldsSchema,
+  type ParasiteFieldKey,
   type ParasiteFields,
 } from "./templates/parasite";
 import type { AtlasEntryView, AtlasTier } from "../../src/atlas/types";
@@ -96,43 +98,56 @@ export async function resolveEntry(
   return null;
 }
 
+/** NULL when the learner's name equals the dataset name (the read path falls back to it). */
+export function storedCommonName(
+  submitted: string,
+  datasetCommonName: string | null,
+): string | null {
+  return submitted === datasetCommonName ? null : submitted;
+}
+
+/** Dataset-origin overlay row; stores overrides only (fields_json is '{}'). */
 export async function insertOverlayFromDataset(
   db: D1Database,
   atlasId: string,
   entry: DatasetEntry,
   patch: {
     commonName?: string | null;
-    fields?: ParasiteFields;
+    overrides?: Partial<ParasiteFields>;
     deletedAt?: string | null;
     editedAt?: string | null;
+    aliasesJson?: string | null;
   },
 ): Promise<EntryRow> {
   const id = newId();
   const ts = nowIso();
-  const fields = patch.fields ?? entry.fields;
+  // NULL inherits the dataset name, so later dataset fixes still show.
   const commonName =
-    patch.commonName !== undefined ? patch.commonName : entry.commonName;
-  const editedAt = patch.editedAt ?? null;
-  const deletedAt = patch.deletedAt ?? null;
+    typeof patch.commonName === "string"
+      ? storedCommonName(patch.commonName, entry.commonName)
+      : null;
   await db
     .prepare(
       `INSERT INTO atlas_entries (
          id, atlas_id, canonical_name, common_name, fields_json, status,
-         created_at, updated_at, origin_key, origin_version, edited_at, deleted_at
-       ) VALUES (?, ?, ?, ?, ?, 'accepted', ?, ?, ?, ?, ?, ?)`,
+         created_at, updated_at, origin_key, origin_version, edited_at, deleted_at,
+         field_overrides_json, aliases_json
+       ) VALUES (?, ?, ?, ?, ?, 'accepted', ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
       atlasId,
       entry.canonicalName,
       commonName,
-      JSON.stringify(fields),
+      "{}",
       ts,
       ts,
       entry.key,
       PARASITE_DATASET_VERSION,
-      editedAt,
-      deletedAt,
+      patch.editedAt ?? null,
+      patch.deletedAt ?? null,
+      JSON.stringify(patch.overrides ?? {}),
+      patch.aliasesJson ?? null,
     )
     .run();
   const row = await findEntryById(db, atlasId, id);
@@ -149,6 +164,42 @@ export function parseFieldsPatch(
     throw new HTTPException(400, { message: "Invalid fields" });
   }
   return parsed.data;
+}
+
+export function parseResetFields(raw: unknown): ParasiteFieldKey[] | undefined {
+  if (raw === undefined) return undefined;
+  const known = PARASITE_FIELD_KEYS as readonly string[];
+  if (
+    !Array.isArray(raw) ||
+    raw.some((k) => typeof k !== "string" || !known.includes(k))
+  ) {
+    throw new HTTPException(400, {
+      message: "resetFields must list known field keys",
+    });
+  }
+  return [...new Set(raw as ParasiteFieldKey[])];
+}
+
+/**
+ * Overrides after a write: the merged result diffed against today's dataset,
+ * so a value equal to the dataset clears its override. Reset wins over patch.
+ */
+export function nextFieldOverrides(
+  dataset: ParasiteFields,
+  current: Partial<ParasiteFields>,
+  patch: Partial<ParasiteFields> | undefined,
+  resetFields: ParasiteFieldKey[] | undefined,
+): Partial<ParasiteFields> {
+  const pending: Partial<ParasiteFields> = { ...current, ...patch };
+  for (const key of resetFields ?? []) delete pending[key];
+  const merged = mergeFields(dataset, pending);
+  const out: Partial<ParasiteFields> = {};
+  for (const key of PARASITE_FIELD_KEYS) {
+    if (!sameFieldValue(merged[key], dataset[key])) {
+      Object.assign(out, { [key]: merged[key] });
+    }
+  }
+  return out;
 }
 
 export function parseFocusOverride(raw: unknown): AtlasTier | null {

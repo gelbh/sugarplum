@@ -1,6 +1,6 @@
 import { Hono, type Context } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { overlayAtlas } from "./merge";
+import { mergeOverlayFields, overlayAtlas, overlayOverrides } from "./merge";
 import {
   enrichEntriesWithFocus,
   focusEntryKey,
@@ -25,7 +25,7 @@ import {
 } from "./entryOverlays";
 import { loadParasiteDataset } from "./datasets/parasites/index";
 import { normalizeParasiteName } from "./names";
-import { emptyParasiteFields, type ParasiteFields } from "./templates/parasite";
+import { emptyParasiteFields } from "./templates/parasite";
 import { applySandboxKeyPrefix, sandboxWriteUserId } from "../admin/sandbox-r2";
 import { createR2PutUrl } from "../materials/r2-presign";
 import { sha256Hex } from "../materials/content-hash";
@@ -47,9 +47,12 @@ import {
   findEntryByOrigin,
   insertOverlayFromDataset,
   mergeFields,
+  nextFieldOverrides,
   parseFieldsPatch,
   parseFocusOverride,
+  parseResetFields,
   resolveEntry,
+  storedCommonName,
 } from "./entry-helpers";
 import {
   parseMakeCardsDeckId,
@@ -301,10 +304,36 @@ atlasItemRoutes.post("/entries", async (c) => {
   return c.json(view, 201);
 });
 
+/** Refuse to rebuild a row from a column we cannot read; saving would erase the learner's edits. */
+function requireReadableJsonObject(
+  json: string | null,
+  column: string,
+  rowId: string,
+): void {
+  if (!json) return;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    parsed = undefined;
+  }
+  if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+    return;
+  }
+  console.error("atlas PATCH: stored entry JSON is unreadable", { rowId, column });
+  throw new HTTPException(500, {
+    message: "Stored entry data is unreadable; edit not saved",
+  });
+}
+
 atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
-  let body: { commonName?: unknown; fields?: unknown };
+  let body: {
+    commonName?: unknown;
+    resetFields?: unknown;
+    fields?: unknown;
+  };
   try {
     body = await c.req.json();
   } catch {
@@ -312,6 +341,7 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   }
 
   const fieldsPatch = parseFieldsPatch(body.fields);
+  const resetFields = parseResetFields(body.resetFields);
   const commonNameProvided = "commonName" in body;
   let commonName: string | undefined;
   if (commonNameProvided) {
@@ -321,7 +351,11 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
     commonName = body.commonName.trim();
   }
 
-  if (fieldsPatch === undefined && !commonNameProvided) {
+  if (
+    fieldsPatch === undefined &&
+    !commonNameProvided &&
+    resetFields === undefined
+  ) {
     throw new HTTPException(400, { message: "No changes" });
   }
 
@@ -329,33 +363,79 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
 
   const ts = nowIso();
-  let row: EntryRow;
+  let row: EntryRow | null = null;
 
   if (resolved.kind === "dataset") {
-    row = await insertOverlayFromDataset(db, atlas.id, resolved.entry, {
-      commonName,
-      fields: mergeFields(resolved.entry.fields, fieldsPatch),
-      editedAt: ts,
-    });
+    // A reset on an entry with no overlay has nothing to remove; do not create a row.
+    const onlyReset = fieldsPatch === undefined && !commonNameProvided;
+    if (!onlyReset) {
+      row = await insertOverlayFromDataset(db, atlas.id, resolved.entry, {
+        commonName,
+        overrides: nextFieldOverrides(
+          resolved.entry.fields,
+          {},
+          fieldsPatch,
+          resetFields,
+        ),
+        editedAt: ts,
+      });
+    }
   } else {
     if (resolved.row.deleted_at) {
       throw new HTTPException(409, { message: "Entry is deleted" });
     }
-    const baseFields = JSON.parse(resolved.row.fields_json) as ParasiteFields;
-    const nextFields = mergeFields(baseFields, fieldsPatch);
+    const dataset = resolved.row.origin_key
+      ? datasetByKey().get(resolved.row.origin_key)
+      : undefined;
+    if (resetFields !== undefined && !dataset) {
+      throw new HTTPException(400, {
+        message: "Only built-in parasites have dataset fields to reset",
+      });
+    }
+    const storedOverrides = resolved.row.field_overrides_json ?? null;
+    requireReadableJsonObject(storedOverrides, "field_overrides_json", resolved.row.id);
+    if (storedOverrides === null || !dataset) {
+      requireReadableJsonObject(resolved.row.fields_json, "fields_json", resolved.row.id);
+    }
+    let fieldsJson: string;
+    let overridesJson: string | null;
+    if (dataset) {
+      // overlayOverrides diffs a legacy full copy, so this write converts the row.
+      const current = overlayOverrides(dataset.fields, resolved.row);
+      fieldsJson = "{}";
+      overridesJson = JSON.stringify(
+        nextFieldOverrides(dataset.fields, current, fieldsPatch, resetFields),
+      );
+    } else {
+      // Learner-added rows, and origin rows whose dataset entry is gone, keep full fields.
+      fieldsJson = JSON.stringify(
+        mergeFields(mergeOverlayFields(null, resolved.row), fieldsPatch),
+      );
+      overridesJson = null;
+    }
     const nextCommon =
-      commonName !== undefined ? commonName : resolved.row.common_name;
+      commonName === undefined
+        ? resolved.row.common_name
+        : dataset
+          ? storedCommonName(commonName, dataset.commonName)
+          : commonName;
+    const nextCanonical = resolved.row.canonical_name;
+    const nextAliasesJson = resolved.row.aliases_json ?? null;
     await db
       .prepare(
         `UPDATE atlas_entries
-         SET common_name = ?, fields_json = ?, edited_at = ?, updated_at = ?, status = 'accepted'
+         SET common_name = ?, fields_json = ?, field_overrides_json = ?, edited_at = ?, updated_at = ?,
+             status = 'accepted', canonical_name = ?, aliases_json = ?
          WHERE id = ? AND atlas_id = ?`,
       )
       .bind(
         nextCommon,
-        JSON.stringify(nextFields),
+        fieldsJson,
+        overridesJson,
         ts,
         ts,
+        nextCanonical,
+        nextAliasesJson,
         resolved.row.id,
         atlas.id,
       )
@@ -365,10 +445,11 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
     row = updated;
   }
 
+  // Names feed scanFocus (and Phase 2 pack matching).
   if (commonNameProvided) {
     await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
   }
-  const overlays = await toOverlayRows(db, atlas.id, [row]);
+  const overlays = row ? await toOverlayRows(db, atlas.id, [row]) : [];
   const focus = await loadFocusMap(db, atlas.id);
   const views = await entryViewsWithNotes(
     db,
@@ -379,7 +460,8 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
       await isFocusPackFresh(db, atlas.id),
     ),
   );
-  const view = views.find((v) => v.id === row.id) ?? views[0];
+  const viewId = row?.id ?? entryId;
+  const view = views.find((v) => v.id === viewId) ?? views[0];
   return c.json(view);
 });
 

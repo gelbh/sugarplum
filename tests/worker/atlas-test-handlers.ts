@@ -510,18 +510,51 @@ export function atlasRun(
     normalized.startsWith("UPDATE atlas_entries") &&
     normalized.includes("SET common_name =")
   ) {
-    const [common_name, fields_json, edited_at, updated_at, id, atlas_id] =
-      bound as [string | null, string, string, string, string, string];
+    const [
+      common_name,
+      fields_json,
+      field_overrides_json,
+      edited_at,
+      updated_at,
+      canonical_name,
+      aliases_json,
+      id,
+      atlas_id,
+    ] = bound as [
+      string | null,
+      string,
+      string | null,
+      string,
+      string,
+      string,
+      string | null,
+      string,
+      string,
+    ];
     const row = state.entries.get(id);
     if (!row || row.atlas_id !== atlas_id) {
       return { success: true, meta: { changes: 0 } } as D1Result;
+    }
+    for (const other of state.entries.values()) {
+      if (
+        other.id !== id &&
+        other.atlas_id === atlas_id &&
+        other.canonical_name === canonical_name
+      ) {
+        throw new Error(
+          "UNIQUE constraint failed: atlas_entries.atlas_id, canonical_name",
+        );
+      }
     }
     state.entries.set(id, {
       ...row,
       common_name,
       fields_json,
+      field_overrides_json,
       edited_at,
       updated_at,
+      canonical_name,
+      aliases_json,
       status: "accepted",
     });
     return { success: true, meta: { changes: 1 } } as D1Result;

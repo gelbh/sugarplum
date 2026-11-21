@@ -4,6 +4,7 @@ import { SESSION_COOKIE } from "../../../worker/auth/session";
 import { createTestEnv } from "../test-env";
 import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites/index";
 import type { AtlasEntryView } from "../../../src/atlas/types";
+import arthropods from "../../../worker/atlas/datasets/parasites/arthropods.json";
 
 type Env = ReturnType<typeof createTestEnv>;
 
@@ -164,5 +165,242 @@ describe("stored field overrides on read", () => {
     );
     expect(view?.fields).toEqual({ ...dataset.fields, significance: "Old copy" });
     expect(view?.editedFields).toEqual(["significance"]);
+  });
+});
+
+describe("PATCH /entries/:entryId field overrides", () => {
+  it("stores only the changed key on the first edit of a dataset entry", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const res = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      fields: { significance: "Mine" },
+    });
+    expect(res.status).toBe(200);
+    const view = (await res.json()) as AtlasEntryView;
+    expect(view.editedFields).toEqual(["significance"]);
+    expect(view.fields.family).toBe(datasetEntry("fasciola-hepatica").fields.family);
+    const row = await rawRow(env, view.id);
+    expect(row?.fields_json).toBe("{}");
+    expect(JSON.parse(row!.field_overrides_json!)).toEqual({ significance: "Mine" });
+  });
+
+  it("removes an override when the value is set back to the dataset value", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const first = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      fields: { significance: "Mine" },
+    });
+    const edited = (await first.json()) as AtlasEntryView;
+    const back = await patchEntry(env, atlasId, edited.id, {
+      fields: { significance: datasetEntry("fasciola-hepatica").fields.significance },
+    });
+    expect(back.status).toBe(200);
+    expect(((await back.json()) as AtlasEntryView).editedFields).toEqual([]);
+    expect((await rawRow(env, edited.id))?.field_overrides_json).toBe("{}");
+  });
+
+  it("resetFields removes one override and leaves the others", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const first = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      fields: { significance: "Mine", family: "Editedidae" },
+    });
+    const edited = (await first.json()) as AtlasEntryView;
+    const res = await patchEntry(env, atlasId, edited.id, {
+      resetFields: ["family"],
+    });
+    expect(res.status).toBe(200);
+    const view = (await res.json()) as AtlasEntryView;
+    expect(view.editedFields).toEqual(["significance"]);
+    expect(view.fields.family).toBe(datasetEntry("fasciola-hepatica").fields.family);
+  });
+
+  it("rejects unknown reset keys and resets on learner entries", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const unknown = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      resetFields: ["nope"],
+    });
+    expect(unknown.status).toBe(400);
+    const learner = await createLearnerEntry(env, atlasId, "Madeupius fictus");
+    const res = await patchEntry(env, atlasId, learner.id, {
+      resetFields: ["family"],
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("writes nothing for a reset-only PATCH on an unedited dataset entry", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const res = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      resetFields: ["family"],
+    });
+    expect(res.status).toBe(200);
+    const view = (await res.json()) as AtlasEntryView;
+    expect(view.id).toBe("fasciola-hepatica");
+    expect(view.editedAt).toBeNull();
+  });
+
+  it("converts a legacy full-copy row on its first PATCH", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const dataset = datasetEntry("fasciola-hepatica");
+    await seedOverlayRow(env, atlasId, {
+      id: "e-legacy",
+      originKey: "fasciola-hepatica",
+      fieldsJson: JSON.stringify({ ...dataset.fields, significance: "Old copy" }),
+    });
+    const res = await patchEntry(env, atlasId, "e-legacy", {
+      fields: { family: "Editedidae" },
+    });
+    expect(res.status).toBe(200);
+    const row = await rawRow(env, "e-legacy");
+    expect(row?.fields_json).toBe("{}");
+    expect(JSON.parse(row!.field_overrides_json!)).toEqual({
+      significance: "Old copy",
+      family: "Editedidae",
+    });
+  });
+
+  it("stores empty overrides on a delete-only tombstone", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const soft = await app.request(
+      `/api/atlas/${atlasId}/entries/fasciola-hepatica/soft-delete`,
+      { method: "POST", headers: authHeaders() },
+      env,
+    );
+    expect(soft.status).toBe(204);
+    const row = await env.DB.prepare(
+      "SELECT * FROM atlas_entries WHERE atlas_id = ? AND origin_key = ?",
+    )
+      .bind(atlasId, "fasciola-hepatica")
+      .first<{
+        fields_json: string;
+        field_overrides_json: string | null;
+        common_name: string | null;
+      }>();
+    expect(row?.fields_json).toBe("{}");
+    expect(row?.field_overrides_json).toBe("{}");
+    expect(row?.common_name).toBeNull();
+  });
+
+  it("keeps a NULL common name on a ref-route overlay insert", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const ref = await app.request(
+      `/api/atlas/${atlasId}/entries/fasciola-hepatica/refs`,
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          citation: "Lecture 3 handout",
+          url: "https://example.com/handout",
+        }),
+      },
+      env,
+    );
+    expect(ref.status).toBeLessThan(300);
+    const row = await env.DB.prepare(
+      "SELECT * FROM atlas_entries WHERE atlas_id = ? AND origin_key = ?",
+    )
+      .bind(atlasId, "fasciola-hepatica")
+      .first<{ common_name: string | null }>();
+    expect(row?.common_name).toBeNull();
+    const view = (await listEntries(env, atlasId)).find(
+      (e) => e.originKey === "fasciola-hepatica",
+    );
+    expect(view?.commonName).toBe(datasetEntry("fasciola-hepatica").commonName);
+    expect(view?.commonNameEdited).toBe(false);
+  });
+
+  it("stores NULL when the common name is set back to the dataset name", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const datasetName = datasetEntry("fasciola-hepatica").commonName;
+    const first = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      commonName: "Sheep fluke",
+    });
+    const edited = (await first.json()) as AtlasEntryView;
+    expect(edited.commonNameEdited).toBe(true);
+    expect((await rawRow(env, edited.id))?.common_name).toBe("Sheep fluke");
+
+    const back = await patchEntry(env, atlasId, edited.id, {
+      commonName: datasetName,
+    });
+    const view = (await back.json()) as AtlasEntryView;
+    expect(view.commonName).toBe(datasetName);
+    expect(view.commonNameEdited).toBe(false);
+    expect((await rawRow(env, edited.id))?.common_name).toBeNull();
+
+    const fresh = await patchEntry(env, atlasId, "toxocara-canis", {
+      commonName: datasetEntry("toxocara-canis").commonName,
+    });
+    const freshView = (await fresh.json()) as AtlasEntryView;
+    expect((await rawRow(env, freshView.id))?.common_name).toBeNull();
+  });
+
+  it("Verify 7: a later dataset change shows through; the edited field stays and resets", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const res = await patchEntry(env, atlasId, "psoroptes-ovis", {
+      fields: { significance: "Student version" },
+    });
+    const edited = (await res.json()) as AtlasEntryView;
+
+    // Simulate a dataset PR: loadParasiteDataset re-parses the imported JSON on every call.
+    const json = (
+      arthropods as { entries: { key: string; fields: { distribution: string | null } }[] }
+    ).entries.find((e) => e.key === "psoroptes-ovis")!;
+    const before = json.fields.distribution;
+    json.fields.distribution = "Changed by a dataset PR";
+    try {
+      const view = (await listEntries(env, atlasId)).find(
+        (e) => e.originKey === "psoroptes-ovis",
+      )!;
+      expect(view.fields.distribution).toBe("Changed by a dataset PR");
+      expect(view.fields.significance).toBe("Student version");
+      expect(view.editedFields).toEqual(["significance"]);
+
+      const reset = await patchEntry(env, atlasId, edited.id, {
+        resetFields: ["significance"],
+      });
+      const after = (await reset.json()) as AtlasEntryView;
+      expect(after.fields.significance).toBe(
+        datasetEntry("psoroptes-ovis").fields.significance,
+      );
+      expect(after.editedFields).toEqual([]);
+    } finally {
+      json.fields.distribution = before;
+    }
+  });
+
+  it("refuses to overwrite an unparseable overrides column", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    await seedOverlayRow(env, atlasId, {
+      id: "e-corrupt",
+      originKey: "fasciola-hepatica",
+      fieldsJson: "{}",
+      overridesJson: "{not json",
+    });
+    const res = await patchEntry(env, atlasId, "e-corrupt", {
+      fields: { family: "Editedidae" },
+    });
+    expect(res.status).toBe(500);
+    const row = await rawRow(env, "e-corrupt");
+    expect(row?.field_overrides_json).toBe("{not json");
+    expect(row?.fields_json).toBe("{}");
   });
 });
