@@ -51,6 +51,8 @@ type EntryOverlayRow = {
   fields_json: string;
   edited_at: string | null;
   deleted_at: string | null;
+  field_overrides_json: string | null;
+  aliases_json: string | null;
 };
 
 export function focusEntryKey(entry: {
@@ -157,7 +159,7 @@ async function loadMergedEntries(
   const { results } = await db
     .prepare(
       `SELECT id, origin_key, origin_version, canonical_name, common_name,
-              fields_json, edited_at, deleted_at
+              fields_json, edited_at, deleted_at, field_overrides_json, aliases_json
        FROM atlas_entries WHERE atlas_id = ?`,
     )
     .bind(atlasId)
@@ -171,6 +173,8 @@ async function loadMergedEntries(
     fields_json: e.fields_json,
     edited_at: e.edited_at,
     deleted_at: e.deleted_at,
+    field_overrides_json: e.field_overrides_json,
+    aliases_json: e.aliases_json,
   }));
   return overlayAtlas(loadParasiteDataset().entries, overlays);
 }

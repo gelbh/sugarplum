@@ -53,7 +53,8 @@ export async function findEntryById(
   return db
     .prepare(
       `SELECT id, atlas_id, canonical_name, common_name, fields_json, status,
-              created_at, updated_at, origin_key, origin_version, edited_at, deleted_at
+              created_at, updated_at, origin_key, origin_version, edited_at, deleted_at,
+              field_overrides_json, aliases_json
        FROM atlas_entries WHERE atlas_id = ? AND id = ?`,
     )
     .bind(atlasId, entryId)
@@ -68,7 +69,8 @@ export async function findEntryByOrigin(
   return db
     .prepare(
       `SELECT id, atlas_id, canonical_name, common_name, fields_json, status,
-              created_at, updated_at, origin_key, origin_version, edited_at, deleted_at
+              created_at, updated_at, origin_key, origin_version, edited_at, deleted_at,
+              field_overrides_json, aliases_json
        FROM atlas_entries WHERE atlas_id = ? AND origin_key = ?`,
     )
     .bind(atlasId, originKey)

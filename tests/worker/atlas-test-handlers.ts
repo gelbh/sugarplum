@@ -19,6 +19,8 @@ export type AtlasEntryRow = {
   origin_version: number | null;
   edited_at: string | null;
   deleted_at: string | null;
+  field_overrides_json?: string | null;
+  aliases_json?: string | null;
 };
 
 export type AtlasRefRow = {
@@ -469,6 +471,13 @@ export function atlasRun(
       origin_version,
       edited_at,
       deleted_at,
+      // When listed, the 0042 columns are always the last two bound values.
+      field_overrides_json: normalized.includes("field_overrides_json")
+        ? ((bound[bound.length - 2] as string | null) ?? null)
+        : null,
+      aliases_json: normalized.includes("aliases_json")
+        ? ((bound[bound.length - 1] as string | null) ?? null)
+        : null,
     });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }

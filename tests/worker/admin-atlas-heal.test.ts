@@ -226,4 +226,52 @@ describe("POST /api/admin/atlas/heal-wiped-fields", () => {
     const againBody = (await again.json()) as { healed: number };
     expect(againBody.healed).toBe(0);
   });
+
+  it("skips rows that already store field overrides", async () => {
+    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
+    seedAdmin(env);
+    seedLearnerWithAtlas(env);
+    const { id: atlasId } = await createAtlas(env);
+    const dataset = loadParasiteDataset().entries.find(
+      (e) => e.key === "fasciola-hepatica",
+    )!;
+    await env.DB.prepare(
+      `INSERT INTO atlas_entries (
+         id, atlas_id, canonical_name, common_name, fields_json, status,
+         created_at, updated_at, origin_key, origin_version, edited_at, deleted_at,
+         field_overrides_json, aliases_json
+       ) VALUES (?, ?, ?, ?, ?, 'accepted', ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        "e-over",
+        atlasId,
+        dataset.canonicalName,
+        "Common liver fluke",
+        "{}",
+        "2026-02-01T00:00:00.000Z",
+        "2026-02-01T00:00:00.000Z",
+        "fasciola-hepatica",
+        1,
+        "2026-02-01T00:00:00.000Z",
+        null,
+        "{}",
+        null,
+      )
+      .run();
+
+    const res = await app.request(
+      "/api/admin/atlas/heal-wiped-fields",
+      {
+        method: "POST",
+        headers: {
+          cookie: `${SESSION_COOKIE}=sess-admin`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ atlasId }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ healed: 0, skipped: 1 });
+  });
 });

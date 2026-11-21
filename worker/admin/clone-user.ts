@@ -817,7 +817,8 @@ async function cloneAtlases(
     const { results: entries } = await db
       .prepare(
         `SELECT id, atlas_id, canonical_name, common_name, fields_json, status,
-                created_at, updated_at, origin_key, origin_version, edited_at, deleted_at
+                created_at, updated_at, origin_key, origin_version, edited_at, deleted_at,
+                field_overrides_json, aliases_json
          FROM atlas_entries WHERE atlas_id = ?`.replace(/\s+/g, " "),
       )
       .bind(atlas.id)
@@ -834,6 +835,8 @@ async function cloneAtlases(
         origin_version: number | null;
         edited_at: string | null;
         deleted_at: string | null;
+        field_overrides_json: string | null;
+        aliases_json: string | null;
       }>();
 
     for (const entry of entries ?? []) {
@@ -842,8 +845,9 @@ async function cloneAtlases(
         .prepare(
           `INSERT INTO atlas_entries (
              id, atlas_id, canonical_name, common_name, fields_json, status,
-             created_at, updated_at, origin_key, origin_version, edited_at, deleted_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`.replace(/\s+/g, " "),
+             created_at, updated_at, origin_key, origin_version, edited_at, deleted_at,
+             field_overrides_json, aliases_json
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`.replace(/\s+/g, " "),
         )
         .bind(
           entryId,
@@ -858,6 +862,8 @@ async function cloneAtlases(
           entry.origin_version,
           entry.edited_at,
           entry.deleted_at,
+          entry.field_overrides_json ?? null,
+          entry.aliases_json ?? null,
         )
         .run();
     }

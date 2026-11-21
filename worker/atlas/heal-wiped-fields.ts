@@ -59,6 +59,7 @@ type OverlayScanRow = {
   atlas_id: string;
   origin_key: string;
   fields_json: string;
+  field_overrides_json?: string | null;
   edited_at: string | null;
 };
 
@@ -74,7 +75,7 @@ export async function runHealWipedFields(
   if (opts.atlasId) {
     const result = await db
       .prepare(
-        `SELECT id, atlas_id, origin_key, fields_json, edited_at
+        `SELECT id, atlas_id, origin_key, fields_json, field_overrides_json, edited_at
          FROM atlas_entries
          WHERE atlas_id = ? AND deleted_at IS NULL AND origin_key IS NOT NULL`,
       )
@@ -84,7 +85,7 @@ export async function runHealWipedFields(
   } else if (opts.userId) {
     const result = await db
       .prepare(
-        `SELECT e.id, e.atlas_id, e.origin_key, e.fields_json, e.edited_at
+        `SELECT e.id, e.atlas_id, e.origin_key, e.fields_json, e.field_overrides_json, e.edited_at
          FROM atlas_entries e
          JOIN atlases a ON a.id = e.atlas_id
          WHERE a.user_id = ?
@@ -97,7 +98,7 @@ export async function runHealWipedFields(
   } else {
     const result = await db
       .prepare(
-        `SELECT id, atlas_id, origin_key, fields_json, edited_at
+        `SELECT id, atlas_id, origin_key, fields_json, field_overrides_json, edited_at
          FROM atlas_entries
          WHERE deleted_at IS NULL AND origin_key IS NOT NULL`,
       )
@@ -112,6 +113,11 @@ export async function runHealWipedFields(
   for (const row of rows) {
     // Defensive: mocks / loose SELECTs may return rows SQL would exclude.
     if (!row.origin_key) {
+      skipped += 1;
+      continue;
+    }
+    // Override rows read through to the dataset, so no field can be wiped.
+    if (row.field_overrides_json != null) {
       skipped += 1;
       continue;
     }
