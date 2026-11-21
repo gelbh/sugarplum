@@ -446,6 +446,41 @@ describe("PATCH /entries/:entryId field overrides", () => {
     expect(JSON.parse(row!.fields_json)).toEqual(view.fields);
   });
 
+  it("drops a stored diagnosticStage override that conflicts with a flagged dataset stage", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const giardia = datasetEntry("giardia-duodenalis");
+    const flagged = giardia.fields.lifecycleStages.find((s) => s.diagnostic)!;
+    expect(flagged.name).not.toBe("trophozoite");
+    await seedOverlayRow(env, atlasId, {
+      id: "e-diag",
+      originKey: "giardia-duodenalis",
+      fieldsJson: "{}",
+      overridesJson: JSON.stringify({ diagnosticStage: "trophozoite" }),
+    });
+    const listed = (await listEntries(env, atlasId)).find((e) => e.id === "e-diag")!;
+    expect(listed.fields.diagnosticStage).toBe(flagged.name);
+    expect(listed.editedFields).toEqual([]);
+
+    const res = await patchEntry(env, atlasId, "e-diag", { commonName: "Beaver fever" });
+    expect(res.status).toBe(200);
+    const view = (await res.json()) as AtlasEntryView;
+    expect(view.editedFields).toEqual([]);
+    expect(view.fields.diagnosticStage).toBe(flagged.name);
+    expect(JSON.parse((await rawRow(env, "e-diag"))!.field_overrides_json!)).toEqual({});
+  });
+
+  it("still rejects a submitted diagnosticStage that conflicts with the flagged stage", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const res = await patchEntry(env, atlasId, "giardia-duodenalis", {
+      fields: { diagnosticStage: "trophozoite" },
+    });
+    expect(res.status).toBe(400);
+  });
+
   it("refuses to overwrite an unparseable overrides column", async () => {
     const env = createTestEnv();
     seedOwner(env);

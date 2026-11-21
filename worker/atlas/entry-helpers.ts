@@ -15,6 +15,7 @@ import {
 import type { DatasetEntry } from "./datasets/schema";
 import {
   diagnosticOwnershipIssue,
+  diagnosticStageFromStages,
   syncDiagnosticOwnership,
 } from "./lifecycleDiagnostic";
 import {
@@ -291,6 +292,25 @@ export function parseResetFields(raw: unknown): ParasiteFieldKey[] | undefined {
 }
 
 /**
+ * A stored `diagnosticStage` override that names a different stage than the
+ * flagged one (dataset or overridden stages) is stale: the stage flag wins,
+ * as on read. Dropping it keeps unrelated PATCHes from failing validation.
+ */
+function dropConflictingDiagnosticStage(
+  pending: Partial<ParasiteFields>,
+  dataset: ParasiteFields,
+): void {
+  const mirror = pending.diagnosticStage;
+  if (!mirror) return;
+  const flagged = diagnosticStageFromStages(
+    pending.lifecycleStages ?? dataset.lifecycleStages,
+  );
+  if (flagged && flagged.toLowerCase() !== mirror.toLowerCase()) {
+    delete pending.diagnosticStage;
+  }
+}
+
+/**
  * Overrides after a write: the merged result diffed against today's dataset,
  * so a value equal to the dataset clears its override. Reset wins over patch.
  * `fields` is the merged snapshot.
@@ -303,6 +323,9 @@ function nextFieldOverrides(
 ): { overrides: Partial<ParasiteFields>; fields: ParasiteFields } {
   const pending: Partial<ParasiteFields> = { ...current, ...patch };
   for (const key of resetFields ?? []) delete pending[key];
+  if (!(patch && "diagnosticStage" in patch)) {
+    dropConflictingDiagnosticStage(pending, dataset);
+  }
   const fields = mergeFields(dataset, pending);
   const overrides: Record<string, unknown> = {};
   for (const key of PARASITE_FIELD_KEYS) {

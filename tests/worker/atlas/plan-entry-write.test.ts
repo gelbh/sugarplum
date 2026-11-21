@@ -174,6 +174,24 @@ describe("planEntryWrite", () => {
     expect(plan.commonName).toBe("Sheep fluke");
   });
 
+  it("drops a stale diagnosticStage override when a stage is flagged", () => {
+    const giardia = loadParasiteDataset().entries.find(
+      (e) => e.key === "giardia-duodenalis",
+    )!;
+    const plan = planEntryWrite(
+      row({
+        origin_key: giardia.key,
+        field_overrides_json: JSON.stringify({
+          diagnosticStage: "trophozoite",
+          significance: "Mine",
+        }),
+      }),
+      giardia,
+      { commonName: "Beaver fever" },
+    );
+    expect(JSON.parse(plan.overridesJson!)).toEqual({ significance: "Mine" });
+  });
+
   it("refuses to plan from an unreadable overrides column", () => {
     expect(() =>
       planEntryWrite(row({ field_overrides_json: "{not json" }), dataset, {
