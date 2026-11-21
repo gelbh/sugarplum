@@ -40,6 +40,7 @@ import {
   requireParam,
 } from "./ownership";
 import {
+  canonicalNameTaken,
   datasetByCanonical,
   datasetByKey,
   deletedEntryViews,
@@ -311,6 +312,7 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
     commonName?: unknown;
     resetFields?: unknown;
     aliases?: unknown;
+    canonicalName?: unknown;
     fields?: unknown;
   };
   try {
@@ -322,6 +324,13 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   const fieldsPatch = parseFieldsPatch(body.fields);
   const resetFields = parseResetFields(body.resetFields);
   const aliases = parseAliasesPatch(body.aliases);
+  const canonicalProvided = "canonicalName" in body;
+  // A non-string reads as empty, so the plan rejects it as "canonicalName required".
+  const canonicalName = canonicalProvided
+    ? typeof body.canonicalName === "string"
+      ? body.canonicalName
+      : ""
+    : undefined;
   const setAndReset = (resetFields ?? []).filter(
     (key) => fieldsPatch !== undefined && key in fieldsPatch,
   );
@@ -343,7 +352,8 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
     fieldsPatch === undefined &&
     !commonNameProvided &&
     resetFields === undefined &&
-    aliases === undefined
+    aliases === undefined &&
+    !canonicalProvided
   ) {
     throw new HTTPException(400, { message: "No changes" });
   }
@@ -352,13 +362,16 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
 
   const ts = nowIso();
-  const input = { fieldsPatch, resetFields, commonName, aliases };
+  const input = { fieldsPatch, resetFields, commonName, aliases, canonicalName };
   let row: EntryRow | null = null;
 
   if (resolved.kind === "dataset") {
     // A reset on an entry with no overlay has nothing to remove; do not create a row.
     const onlyReset =
-      fieldsPatch === undefined && !commonNameProvided && aliases === undefined;
+      fieldsPatch === undefined &&
+      !commonNameProvided &&
+      aliases === undefined &&
+      !canonicalProvided;
     if (!onlyReset) {
       row = await insertOverlayFromDataset(db, atlas.id, resolved.entry, {
         plan: planEntryWrite(null, resolved.entry, input),
@@ -374,13 +387,25 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
       : null;
     const plan = planEntryWrite(resolved.row, dataset, input);
     // Columns the patch did not touch are left out of the SET.
+    const renaming =
+      plan.canonicalName !== undefined &&
+      plan.canonicalName !== resolved.row.canonical_name;
+    if (
+      renaming &&
+      (await canonicalNameTaken(db, atlas.id, plan.canonicalName!, resolved.row.id))
+    ) {
+      throw new HTTPException(409, { message: "Entry already exists" });
+    }
     const optional: { column: string; value: string | null }[] = [];
+    if (renaming) {
+      optional.push({ column: "canonical_name", value: plan.canonicalName! });
+    }
     if (plan.aliasesJson !== undefined) {
       optional.push({ column: "aliases_json", value: plan.aliasesJson });
     }
     const optionalSet = optional.map((o) => `, ${o.column} = ?`).join("");
     // Optimistic guard: the plan was built from this read of the row.
-    const result = await db
+    const update = db
       .prepare(
         `UPDATE atlas_entries
          SET common_name = ?, fields_json = ?, field_overrides_json = ?, edited_at = ?, updated_at = ?,
@@ -397,8 +422,17 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
         resolved.row.id,
         atlas.id,
         resolved.row.updated_at,
-      )
-      .run();
+      );
+    let result: D1Result;
+    try {
+      result = await update.run();
+    } catch (err) {
+      // UNIQUE (atlas_id, canonical_name) race after the pre-check.
+      if (renaming && String(err).includes("UNIQUE constraint failed")) {
+        throw new HTTPException(409, { message: "Entry already exists" });
+      }
+      throw err;
+    }
     if (result.meta.changes === 0) {
       throw new HTTPException(409, {
         message: "Entry changed, reload and try again",
@@ -410,7 +444,11 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   }
 
   // Names and aliases feed scanFocus and course-pack matching.
-  if (commonNameProvided || aliases !== undefined) {
+  if (
+    commonNameProvided ||
+    aliases !== undefined ||
+    canonicalProvided
+  ) {
     await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
   }
   const overlays = row ? await toOverlayRows(db, atlas.id, [row]) : [];

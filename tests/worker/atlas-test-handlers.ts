@@ -118,6 +118,24 @@ export function atlasFirst<T>(
   bound: unknown[],
 ): T | null {
   if (
+    normalized.includes("FROM atlas_entries WHERE atlas_id =") &&
+    normalized.includes("AND canonical_name =") &&
+    normalized.includes("AND id <>")
+  ) {
+    const [atlasId, canonicalName, exceptId] = bound as [string, string, string];
+    for (const row of state.entries.values()) {
+      if (
+        row.atlas_id === atlasId &&
+        row.canonical_name === canonicalName &&
+        row.id !== exceptId
+      ) {
+        return { id: row.id } as T;
+      }
+    }
+    return null;
+  }
+
+  if (
     normalized.startsWith(
       "SELECT id, user_id, template_key, created_at FROM atlases WHERE id =",
     )

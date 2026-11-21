@@ -732,3 +732,92 @@ describe("PATCH /entries/:entryId aliases", () => {
     expect(after?.tier).toBe("key");
   });
 });
+
+const BUILT_IN_MESSAGE =
+  "Scientific name of a built-in parasite cannot change; add an alias instead";
+
+describe("PATCH /entries/:entryId canonicalName", () => {
+  it("returns 400 for a dataset entry and writes no overlay", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const res = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      canonicalName: "Fasciola gigantica",
+    });
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { message: string }).message).toBe(
+      BUILT_IN_MESSAGE,
+    );
+    const view = (await listEntries(env, atlasId)).find(
+      (e) => e.id === "fasciola-hepatica",
+    );
+    expect(view?.editedAt).toBeNull();
+  });
+
+  it("returns 400 for an edited dataset overlay row", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const first = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      commonName: "Edited fluke",
+    });
+    const edited = (await first.json()) as AtlasEntryView;
+    const res = await patchEntry(env, atlasId, edited.id, {
+      canonicalName: "Fasciola gigantica",
+    });
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { message: string }).message).toBe(
+      BUILT_IN_MESSAGE,
+    );
+  });
+
+  it("renames a learner entry with normalization", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const added = await createLearnerEntry(env, atlasId, "Madeupius fictus");
+    const res = await patchEntry(env, atlasId, added.id, {
+      canonicalName: "  madeupius renamus ",
+    });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as AtlasEntryView).canonicalName).toBe(
+      "Madeupius renamus",
+    );
+    const listed = (await listEntries(env, atlasId)).find(
+      (e) => e.id === added.id,
+    );
+    expect(listed?.canonicalName).toBe("Madeupius renamus");
+  });
+
+  it("returns 409 for a duplicate learner or dataset name, and accepts its own name", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    await createLearnerEntry(env, atlasId, "Madeupius renamus");
+    const other = await createLearnerEntry(env, atlasId, "Madeupius alter");
+    const dupLearner = await patchEntry(env, atlasId, other.id, {
+      canonicalName: "Madeupius renamus",
+    });
+    expect(dupLearner.status).toBe(409);
+    const dupDataset = await patchEntry(env, atlasId, other.id, {
+      canonicalName: "Fasciola hepatica",
+    });
+    expect(dupDataset.status).toBe(409);
+    const same = await patchEntry(env, atlasId, other.id, {
+      canonicalName: "Madeupius alter",
+    });
+    expect(same.status).toBe(200);
+  });
+
+  it("returns 400 for an empty or unparseable name", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    const added = await createLearnerEntry(env, atlasId, "Madeupius fictus");
+    const res = await patchEntry(env, atlasId, added.id, { canonicalName: "" });
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { message: string }).message).toMatch(
+      /canonicalName required/,
+    );
+  });
+});

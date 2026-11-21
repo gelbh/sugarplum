@@ -29,6 +29,7 @@ import {
 } from "./templates/parasite";
 import type { AtlasEntryView, AtlasTier } from "../../src/atlas/types";
 import { newId, nowIso } from "./ownership";
+import { normalizeParasiteName } from "./names";
 import {
   ALIAS_MAX_CHARS,
   ALIAS_MAX_ITEMS,
@@ -119,6 +120,8 @@ export type EntryWritePlan = {
   commonName: string | null;
   /** Present only when the patch sets aliases; absent means leave the column alone. */
   aliasesJson?: string | null;
+  /** Normalized rename of a learner-added entry; absent means no rename. */
+  canonicalName?: string;
 };
 
 export type EntryWriteInput = {
@@ -127,7 +130,33 @@ export type EntryWriteInput = {
   commonName?: string;
   /** Already cleaned by `parseAliasesPatch`. */
   aliases?: string[];
+  /** Raw submitted scientific name; validated by the plan. */
+  canonicalName?: string;
 };
+
+const BUILT_IN_NAME_MESSAGE =
+  "Scientific name of a built-in parasite cannot change; add an alias instead";
+
+/**
+ * The stored scientific name for a rename. Built-in (dataset-origin) entries
+ * never rename; a learner entry may not take a dataset name. Uniqueness among
+ * the atlas's own rows needs the DB and is the route's job.
+ */
+function plannedCanonicalName(originKey: string | null, raw: string): string {
+  if (originKey !== null) {
+    throw new HTTPException(400, { message: BUILT_IN_NAME_MESSAGE });
+  }
+  const normalized = normalizeParasiteName(raw.trim());
+  if (!normalized) {
+    throw new HTTPException(400, { message: "canonicalName required" });
+  }
+  if (datasetByCanonical().has(normalized.canonical)) {
+    throw new HTTPException(409, {
+      message: "Entry already exists in the dataset",
+    });
+  }
+  return normalized.canonical;
+}
 
 /** Refuse to rebuild a row from a column we cannot read; saving would erase the learner's edits. */
 function requireReadable(
@@ -155,8 +184,17 @@ export function planEntryWrite(
   dataset: DatasetEntry | null,
   input: EntryWriteInput,
 ): EntryWritePlan {
+  // Checked first so a rejected rename never creates an overlay row.
+  const canonicalName =
+    input.canonicalName === undefined
+      ? undefined
+      : plannedCanonicalName(
+          row ? row.origin_key : (dataset?.key ?? null),
+          input.canonicalName,
+        );
   const plan = planFieldColumns(row, dataset, input);
   if (input.aliases !== undefined) plan.aliasesJson = aliasesJson(input.aliases);
+  if (canonicalName !== undefined) plan.canonicalName = canonicalName;
   return plan;
 }
 
@@ -406,4 +444,21 @@ export function mergeFields(
     lifecycleStages: synced.stages,
     diagnosticStage: synced.diagnosticStage,
   };
+}
+
+/** True when another row in the atlas (deleted or not) already uses the name. */
+export async function canonicalNameTaken(
+  db: D1Database,
+  atlasId: string,
+  canonicalName: string,
+  exceptId: string,
+): Promise<boolean> {
+  const hit = await db
+    .prepare(
+      `SELECT id FROM atlas_entries
+       WHERE atlas_id = ? AND canonical_name = ? AND id <> ?`,
+    )
+    .bind(atlasId, canonicalName, exceptId)
+    .first<{ id: string }>();
+  return hit !== null;
 }

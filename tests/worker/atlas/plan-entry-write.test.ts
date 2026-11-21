@@ -256,3 +256,60 @@ describe("parseAliasesPatch", () => {
     expect(aliasesJson(["a"])).toBe('["a"]');
   });
 });
+
+describe("planEntryWrite canonicalName", () => {
+  const learner = () =>
+    row({
+      origin_key: null,
+      origin_version: null,
+      canonical_name: "Madeupius fictus",
+      fields_json: JSON.stringify({ ...emptyParasiteFields(), group: "nematode" }),
+      field_overrides_json: null,
+    });
+
+  function status(fn: () => unknown): number | undefined {
+    try {
+      fn();
+    } catch (e) {
+      return e instanceof HTTPException ? e.status : undefined;
+    }
+    return undefined;
+  }
+
+  it("leaves the name unwritten when the patch omits it", () => {
+    expect(planEntryWrite(learner(), null, {}).canonicalName).toBeUndefined();
+  });
+
+  it("normalizes a learner rename", () => {
+    expect(
+      planEntryWrite(learner(), null, { canonicalName: "  madeupius renamus " })
+        .canonicalName,
+    ).toBe("Madeupius renamus");
+  });
+
+  it("refuses to rename any dataset-origin entry", () => {
+    expect(() =>
+      planEntryWrite(null, dataset, { canonicalName: "Fasciola gigantica" }),
+    ).toThrow(/built-in parasite cannot change/);
+    expect(() =>
+      planEntryWrite(row({}), dataset, { canonicalName: "Fasciola gigantica" }),
+    ).toThrow(/built-in parasite cannot change/);
+    // Origin row whose dataset entry left the bundle is still built-in.
+    expect(() =>
+      planEntryWrite(row({ origin_key: "gone" }), null, {
+        canonicalName: "Fasciola gigantica",
+      }),
+    ).toThrow(/built-in parasite cannot change/);
+  });
+
+  it("returns 400 for an empty name and 409 for a dataset name", () => {
+    expect(status(() => planEntryWrite(learner(), null, { canonicalName: "" }))).toBe(
+      400,
+    );
+    expect(
+      status(() =>
+        planEntryWrite(learner(), null, { canonicalName: dataset.canonicalName }),
+      ),
+    ).toBe(409);
+  });
+});
