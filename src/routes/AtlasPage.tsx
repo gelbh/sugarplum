@@ -374,9 +374,7 @@ export default function AtlasPage({
           canMutate ? (section) => setEditTarget({ entry, section }) : undefined
         }
         onResetField={
-          canMutate && entry.originKey
-            ? (field) => void onResetField(entry, field)
-            : undefined
+          canMutate ? (field) => void onResetField(entry, field) : undefined
         }
         resettingFields={resettingFields}
         onEditLifecycle={
