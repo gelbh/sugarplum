@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { act, createElement } from "react";
+import { act, createElement, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -478,6 +478,90 @@ describe("EditEntryDialog sections", () => {
       document.body.querySelector('button[aria-label="Reset Significance"]'),
     ).toBeNull();
     expect(onDone).toHaveBeenCalled();
+  });
+
+  it("resets lifecycle stages and then saves without a stale diagnosticStage", async () => {
+    const stage = (name: string) =>
+      lifecycleStageSchema.parse({ name, diagnostic: true });
+    const edited = entry({
+      originKey: "psoroptes-ovis",
+      editedFields: ["lifecycleStages"],
+      fields: {
+        ...emptyParasiteFields(),
+        group: "arthropod",
+        lifecycleStages: [stage("egg")],
+        diagnosticStage: "egg",
+      } as AtlasEntryView["fields"],
+    });
+    const fresh = {
+      ...edited,
+      editedFields: [],
+      fields: {
+        ...edited.fields,
+        lifecycleStages: [stage("adult")],
+        diagnosticStage: "adult",
+      },
+    };
+    vi.mocked(resetEntryFields).mockResolvedValueOnce(fresh);
+    vi.mocked(patchEntry).mockResolvedValueOnce(fresh);
+    await render(editDialog({ entry: edited }));
+    await act(async () => {
+      document.body
+        .querySelector<HTMLButtonElement>(
+          'button[aria-label="Reset Lifecycle stages"]',
+        )!
+        .click();
+    });
+    expect(fieldByLabel("Diagnostic stage").value).toBe("adult");
+    await typeInto(fieldByLabel("Vector role"), "Mechanical");
+    await submitForm();
+    expect(patchEntry).toHaveBeenCalledWith("atlas-1", "e1", {
+      fields: { vectorRole: "Mechanical" },
+    });
+  });
+
+  it("keeps another field's unsaved edit across a reset while the page reloads", async () => {
+    const edited = entry({
+      originKey: "psoroptes-ovis",
+      editedFields: ["significance"],
+      fields: {
+        ...emptyParasiteFields(),
+        group: "arthropod",
+        significance: "Mine",
+      } as AtlasEntryView["fields"],
+    });
+    const fresh = {
+      ...edited,
+      editedFields: [],
+      fields: { ...edited.fields, significance: "Dataset text" },
+    };
+    vi.mocked(resetEntryFields).mockResolvedValueOnce(fresh);
+    vi.mocked(patchEntry).mockResolvedValueOnce(fresh);
+    // Mirrors AtlasPage: the dialog entry is a state snapshot, and onDone
+    // re-renders the page with a reloaded list.
+    function Page() {
+      const [editEntry] = useState<AtlasEntryView | null>(edited);
+      const [, setReloads] = useState(0);
+      return createElement(EditEntryDialog, {
+        open: editEntry !== null,
+        atlasId: "atlas-1",
+        entry: editEntry,
+        onClose: () => {},
+        onDone: () => setReloads((n) => n + 1),
+      });
+    }
+    await render(createElement(Page));
+    await typeInto(fieldByLabel("Vector role"), "Unsaved vector");
+    await act(async () => {
+      document.body
+        .querySelector<HTMLButtonElement>('button[aria-label="Reset Significance"]')!
+        .click();
+    });
+    expect(fieldByLabel("Vector role").value).toBe("Unsaved vector");
+    await submitForm();
+    expect(patchEntry).toHaveBeenCalledWith("atlas-1", "e1", {
+      fields: { vectorRole: "Unsaved vector" },
+    });
   });
 
   it("runs afterSave after patchEntry with the sent patch and renders footerExtra", async () => {

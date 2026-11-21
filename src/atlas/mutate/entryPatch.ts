@@ -236,19 +236,35 @@ export function isEmptyPatch(patch: EntryPatch): boolean {
 const FIELD_DRAFT_KEYS: Partial<Record<FieldKey, (keyof EntryDraft)[]>> = {
   pppDays: ["pppMin", "pppMax"],
 };
+const PPP_DRAFT_KEYS: (keyof EntryDraft)[] = ["pppMin", "pppMax"];
 
-/** After a per-field reset: take that field's inputs from the server view, keep other edits. */
+/**
+ * After a per-field reset: the reset field's inputs come from the fresh view,
+ * and so does every other input the student has not touched since `before`.
+ * The PPP inputs move together so a reset never leaves a half range.
+ */
 export function withFieldFromEntry(
   draft: EntryDraft,
-  entry: AtlasEntryView,
+  before: AtlasEntryView,
+  after: AtlasEntryView,
   field: FieldKey,
 ): EntryDraft {
-  const fresh = draftFromEntry(entry);
-  const keys =
+  const old = draftFromEntry(before);
+  const fresh = draftFromEntry(after);
+  const resetKeys =
     FIELD_DRAFT_KEYS[field] ??
     (field in fresh ? [field as keyof EntryDraft] : []);
+  const untouched = (keys: (keyof EntryDraft)[]) =>
+    keys.every((k) => same(draft[k], old[k]));
   const next = { ...draft };
-  for (const key of keys) Object.assign(next, { [key]: fresh[key] });
+  const take = (keys: (keyof EntryDraft)[]) => {
+    for (const key of keys) Object.assign(next, { [key]: fresh[key] });
+  };
+  take(resetKeys);
+  if (untouched(PPP_DRAFT_KEYS)) take(PPP_DRAFT_KEYS);
+  for (const key of Object.keys(fresh) as (keyof EntryDraft)[]) {
+    if (!PPP_DRAFT_KEYS.includes(key) && untouched([key])) take([key]);
+  }
   return next;
 }
 

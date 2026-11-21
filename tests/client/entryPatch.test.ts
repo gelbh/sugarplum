@@ -129,23 +129,74 @@ describe("diffEntryPatch", () => {
 });
 
 describe("withFieldFromEntry", () => {
-  it("copies only the reset field's inputs from the fresh view", () => {
+  const stage = (name: string, diagnostic: boolean) => ({
+    name,
+    location: null,
+    hostRole: null,
+    host: null,
+    durationDays: null,
+    infective: false,
+    diagnostic,
+    transmission: null,
+    note: null,
+    imageId: null,
+  });
+
+  it("always takes the reset field from the fresh view", () => {
+    const e = entry();
+    const dirty = { ...draftFromEntry(e), significance: "Unsaved" };
+    const fresh = entry({
+      fields: { ...e.fields, significance: "Dataset text" },
+    });
+    expect(withFieldFromEntry(dirty, e, fresh, "significance").significance).toBe(
+      "Dataset text",
+    );
+  });
+
+  it("refreshes untouched keys and keeps the student's other edits", () => {
     const e = entry();
     const dirty = {
       ...draftFromEntry(e),
       significance: "Unsaved",
-      vectorRole: "Unsaved vector",
       pppMin: "1",
     };
     const fresh = entry({
-      fields: { ...e.fields, significance: "Dataset text", pppDays: null },
+      fields: {
+        ...e.fields,
+        significance: "Dataset text",
+        family: "Psoroptidae",
+        pppDays: null,
+      },
     });
-    const afterSig = withFieldFromEntry(dirty, fresh, "significance");
-    expect(afterSig.significance).toBe("Dataset text");
-    expect(afterSig.vectorRole).toBe("Unsaved vector");
-    const afterPpp = withFieldFromEntry(dirty, fresh, "pppDays");
-    expect([afterPpp.pppMin, afterPpp.pppMax]).toEqual(["", ""]);
-    expect(withFieldFromEntry(dirty, fresh, "lifecycleStages")).toEqual(dirty);
+    const next = withFieldFromEntry(dirty, e, fresh, "lifecycleStages");
+    expect(next.significance).toBe("Unsaved");
+    expect([next.pppMin, next.pppMax]).toEqual(["1", "14"]);
+    expect(next.family).toBe("Psoroptidae");
+  });
+
+  it("refreshes both PPP inputs when the student touched neither", () => {
+    const e = entry();
+    const fresh = entry({ fields: { ...e.fields, pppDays: { min: 3, max: 5 } } });
+    const next = withFieldFromEntry(draftFromEntry(e), e, fresh, "significance");
+    expect([next.pppMin, next.pppMax]).toEqual(["3", "5"]);
+  });
+
+  it("drops a stale diagnosticStage after a lifecycle stages reset", () => {
+    const e = entry();
+    e.fields.lifecycleStages = [
+      stage("egg", true),
+    ] as AtlasEntryView["fields"]["lifecycleStages"];
+    e.fields.diagnosticStage = "egg";
+    const fresh = entry();
+    fresh.fields.lifecycleStages = [
+      stage("adult", true),
+    ] as AtlasEntryView["fields"]["lifecycleStages"];
+    fresh.fields.diagnosticStage = "adult";
+    const dirty = { ...draftFromEntry(e), vectorRole: "Mechanical" };
+    const next = withFieldFromEntry(dirty, e, fresh, "lifecycleStages");
+    const patch = diffEntryPatch(fresh, next);
+    expect(patch).toEqual({ fields: { vectorRole: "Mechanical" } });
+    expect(validateEntryPatch(fresh, patch)).toEqual({});
   });
 });
 
