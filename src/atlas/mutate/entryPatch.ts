@@ -47,12 +47,28 @@ export const EDIT_SECTION_TITLES: Record<EditSectionId, string> = {
 export const editSectionDomId = (id: EditSectionId) => `atlas-edit-${id}`;
 
 export type DiagnosticTestDraft = {
+  /** Draft-only React key; never sent. */
+  rowId: string;
   name: string;
   sample: string;
   /** Not editable here; carried so a save does not erase them. */
   windowStartWeek: number | null;
   windowEndWeek: number | null;
 };
+
+export const EMPTY_TEST: Omit<DiagnosticTestDraft, "rowId"> = {
+  name: "",
+  sample: "",
+  windowStartWeek: null,
+  windowEndWeek: null,
+};
+
+let addedRows = 0;
+/** A new blank test row; ids stay distinct from the `saved-` rows draftFromEntry builds. */
+export const newTestRow = (): DiagnosticTestDraft => ({
+  ...EMPTY_TEST,
+  rowId: `added-${++addedRows}`,
+});
 
 /** Dialog form state: free text where the learner types, typed values for pickers. */
 export type EntryDraft = {
@@ -150,7 +166,8 @@ export function draftFromEntry(entry: AtlasEntryView): EntryDraft {
     significance: f.significance ?? "",
     vectorRole: f.vectorRole ?? "",
     diagnosticStage: f.diagnosticStage ?? "",
-    diagnosticTests: f.diagnosticTests.map((t) => ({
+    diagnosticTests: f.diagnosticTests.map((t, i) => ({
+      rowId: `saved-${i}`,
       name: t.name,
       sample: t.sample ?? "",
       windowStartWeek: t.windowStartWeek,

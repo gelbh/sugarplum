@@ -3,10 +3,12 @@ import { ALIAS_MAX_ITEMS } from "../../src/atlas/hub/nameMatch";
 import {
   DIAGNOSTIC_OWNED_ERROR,
   DIAGNOSTIC_TEST_NAME_ERROR,
+  EMPTY_TEST,
   PPP_ERROR,
   diffEntryPatch,
   draftFromEntry,
   isEmptyPatch,
+  newTestRow,
   validateEntryPatch,
   withFieldFromEntry,
 } from "../../src/atlas/mutate/entryPatch";
@@ -114,8 +116,8 @@ describe("diffEntryPatch", () => {
       ...base,
       diagnosticTests: [
         { ...base.diagnosticTests[0], sample: "" },
-        { name: "  ", sample: " ", windowStartWeek: null, windowEndWeek: null },
-        { name: "PCR", sample: "", windowStartWeek: null, windowEndWeek: null },
+        { rowId: "added-a", name: "  ", sample: " ", windowStartWeek: null, windowEndWeek: null },
+        { rowId: "added-b", name: "PCR", sample: "", windowStartWeek: null, windowEndWeek: null },
       ],
     };
     expect(diffEntryPatch(e, draft)).toEqual({
@@ -135,7 +137,7 @@ describe("diffEntryPatch", () => {
       ...base,
       diagnosticTests: [
         ...base.diagnosticTests,
-        { name: "  ", sample: "faeces", windowStartWeek: null, windowEndWeek: null },
+        { rowId: "added-c", name: "  ", sample: "faeces", windowStartWeek: null, windowEndWeek: null },
       ],
     };
     expect(validateEntryPatch(e, diffEntryPatch(e, sampleOnly))).toEqual({
@@ -148,6 +150,31 @@ describe("diffEntryPatch", () => {
     expect(validateEntryPatch(e, diffEntryPatch(e, nameCleared))).toEqual({
       diagnosticTests: DIAGNOSTIC_TEST_NAME_ERROR,
     });
+  });
+});
+
+describe("diagnostic test rows", () => {
+  it("gives saved rows stable ids and new rows distinct ones", () => {
+    const e = entry();
+    expect(draftFromEntry(e).diagnosticTests.map((t) => t.rowId)).toEqual([
+      "saved-0",
+    ]);
+    expect(draftFromEntry(e)).toEqual(draftFromEntry(e));
+    const a = newTestRow();
+    const b = newTestRow();
+    expect(a.rowId).not.toBe(b.rowId);
+    expect({ ...a, rowId: undefined }).toEqual({ ...EMPTY_TEST, rowId: undefined });
+  });
+
+  it("never sends row ids", () => {
+    const e = entry();
+    const base = draftFromEntry(e);
+    const draft = {
+      ...base,
+      diagnosticTests: [...base.diagnosticTests, { ...newTestRow(), name: "PCR" }],
+    };
+    const tests = diffEntryPatch(e, draft).fields?.diagnosticTests ?? [];
+    expect(tests.every((t) => !("rowId" in t))).toBe(true);
   });
 });
 

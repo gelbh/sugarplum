@@ -38,6 +38,8 @@ import type { AtlasEntryView, FieldKey } from "../types";
 import {
   EDIT_SECTION_TITLES,
   editSectionDomId,
+  newTestRow,
+  type DiagnosticTestDraft,
   type EditSectionId,
   type EntryDraft,
   type EntryPatch,
@@ -194,6 +196,69 @@ function PppRangeField({
         </Typography>
       ) : null}
       {edited}
+    </>
+  );
+}
+
+function DiagnosticTestsField({
+  value,
+  onChange,
+  error,
+  disabled,
+}: {
+  value: DiagnosticTestDraft[];
+  onChange: (next: DiagnosticTestDraft[]) => void;
+  error?: string;
+  disabled: boolean;
+}) {
+  const patchRow = (i: number, partial: Partial<DiagnosticTestDraft>) =>
+    onChange(value.map((row, j) => (j === i ? { ...row, ...partial } : row)));
+  return (
+    <>
+      {value.map((t, i) => (
+        <Stack
+          key={t.rowId}
+          direction="row"
+          sx={{ gap: 1, alignItems: "flex-start" }}
+        >
+          <TextField
+            label="Test"
+            value={t.name}
+            error={Boolean(error) && !t.name.trim()}
+            onChange={(ev) => patchRow(i, { name: ev.target.value })}
+            disabled={disabled}
+            fullWidth
+          />
+          <TextField
+            label="Sample (optional)"
+            value={t.sample}
+            onChange={(ev) => patchRow(i, { sample: ev.target.value })}
+            disabled={disabled}
+            fullWidth
+          />
+          <IconButton
+            aria-label={`Remove test ${i + 1}`}
+            onClick={() => onChange(value.filter((_, j) => j !== i))}
+            disabled={disabled}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Stack>
+      ))}
+      {error ? (
+        <Typography variant="caption" sx={{ color: "error.main" }}>
+          {error}
+        </Typography>
+      ) : null}
+      <Button
+        variant="text"
+        size="small"
+        onClick={() => onChange([...value, newTestRow()])}
+        disabled={disabled}
+        sx={{ alignSelf: "flex-start" }}
+      >
+        Add test
+      </Button>
     </>
   );
 }
@@ -468,81 +533,12 @@ export function EditEntryDialog({
                     ? "Set by the diagnostic stage in the lifecycle editor"
                     : undefined,
                 })}
-                {draft.diagnosticTests.map((t, i) => (
-                  <Stack
-                    key={i}
-                    direction="row"
-                    sx={{ gap: 1, alignItems: "flex-start" }}
-                  >
-                    <TextField
-                      label="Test"
-                      value={t.name}
-                      error={
-                        Boolean(fieldErrors.diagnosticTests) && !t.name.trim()
-                      }
-                      onChange={(ev) =>
-                        update(
-                          "diagnosticTests",
-                          draft.diagnosticTests.map((x, j) =>
-                            j === i ? { ...x, name: ev.target.value } : x,
-                          ),
-                        )
-                      }
-                      disabled={busy}
-                      fullWidth
-                    />
-                    <TextField
-                      label="Sample (optional)"
-                      value={t.sample}
-                      onChange={(ev) =>
-                        update(
-                          "diagnosticTests",
-                          draft.diagnosticTests.map((x, j) =>
-                            j === i ? { ...x, sample: ev.target.value } : x,
-                          ),
-                        )
-                      }
-                      disabled={busy}
-                      fullWidth
-                    />
-                    <IconButton
-                      aria-label={`Remove test ${i + 1}`}
-                      onClick={() =>
-                        update(
-                          "diagnosticTests",
-                          draft.diagnosticTests.filter((_, j) => j !== i),
-                        )
-                      }
-                      disabled={busy}
-                    >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </Stack>
-                ))}
-                {fieldErrors.diagnosticTests ? (
-                  <Typography variant="caption" sx={{ color: "error.main" }}>
-                    {fieldErrors.diagnosticTests}
-                  </Typography>
-                ) : null}
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={() =>
-                    update("diagnosticTests", [
-                      ...draft.diagnosticTests,
-                      {
-                        name: "",
-                        sample: "",
-                        windowStartWeek: null,
-                        windowEndWeek: null,
-                      },
-                    ])
-                  }
+                <DiagnosticTestsField
+                  value={draft.diagnosticTests}
+                  onChange={(next) => update("diagnosticTests", next)}
+                  error={fieldErrors.diagnosticTests}
                   disabled={busy}
-                  sx={{ alignSelf: "flex-start" }}
-                >
-                  Add test
-                </Button>
+                />
                 {edited("diagnosticTests")}
               </Section>
             </Stack>
