@@ -8,9 +8,16 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import MagnificCredits from "../achievements/MagnificCredits";
 import MedalCabinet from "../achievements/MedalCabinet";
+import OrchardOverview from "../achievements/OrchardOverview";
 import { useAchievementsData } from "../achievements/useAchievementsData";
 import type { GamificationResponse } from "../api/client";
 import type { AchievementItem } from "../achievements/wire";
+import {
+  insightsBandTitleSx,
+  insightsBrandSerif,
+  insightsPageTitleSx,
+  insightsPaperSx,
+} from "../insights/operatePaper";
 
 const SHEEN_SEEN_KEY = "sugarplum:achievement-sheen-seen";
 
@@ -47,10 +54,28 @@ function GalleryLayout({
   children: ReactNode;
 }) {
   return (
-    <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
+    <Container
+      maxWidth="sm"
+      sx={{
+        py: { xs: 4, md: 5 },
+        position: "relative",
+        "&::before": {
+          content: '""',
+          pointerEvents: "none",
+          position: "absolute",
+          inset: "0 8% auto",
+          height: 280,
+          background:
+            "radial-gradient(ellipse 70% 55% at 50% 0%, rgba(196, 165, 116, 0.16) 0%, transparent 72%)",
+          zIndex: 0,
+        },
+      }}
+    >
       <Stack
-        spacing={3}
+        spacing={3.25}
         sx={{
+          position: "relative",
+          zIndex: 1,
           "@keyframes achievementStagger": {
             from: { opacity: 0, transform: "translateY(6px)" },
             to: { opacity: 1, transform: "translateY(0)" },
@@ -58,43 +83,48 @@ function GalleryLayout({
         }}
       >
         <Box>
-          <Typography
-            variant="h4"
-            component="h1"
-            gutterBottom
-            sx={{ color: "text.primary", fontWeight: 600 }}
-          >
+          <Typography variant="h3" component="h1" sx={insightsPageTitleSx}>
             Achievements
           </Typography>
-          <Typography variant="body2" sx={{
-            color: "text.secondary"
-          }}>
+          <Box
+            aria-hidden
+            sx={{
+              mt: 1.75,
+              width: 48,
+              height: 3,
+              borderRadius: 1,
+              bgcolor: "secondary.main",
+            }}
+          />
+          <Typography
+            variant="body2"
+            sx={{ color: "text.secondary", mt: 2, maxWidth: "38ch" }}
+          >
             Collect fruit medals as you study, accept cards, and keep your
             streak alive.
           </Typography>
-          {gamification ? (
-            <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-                mt: 1
-              }}>
-              Streak {gamification.streakCurrent} (best{" "}
-              {gamification.streakBest}) · Level {gamification.level} ·{" "}
-              {gamification.xpTotal} XP
-            </Typography>
-          ) : null}
           {tally ? (
             <Typography
               variant="body2"
-              sx={{
-                color: "text.secondary",
-                mt: 0.5
-              }}>
-              {tally.collected} / {tally.total} collected
+              sx={{ color: "text.secondary", mt: 1.25 }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  fontFamily: insightsBrandSerif,
+                  color: "secondary.main",
+                  fontSize: "1.15rem",
+                  mr: 0.75,
+                }}
+              >
+                {tally.collected}
+              </Box>
+              / {tally.total} collected
             </Typography>
           ) : null}
         </Box>
+
+        {gamification ? <OrchardOverview gamification={gamification} /> : null}
 
         {children}
 
@@ -145,7 +175,7 @@ export default function AchievementsPage() {
       return (
         <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
           <Stack spacing={2}>
-            <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+            <Typography variant="h3" component="h1" sx={insightsPageTitleSx}>
               Achievements
             </Typography>
             <Alert severity="info">
@@ -173,52 +203,60 @@ export default function AchievementsPage() {
           gamification={gamification}
           tally={{ collected, total: items.length }}
         >
-          <MedalCabinet items={items} sheenIds={sheenOnceIds} />
+          <Box>
+            <Typography component="h2" sx={insightsBandTitleSx}>
+              Fruit medals
+            </Typography>
+            <MedalCabinet items={items} sheenIds={sheenOnceIds} />
+          </Box>
 
           {board ? (
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2.5,
-                bgcolor: "background.paper",
-                borderColor: "divider",
-              }}
-            >
-              <Typography
-                variant="subtitle1"
-                component="h2"
-                sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
-              >
+            <Box>
+              <Typography component="h2" sx={insightsBandTitleSx}>
                 Weekly board
               </Typography>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "text.secondary",
-                  display: "block",
-                  mb: 1.5
-                }}>
-                Week {board.weekKey} (UTC)
-                {gamification && !gamification.boardOptIn
-                  ? " · Opt in under Settings to appear on the board"
-                  : null}
-              </Typography>
-              {board.entries.length === 0 ? (
-                <Typography variant="body2" sx={{
-                  color: "text.secondary"
-                }}>
-                  No entries yet this week.
+              <Paper variant="outlined" sx={insightsPaperSx}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                    display: "block",
+                    mb: 1.5,
+                  }}
+                >
+                  Week {board.weekKey} (UTC)
+                  {gamification && !gamification.boardOptIn
+                    ? " · Opt in under Settings to appear on the board"
+                    : null}
                 </Typography>
-              ) : (
-                <Stack spacing={0.75}>
-                  {board.entries.map((entry, i) => (
-                    <Typography key={entry.userId} variant="body2">
-                      {i + 1}. {entry.displayName ?? "Learner"} · {entry.xp} XP
-                    </Typography>
-                  ))}
-                </Stack>
-              )}
-            </Paper>
+                {board.entries.length === 0 ? (
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    No entries yet this week.
+                  </Typography>
+                ) : (
+                  <Stack spacing={0.75}>
+                    {board.entries.map((entry, i) => (
+                      <Typography key={entry.userId} variant="body2">
+                        {i + 1}. {entry.displayName ?? "Learner"} ·{" "}
+                        <Box
+                          component="span"
+                          sx={{
+                            fontFamily: insightsBrandSerif,
+                            color: "secondary.main",
+                          }}
+                        >
+                          {entry.xp}
+                        </Box>{" "}
+                        XP
+                      </Typography>
+                    ))}
+                  </Stack>
+                )}
+              </Paper>
+            </Box>
           ) : null}
         </GalleryLayout>
       );

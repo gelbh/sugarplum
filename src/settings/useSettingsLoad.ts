@@ -39,6 +39,7 @@ type Args = {
   setGamification: Dispatch<SetStateAction<GamificationResponse | null>>;
   setDisplayNameInput: Dispatch<SetStateAction<string>>;
   setBoardOptIn: Dispatch<SetStateAction<boolean>>;
+  setDailyGoalInput: Dispatch<SetStateAction<string>>;
   setHeldIntroCount: Dispatch<SetStateAction<number | null>>;
   setError: Dispatch<SetStateAction<string | null>>;
   setReady: Dispatch<SetStateAction<boolean>>;
@@ -64,6 +65,7 @@ export function useSettingsLoad({
   setGamification,
   setDisplayNameInput,
   setBoardOptIn,
+  setDailyGoalInput,
   setHeldIntroCount,
   setError,
   setReady,
@@ -105,6 +107,7 @@ export function useSettingsLoad({
           setGamification(gam);
           setDisplayNameInput(gam.displayName ?? "");
           setBoardOptIn(gam.boardOptIn);
+          setDailyGoalInput(String(gam.dailyGoalReviews));
         }
         setReady(true);
         endLoad();
@@ -137,6 +140,7 @@ export function useSettingsLoad({
     endLoad,
     setAccountEmail,
     setBoardOptIn,
+    setDailyGoalInput,
     setCalendarStatus,
     setCurrent,
     setDesiredRetentionInput,

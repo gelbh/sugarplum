@@ -8,7 +8,7 @@ describe("cssFilterFromTraits", () => {
         { shine: "max", colour: "golden", status: "perfect" },
         { locked: true },
       ),
-    ).toBe("brightness(0.55) saturate(0.35)");
+    ).toBe("brightness(0.72) saturate(0.48) sepia(0.22)");
   });
 
   it("makes legendary golden warmer than common dull", () => {

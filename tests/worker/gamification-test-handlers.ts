@@ -37,6 +37,9 @@ export type UserGamificationRow = {
   clear_due_days: number;
   clear_due_last_day: string | null;
   catalog_version: number;
+  streak_freezes: number;
+  daily_goal_reviews: number;
+  daily_goal_day: string | null;
 };
 
 export type AchievementProgressRow = {
@@ -63,6 +66,13 @@ export type XpLedgerRow = {
   created_at: string;
 };
 
+export type StreakFreezeEventRow = {
+  id: string;
+  user_id: string;
+  consumed_at: string;
+  streak_at_consume: number;
+};
+
 export type GamificationTestState = {
   achievementDefs: Map<string, AchievementDefSeed>;
   userGamification: Map<string, UserGamificationRow>;
@@ -70,6 +80,7 @@ export type GamificationTestState = {
   achievementCompletions: Map<string, AchievementCompletionRow>;
   xpLedger: XpLedgerRow[];
   xpLedgerKeys: Set<string>;
+  streakFreezeEvents: StreakFreezeEventRow[];
   cards: Map<string, CardRowLike>;
   decks: Map<string, DeckRow>;
   schedules: Map<string, ScheduleRowLike>;
@@ -129,6 +140,21 @@ export function gamificationFirst<T>(
 ): T | null {
   if (
     normalized.startsWith(
+      "SELECT streak_current, streak_best, streak_day, streak_freezes FROM user_gamification",
+    )
+  ) {
+    const row = state.userGamification.get(bound[0] as string);
+    return row
+      ? ({
+          streak_current: row.streak_current,
+          streak_best: row.streak_best,
+          streak_day: row.streak_day,
+          streak_freezes: row.streak_freezes,
+        } as T)
+      : null;
+  }
+  if (
+    normalized.startsWith(
       "SELECT streak_current, streak_best, streak_day FROM user_gamification",
     )
   ) {
@@ -143,11 +169,71 @@ export function gamificationFirst<T>(
   }
   if (
     normalized.startsWith(
+      "SELECT daily_goal_reviews, daily_goal_day FROM user_gamification",
+    )
+  ) {
+    const row = state.userGamification.get(bound[0] as string);
+    return row
+      ? ({
+          daily_goal_reviews: row.daily_goal_reviews,
+          daily_goal_day: row.daily_goal_day,
+        } as T)
+      : null;
+  }
+  if (
+    normalized.startsWith("SELECT COUNT(*) AS n FROM review_logs rl") &&
+    normalized.includes("rl.reviewed_at >=")
+  ) {
+    const [userId, start, end] = bound as [string, string, string];
+    const n = reviewLogsForUser(state, userId).filter(
+      (l) => l.reviewed_at >= start && l.reviewed_at <= end,
+    ).length;
+    return { n } as T;
+  }
+  if (
+    normalized.startsWith(
+      "SELECT COALESCE(SUM(amount), 0) AS xp FROM xp_ledger",
+    ) &&
+    normalized.includes("created_at >=")
+  ) {
+    const [userId, start, end] = bound as [string, string, string];
+    const xp = state.xpLedger
+      .filter(
+        (r) =>
+          r.user_id === userId &&
+          r.created_at >= start &&
+          r.created_at <= end,
+      )
+      .reduce((sum, r) => sum + r.amount, 0);
+    return { xp } as T;
+  }
+  if (
+    normalized.startsWith(
       "SELECT xp_total, level FROM user_gamification WHERE user_id =",
     )
   ) {
     const row = state.userGamification.get(bound[0] as string);
     return row ? ({ xp_total: row.xp_total, level: row.level } as T) : null;
+  }
+  if (
+    normalized.includes("COALESCE(streak_freezes, 0) AS streak_freezes") &&
+    normalized.includes("FROM user_gamification WHERE user_id =")
+  ) {
+    const userId = bound[bound.length - 1] as string;
+    const row = state.userGamification.get(userId);
+    return row
+      ? ({
+          streak_current: row.streak_current,
+          streak_best: row.streak_best,
+          streak_day: row.streak_day,
+          xp_total: row.xp_total,
+          level: row.level,
+          display_name: row.display_name,
+          board_opt_in: row.board_opt_in,
+          streak_freezes: row.streak_freezes,
+          daily_goal_reviews: row.daily_goal_reviews,
+        } as T)
+      : null;
   }
   if (
     normalized.startsWith(
@@ -430,6 +516,9 @@ export function gamificationRun(
       clear_due_days,
       clear_due_last_day,
       catalog_version,
+      streak_freezes: 0,
+      daily_goal_reviews: 20,
+      daily_goal_day: null,
     });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
@@ -453,10 +542,141 @@ export function gamificationRun(
         )
           ? latestCatalogVersion(state)
           : 1,
+        streak_freezes: 0,
+        daily_goal_reviews: 20,
+        daily_goal_day: null,
       });
       return { success: true, meta: { changes: 1 } } as D1Result;
     }
     return { success: true, meta: { changes: 0 } } as D1Result;
+  }
+  if (
+    normalized.startsWith(
+      "UPDATE user_gamification SET streak_freezes = streak_freezes - ?",
+    )
+  ) {
+    const [needed, yesterday, updatedAt, userId, needGuard, streakDayGuard] =
+      bound as [number, string, string, string, number, string];
+    const row = state.userGamification.get(userId);
+    if (
+      !row ||
+      row.streak_freezes < needGuard ||
+      row.streak_day !== streakDayGuard
+    ) {
+      return { success: true, meta: { changes: 0 } } as D1Result;
+    }
+    state.userGamification.set(userId, {
+      ...row,
+      streak_freezes: row.streak_freezes - needed,
+      streak_day: yesterday,
+      updated_at: updatedAt,
+    });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+  if (
+    normalized.startsWith(
+      "UPDATE user_gamification SET streak_freezes = MIN(streak_freezes + 1",
+    )
+  ) {
+    const [_maxStored, updatedAt, userId, maxGuard] = bound as [
+      number,
+      string,
+      string,
+      number,
+    ];
+    const row = state.userGamification.get(userId);
+    if (!row || row.streak_freezes >= maxGuard) {
+      return { success: true, meta: { changes: 0 } } as D1Result;
+    }
+    state.userGamification.set(userId, {
+      ...row,
+      streak_freezes: Math.min(row.streak_freezes + 1, maxGuard),
+      updated_at: updatedAt,
+    });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+  if (
+    normalized.startsWith(
+      "UPDATE user_gamification SET streak_current = 0, updated_at = ?",
+    )
+  ) {
+    const [updatedAt, userId, yesterday, needGuard] = bound as [
+      string,
+      string,
+      string,
+      number,
+    ];
+    const row = state.userGamification.get(userId);
+    if (
+      !row ||
+      row.streak_current <= 0 ||
+      row.streak_day == null ||
+      row.streak_day >= yesterday ||
+      row.streak_freezes >= needGuard
+    ) {
+      return { success: true, meta: { changes: 0 } } as D1Result;
+    }
+    state.userGamification.set(userId, {
+      ...row,
+      streak_current: 0,
+      updated_at: updatedAt,
+    });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+  if (
+    normalized.startsWith(
+      "UPDATE user_gamification SET daily_goal_day = ?, updated_at = ?",
+    )
+  ) {
+    const [day, updatedAt, userId] = bound as [string, string, string];
+    const row = state.userGamification.get(userId);
+    if (!row) return { success: true, meta: { changes: 0 } } as D1Result;
+    state.userGamification.set(userId, {
+      ...row,
+      daily_goal_day: day,
+      updated_at: updatedAt,
+    });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+  if (normalized.startsWith("INSERT INTO streak_freeze_events")) {
+    const [id, userId, consumedAt, streakAt] = bound as [
+      string,
+      string,
+      string,
+      number,
+    ];
+    state.streakFreezeEvents.push({
+      id,
+      user_id: userId,
+      consumed_at: consumedAt,
+      streak_at_consume: streakAt,
+    });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+  if (
+    normalized.startsWith("UPDATE user_gamification SET") &&
+    normalized.includes("WHERE user_id = ?") &&
+    (normalized.includes("daily_goal_reviews = ?") ||
+      normalized.includes("board_opt_in = ?") ||
+      normalized.includes("display_name = ?"))
+  ) {
+    const userId = bound[bound.length - 1] as string;
+    const row = state.userGamification.get(userId);
+    if (!row) return { success: true, meta: { changes: 0 } } as D1Result;
+    let i = 0;
+    const next = { ...row };
+    if (normalized.includes("board_opt_in = ?")) {
+      next.board_opt_in = bound[i++] as number;
+    }
+    if (normalized.includes("display_name = ?")) {
+      next.display_name = bound[i++] as string | null;
+    }
+    if (normalized.includes("daily_goal_reviews = ?")) {
+      next.daily_goal_reviews = bound[i++] as number;
+    }
+    next.updated_at = bound[i++] as string;
+    state.userGamification.set(userId, next);
+    return { success: true, meta: { changes: 1 } } as D1Result;
   }
   if (
     normalized.startsWith(
@@ -737,6 +957,7 @@ export function initGamificationState(
     achievementCompletions: new Map(),
     xpLedger: [],
     xpLedgerKeys: new Set(),
+    streakFreezeEvents: [],
     cards,
     decks,
     schedules,

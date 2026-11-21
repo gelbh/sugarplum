@@ -69,19 +69,45 @@ function MedalTile({
     buttonRef.current?.focus();
   }
 
+  const heldUnlocked = held.completedAt != null;
+
   return (
     <Box
       className="medal-tile"
       onKeyDown={onKeyDown}
-      sx={{
+      sx={(theme) => ({
         gridColumn: open ? "1 / -1" : undefined,
         border: 1,
-        borderColor: open ? "primary.main" : "divider",
-        borderRadius: "4px",
+        borderColor: open
+          ? "primary.main"
+          : heldUnlocked
+            ? "rgba(196, 165, 116, 0.42)"
+            : "divider",
+        borderRadius: 2,
         bgcolor: "background.paper",
         minWidth: 0,
         position: "relative",
-      }}
+        overflow: "hidden",
+        transition:
+          "border-color 180ms cubic-bezier(0.16, 1, 0.3, 1), background-color 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1)",
+        ...theme.applyStyles("dark", {
+          bgcolor: heldUnlocked
+            ? "rgba(196, 165, 116, 0.07)"
+            : "rgba(232, 216, 199, 0.045)",
+          boxShadow: heldUnlocked
+            ? "0 10px 28px rgba(0, 0, 0, 0.22)"
+            : "none",
+        }),
+        "&:hover": {
+          borderColor: open ? "primary.main" : "secondary.main",
+          ...theme.applyStyles("dark", {
+            bgcolor: "rgba(196, 165, 116, 0.1)",
+          }),
+        },
+        "@media (prefers-reduced-motion: reduce)": {
+          transition: "none",
+        },
+      })}
     >
       <Tooltip describeChild title={held.def.description}>
         <Box
@@ -96,8 +122,8 @@ function MedalTile({
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-start",
-            gap: 0.25,
-            p: 1.25,
+            gap: 0.35,
+            p: 1.35,
             m: 0,
             border: 0,
             bgcolor: "transparent",
@@ -105,18 +131,42 @@ function MedalTile({
             font: "inherit",
             textAlign: "left",
             cursor: "pointer",
+            "&:focus-visible": {
+              outline: "2px solid",
+              outlineColor: "primary.main",
+              outlineOffset: "-2px",
+            },
           }}
         >
-          <FruitMedal
-            fruitType={held.def.fruitType}
-            traits={held.traits}
-            size={64}
-            locked={held.completedAt == null}
-            sheenOnce={sheenIds.has(held.def.id)}
-          />
-          <Typography component="span" variant="subtitle2" sx={{
-            fontWeight: 600
-          }}>
+          <Box
+            sx={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              py: 0.5,
+              borderRadius: 1.5,
+              background:
+                "radial-gradient(ellipse 70% 80% at 50% 55%, rgba(196, 165, 116, 0.14) 0%, transparent 70%)",
+            }}
+          >
+            <FruitMedal
+              fruitType={held.def.fruitType}
+              traits={held.traits}
+              size={64}
+              locked={held.completedAt == null}
+              sheenOnce={sheenIds.has(held.def.id)}
+            />
+          </Box>
+          <Typography
+            component="span"
+            variant="subtitle2"
+            sx={{
+              fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
+              fontWeight: 400,
+              letterSpacing: "0.02em",
+              fontSize: "0.98rem",
+            }}
+          >
             {held.def.title}
           </Typography>
           <Box
@@ -127,14 +177,19 @@ function MedalTile({
               justifyContent: "space-between",
             }}
           >
-            <Typography variant="caption" sx={{
-              color: "text.secondary"
-            }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: heldUnlocked ? "secondary.main" : "text.secondary",
+                fontWeight: heldUnlocked ? 600 : 400,
+              }}
+            >
               {unlocked} of {items.length}
             </Typography>
             <ExpandMoreIcon
               fontSize="small"
               sx={{
+                color: "text.secondary",
                 transform: open ? "rotate(180deg)" : "none",
                 transition: "transform 180ms cubic-bezier(0.16, 1, 0.3, 1)",
                 "@media (prefers-reduced-motion: reduce)": {
@@ -175,7 +230,13 @@ export default function MedalCabinet({
   // A spanning tile past column 1 leaves empty cells on its row.
   const ordered = withOpenTileOnRowStart(fruits, openFruit);
   return (
-    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1 }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr 1fr",
+        gap: 1.25,
+      }}
+    >
       {ordered.map((fruit) => {
         const list = grouped.get(fruit) ?? [];
         return (

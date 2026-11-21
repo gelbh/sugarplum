@@ -225,6 +225,7 @@ export function getWeeklyLeaderboard() {
 export function patchGamificationSettings(body: {
   boardOptIn?: boolean;
   displayName?: string | null;
+  dailyGoalReviews?: number;
 }) {
   return api<GamificationResponse>("/api/gamification/settings", {
     method: "PATCH",

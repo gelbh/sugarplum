@@ -52,7 +52,8 @@ export default function FruitMedal({
           height: "100%",
           display: "block",
           filter: cssFilterFromTraits(traits, { locked }),
-          opacity: locked ? 0.45 : 1,
+          // Locked keeps enough warmth to read as unripe fruit, not dead chrome.
+          opacity: locked ? 0.58 : 1,
           transition: `filter 650ms ${EASE}, opacity 550ms ${EASE}`,
           "@media (prefers-reduced-motion: reduce)": {
             transition: "filter 200ms ease, opacity 200ms ease",

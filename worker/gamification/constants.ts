@@ -4,6 +4,7 @@ export const XP = {
   reviewDailyCap: 100,
   acceptCard: 20,
   generation: 0,
+  dailyGoalComplete: 25,
   unlock: {
     common: 25,
     uncommon: 50,
@@ -19,5 +20,17 @@ export function levelFromXp(xpTotal: number): number {
   if (xpTotal < 0) return 1;
   return Math.floor(Math.sqrt(xpTotal / 100)) + 1;
 }
+
+/** Cap 2; Duolingo softens habit if freezes stack too high. */
+export const STREAK_FREEZE = {
+  maxStored: 2,
+  earnEveryDays: 7,
+} as const;
+
+export const DAILY_GOAL_REVIEWS = {
+  min: 5,
+  max: 100,
+  default: 20,
+} as const;
 
 export { utcDay } from "../utc-day";
