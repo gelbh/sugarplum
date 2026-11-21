@@ -7,6 +7,7 @@ import type {
 export type AtlasTier = "key" | "frequent" | "standard";
 
 export type DatasetFields = DatasetEntry["fields"];
+export type FieldKey = keyof DatasetFields;
 export type ParasiteGroup = DatasetFields["group"];
 export type ImageRole = (typeof IMAGE_ROLES)[number];
 
@@ -46,6 +47,10 @@ export type AtlasEntryView = {
   focusMaterialIds: string[];
   /** Named in the course pack (lenient match); null when unscanned. */
   inPack: boolean | null;
+  /** Fields this learner overrides on a dataset entry; empty for learner-added and unedited entries. */
+  editedFields: FieldKey[];
+  /** True when a dataset entry's common name is the learner's own (stored non-null and different). */
+  commonNameEdited: boolean;
 };
 
 export type AtlasSource = {

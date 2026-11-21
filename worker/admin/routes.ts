@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getDb } from "../db/client";
 import { getFreeGenUsage } from "../generation/quota";
@@ -9,6 +9,7 @@ import {
 import { requireAdmin } from "./requireAdmin";
 import { runProvenanceBackfill } from "./provenance-backfill";
 import { runHealWipedFields } from "../atlas/heal-wiped-fields";
+import { runBackfillFieldOverrides } from "../atlas/backfill-field-overrides";
 import type { AppEnv, AdminUserDetail } from "./types";
 import {
   collectUserR2Keys,
@@ -164,8 +165,12 @@ adminRoutes.post("/provenance/backfill", async (c) => {
   return c.json(result);
 });
 
-adminRoutes.post("/atlas/heal-wiped-fields", async (c) => {
-  await requireAdmin(c);
+/** Body shared by atlas maintenance routes: dry_run defaults to true. */
+async function readAtlasScopeBody(c: Context<AppEnv>): Promise<{
+  dry_run: boolean;
+  userId?: string;
+  atlasId?: string;
+}> {
   const raw = await c.req.text();
   let body: unknown = {};
   if (raw.trim()) {
@@ -194,12 +199,19 @@ adminRoutes.post("/atlas/heal-wiped-fields", async (c) => {
       message: "userId or atlasId required when dry_run is false",
     });
   }
-  const result = await runHealWipedFields(getDb(c.env), {
-    dry_run,
-    userId,
-    atlasId,
-  });
-  return c.json(result);
+  return { dry_run, userId, atlasId };
+}
+
+adminRoutes.post("/atlas/heal-wiped-fields", async (c) => {
+  await requireAdmin(c);
+  const opts = await readAtlasScopeBody(c);
+  return c.json(await runHealWipedFields(getDb(c.env), opts));
+});
+
+adminRoutes.post("/atlas/backfill-field-overrides", async (c) => {
+  await requireAdmin(c);
+  const opts = await readAtlasScopeBody(c);
+  return c.json(await runBackfillFieldOverrides(getDb(c.env), opts));
 });
 
 adminRoutes.get("/users/:id", async (c) => {

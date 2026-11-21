@@ -25,7 +25,7 @@ import {
 } from "./entryOverlays";
 import { loadParasiteDataset } from "./datasets/parasites/index";
 import { normalizeParasiteName } from "./names";
-import { emptyParasiteFields, type ParasiteFields } from "./templates/parasite";
+import { emptyParasiteFields } from "./templates/parasite";
 import { applySandboxKeyPrefix, sandboxWriteUserId } from "../admin/sandbox-r2";
 import { createR2PutUrl } from "../materials/r2-presign";
 import { sha256Hex } from "../materials/content-hash";
@@ -49,6 +49,8 @@ import {
   mergeFields,
   parseFieldsPatch,
   parseFocusOverride,
+  parseResetFields,
+  planEntryWrite,
   resolveEntry,
 } from "./entry-helpers";
 import {
@@ -304,7 +306,11 @@ atlasItemRoutes.post("/entries", async (c) => {
 atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
-  let body: { commonName?: unknown; fields?: unknown };
+  let body: {
+    commonName?: unknown;
+    resetFields?: unknown;
+    fields?: unknown;
+  };
   try {
     body = await c.req.json();
   } catch {
@@ -312,6 +318,15 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   }
 
   const fieldsPatch = parseFieldsPatch(body.fields);
+  const resetFields = parseResetFields(body.resetFields);
+  const setAndReset = (resetFields ?? []).filter(
+    (key) => fieldsPatch !== undefined && key in fieldsPatch,
+  );
+  if (setAndReset.length > 0) {
+    throw new HTTPException(400, {
+      message: `Cannot set and reset the same field: ${setAndReset.join(", ")}`,
+    });
+  }
   const commonNameProvided = "commonName" in body;
   let commonName: string | undefined;
   if (commonNameProvided) {
@@ -321,7 +336,11 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
     commonName = body.commonName.trim();
   }
 
-  if (fieldsPatch === undefined && !commonNameProvided) {
+  if (
+    fieldsPatch === undefined &&
+    !commonNameProvided &&
+    resetFields === undefined
+  ) {
     throw new HTTPException(400, { message: "No changes" });
   }
 
@@ -329,46 +348,60 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
 
   const ts = nowIso();
-  let row: EntryRow;
+  const input = { fieldsPatch, resetFields, commonName };
+  let row: EntryRow | null = null;
 
   if (resolved.kind === "dataset") {
-    row = await insertOverlayFromDataset(db, atlas.id, resolved.entry, {
-      commonName,
-      fields: mergeFields(resolved.entry.fields, fieldsPatch),
-      editedAt: ts,
-    });
+    // A reset on an entry with no overlay has nothing to remove; do not create a row.
+    const onlyReset = fieldsPatch === undefined && !commonNameProvided;
+    if (!onlyReset) {
+      row = await insertOverlayFromDataset(db, atlas.id, resolved.entry, {
+        plan: planEntryWrite(null, resolved.entry, input),
+        editedAt: ts,
+      });
+    }
   } else {
     if (resolved.row.deleted_at) {
       throw new HTTPException(409, { message: "Entry is deleted" });
     }
-    const baseFields = JSON.parse(resolved.row.fields_json) as ParasiteFields;
-    const nextFields = mergeFields(baseFields, fieldsPatch);
-    const nextCommon =
-      commonName !== undefined ? commonName : resolved.row.common_name;
-    await db
+    const dataset = resolved.row.origin_key
+      ? (datasetByKey().get(resolved.row.origin_key) ?? null)
+      : null;
+    const plan = planEntryWrite(resolved.row, dataset, input);
+    // Optimistic guard: the plan was built from this read of the row.
+    const result = await db
       .prepare(
         `UPDATE atlas_entries
-         SET common_name = ?, fields_json = ?, edited_at = ?, updated_at = ?, status = 'accepted'
-         WHERE id = ? AND atlas_id = ?`,
+         SET common_name = ?, fields_json = ?, field_overrides_json = ?, edited_at = ?, updated_at = ?,
+             status = 'accepted'
+         WHERE id = ? AND atlas_id = ? AND updated_at = ?`,
       )
       .bind(
-        nextCommon,
-        JSON.stringify(nextFields),
+        plan.commonName,
+        plan.fieldsJson,
+        plan.overridesJson,
         ts,
         ts,
         resolved.row.id,
         atlas.id,
+        resolved.row.updated_at,
       )
       .run();
+    if (result.meta.changes === 0) {
+      throw new HTTPException(409, {
+        message: "Entry changed, reload and try again",
+      });
+    }
     const updated = await findEntryById(db, atlas.id, resolved.row.id);
     if (!updated) throw new HTTPException(404, { message: "Entry not found" });
     row = updated;
   }
 
+  // Names feed scanFocus and course-pack matching.
   if (commonNameProvided) {
     await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
   }
-  const overlays = await toOverlayRows(db, atlas.id, [row]);
+  const overlays = row ? await toOverlayRows(db, atlas.id, [row]) : [];
   const focus = await loadFocusMap(db, atlas.id);
   const views = await entryViewsWithNotes(
     db,
@@ -379,7 +412,8 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
       await isFocusPackFresh(db, atlas.id),
     ),
   );
-  const view = views.find((v) => v.id === row.id) ?? views[0];
+  const viewId = row?.id ?? entryId;
+  const view = views.find((v) => v.id === viewId) ?? views[0];
   return c.json(view);
 });
 

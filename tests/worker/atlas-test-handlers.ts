@@ -19,6 +19,8 @@ export type AtlasEntryRow = {
   origin_version: number | null;
   edited_at: string | null;
   deleted_at: string | null;
+  field_overrides_json: string | null;
+  aliases_json: string | null;
 };
 
 export type AtlasRefRow = {
@@ -246,48 +248,30 @@ export function atlasAll<T>(
     return { results: rows as T[] };
   }
 
+  // scopedOriginRows (heal and backfill scans): origin rows per scope plus
+  // the optional deleted_at / field_overrides_json filters.
   if (
     normalized.includes("FROM atlas_entries e") &&
-    normalized.includes("JOIN atlases a") &&
-    normalized.includes("a.user_id =") &&
-    normalized.includes("origin_key IS NOT NULL")
+    normalized.includes("e.origin_key IS NOT NULL")
   ) {
-    const userId = bound[0] as string;
-    const atlasIds = new Set(
-      [...state.atlases.values()]
-        .filter((a) => a.user_id === userId)
-        .map((a) => a.id),
-    );
-    const rows = [...state.entries.values()].filter(
+    let candidates = [...state.entries.values()];
+    if (normalized.includes("a.user_id = ?")) {
+      const userId = bound[0] as string;
+      const atlasIds = new Set(
+        [...state.atlases.values()]
+          .filter((a) => a.user_id === userId)
+          .map((a) => a.id),
+      );
+      candidates = candidates.filter((e) => atlasIds.has(e.atlas_id));
+    } else if (normalized.includes("e.atlas_id = ?")) {
+      candidates = entriesForAtlas(state, bound[0] as string);
+    }
+    const rows = candidates.filter(
       (e) =>
-        atlasIds.has(e.atlas_id) &&
-        e.deleted_at == null &&
-        e.origin_key != null,
-    );
-    return { results: rows as T[] };
-  }
-
-  if (
-    normalized.includes("FROM atlas_entries") &&
-    normalized.includes("deleted_at IS NULL") &&
-    normalized.includes("origin_key IS NOT NULL") &&
-    !normalized.includes("atlas_id =") &&
-    !normalized.includes("a.user_id")
-  ) {
-    const rows = [...state.entries.values()].filter(
-      (e) => e.deleted_at == null && e.origin_key != null,
-    );
-    return { results: rows as T[] };
-  }
-
-  if (
-    normalized.includes("FROM atlas_entries WHERE atlas_id =") &&
-    normalized.includes("deleted_at IS NULL") &&
-    normalized.includes("origin_key IS NOT NULL")
-  ) {
-    const atlasId = bound[0] as string;
-    const rows = entriesForAtlas(state, atlasId).filter(
-      (e) => e.deleted_at == null && e.origin_key != null,
+        e.origin_key !== null &&
+        (!normalized.includes("e.deleted_at IS NULL") || e.deleted_at === null) &&
+        (!normalized.includes("e.field_overrides_json IS NULL") ||
+          e.field_overrides_json === null),
     );
     return { results: rows as T[] };
   }
@@ -468,7 +452,15 @@ export function atlasRun(
       origin_key,
       origin_version,
       edited_at,
-      deleted_at,
+      // Seeds may write a literal NULL instead of binding the last column.
+      deleted_at: deleted_at ?? null,
+      // The 0042 columns default to NULL; when listed they are the last two bound values.
+      ...(normalized.includes("field_overrides_json")
+        ? {
+            field_overrides_json: bound[bound.length - 2] as string | null,
+            aliases_json: bound[bound.length - 1] as string | null,
+          }
+        : { field_overrides_json: null, aliases_json: null }),
     });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
@@ -501,16 +493,38 @@ export function atlasRun(
     normalized.startsWith("UPDATE atlas_entries") &&
     normalized.includes("SET common_name =")
   ) {
-    const [common_name, fields_json, edited_at, updated_at, id, atlas_id] =
-      bound as [string | null, string, string, string, string, string];
+    const [
+      common_name,
+      fields_json,
+      field_overrides_json,
+      edited_at,
+      updated_at,
+      id,
+      atlas_id,
+      expected_updated_at,
+    ] = bound as [
+      string | null,
+      string,
+      string | null,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
     const row = state.entries.get(id);
-    if (!row || row.atlas_id !== atlas_id) {
+    if (
+      !row ||
+      row.atlas_id !== atlas_id ||
+      row.updated_at !== expected_updated_at
+    ) {
       return { success: true, meta: { changes: 0 } } as D1Result;
     }
     state.entries.set(id, {
       ...row,
       common_name,
       fields_json,
+      field_overrides_json,
       edited_at,
       updated_at,
       status: "accepted",
@@ -543,6 +557,23 @@ export function atlasRun(
       return { success: true, meta: { changes: 0 } } as D1Result;
     }
     state.entries.set(id, { ...row, deleted_at, updated_at });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+
+  if (normalized.startsWith("UPDATE atlas_entries SET field_overrides_json =")) {
+    const [field_overrides_json, fields_json, common_name, updated_at, id, atlas_id] =
+      bound as [string, string, string | null, string, string, string];
+    const row = state.entries.get(id);
+    if (!row || row.atlas_id !== atlas_id || row.field_overrides_json != null) {
+      return { success: true, meta: { changes: 0 } } as D1Result;
+    }
+    state.entries.set(id, {
+      ...row,
+      field_overrides_json,
+      fields_json,
+      common_name,
+      updated_at,
+    });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
 
