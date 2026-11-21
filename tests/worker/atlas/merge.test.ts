@@ -351,7 +351,7 @@ describe("mergeOverlayFields", () => {
   });
 
   it("lets an override win only for its own key", () => {
-    const fields = mergeOverlayFields(
+    const { fields } = mergeOverlayFields(
       datasetFields,
       originRow({ field_overrides_json: JSON.stringify({ significance: "Mine" }) }),
     );
@@ -364,7 +364,7 @@ describe("mergeOverlayFields", () => {
     const row = originRow({
       field_overrides_json: JSON.stringify({ significance: "Mine" }),
     });
-    const fields = mergeOverlayFields(
+    const { fields } = mergeOverlayFields(
       { ...datasetFields, distribution: "Temperate regions" },
       row,
     );
@@ -374,7 +374,7 @@ describe("mergeOverlayFields", () => {
 
   it("legacy NULL overrides with a full fields_json copy match the pre-migration view", () => {
     const legacyCopy = { ...datasetFields, family: "Editedidae" };
-    const fields = mergeOverlayFields(
+    const { fields } = mergeOverlayFields(
       datasetFields,
       originRow({ fields_json: JSON.stringify(legacyCopy) }),
     );
@@ -383,7 +383,7 @@ describe("mergeOverlayFields", () => {
 
   it("uses fields_json unchanged for a learner-added row", () => {
     const learner = { ...emptyParasiteFields(), group: "nematode", family: "Mine" };
-    const fields = mergeOverlayFields(datasetFields, {
+    const { fields } = mergeOverlayFields(datasetFields, {
       origin_key: null,
       fields_json: JSON.stringify(learner),
       field_overrides_json: null,
@@ -392,7 +392,7 @@ describe("mergeOverlayFields", () => {
   });
 
   it("falls back to fields_json plus overrides when the dataset entry is gone", () => {
-    const fields = mergeOverlayFields(
+    const { fields } = mergeOverlayFields(
       null,
       originRow({ field_overrides_json: JSON.stringify({ family: "Kept" }) }),
     );

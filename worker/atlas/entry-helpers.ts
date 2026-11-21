@@ -1,5 +1,12 @@
 import { HTTPException } from "hono/http-exception";
-import { sameFieldValue, viewFromOverlay, type OverlayRow } from "./merge";
+import {
+  mergeOverlayFields,
+  overlayOverrides,
+  sameFieldValue,
+  tryParseObject,
+  viewFromOverlay,
+  type OverlayRow,
+} from "./merge";
 import { type EntryRow } from "./entryOverlays";
 import {
   loadParasiteDataset,
@@ -106,14 +113,101 @@ export function storedCommonName(
   return submitted === datasetCommonName ? null : submitted;
 }
 
-/** Dataset-origin overlay row; stores overrides only (fields_json is '{}'). */
+export type EntryWritePlan = {
+  fieldsJson: string;
+  overridesJson: string | null;
+  commonName: string | null;
+};
+
+export type EntryWriteInput = {
+  fieldsPatch?: Partial<ParasiteFields>;
+  resetFields?: ParasiteFieldKey[];
+  commonName?: string;
+};
+
+/** Refuse to rebuild a row from a column we cannot read; saving would erase the learner's edits. */
+function requireReadable(
+  json: string | null | undefined,
+  column: string,
+  rowId: string,
+): void {
+  if (tryParseObject(json) !== null) return;
+  console.error("atlas PATCH: stored entry JSON is unreadable", { rowId, column });
+  throw new HTTPException(500, {
+    message: "Stored entry data is unreadable; edit not saved",
+  });
+}
+
+/**
+ * The columns one entry write stores. `row` is null for the first write to a
+ * dataset entry (an overlay insert). Pure: no I/O.
+ */
+export function planEntryWrite(
+  row: EntryRow | null,
+  dataset: DatasetEntry | null,
+  input: EntryWriteInput,
+): EntryWritePlan {
+  const { fieldsPatch, resetFields, commonName } = input;
+  if (row === null) {
+    if (!dataset) throw new Error("planEntryWrite: no row and no dataset entry");
+    return {
+      fieldsJson: "{}",
+      overridesJson: JSON.stringify(
+        nextFieldOverrides(dataset.fields, {}, fieldsPatch, resetFields),
+      ),
+      // NULL inherits the dataset name, so later dataset fixes still show.
+      commonName:
+        commonName === undefined
+          ? null
+          : storedCommonName(commonName, dataset.commonName),
+    };
+  }
+
+  if (resetFields !== undefined && !dataset) {
+    throw new HTTPException(400, {
+      message: "Only built-in parasites have dataset fields to reset",
+    });
+  }
+  requireReadable(row.field_overrides_json, "field_overrides_json", row.id);
+  if (row.field_overrides_json == null || !dataset) {
+    requireReadable(row.fields_json, "fields_json", row.id);
+  }
+
+  const nextCommon =
+    commonName === undefined
+      ? row.common_name
+      : dataset
+        ? storedCommonName(commonName, dataset.commonName)
+        : commonName;
+
+  if (dataset) {
+    // overlayOverrides diffs a legacy full copy, so this write converts the row.
+    const current = overlayOverrides(dataset.fields, row);
+    return {
+      fieldsJson: "{}",
+      overridesJson: JSON.stringify(
+        nextFieldOverrides(dataset.fields, current, fieldsPatch, resetFields),
+      ),
+      commonName: nextCommon,
+    };
+  }
+  // Learner-added rows, and origin rows whose dataset entry is gone, keep full fields.
+  return {
+    fieldsJson: JSON.stringify(
+      mergeFields(mergeOverlayFields(null, row).fields, fieldsPatch),
+    ),
+    overridesJson: null,
+    commonName: nextCommon,
+  };
+}
+
+/** Dataset-origin overlay row, written from `plan` (default: no edits). */
 export async function insertOverlayFromDataset(
   db: D1Database,
   atlasId: string,
   entry: DatasetEntry,
   patch: {
-    commonName?: string | null;
-    overrides?: Partial<ParasiteFields>;
+    plan?: EntryWritePlan;
     deletedAt?: string | null;
     editedAt?: string | null;
     aliasesJson?: string | null;
@@ -121,11 +215,7 @@ export async function insertOverlayFromDataset(
 ): Promise<EntryRow> {
   const id = newId();
   const ts = nowIso();
-  // NULL inherits the dataset name, so later dataset fixes still show.
-  const commonName =
-    typeof patch.commonName === "string"
-      ? storedCommonName(patch.commonName, entry.commonName)
-      : null;
+  const plan = patch.plan ?? planEntryWrite(null, entry, {});
   await db
     .prepare(
       `INSERT INTO atlas_entries (
@@ -138,15 +228,15 @@ export async function insertOverlayFromDataset(
       id,
       atlasId,
       entry.canonicalName,
-      commonName,
-      "{}",
+      plan.commonName,
+      plan.fieldsJson,
       ts,
       ts,
       entry.key,
       PARASITE_DATASET_VERSION,
       patch.editedAt ?? null,
       patch.deletedAt ?? null,
-      JSON.stringify(patch.overrides ?? {}),
+      plan.overridesJson,
       patch.aliasesJson ?? null,
     )
     .run();

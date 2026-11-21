@@ -128,6 +128,14 @@ function withSchemaDefaults(key: ParasiteFieldKey, value: unknown): unknown {
   return parsed.success ? parsed.data : value;
 }
 
+/**
+ * Learner values are `ParasiteFields`, which is wider than the dataset's
+ * `DatasetFields`; the view type is the dataset one. The single cast lives here.
+ */
+function viewFields(...parts: Record<string, unknown>[]): DatasetFields {
+  return Object.assign({}, emptyParasiteFields(), ...parts) as DatasetFields;
+}
+
 function syncFields(fields: DatasetFields): DatasetFields {
   const synced = syncDiagnosticOwnership(
     fields.lifecycleStages,
@@ -156,42 +164,53 @@ export function overlayOverrides(
         rowId: row.id,
         column: "field_overrides_json",
       });
-  const out: Partial<ParasiteFields> = {};
+  const out: Record<string, unknown> = {};
   for (const key of PARASITE_FIELD_KEYS) {
     if (!(key in stored)) continue;
     const value = legacy ? withSchemaDefaults(key, stored[key]) : stored[key];
     if (sameFieldValue(value, datasetFields[key])) continue;
-    Object.assign(out, { [key]: value });
+    out[key] = value;
   }
-  return out;
+  return out as Partial<ParasiteFields>;
 }
 
-/** The one place merged overlay fields are built (views, Focus, PATCH base). */
+export type MergedOverlayFields = {
+  fields: DatasetFields;
+  /**
+   * Override keys whose final (diagnostic-synced) value differs from the
+   * dataset. Empty for learner-added rows, and for origin rows whose dataset
+   * entry is gone: there is no dataset value to reset to.
+   */
+  editedFields: FieldKey[];
+};
+
+/**
+ * The one place merged overlay fields are built (views, Focus, PATCH base).
+ * Overrides are computed once per row.
+ */
 export function mergeOverlayFields(
   datasetFields: DatasetFields | null,
   row: OverlayFieldsRow,
-): DatasetFields {
-  const empty = emptyParasiteFields() as DatasetFields;
+): MergedOverlayFields {
+  const parse = (column: "fields_json" | "field_overrides_json") =>
+    parseObject(row[column], { rowId: row.id, column });
   if (row.origin_key === null) {
-    return syncFields({
-      ...empty,
-      ...parseObject(row.fields_json, { rowId: row.id, column: "fields_json" }),
-    } as DatasetFields);
+    return { fields: syncFields(viewFields(parse("fields_json"))), editedFields: [] };
   }
   if (datasetFields === null) {
-    return syncFields({
-      ...empty,
-      ...parseObject(row.fields_json, { rowId: row.id, column: "fields_json" }),
-      ...parseObject(row.field_overrides_json, {
-        rowId: row.id,
-        column: "field_overrides_json",
-      }),
-    } as DatasetFields);
+    return {
+      fields: syncFields(
+        viewFields(parse("fields_json"), parse("field_overrides_json")),
+      ),
+      editedFields: [],
+    };
   }
-  return syncFields({
-    ...datasetFields,
-    ...overlayOverrides(datasetFields, row),
-  } as DatasetFields);
+  const overrides = overlayOverrides(datasetFields, row);
+  const fields = syncFields(viewFields(datasetFields, overrides));
+  const editedFields = (Object.keys(overrides) as FieldKey[]).filter(
+    (key) => !sameFieldValue(fields[key], datasetFields[key]),
+  );
+  return { fields, editedFields };
 }
 
 /** Dataset refs/images first, then learner overlay refs/images. */
@@ -212,10 +231,7 @@ export function viewFromOverlay(
 ): AtlasEntryView {
   const fromDataset = base ? toEntryView(base) : null;
   const media = concatOverlayMedia(base, row);
-  const editedFields =
-    base && row.origin_key !== null
-      ? (Object.keys(overlayOverrides(base.fields, row)) as FieldKey[])
-      : [];
+  const merged = mergeOverlayFields(base?.fields ?? null, row);
   return {
     id: row.id,
     originKey: row.origin_key,
@@ -223,7 +239,7 @@ export function viewFromOverlay(
     // NULL means "use the dataset name", so dataset fixes to the name show through.
     commonName: row.common_name ?? base?.commonName ?? null,
     aliases: fromDataset?.aliases ?? [],
-    fields: mergeOverlayFields(base?.fields ?? null, row),
+    fields: merged.fields,
     refs: media.refs,
     images: media.images,
     editedAt: row.edited_at,
@@ -233,7 +249,7 @@ export function viewFromOverlay(
     override: null,
     focusMaterialIds: [],
     inPack: null,
-    editedFields,
+    editedFields: merged.editedFields,
     commonNameEdited:
       base !== null &&
       row.origin_key !== null &&

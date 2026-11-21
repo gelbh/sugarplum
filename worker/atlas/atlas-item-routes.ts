@@ -1,6 +1,6 @@
 import { Hono, type Context } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { mergeOverlayFields, overlayAtlas, overlayOverrides } from "./merge";
+import { overlayAtlas } from "./merge";
 import {
   enrichEntriesWithFocus,
   focusEntryKey,
@@ -47,12 +47,11 @@ import {
   findEntryByOrigin,
   insertOverlayFromDataset,
   mergeFields,
-  nextFieldOverrides,
   parseFieldsPatch,
   parseFocusOverride,
   parseResetFields,
+  planEntryWrite,
   resolveEntry,
-  storedCommonName,
 } from "./entry-helpers";
 import {
   parseMakeCardsDeckId,
@@ -304,28 +303,6 @@ atlasItemRoutes.post("/entries", async (c) => {
   return c.json(view, 201);
 });
 
-/** Refuse to rebuild a row from a column we cannot read; saving would erase the learner's edits. */
-function requireReadableJsonObject(
-  json: string | null,
-  column: string,
-  rowId: string,
-): void {
-  if (!json) return;
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(json);
-  } catch {
-    parsed = undefined;
-  }
-  if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
-    return;
-  }
-  console.error("atlas PATCH: stored entry JSON is unreadable", { rowId, column });
-  throw new HTTPException(500, {
-    message: "Stored entry data is unreadable; edit not saved",
-  });
-}
-
 atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
@@ -363,6 +340,7 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
 
   const ts = nowIso();
+  const input = { fieldsPatch, resetFields, commonName };
   let row: EntryRow | null = null;
 
   if (resolved.kind === "dataset") {
@@ -370,13 +348,7 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
     const onlyReset = fieldsPatch === undefined && !commonNameProvided;
     if (!onlyReset) {
       row = await insertOverlayFromDataset(db, atlas.id, resolved.entry, {
-        commonName,
-        overrides: nextFieldOverrides(
-          resolved.entry.fields,
-          {},
-          fieldsPatch,
-          resetFields,
-        ),
+        plan: planEntryWrite(null, resolved.entry, input),
         editedAt: ts,
       });
     }
@@ -385,42 +357,9 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
       throw new HTTPException(409, { message: "Entry is deleted" });
     }
     const dataset = resolved.row.origin_key
-      ? datasetByKey().get(resolved.row.origin_key)
-      : undefined;
-    if (resetFields !== undefined && !dataset) {
-      throw new HTTPException(400, {
-        message: "Only built-in parasites have dataset fields to reset",
-      });
-    }
-    const storedOverrides = resolved.row.field_overrides_json ?? null;
-    requireReadableJsonObject(storedOverrides, "field_overrides_json", resolved.row.id);
-    if (storedOverrides === null || !dataset) {
-      requireReadableJsonObject(resolved.row.fields_json, "fields_json", resolved.row.id);
-    }
-    let fieldsJson: string;
-    let overridesJson: string | null;
-    if (dataset) {
-      // overlayOverrides diffs a legacy full copy, so this write converts the row.
-      const current = overlayOverrides(dataset.fields, resolved.row);
-      fieldsJson = "{}";
-      overridesJson = JSON.stringify(
-        nextFieldOverrides(dataset.fields, current, fieldsPatch, resetFields),
-      );
-    } else {
-      // Learner-added rows, and origin rows whose dataset entry is gone, keep full fields.
-      fieldsJson = JSON.stringify(
-        mergeFields(mergeOverlayFields(null, resolved.row), fieldsPatch),
-      );
-      overridesJson = null;
-    }
-    const nextCommon =
-      commonName === undefined
-        ? resolved.row.common_name
-        : dataset
-          ? storedCommonName(commonName, dataset.commonName)
-          : commonName;
-    const nextCanonical = resolved.row.canonical_name;
-    const nextAliasesJson = resolved.row.aliases_json ?? null;
+      ? (datasetByKey().get(resolved.row.origin_key) ?? null)
+      : null;
+    const plan = planEntryWrite(resolved.row, dataset, input);
     await db
       .prepare(
         `UPDATE atlas_entries
@@ -429,13 +368,13 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
          WHERE id = ? AND atlas_id = ?`,
       )
       .bind(
-        nextCommon,
-        fieldsJson,
-        overridesJson,
+        plan.commonName,
+        plan.fieldsJson,
+        plan.overridesJson,
         ts,
         ts,
-        nextCanonical,
-        nextAliasesJson,
+        resolved.row.canonical_name,
+        resolved.row.aliases_json ?? null,
         resolved.row.id,
         atlas.id,
       )
