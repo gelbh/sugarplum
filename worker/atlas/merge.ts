@@ -165,7 +165,8 @@ export function overlayOverrides(
   datasetFields: DatasetFields,
   row: OverlayFieldsRow,
 ): Partial<ParasiteFields> {
-  const legacy = row.field_overrides_json === null;
+  // Loose check on purpose: a SELECT that omits the column must read as a legacy copy, never as {}.
+  const legacy = row.field_overrides_json == null;
   const stored = legacy
     ? parseObject(row.fields_json, { rowId: row.id, column: "fields_json" })
     : parseObject(row.field_overrides_json, {

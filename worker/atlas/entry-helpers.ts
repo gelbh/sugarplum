@@ -167,7 +167,7 @@ export function planEntryWrite(
     });
   }
   requireReadable(row.field_overrides_json, "field_overrides_json", row.id);
-  if (row.field_overrides_json === null || !dataset) {
+  if (row.field_overrides_json == null || !dataset) {
     requireReadable(row.fields_json, "fields_json", row.id);
   }
 
@@ -182,7 +182,7 @@ export function planEntryWrite(
   if (dataset) {
     // A legacy full copy is healed and converted by this write, as the backfill does.
     const current =
-      row.field_overrides_json === null
+      row.field_overrides_json == null
         ? (convertLegacyOverlay(row, dataset)?.overrides ?? {})
         : overlayOverrides(dataset.fields, row);
     const next = nextFieldOverrides(dataset.fields, current, fieldsPatch, resetFields);
@@ -194,7 +194,7 @@ export function planEntryWrite(
   }
 
   const fields = mergeFields(mergeOverlayFields(null, row).fields, fieldsPatch);
-  if (row.origin_key === null || row.field_overrides_json === null) {
+  if (row.origin_key === null || row.field_overrides_json == null) {
     // Learner-added rows keep full fields. A legacy origin row whose dataset
     // entry is gone stays a legacy full copy, so its edits survive if the
     // entry returns to the bundle.
