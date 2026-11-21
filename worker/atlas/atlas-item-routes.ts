@@ -297,6 +297,16 @@ atlasItemRoutes.post("/entries", async (c) => {
   return c.json(view, 201);
 });
 
+type StoredNames = Pick<EntryRow, "canonical_name" | "common_name" | "aliases_json">;
+
+function storedNamesChanged(before: StoredNames, after: StoredNames): boolean {
+  return (
+    before.canonical_name !== after.canonical_name ||
+    before.common_name !== after.common_name ||
+    before.aliases_json !== after.aliases_json
+  );
+}
+
 atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
@@ -317,7 +327,6 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   const resetFields = parseResetFields(body.resetFields);
   const aliases = parseAliasesPatch(body.aliases);
   const canonicalName = parseCanonicalNamePatch(body.canonicalName);
-  const canonicalProvided = canonicalName !== undefined;
   const setAndReset = (resetFields ?? []).filter(
     (key) => fieldsPatch !== undefined && key in fieldsPatch,
   );
@@ -326,22 +335,22 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
       message: `Cannot set and reset the same field: ${setAndReset.join(", ")}`,
     });
   }
-  const commonNameProvided = "commonName" in body;
   let commonName: string | undefined;
-  if (commonNameProvided) {
+  if ("commonName" in body) {
     if (typeof body.commonName !== "string" || !body.commonName.trim()) {
       throw new HTTPException(400, { message: "commonName required" });
     }
     commonName = body.commonName.trim();
   }
 
-  if (
-    fieldsPatch === undefined &&
-    !commonNameProvided &&
-    resetFields === undefined &&
-    aliases === undefined &&
-    !canonicalProvided
-  ) {
+  // What this patch touches, decided once from the parsed body. A built-in's
+  // scientific name never changes, so only `writesColumns` counts canonicalName.
+  const touchesNames =
+    commonName !== undefined || aliases !== undefined || canonicalName !== undefined;
+  const writesOverlay =
+    fieldsPatch !== undefined || commonName !== undefined || aliases !== undefined;
+  const writesColumns = writesOverlay || canonicalName !== undefined;
+  if (!writesColumns && resetFields === undefined) {
     throw new HTTPException(400, { message: "No changes" });
   }
 
@@ -351,21 +360,26 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   const ts = nowIso();
   const input = { fieldsPatch, resetFields, commonName, aliases, canonicalName };
   let row: EntryRow | null = null;
+  let namesBefore: StoredNames;
 
   if (resolved.kind === "dataset") {
-    // A reset on an entry with no overlay has nothing to remove; do not create a row.
-    const onlyReset =
-      fieldsPatch === undefined &&
-      !commonNameProvided &&
-      aliases === undefined &&
-      !canonicalProvided;
-    if (!onlyReset) {
+    namesBefore = {
+      canonical_name: resolved.entry.canonicalName,
+      common_name: null,
+      aliases_json: null,
+    };
+    // Planned even when nothing is stored, so a different built-in name is refused.
+    const plan = planEntryWrite(null, resolved.entry, input);
+    // A reset has nothing to remove, and a built-in keeps its name (the plan
+    // refused any other), so neither creates a row on its own.
+    if (writesOverlay) {
       row = await insertOverlayFromDataset(db, atlas.id, resolved.entry, {
-        plan: planEntryWrite(null, resolved.entry, input),
+        plan,
         editedAt: ts,
       });
     }
   } else {
+    namesBefore = resolved.row;
     if (resolved.row.deleted_at) {
       throw new HTTPException(409, { message: "Entry is deleted" });
     }
@@ -414,11 +428,7 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   }
 
   // Names and aliases feed scanFocus and course-pack matching.
-  if (
-    commonNameProvided ||
-    aliases !== undefined ||
-    canonicalProvided
-  ) {
+  if (touchesNames && row !== null && storedNamesChanged(namesBefore, row)) {
     await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
   }
   const overlays = row ? await toOverlayRows(db, atlas.id, [row]) : [];

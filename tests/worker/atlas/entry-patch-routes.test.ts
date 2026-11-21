@@ -1,11 +1,20 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { app } from "../../../worker/index";
+import { refreshFocusBestEffort } from "../../../worker/atlas/focus";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
 import { createTestEnv } from "../test-env";
 import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites/index";
 import type { AtlasEntryView } from "../../../src/atlas/types";
 import { searchable } from "../../../src/atlas/hub/nameMatch";
 import arthropods from "../../../worker/atlas/datasets/parasites/arthropods.json";
+
+vi.mock("../../../worker/atlas/focus", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../worker/atlas/focus")>();
+  return {
+    ...actual,
+    refreshFocusBestEffort: vi.fn(actual.refreshFocusBestEffort),
+  };
+});
 
 type Env = ReturnType<typeof createTestEnv>;
 
@@ -838,5 +847,66 @@ describe("PATCH /entries/:entryId canonicalName", () => {
     const view = (await res.json()) as AtlasEntryView;
     expect(view.canonicalName).toBe("Fasciola hepatica");
     expect(view.commonName).toBe("My fluke");
+  });
+});
+
+describe("PATCH /entries/:entryId Focus refresh", () => {
+  const refresh = vi.mocked(refreshFocusBestEffort);
+  beforeEach(() => {
+    refresh.mockClear();
+  });
+
+  it("does not refresh when the names stay the same", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    refresh.mockClear();
+    const first = await patchEntry(env, atlasId, "demodex-canis", {
+      aliases: ["follicular mite"],
+    });
+    const edited = (await first.json()) as AtlasEntryView;
+    expect(refresh).toHaveBeenCalledTimes(1);
+    refresh.mockClear();
+
+    const fieldsOnly = await patchEntry(env, atlasId, edited.id, {
+      fields: { significance: "Mine" },
+    });
+    expect(fieldsOnly.status).toBe(200);
+    const sameNames = await patchEntry(env, atlasId, edited.id, {
+      aliases: ["follicular mite"],
+      commonName: edited.commonName,
+      canonicalName: edited.canonicalName,
+    });
+    expect(sameNames.status).toBe(200);
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("refreshes after a common name change or a learner rename", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    refresh.mockClear();
+    await patchEntry(env, atlasId, "fasciola-hepatica", { commonName: "My fluke" });
+    expect(refresh).toHaveBeenCalledTimes(1);
+
+    const added = await createLearnerEntry(env, atlasId, "Madeupius fictus");
+    refresh.mockClear();
+    await patchEntry(env, atlasId, added.id, { canonicalName: "Madeupius renamus" });
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("writes no overlay for a built-in entry's own name alone", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const atlasId = await createAtlas(env);
+    refresh.mockClear();
+    const res = await patchEntry(env, atlasId, "fasciola-hepatica", {
+      canonicalName: "Fasciola hepatica",
+    });
+    expect(res.status).toBe(200);
+    const view = (await res.json()) as AtlasEntryView;
+    expect(view.id).toBe("fasciola-hepatica");
+    expect(view.editedAt).toBeNull();
+    expect(refresh).not.toHaveBeenCalled();
   });
 });
