@@ -40,6 +40,7 @@ export function toEntryView(entry: DatasetEntry): AtlasEntryView {
     canonicalName: entry.canonicalName,
     commonName: entry.commonName,
     aliases: [...entry.aliases, ...entry.misspellings],
+    learnerAliases: [],
     fields: entry.fields,
     refs: entry.refs,
     images: entry.images.map(({ file, ...image }) => {

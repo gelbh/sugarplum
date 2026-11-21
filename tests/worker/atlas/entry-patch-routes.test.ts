@@ -694,7 +694,7 @@ describe("PATCH /entries/:entryId aliases", () => {
     );
     expect(view?.editedAt).toBeNull();
     expect(view?.aliases).not.toContain("big liver fluke");
-    expect(view?.learnerAliases).toBeUndefined();
+    expect(view?.learnerAliases).toEqual([]);
     expect(view?.editedFields).toEqual([]);
   });
 

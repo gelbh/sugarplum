@@ -398,6 +398,7 @@ describe("overlayAtlas", () => {
     );
     expect(views[0].aliases).toEqual(toEntryView(fasciola).aliases);
     expect(views[0].learnerAliases).toEqual([]);
+    expect(toEntryView(fasciola).learnerAliases).toEqual([]);
   });
 });
 

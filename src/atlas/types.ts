@@ -29,8 +29,8 @@ export type AtlasEntryView = {
   canonicalName: string;
   commonName: string | null;
   aliases: string[];
-  /** Learner-added aliases only (already merged into `aliases`); absent on unedited dataset views. */
-  learnerAliases?: string[];
+  /** Learner-added aliases only (already merged into `aliases`); empty on unedited dataset views. */
+  learnerAliases: string[];
   fields: DatasetFields;
   refs: {
     field: string | null;
