@@ -20,6 +20,7 @@ export {
 } from "./mutate/AtlasMutateDialogs";
 export { EditEntryDialog } from "./mutate/EditEntryDialog";
 export { useCorrectionSuggestion } from "./corrections/useCorrectionSuggestion";
+export { default as AtlasCorrectionsSection } from "./corrections/AtlasCorrectionsSection";
 export type { EditSectionId } from "./mutate/entryPatch";
 export { default as MakeCardsDeckDialog } from "./mutate/MakeCardsDeckDialog";
 export {

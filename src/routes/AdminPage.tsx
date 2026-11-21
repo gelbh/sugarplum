@@ -39,6 +39,7 @@ import {
   formatAdminCount,
   formatAdminDateShort,
 } from "./adminFormat";
+import { AtlasCorrectionsSection } from "../atlas";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -715,6 +716,8 @@ export default function AdminPage() {
               </TableContainer>
             </Paper>
           ) : null}
+
+          {!forbidden ? <AtlasCorrectionsSection /> : null}
         </Stack>
       )}
     </Container>
