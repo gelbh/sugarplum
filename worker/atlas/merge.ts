@@ -86,20 +86,32 @@ export function sameFieldValue(a: unknown, b: unknown): boolean {
   return JSON.stringify(canonicalJson(a)) === JSON.stringify(canonicalJson(b));
 }
 
-function parseObject(
+/**
+ * A stored JSON object column, or null when it is malformed (bad JSON or not
+ * a plain object). Empty or missing means no keys, not malformed.
+ */
+export function tryParseObject(
   json: string | null | undefined,
-  context: { rowId?: string; column: string },
-): Record<string, unknown> {
+): Record<string, unknown> | null {
   if (!json) return {};
   let parsed: unknown;
   try {
     parsed = JSON.parse(json);
   } catch {
-    parsed = undefined;
+    return null;
   }
   if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
     return parsed as Record<string, unknown>;
   }
+  return null;
+}
+
+function parseObject(
+  json: string | null | undefined,
+  context: { rowId?: string; column: string },
+): Record<string, unknown> {
+  const parsed = tryParseObject(json);
+  if (parsed) return parsed;
   console.warn("atlas entry: ignoring malformed JSON object", {
     rowId: context.rowId ?? null,
     column: context.column,

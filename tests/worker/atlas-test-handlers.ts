@@ -248,6 +248,30 @@ export function atlasAll<T>(
     return { results: rows as T[] };
   }
 
+  // Backfill scan: legacy origin rows (soft-deleted included), per scope.
+  if (
+    normalized.includes("FROM atlas_entries") &&
+    normalized.includes("origin_key IS NOT NULL") &&
+    normalized.includes("field_overrides_json IS NULL")
+  ) {
+    let candidates = [...state.entries.values()];
+    if (normalized.includes("a.user_id =")) {
+      const userId = bound[0] as string;
+      const atlasIds = new Set(
+        [...state.atlases.values()]
+          .filter((a) => a.user_id === userId)
+          .map((a) => a.id),
+      );
+      candidates = candidates.filter((e) => atlasIds.has(e.atlas_id));
+    } else if (normalized.includes("atlas_id =")) {
+      candidates = entriesForAtlas(state, bound[0] as string);
+    }
+    const rows = candidates.filter(
+      (e) => e.origin_key != null && e.field_overrides_json == null,
+    );
+    return { results: rows as T[] };
+  }
+
   if (
     normalized.includes("FROM atlas_entries e") &&
     normalized.includes("JOIN atlases a") &&
@@ -585,6 +609,17 @@ export function atlasRun(
       return { success: true, meta: { changes: 0 } } as D1Result;
     }
     state.entries.set(id, { ...row, deleted_at, updated_at });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+
+  if (normalized.startsWith("UPDATE atlas_entries SET field_overrides_json =")) {
+    const [field_overrides_json, common_name, updated_at, id, atlas_id] =
+      bound as [string, string | null, string, string, string];
+    const row = state.entries.get(id);
+    if (!row || row.atlas_id !== atlas_id || row.field_overrides_json != null) {
+      return { success: true, meta: { changes: 0 } } as D1Result;
+    }
+    state.entries.set(id, { ...row, field_overrides_json, common_name, updated_at });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
 
