@@ -30,7 +30,7 @@ import {
   isFieldKey,
 } from "../entry/entryFields";
 import { entryTitles } from "../entry/entryTitles";
-import { distributionChipLabels } from "../hub/distributionTags";
+import { BAND_LABELS, REGION_LABELS } from "../hub/distributionTags";
 import { GROUP_LABELS } from "../hub/filter";
 import { ALIAS_MAX_CHARS, ALIAS_MAX_ITEMS } from "../hub/nameMatch";
 import { shouldAutoFocusText } from "../../shared/lib/autoFocusText";
@@ -64,10 +64,21 @@ type Props = {
 const HOST_HELP = "Comma-separated host terms";
 const LIST_HELP = "Comma-separated";
 
-const regionLabel = (r: EntryDraft["distributionRegions"][number]) =>
-  distributionChipLabels({ worldwide: false, regions: [r], bands: [] })[0] ?? r;
-const bandLabel = (b: EntryDraft["climateBands"][number]) =>
-  distributionChipLabels({ worldwide: false, regions: [], bands: [b] })[0] ?? b;
+const LIFECYCLE_TYPE_OPTIONS = [
+  { value: "", label: "Not set" },
+  { value: "direct", label: "Direct" },
+  { value: "indirect", label: "Indirect" },
+];
+const GROUP_OPTIONS = PARASITE_GROUPS.map((g) => ({
+  value: g,
+  label: GROUP_LABELS[g].plural,
+}));
+const ZOONOTIC_OPTIONS = [
+  { value: "", label: "Not set" },
+  ...ZOONOTIC_VALUES.map((z) => ({ value: z, label: ZOONOTIC_LABELS[z] })),
+];
+
+type SelectDraftKey = "group" | "lifecycleType" | "zoonotic";
 
 function Section({ id, children }: { id: EditSectionId; children: ReactNode }) {
   const title = EDIT_SECTION_TITLES[id];
@@ -145,6 +156,48 @@ function TermChecks<T extends string>({
   );
 }
 
+function PppRangeField({
+  min,
+  max,
+  onChange,
+  error,
+  edited,
+  disabled,
+}: {
+  min: string;
+  max: string;
+  onChange: (key: "pppMin" | "pppMax", value: string) => void;
+  error?: string;
+  edited: ReactNode;
+  disabled: boolean;
+}) {
+  const input = (key: "pppMin" | "pppMax", label: string, value: string) => (
+    <TextField
+      label={label}
+      value={value}
+      onChange={(ev) => onChange(key, ev.target.value)}
+      disabled={disabled}
+      fullWidth
+      slotProps={{ htmlInput: { inputMode: "numeric" } }}
+      error={Boolean(error)}
+    />
+  );
+  return (
+    <>
+      <Stack direction="row" sx={{ gap: 1.5 }}>
+        {input("pppMin", "PPP min (days)", min)}
+        {input("pppMax", "PPP max (days)", max)}
+      </Stack>
+      {error ? (
+        <Typography variant="caption" sx={{ color: "error.main" }}>
+          {error}
+        </Typography>
+      ) : null}
+      {edited}
+    </>
+  );
+}
+
 export function EditEntryDialog({
   open,
   atlasId,
@@ -207,11 +260,9 @@ export function EditEntryDialog({
       required?: boolean;
       disabled?: boolean;
       autoFocus?: boolean;
-      numeric?: boolean;
     } = {},
   ) => {
-    const ppp = key === "pppMin" || key === "pppMax";
-    const err = fieldErrors[key === "pppMin" || key === "pppMax" ? "pppDays" : key];
+    const err = fieldErrors[key];
     return (
       <>
         <TextField
@@ -224,16 +275,39 @@ export function EditEntryDialog({
           autoFocus={opts.autoFocus}
           multiline={opts.multiline}
           minRows={opts.multiline ? 2 : undefined}
-          slotProps={
-            opts.numeric ? { htmlInput: { inputMode: "numeric" } } : undefined
-          }
           error={Boolean(err)}
-          helperText={ppp ? undefined : (err ?? opts.helper)}
+          helperText={err ?? opts.helper}
         />
         {isFieldKey(key) ? edited(key) : null}
       </>
     );
   };
+
+  const select = <K extends SelectDraftKey>(
+    key: K,
+    label: string,
+    options: readonly { value: string; label: string }[],
+  ) => (
+    <>
+      <TextField
+        select
+        label={label}
+        value={draft?.[key] ?? ""}
+        onChange={(ev) => update(key, ev.target.value as EntryDraft[K])}
+        disabled={busy}
+        fullWidth
+        error={Boolean(fieldErrors[key])}
+        helperText={fieldErrors[key]}
+      >
+        {options.map((o) => (
+          <MenuItem key={o.value} value={o.value}>
+            {o.label}
+          </MenuItem>
+        ))}
+      </TextField>
+      {edited(key)}
+    </>
+  );
 
   return (
     <Dialog
@@ -295,25 +369,7 @@ export function EditEntryDialog({
                 {text("phylum", FIELD_LABELS.phylum)}
                 {text("order", FIELD_LABELS.order)}
                 {text("family", FIELD_LABELS.family)}
-                <TextField
-                  select
-                  label={FIELD_LABELS.group}
-                  value={draft.group}
-                  onChange={(ev) =>
-                    update("group", ev.target.value as EntryDraft["group"])
-                  }
-                  disabled={busy}
-                  fullWidth
-                  error={Boolean(fieldErrors.group)}
-                  helperText={fieldErrors.group}
-                >
-                  {PARASITE_GROUPS.map((g) => (
-                    <MenuItem key={g} value={g}>
-                      {GROUP_LABELS[g].plural}
-                    </MenuItem>
-                  ))}
-                </TextField>
-                {edited("group")}
+                {select("group", FIELD_LABELS.group, GROUP_OPTIONS)}
               </Section>
 
               <Section id="hosts">
@@ -333,34 +389,19 @@ export function EditEntryDialog({
                 {text("onHostStages", FIELD_LABELS.onHostStages, {
                   helper: LIST_HELP,
                 })}
-                <TextField
-                  select
-                  label={FIELD_LABELS.lifecycleType}
-                  value={draft.lifecycleType}
-                  onChange={(ev) =>
-                    update(
-                      "lifecycleType",
-                      ev.target.value as EntryDraft["lifecycleType"],
-                    )
-                  }
+                {select(
+                  "lifecycleType",
+                  FIELD_LABELS.lifecycleType,
+                  LIFECYCLE_TYPE_OPTIONS,
+                )}
+                <PppRangeField
+                  min={draft.pppMin}
+                  max={draft.pppMax}
+                  onChange={update}
+                  error={fieldErrors.pppDays}
+                  edited={edited("pppDays")}
                   disabled={busy}
-                  fullWidth
-                >
-                  <MenuItem value="">Not set</MenuItem>
-                  <MenuItem value="direct">Direct</MenuItem>
-                  <MenuItem value="indirect">Indirect</MenuItem>
-                </TextField>
-                {edited("lifecycleType")}
-                <Stack direction="row" sx={{ gap: 1.5 }}>
-                  {text("pppMin", "PPP min (days)", { numeric: true })}
-                  {text("pppMax", "PPP max (days)", { numeric: true })}
-                </Stack>
-                {fieldErrors.pppDays ? (
-                  <Typography variant="caption" sx={{ color: "error.main" }}>
-                    {fieldErrors.pppDays}
-                  </Typography>
-                ) : null}
-                {edited("pppDays")}
+                />
                 {onEditLifecycle ? (
                   <Button
                     variant="text"
@@ -396,7 +437,7 @@ export function EditEntryDialog({
                   legend={FIELD_LABELS.distributionRegions}
                   options={DISTRIBUTION_REGION_TERM_KEYS}
                   selected={draft.distributionRegions}
-                  labelFor={regionLabel}
+                  labelFor={(r) => REGION_LABELS[r]}
                   onChange={(next) => update("distributionRegions", next)}
                   disabled={busy}
                 />
@@ -405,7 +446,7 @@ export function EditEntryDialog({
                   legend={FIELD_LABELS.climateBands}
                   options={CLIMATE_BAND_TERM_KEYS}
                   selected={draft.climateBands}
-                  labelFor={bandLabel}
+                  labelFor={(b) => BAND_LABELS[b]}
                   onChange={(next) => update("climateBands", next)}
                   disabled={busy}
                 />
@@ -413,24 +454,7 @@ export function EditEntryDialog({
               </Section>
 
               <Section id="clinical">
-                <TextField
-                  select
-                  label={FIELD_LABELS.zoonotic}
-                  value={draft.zoonotic}
-                  onChange={(ev) =>
-                    update("zoonotic", ev.target.value as EntryDraft["zoonotic"])
-                  }
-                  disabled={busy}
-                  fullWidth
-                >
-                  <MenuItem value="">Not set</MenuItem>
-                  {ZOONOTIC_VALUES.map((z) => (
-                    <MenuItem key={z} value={z}>
-                      {ZOONOTIC_LABELS[z]}
-                    </MenuItem>
-                  ))}
-                </TextField>
-                {edited("zoonotic")}
+                {select("zoonotic", FIELD_LABELS.zoonotic, ZOONOTIC_OPTIONS)}
                 {text("significance", FIELD_LABELS.significance, {
                   multiline: true,
                 })}

@@ -95,8 +95,6 @@ export type TextDraftKey =
   | "paratenicHosts"
   | "majorOrgan"
   | "onHostStages"
-  | "pppMin"
-  | "pppMax"
   | "distribution"
   | "significance"
   | "vectorRole"

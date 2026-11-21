@@ -46,7 +46,7 @@ const TERM_TO_REGION: Record<DistributionRegionTerm, MapRegionId> = {
   antarctica: "an",
 };
 
-const REGION_LABELS: Record<DistributionRegionTerm, string> = {
+export const REGION_LABELS: Record<DistributionRegionTerm, string> = {
   "north-america": "North America",
   "south-america": "South America",
   europe: "Europe",
@@ -56,7 +56,7 @@ const REGION_LABELS: Record<DistributionRegionTerm, string> = {
   antarctica: "Antarctica",
 };
 
-const BAND_LABELS: Record<ClimateBandTerm, string> = {
+export const BAND_LABELS: Record<ClimateBandTerm, string> = {
   tropical: "Tropical",
   subtropical: "Subtropical",
   "warm-humid": "Warm humid",
