@@ -9,6 +9,8 @@ import { syncDiagnosticOwnership } from "./lifecycleDiagnostic";
 import {
   emptyParasiteFields,
   PARASITE_FIELD_KEYS,
+  parasiteFieldsSchema,
+  type ParasiteFieldKey,
   type ParasiteFields,
 } from "./templates/parasite";
 
@@ -64,7 +66,7 @@ export function toEntryView(entry: DatasetEntry): AtlasEntryView {
 export type OverlayFieldsRow = Pick<
   OverlayRow,
   "origin_key" | "fields_json" | "field_overrides_json"
->;
+> & { id?: string };
 
 function canonicalJson(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalJson);
@@ -84,16 +86,34 @@ export function sameFieldValue(a: unknown, b: unknown): boolean {
   return JSON.stringify(canonicalJson(a)) === JSON.stringify(canonicalJson(b));
 }
 
-function parseObject(json: string | null | undefined): Record<string, unknown> {
+function parseObject(
+  json: string | null | undefined,
+  context: { rowId?: string; column: string },
+): Record<string, unknown> {
   if (!json) return {};
+  let parsed: unknown;
   try {
-    const parsed: unknown = JSON.parse(json);
-    return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : {};
+    parsed = JSON.parse(json);
   } catch {
-    return {};
+    parsed = undefined;
   }
+  if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+    return parsed as Record<string, unknown>;
+  }
+  console.warn("atlas entry: ignoring malformed JSON object", {
+    rowId: context.rowId ?? null,
+    column: context.column,
+  });
+  return {};
+}
+
+/**
+ * Fill schema defaults into a stored value (e.g. a stage written before
+ * `imageId` existed), so a legacy copy is not mistaken for an edit.
+ */
+function withSchemaDefaults(key: ParasiteFieldKey, value: unknown): unknown {
+  const parsed = parasiteFieldsSchema.shape[key].safeParse(value);
+  return parsed.success ? parsed.data : value;
 }
 
 function syncFields(fields: DatasetFields): DatasetFields {
@@ -117,14 +137,19 @@ export function overlayOverrides(
   datasetFields: DatasetFields,
   row: OverlayFieldsRow,
 ): Partial<ParasiteFields> {
-  const stored = parseObject(
-    row.field_overrides_json != null ? row.field_overrides_json : row.fields_json,
-  );
+  const legacy = row.field_overrides_json == null;
+  const stored = legacy
+    ? parseObject(row.fields_json, { rowId: row.id, column: "fields_json" })
+    : parseObject(row.field_overrides_json, {
+        rowId: row.id,
+        column: "field_overrides_json",
+      });
   const out: Partial<ParasiteFields> = {};
   for (const key of PARASITE_FIELD_KEYS) {
     if (!(key in stored)) continue;
-    if (sameFieldValue(stored[key], datasetFields[key])) continue;
-    Object.assign(out, { [key]: stored[key] });
+    const value = legacy ? withSchemaDefaults(key, stored[key]) : stored[key];
+    if (sameFieldValue(value, datasetFields[key])) continue;
+    Object.assign(out, { [key]: value });
   }
   return out;
 }
@@ -136,13 +161,19 @@ export function mergeOverlayFields(
 ): DatasetFields {
   const empty = emptyParasiteFields() as DatasetFields;
   if (row.origin_key === null) {
-    return syncFields({ ...empty, ...parseObject(row.fields_json) } as DatasetFields);
+    return syncFields({
+      ...empty,
+      ...parseObject(row.fields_json, { rowId: row.id, column: "fields_json" }),
+    } as DatasetFields);
   }
   if (datasetFields === null) {
     return syncFields({
       ...empty,
-      ...parseObject(row.fields_json),
-      ...parseObject(row.field_overrides_json),
+      ...parseObject(row.fields_json, { rowId: row.id, column: "fields_json" }),
+      ...parseObject(row.field_overrides_json, {
+        rowId: row.id,
+        column: "field_overrides_json",
+      }),
     } as DatasetFields);
   }
   return syncFields({
