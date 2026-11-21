@@ -542,7 +542,7 @@ export default function SettingsPage() {
                     value={dailyGoalInput}
                     onChange={(ev) => setDailyGoalInput(ev.target.value)}
                     fullWidth
-                    inputProps={{ min: 5, max: 100, step: 1 }}
+                    slotProps={{ htmlInput: { min: 5, max: 100, step: 1 } }}
                     helperText="Optional volume target (5–100). Does not control your streak."
                   />
                   {gamification ? (
