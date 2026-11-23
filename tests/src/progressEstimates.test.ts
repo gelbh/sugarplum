@@ -2,20 +2,24 @@ import { describe, expect, it } from "vitest";
 import {
   etaMs,
   calmDisplayEtaMs,
+  combineEtaMs,
+  updateEwmaRate,
+  remainingPriorMs,
   resolveJobStartedAtMs,
   projectTokensFromPercent,
   projectCardsFromPercent,
   projectTokens,
   projectCardsThisJob,
   remainingCardsToday,
+  ETA_SEED_TOTAL_MS,
 } from "../../src/progress/estimates";
+import { formatEtaCompact, formatEtaSubline } from "../../src/progress/copy";
 
 describe("etaMs", () => {
   it("returns null when percent < 5", () => {
     expect(etaMs(10_000, 4.9)).toBeNull();
   });
   it("extrapolates remaining time", () => {
-    // 20% in 10s → 40s remaining
     expect(etaMs(10_000, 20)).toBe(40_000);
   });
 });
@@ -24,20 +28,20 @@ describe("calmDisplayEtaMs", () => {
   it("returns null when percent < 5", () => {
     expect(
       calmDisplayEtaMs({
-        elapsedMs: 10_000,
         percent: 4.9,
         previous: null,
         nowMs: 1_000,
+        rawEtaMs: 40_000,
       }),
     ).toEqual({ etaMs: null, sample: null });
   });
 
-  it("first sample uses raw etaMs", () => {
+  it("first sample uses rawEtaMs", () => {
     const result = calmDisplayEtaMs({
-      elapsedMs: 10_000,
       percent: 20,
       previous: null,
       nowMs: 10_000,
+      rawEtaMs: 40_000,
     });
     expect(result.etaMs).toBe(40_000);
     expect(result.sample).toEqual({
@@ -49,75 +53,135 @@ describe("calmDisplayEtaMs", () => {
 
   it("flat percent countdowns instead of growing with elapsed", () => {
     const first = calmDisplayEtaMs({
-      elapsedMs: 10_000,
       percent: 25,
       previous: null,
       nowMs: 10_000,
+      rawEtaMs: 30_000,
     });
     expect(first.etaMs).toBe(30_000);
-    const grownRaw = etaMs(15_000, 25);
-    expect(grownRaw).toBe(45_000);
     const held = calmDisplayEtaMs({
-      elapsedMs: 15_000,
       percent: 25,
       previous: first.sample,
       nowMs: 15_000,
+      rawEtaMs: 45_000,
     });
     expect(held.etaMs).toBe(25_000);
-    expect(held.etaMs!).toBeLessThan(grownRaw!);
     expect(held.sample).toEqual(first.sample);
   });
 
   it("returns null when flat countdown hits zero but keeps anchor", () => {
     const first = calmDisplayEtaMs({
-      elapsedMs: 10_000,
       percent: 50,
       previous: null,
       nowMs: 10_000,
+      rawEtaMs: 10_000,
     });
     expect(first.etaMs).toBe(10_000);
     const stalled = calmDisplayEtaMs({
-      elapsedMs: 25_000,
       percent: 50,
       previous: first.sample,
       nowMs: 25_000,
+      rawEtaMs: 10_000,
     });
     expect(stalled.etaMs).toBeNull();
     expect(stalled.sample).toEqual(first.sample);
   });
 
-  it("recomputes raw when percent increases", () => {
+  it("recomputes raw when percent increases (may grow)", () => {
     const first = calmDisplayEtaMs({
-      elapsedMs: 10_000,
       percent: 20,
       previous: null,
       nowMs: 10_000,
+      rawEtaMs: 20_000,
     });
     const next = calmDisplayEtaMs({
-      elapsedMs: 12_000,
       percent: 30,
       previous: first.sample,
       nowMs: 12_000,
+      rawEtaMs: 50_000,
     });
-    expect(next.etaMs).toBe(etaMs(12_000, 30));
+    expect(next.etaMs).toBe(50_000);
     expect(next.sample?.percent).toBe(30);
   });
 
   it("recomputes raw when percent decreases", () => {
     const first = calmDisplayEtaMs({
-      elapsedMs: 10_000,
       percent: 40,
       previous: null,
       nowMs: 10_000,
+      rawEtaMs: 15_000,
     });
     const next = calmDisplayEtaMs({
-      elapsedMs: 12_000,
       percent: 20,
       previous: first.sample,
       nowMs: 12_000,
+      rawEtaMs: 40_000,
     });
-    expect(next.etaMs).toBe(etaMs(12_000, 20));
+    expect(next.etaMs).toBe(40_000);
     expect(next.sample?.percent).toBe(20);
+  });
+});
+
+describe("updateEwmaRate / combineEtaMs", () => {
+  it("needs two positive bumps before rate samples >= 2", () => {
+    let state = updateEwmaRate(null, 10, 1_000);
+    state = updateEwmaRate(state, 20, 2_000);
+    expect(state?.samples).toBe(1);
+    state = updateEwmaRate(state, 30, 3_000);
+    expect(state?.samples).toBe(2);
+    expect(state!.smoothedPerMs).toBeGreaterThan(0);
+  });
+
+  it("combine uses seed for current stage when ewma cold", () => {
+    const eta = combineEtaMs({
+      percent: 10,
+      stage: "claims",
+      presentStages: ["extract", "rules", "claims", "generate", "persist"],
+      ewma: null,
+      priors: null,
+      current: 0,
+      total: 0,
+    });
+    expect(eta).toBeGreaterThan(0);
+    expect(eta).toBe(
+      0.15 * ETA_SEED_TOTAL_MS +
+        remainingPriorMs({
+          stage: "claims",
+          presentStages: ["extract", "rules", "claims", "generate", "persist"],
+          priors: null,
+        }),
+    );
+  });
+
+  it("remainingPriorMs prefers p50 when n>=3", () => {
+    const seeded = remainingPriorMs({
+      stage: "claims",
+      presentStages: ["claims", "generate", "persist"],
+      priors: null,
+    });
+    const withPrior = remainingPriorMs({
+      stage: "claims",
+      presentStages: ["claims", "generate", "persist"],
+      priors: {
+        stages: {
+          generate: { p50_ms: 1_000, n: 3 },
+          persist: { p50_ms: 500, n: 5 },
+        },
+      },
+    });
+    expect(withPrior).toBe(1_500);
+    expect(withPrior).toBeLessThan(seeded);
+  });
+});
+
+describe("formatEta coarsening", () => {
+  it("drops seconds at or above 2 minutes", () => {
+    expect(formatEtaSubline(18 * 60 * 1000)).toBe("About 18m left");
+    expect(formatEtaCompact(18 * 60 * 1000)).toBe("~18m");
+  });
+
+  it("keeps seconds under 2 minutes", () => {
+    expect(formatEtaSubline(90_000)).toBe("About 1m 30s left");
   });
 });
 
@@ -200,7 +264,6 @@ describe("projectCardsThisJob", () => {
 
 describe("remainingCardsToday", () => {
   it("adds cards left this job plus remaining * projected job yield", () => {
-    // projected 10, so far 5 → 5 left; R=3 → 5 + 3*10 = 35
     expect(
       remainingCardsToday({
         draftsSoFar: 5,

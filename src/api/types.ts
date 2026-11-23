@@ -242,6 +242,10 @@ export type GenerationJobProgress = {
   path?: "free" | "byo";
 };
 
+export type GenerationJobEtaPriors = {
+  stages: Partial<Record<string, { p50_ms: number; n: number }>>;
+};
+
 export type GenerationJob = {
   id: string;
   material_id: string;
@@ -250,6 +254,8 @@ export type GenerationJob = {
   coverage_json: string | null;
   progress: GenerationJobProgress | null;
   free_quota: { used: number; cap: number; remaining: number } | null;
+  /** Historical stage p50s for ETA (omitted/null when KV rollup empty). */
+  eta_priors?: GenerationJobEtaPriors | null;
   created_at: string;
   finished_at: string | null;
   /** Deck/subject for draft-review crumbs (GET /api/jobs/:id). */

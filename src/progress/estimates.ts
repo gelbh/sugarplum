@@ -1,8 +1,31 @@
+import { PROGRESS_STAGE_ORDER } from "./copy";
+
+/** @deprecated Lifetime linear; kept for tests/legacy. Prefer combineEtaMs. */
 export function etaMs(elapsedMs: number, percent: number): number | null {
   if (percent < 5) {
     return null;
   }
   return (elapsedMs * (100 - percent)) / percent;
+}
+
+export const ETA_EWMA_ALPHA = 0.25;
+export const ETA_SEED_TOTAL_MS = 12 * 60 * 1000;
+export const ETA_PRIOR_MIN_N = 3;
+
+/** Static catalog weights (mirror worker STAGE_WEIGHTS). */
+const CLIENT_STAGE_WEIGHTS: Record<string, number> = {
+  queued: 0.02,
+  extract: 0.08,
+  figures: 0.1,
+  rules: 0.05,
+  claims: 0.15,
+  generate: 0.2,
+  critique: 0.3,
+  persist: 0.1,
+};
+
+export function defaultStageWeight(stage: string): number {
+  return CLIENT_STAGE_WEIGHTS[stage] ?? 0;
 }
 
 /** Durable ETA clock: started_at, else earliest progress event (no created_at / queue). */
@@ -31,16 +54,29 @@ export type CalmEtaSample = {
   atMs: number;
 };
 
+export type EwmaRateState = {
+  smoothedPerMs: number;
+  samples: number;
+  lastPercent: number;
+  lastAtMs: number;
+};
+
+export type EtaPriors = {
+  stages: Partial<Record<string, { p50_ms: number; n: number }>>;
+};
+
 /**
- * Calm ETA: recompute when percent changes; while flat, countdown the anchor
- * (never grow). When countdown hits 0, return null ("Calculating…") but keep
- * the anchor so a later percent bump still recomputes.
+ * Calm ETA: recompute when percent changes (raw may grow); while flat,
+ * countdown the anchor. When countdown hits 0, return null but keep anchor.
  */
 export function calmDisplayEtaMs(args: {
-  elapsedMs: number;
   percent: number;
   previous: CalmEtaSample | null;
   nowMs: number;
+  /** Precomputed combineEtaMs (or legacy etaMs) result. */
+  rawEtaMs: number | null;
+  /** @deprecated Ignored; use rawEtaMs. */
+  elapsedMs?: number;
 }): { etaMs: number | null; sample: CalmEtaSample | null } {
   if (args.percent < 5) {
     return { etaMs: null, sample: null };
@@ -51,7 +87,7 @@ export function calmDisplayEtaMs(args: {
     previous == null || args.percent !== previous.percent;
 
   if (shouldRecompute) {
-    const raw = etaMs(args.elapsedMs, args.percent);
+    const raw = args.rawEtaMs;
     if (raw == null) {
       return { etaMs: null, sample: null };
     }
@@ -69,6 +105,109 @@ export function calmDisplayEtaMs(args: {
     return { etaMs: null, sample: previous };
   }
   return { etaMs: display, sample: previous };
+}
+
+export function updateEwmaRate(
+  prev: EwmaRateState | null,
+  percent: number,
+  atMs: number,
+): EwmaRateState | null {
+  if (!Number.isFinite(percent) || percent < 0) return prev;
+  if (prev == null) {
+    return {
+      smoothedPerMs: 0,
+      samples: 0,
+      lastPercent: percent,
+      lastAtMs: atMs,
+    };
+  }
+  if (percent <= prev.lastPercent) {
+    return prev;
+  }
+  const dt = atMs - prev.lastAtMs;
+  const dPercent = percent - prev.lastPercent;
+  if (dt <= 0 || dPercent <= 0) return prev;
+  const instant = dPercent / dt;
+  const smoothedPerMs =
+    prev.samples === 0
+      ? instant
+      : ETA_EWMA_ALPHA * instant + (1 - ETA_EWMA_ALPHA) * prev.smoothedPerMs;
+  return {
+    smoothedPerMs,
+    samples: prev.samples + 1,
+    lastPercent: percent,
+    lastAtMs: atMs,
+  };
+}
+
+export function remainingPriorMs(args: {
+  stage: string | null | undefined;
+  presentStages: readonly string[];
+  priors: EtaPriors | null | undefined;
+  stageOrder?: readonly string[];
+  stageWeight?: (stage: string) => number;
+}): number {
+  const order = args.stageOrder ?? PROGRESS_STAGE_ORDER;
+  const weight = args.stageWeight ?? defaultStageWeight;
+  const stage = args.stage ?? "";
+  const present = new Set(
+    args.presentStages.filter((s) => s && s !== "queued"),
+  );
+  let pastCurrent = false;
+  let sum = 0;
+  for (const s of order) {
+    if (s === "queued" || !present.has(s)) continue;
+    if (!pastCurrent) {
+      if (s === stage) pastCurrent = true;
+      continue;
+    }
+    const prior = args.priors?.stages?.[s];
+    if (prior && prior.n >= ETA_PRIOR_MIN_N) {
+      sum += prior.p50_ms;
+    } else {
+      sum += weight(s) * ETA_SEED_TOTAL_MS;
+    }
+  }
+  return sum;
+}
+
+export function combineEtaMs(args: {
+  percent: number;
+  stage: string | null | undefined;
+  presentStages: readonly string[];
+  ewma: EwmaRateState | null;
+  priors: EtaPriors | null | undefined;
+  current?: number;
+  total?: number;
+  stageWeight?: (stage: string) => number;
+}): number | null {
+  if (args.percent < 5) return null;
+  const stage = args.stage;
+  if (stage == null || stage === "queued") return null;
+
+  const weightFn = args.stageWeight ?? defaultStageWeight;
+  const total = args.total ?? 0;
+  const current = args.current ?? 0;
+  const within =
+    total > 0 ? Math.min(1, Math.max(0, current / total)) : 0;
+  const currentLeftWeight = weightFn(stage) * (1 - within);
+
+  let currentMs: number;
+  if (args.ewma && args.ewma.samples >= 2 && args.ewma.smoothedPerMs > 0) {
+    currentMs = (currentLeftWeight * 100) / args.ewma.smoothedPerMs;
+  } else {
+    currentMs = currentLeftWeight * ETA_SEED_TOTAL_MS;
+  }
+
+  const futurePrior = remainingPriorMs({
+    stage,
+    presentStages: args.presentStages,
+    priors: args.priors,
+    stageWeight: weightFn,
+  });
+
+  const eta = currentMs + futurePrior;
+  return Number.isFinite(eta) && eta > 0 ? eta : null;
 }
 
 /** Extrapolate job token total from usage so far and weighted percent. */

@@ -14,7 +14,7 @@ export const STAGE_WEIGHTS = {
 
 export type ProgressStage = keyof typeof STAGE_WEIGHTS;
 
-const STAGE_ORDER: ProgressStage[] = [
+export const STAGE_ORDER: ProgressStage[] = [
   "queued",
   "extract",
   "figures",

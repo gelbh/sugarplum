@@ -4,7 +4,10 @@ import { useProgressRegistry } from "./ProgressProvider";
 import type { ProgressSnapshot } from "./types";
 import {
   calmDisplayEtaMs,
+  combineEtaMs,
+  updateEwmaRate,
   type CalmEtaSample,
+  type EwmaRateState,
   resolveJobStartedAtMs,
   projectTokensFromPercent,
   projectCardsFromPercent,
@@ -54,6 +57,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
   const settledRef = useRef(false);
   const calmEtaRef = useRef<CalmEtaSample | null>(null);
   const calmStartedAtRef = useRef<number | null>(null);
+  const ewmaRef = useRef<EwmaRateState | null>(null);
 
   useEffect(() => {
     settledRef.current = false;
@@ -64,6 +68,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
     setEstimates(null);
     calmEtaRef.current = null;
     calmStartedAtRef.current = null;
+    ewmaRef.current = null;
 
     if (!jobId) {
       setPending(false);
@@ -130,6 +135,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
         if (job.status === "queued") {
           calmEtaRef.current = null;
           calmStartedAtRef.current = null;
+          ewmaRef.current = null;
           setFreeQuota(job.free_quota ?? null);
           setEstimates({
             etaMs: null,
@@ -191,6 +197,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
           if (startedAtMs !== calmStartedAtRef.current) {
             calmEtaRef.current = null;
             calmStartedAtRef.current = startedAtMs;
+            ewmaRef.current = null;
           }
 
           setFreeQuota(job.free_quota ?? null);
@@ -201,13 +208,28 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
           let projectedCards: number | null = null;
           if (startedAtMs != null && job.progress) {
             const nowMs = Date.now();
-            const elapsed = nowMs - startedAtMs;
             const percent = job.progress.percent;
+            ewmaRef.current = updateEwmaRate(
+              ewmaRef.current,
+              percent,
+              nowMs,
+            );
+            const presentStages =
+              (ext.presentStages as string[] | undefined) ?? [];
+            const rawEta = combineEtaMs({
+              percent,
+              stage: job.progress.stage ?? ext.stage,
+              presentStages,
+              ewma: ewmaRef.current,
+              priors: job.eta_priors ?? null,
+              current: job.progress.current,
+              total: job.progress.total,
+            });
             const calm = calmDisplayEtaMs({
-              elapsedMs: elapsed,
               percent,
               previous: calmEtaRef.current,
               nowMs,
+              rawEtaMs: rawEta,
             });
             calmEtaRef.current = calm.sample;
             eta = calm.etaMs;

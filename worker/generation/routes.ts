@@ -26,6 +26,7 @@ import {
   getFillAllWorkflowStatus,
   startFillAllWorkflow,
 } from "./fillAllLifecycle";
+import { readEtaPriors } from "./stageDurations";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -216,6 +217,13 @@ jobRoutes.get("/:id", async (c) => {
     free_quota = await getFreeGenUsage(c.env, userId);
   }
 
+  let eta_priors: Awaited<ReturnType<typeof readEtaPriors>> = null;
+  try {
+    eta_priors = await readEtaPriors(c.env.CACHE);
+  } catch {
+    eta_priors = null;
+  }
+
   return c.json({
     id: row.id,
     material_id: row.material_id,
@@ -224,6 +232,7 @@ jobRoutes.get("/:id", async (c) => {
     coverage_json: row.coverage_json,
     progress,
     free_quota,
+    eta_priors,
     created_at: row.created_at,
     finished_at: row.finished_at,
     deck_id: row.deck_id,
