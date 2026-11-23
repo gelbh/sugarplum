@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   AUTO_ORPHAN_FILL_CAP,
   FILL_ALL_REQUEST_CAP,
+  FILL_ALL_SOFT_FAIL_BUDGET,
   fillOrphanClaims,
   runClaimOrphanFillPhase,
 } from "../../worker/generation/claim-orphan-fill";
@@ -472,6 +473,65 @@ describe("fillOrphanClaims", () => {
     );
   });
 
+  it("stops re-attempting orphans after soft-fail budget", async () => {
+    const env = createTestEnv();
+    seedOwnerNeedsReview(env);
+    seedOrphan(env, {
+      id: "cl-bad",
+      subject: "Junk",
+      span: "IgA protects mucosa",
+      createdAt: "2026-01-01T01:02:00.000Z",
+    });
+    const run = vi.fn(async () => ({
+      choices: [
+        {
+          index: 0,
+          message: { role: "assistant" as const, content: COMPOUND_QA },
+          finish_reason: "stop" as const,
+        },
+      ],
+      usage: { prompt_tokens: 40, completion_tokens: 20, total_tokens: 60 },
+    }));
+    env.AI = { run } as unknown as Ai;
+
+    const first = await fillOrphanClaims({
+      env,
+      userId: "user-a",
+      jobId: "job-a",
+      cap: FILL_ALL_REQUEST_CAP,
+      softFailBudget: FILL_ALL_SOFT_FAIL_BUDGET,
+    });
+    expect(first.attempted).toBe(1);
+    expect(first.filled).toBe(0);
+    expect(first.skipped).toBe(1);
+    expect(first.softFailCounts?.["cl-bad"]).toBe(1);
+    expect(first.softFailBudgetExhausted).toBe(false);
+
+    const second = await fillOrphanClaims({
+      env,
+      userId: "user-a",
+      jobId: "job-a",
+      cap: FILL_ALL_REQUEST_CAP,
+      softFailBudget: FILL_ALL_SOFT_FAIL_BUDGET,
+      softFailCounts: first.softFailCounts,
+    });
+    expect(second.attempted).toBe(1);
+    expect(second.softFailCounts?.["cl-bad"]).toBe(2);
+
+    const third = await fillOrphanClaims({
+      env,
+      userId: "user-a",
+      jobId: "job-a",
+      cap: FILL_ALL_REQUEST_CAP,
+      softFailBudget: FILL_ALL_SOFT_FAIL_BUDGET,
+      softFailCounts: second.softFailCounts,
+    });
+    expect(third.attempted).toBe(0);
+    expect(third.softFailBudgetExhausted).toBe(true);
+    expect(third.remaining).toBe(1);
+    expect(run.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
   it("returns zeros when job is not needs_review", async () => {
     const env = createTestEnv();
     seedOwnerNeedsReview(env);
@@ -511,6 +571,7 @@ describe("fillOrphanClaims", () => {
       remaining: 0,
       cards: [],
       inconclusive: true,
+      softFailCounts: {},
     });
   });
 });

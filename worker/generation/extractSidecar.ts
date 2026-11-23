@@ -32,7 +32,13 @@ async function sandboxIdForJob(
   jobId: string,
 ): Promise<string | null> {
   const row = await getDb(env)
-    .prepare("SELECT user_id FROM generation_jobs WHERE id = ?")
+    .prepare(
+      `SELECT d.user_id AS user_id
+       FROM generation_jobs j
+       INNER JOIN materials m ON m.id = j.material_id
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE j.id = ?`,
+    )
     .bind(jobId)
     .first<{ user_id: string }>();
   return row ? sandboxWriteUserId(getDb(env), row.user_id) : null;

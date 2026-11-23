@@ -4,6 +4,7 @@ import {
   asRegenType,
   dismissJob,
   generateCardFromClaim,
+  cancelFillAllOrphans,
   generateCardsFromOrphanClaims,
   getFillAllOrphansStatus,
   getJobClaimCoverage,
@@ -238,13 +239,22 @@ export function createDraftReviewRegen(ctx: DraftReviewRegenCtx) {
     orphanFallback: number,
   ) {
     const filled = output?.filled ?? 0;
+    const skipped = output?.skipped ?? 0;
     const remaining = output?.remaining ?? orphanFallback;
     const stop = output?.stopReason;
+    const skipBit = skipped > 0 ? `; ${skipped} skipped` : "";
+    if (stop === "soft_fail_budget") {
+      setNotice({
+        message: `Filled ${filled}${skipBit}; ${remaining} still orphan (quality skips)`,
+        tone: "info",
+      });
+      return;
+    }
     if (stop === "capacity" || (filled === 0 && remaining > 0)) {
       setNotice({
         message:
           remaining > 0
-            ? `Filled ${filled}; ${remaining} still orphan (capacity)`
+            ? `Filled ${filled}${skipBit}; ${remaining} still orphan (capacity)`
             : "Could not fill orphans right now; try again later",
         tone: "info",
       });
@@ -252,14 +262,14 @@ export function createDraftReviewRegen(ctx: DraftReviewRegenCtx) {
     }
     if (remaining > 0) {
       setNotice({
-        message: `Filled ${filled}; ${remaining} still orphan`,
+        message: `Filled ${filled}${skipBit}; ${remaining} still orphan`,
         tone: "info",
       });
       return;
     }
     if (filled > 0) {
       setNotice({
-        message: `Filled ${filled} orphan claim${filled === 1 ? "" : "s"}`,
+        message: `Filled ${filled} orphan claim${filled === 1 ? "" : "s"}${skipBit}`,
         tone: "info",
       });
       return;
@@ -404,12 +414,31 @@ export function createDraftReviewRegen(ctx: DraftReviewRegenCtx) {
     }
   }
 
+  async function onCancelFillAll() {
+    if (!jobId || !fillAllBusy) return;
+    try {
+      await cancelFillAllOrphans(jobId);
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Could not cancel fill-all",
+      );
+      return;
+    }
+    fillAllSession += 1;
+    setFillAllBusy(false);
+    setCardRegenBusy(false);
+    fillAllBaselineOrphan = null;
+    setNotice({ message: "Fill-all cancelled", tone: "info" });
+    end(false);
+  }
+
   return {
     onRegenThisCard,
     onRegen,
     onDismissFailed,
     onGenerateOrphan,
     onFillAllOrphans,
+    onCancelFillAll,
     resumeFillAllIfRunning,
   };
 }
