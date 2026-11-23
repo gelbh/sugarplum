@@ -252,6 +252,8 @@ export type GenerationJobProgress = {
 
 export type GenerationJobEtaPriors = {
   stages: Partial<Record<string, { p50_ms: number; n: number }>>;
+  /** Duration-share stage weights when KV overlay is valid; omit otherwise. */
+  weights?: Partial<Record<string, number>>;
 };
 
 export type GenerationJob = {

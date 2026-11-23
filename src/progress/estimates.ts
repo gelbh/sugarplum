@@ -24,17 +24,59 @@ export const CLIENT_STAGE_WEIGHTS: Record<string, number> = {
   persist: 0.1,
 };
 
+const CLIENT_STAGE_ORDER = Object.keys(CLIENT_STAGE_WEIGHTS);
+
+/** Accept overlay when finite, known stages, and sum ≈ 1.0 (±0.01). */
+function normalizeClientWeightOverlay(
+  overlay: Partial<Record<string, number>> | null | undefined,
+): Partial<Record<string, number>> | null {
+  if (!overlay || typeof overlay !== "object") return null;
+  const out: Partial<Record<string, number>> = {};
+  let sum = 0;
+  for (const [stage, raw] of Object.entries(overlay)) {
+    if (!(stage in CLIENT_STAGE_WEIGHTS)) continue;
+    if (typeof raw !== "number" || !Number.isFinite(raw) || raw < 0) {
+      return null;
+    }
+    out[stage] = raw;
+    sum += raw;
+  }
+  if (Object.keys(out).length === 0) return null;
+  if (Math.abs(sum - 1) > 0.01) return null;
+  return out;
+}
+
+function clientOverlayCoversPresent(
+  overlay: Partial<Record<string, number>>,
+  presentStages: readonly string[],
+): boolean {
+  for (const stage of presentStages) {
+    if (stage === "queued") continue;
+    if (typeof overlay[stage] !== "number") return false;
+  }
+  return true;
+}
+
 /**
  * Mirror worker `effectiveWeights`: skipped catalog weights roll into generate
- * when present, else persist.
+ * when present, else persist. Prefers a valid duration-share overlay when it
+ * covers every non-queued present stage; else CLIENT_STAGE_WEIGHTS.
  */
 export function effectiveClientWeights(
   presentStages: readonly string[],
+  overlay?: Partial<Record<string, number>> | null,
 ): Record<string, number> {
   const present = new Set(presentStages);
-  const weights: Record<string, number> = { ...CLIENT_STAGE_WEIGHTS };
+  const normalized = normalizeClientWeightOverlay(overlay);
+  const useOverlay =
+    normalized != null && clientOverlayCoversPresent(normalized, presentStages);
+  const weights: Record<string, number> = useOverlay
+    ? Object.fromEntries(
+        CLIENT_STAGE_ORDER.map((s) => [s, normalized![s] ?? 0]),
+      )
+    : { ...CLIENT_STAGE_WEIGHTS };
   let skipped = 0;
-  for (const stage of Object.keys(CLIENT_STAGE_WEIGHTS)) {
+  for (const stage of CLIENT_STAGE_ORDER) {
     if (!present.has(stage)) {
       skipped += weights[stage] ?? 0;
       weights[stage] = 0;
@@ -53,9 +95,10 @@ export function effectiveClientWeights(
 export function defaultStageWeight(
   stage: string,
   presentStages?: readonly string[],
+  overlay?: Partial<Record<string, number>> | null,
 ): number {
   if (presentStages && presentStages.length > 0) {
-    return effectiveClientWeights(presentStages)[stage] ?? 0;
+    return effectiveClientWeights(presentStages, overlay)[stage] ?? 0;
   }
   return CLIENT_STAGE_WEIGHTS[stage] ?? 0;
 }
@@ -95,6 +138,8 @@ export type EwmaRateState = {
 
 export type EtaPriors = {
   stages: Partial<Record<string, { p50_ms: number; n: number }>>;
+  /** Duration-share overlay from poll; omit when corrupt/missing. */
+  weights?: Partial<Record<string, number>>;
 };
 
 /**
@@ -182,7 +227,8 @@ export function remainingPriorMs(args: {
   const order = args.stageOrder ?? PROGRESS_STAGE_ORDER;
   const weightFn =
     args.stageWeight ??
-    ((s: string) => defaultStageWeight(s, args.presentStages));
+    ((s: string) =>
+      defaultStageWeight(s, args.presentStages, args.priors?.weights));
   const stage = args.stage ?? "";
   const present = new Set(
     args.presentStages.filter((s) => s && s !== "queued"),
@@ -221,7 +267,8 @@ export function combineEtaMs(args: {
 
   const weightFn =
     args.stageWeight ??
-    ((s: string) => defaultStageWeight(s, args.presentStages));
+    ((s: string) =>
+      defaultStageWeight(s, args.presentStages, args.priors?.weights));
   const total = args.total ?? 0;
   const current = args.current ?? 0;
   const within =
