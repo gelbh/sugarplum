@@ -13,8 +13,8 @@ import {
   guestFsrsOptimizeStatus,
   guestRevlogCsv,
   nextGuestFsrsPending,
-} from "../study/fsrs/guestFsrsOptimize";
-import { rescheduleGuestSchedules } from "../study/fsrs/guestFsrsReschedule";
+} from "./guestFsrsOptimize";
+import { rescheduleGuestSchedules } from "./guestFsrsReschedule";
 import { normalizeSchedulerCard } from "../study/kernel";
 import { buildDueHistogramFromDues } from "../study/kernel";
 import { applyLoadBalance } from "../study/kernel";

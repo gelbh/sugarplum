@@ -2,7 +2,7 @@ import {
   schedulerForPrefs,
   type FsrsPrefs,
 } from "../study/kernel";
-import { buildGuestFsrsPrefs } from "../study/fsrs/guestFsrsOptimize";
+import { buildGuestFsrsPrefs } from "./guestFsrsOptimize";
 import {
   normalizeSchedulerCard,
   ratingToGrade,
