@@ -1913,6 +1913,67 @@ export function createTestEnv(opts?: {
           return { results: rows as T[] };
         }
         if (
+          normalized.includes("FROM study_claims") &&
+          normalized.includes("WHERE job_id =") &&
+          !normalized.includes("INNER JOIN") &&
+          !normalized.includes("LEFT JOIN")
+        ) {
+          const jobId = bound[0] as string;
+          const rows = [...studyClaims.values()]
+            .filter((claim) => claim.job_id === jobId)
+            .map(
+              ({
+                id,
+                subject,
+                predicate,
+                source_span,
+                object,
+                qualifiers_json,
+                pages_json,
+              }) => ({
+                id,
+                subject,
+                predicate,
+                source_span,
+                object,
+                qualifiers_json,
+                pages_json,
+              }),
+            );
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM study_claims") &&
+          normalized.includes("WHERE deck_id =") &&
+          !normalized.includes("WHERE id =") &&
+          !normalized.includes("INNER JOIN") &&
+          !normalized.includes("LEFT JOIN")
+        ) {
+          const deckId = bound[0] as string;
+          const rows = [...studyClaims.values()]
+            .filter((claim) => claim.deck_id === deckId)
+            .map(
+              ({
+                id,
+                subject,
+                predicate,
+                source_span,
+                object,
+                qualifiers_json,
+                pages_json,
+              }) => ({
+                id,
+                subject,
+                predicate,
+                source_span,
+                object,
+                qualifiers_json,
+                pages_json,
+              }),
+            );
+          return { results: rows as T[] };
+        }
+        if (
           normalized.includes("FROM study_claims sc") &&
           normalized.includes("INNER JOIN decks d") &&
           normalized.includes("d.user_id =") &&
@@ -4828,6 +4889,54 @@ export function createTestEnv(opts?: {
               provenance_json,
               media_r2_keys_json,
               content_fp,
+              updated_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
+            "UPDATE cards SET type = ?, front_json = ?, back_json = ?, provenance_json = ?, media_r2_keys_json = NULL, content_fp = ?, claim_id = ?, updated_at = ?",
+          )
+        ) {
+          const [
+            type,
+            front_json,
+            back_json,
+            provenance_json,
+            content_fp,
+            claim_id,
+            updated_at,
+            id,
+          ] = bound as [
+            string,
+            string,
+            string,
+            string,
+            string,
+            string | null,
+            string,
+            string,
+          ];
+          const row = cards.get(id);
+          if (row) {
+            if (claim_id != null) {
+              for (const existing of cards.values()) {
+                if (
+                  existing.id !== id &&
+                  existing.claim_id === claim_id
+                ) {
+                  throw new Error("UNIQUE constraint failed: cards.claim_id");
+                }
+              }
+            }
+            cards.set(id, {
+              ...row,
+              type,
+              front_json,
+              back_json,
+              provenance_json,
+              media_r2_keys_json: null,
+              content_fp,
+              claim_id,
               updated_at,
             });
           }

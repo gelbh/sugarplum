@@ -349,33 +349,70 @@ function isChromeFront(front: string): boolean {
   return CHROME_FRONT_RE.test(front.trim());
 }
 
-function shouldDrop(draft: CardDraft, front: string, back: string): boolean {
-  if (draft.type === "mcq" && isInvalidMcq(draft)) return true;
-  if (isEssayBack(back)) return true;
-  if (isCompoundFront(front)) return true;
-  if (isAdverbDebrisFront(front)) return true;
-  if (isChromeFront(front)) return true;
-  if (isIncompleteBack(front, back)) return true;
-  if (hasBrokenPunctuation(back)) return true;
-  // Table-column suffixes only on non-questions (avoid "What is the host?").
-  if (!front.includes("?") && TABLE_COLUMN_SUFFIX_RE.test(front)) return true;
-  if (draft.type === "qa" && isFragmentFront(front)) return true;
-  if (draft.type === "qa" && isGenericOneWordPair(front, back)) return true;
-  if (draft.type === "qa" && isSectionHeaderDebris(front, back)) return true;
-  if (draft.type === "qa" && isThinOneWordGlossaryPair(front, back))
-    return true;
-  if (draft.type === "qa" && isTautologicalQa(front, back)) return true;
+/**
+ * Named Layer-1 reject codes for a single draft (aligned with
+ * filterDraftsByQuality drop paths, excluding duplicate-front dedupe).
+ */
+export function layer1RejectReasons(draft: CardDraft): string[] {
+  if (draft.type === "occlusion") return [];
+  const front = draft.front.trim();
+  const back = draft.back.trim();
+  const reasons: string[] = [];
+  const glossary = isGlossaryShaped(front);
+  const minFront = glossary ? MIN_GLOSSARY_FRONT : MIN_FRONT;
+  if (front.length < minFront || front.length > MAX_FRONT) {
+    reasons.push("front_length");
+  }
+  const emptyClozeExtra = draft.type === "cloze" && back.length === 0;
+  if (!emptyClozeExtra && (back.length < MIN_BACK || back.length > MAX_BACK)) {
+    reasons.push("back_length");
+  }
+  if (draft.type === "qa" && !front.includes("?") && !glossary) {
+    reasons.push("non_question_front");
+  }
+  if (sentenceCount(back) >= 3) reasons.push("too_many_sentences");
+  if (draft.type === "mcq" && isInvalidMcq(draft)) reasons.push("invalid_mcq");
+  if (isEssayBack(back)) reasons.push("essay_back");
+  if (isCompoundFront(front)) reasons.push("compound_front");
+  if (isAdverbDebrisFront(front)) reasons.push("adverb_debris");
+  if (isChromeFront(front)) reasons.push("chrome_front");
+  if (isIncompleteBack(front, back)) reasons.push("incomplete_back");
+  if (hasBrokenPunctuation(back)) reasons.push("broken_punctuation");
+  if (!front.includes("?") && TABLE_COLUMN_SUFFIX_RE.test(front)) {
+    reasons.push("table_column_suffix");
+  }
+  if (draft.type === "qa" && isFragmentFront(front)) {
+    reasons.push("fragment_front");
+  }
+  if (draft.type === "qa" && isGenericOneWordPair(front, back)) {
+    reasons.push("generic_one_word_pair");
+  }
+  if (draft.type === "qa" && isSectionHeaderDebris(front, back)) {
+    reasons.push("section_header_debris");
+  }
+  if (draft.type === "qa" && isThinOneWordGlossaryPair(front, back)) {
+    reasons.push("thin_one_word_glossary");
+  }
+  if (draft.type === "qa" && isTautologicalQa(front, back)) {
+    reasons.push("tautological_qa");
+  }
   if (
     (draft.type === "qa" || draft.type === "mcq") &&
     isTaxonUnsupportedByExcerpt(front, draft.provenance?.excerpt ?? "")
   ) {
-    return true;
+    reasons.push("taxon_unsupported");
   }
   if (draft.type === "cloze" && LEADING_GENUS_CLOZE_RE.test(front.trim())) {
-    return true;
+    reasons.push("leading_genus_cloze");
   }
-  if (draft.type === "cloze" && isLongCloze(front, back)) return true;
-  return false;
+  if (draft.type === "cloze" && isLongCloze(front, back)) {
+    reasons.push("long_cloze");
+  }
+  return reasons;
+}
+
+function shouldDrop(draft: CardDraft): boolean {
+  return layer1RejectReasons(draft).length > 0;
 }
 
 /** Layer-1 heuristic gate: drop junk before persist. No LLM. */
@@ -395,13 +432,16 @@ export function filterDraftsByQuality(drafts: CardDraft[]): CardDraft[] {
     if (front.length < minFront || front.length > MAX_FRONT) continue;
     // Cloze Extra may be empty; answer lives in the front blank.
     const emptyClozeExtra = draft.type === "cloze" && back.length === 0;
-    if (!emptyClozeExtra && (back.length < MIN_BACK || back.length > MAX_BACK)) {
+    if (
+      !emptyClozeExtra &&
+      (back.length < MIN_BACK || back.length > MAX_BACK)
+    ) {
       continue;
     }
     // Non-question QA that is not glossary-shaped is junk (header / fragment).
     if (draft.type === "qa" && !front.includes("?") && !glossary) continue;
     if (sentenceCount(back) >= 3) continue;
-    if (shouldDrop(draft, front, back)) continue;
+    if (shouldDrop(draft)) continue;
     const key = front.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
