@@ -5,7 +5,10 @@ import {
   evaluateAfterAccept,
   evaluateAfterReview,
 } from "../../../worker/gamification/evaluate";
-import { onReviewGraded, onCardAccepted } from "../../../worker/gamification/onStudyEvent";
+import {
+  onReviewGraded,
+  onCardAccepted,
+} from "../../../worker/gamification/onStudyEvent";
 import { traitsForAchievement } from "../../../worker/gamification/traits";
 import { XP } from "../../../worker/gamification/constants";
 import {
@@ -327,7 +330,9 @@ describe("harder fruit ladder durability", () => {
         current_value: number;
         threshold: number;
       }>();
-    const reviews25 = mid.results.find((r) => r.achievement_id === "reviews_25");
+    const reviews25 = mid.results.find(
+      (r) => r.achievement_id === "reviews_25",
+    );
     expect(reviews25?.current_value).toBe(40);
     expect(reviews25?.threshold).toBe(50);
 

@@ -125,9 +125,9 @@ describe("achievement_defs after all migrations", () => {
   });
 
   it("keeps kiwi at the type-ceiling ladder", () => {
-    const kiwi = ACHIEVEMENT_DEF_SEEDS.filter((d) => d.fruit_type === "kiwi").sort(
-      (a, b) => a.sort_order - b.sort_order,
-    );
+    const kiwi = ACHIEVEMENT_DEF_SEEDS.filter(
+      (d) => d.fruit_type === "kiwi",
+    ).sort((a, b) => a.sort_order - b.sort_order);
     expect(kiwi.map((d) => d.threshold)).toEqual([2, 3, 4, 5, 6]);
   });
 });

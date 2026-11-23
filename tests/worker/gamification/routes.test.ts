@@ -273,8 +273,9 @@ describe("gamification read APIs", () => {
     expect(markerKeys).toHaveLength(1);
     expect(markerKeys[0]!.amount).toBe(0);
 
-    const ledgerBefore = env.getXpLedger().filter((e) => e.user_id === userId)
-      .length;
+    const ledgerBefore = env
+      .getXpLedger()
+      .filter((e) => e.user_id === userId).length;
     const completionCountBefore = env
       .getAchievementCompletions()
       .filter((c) => c.user_id === userId).length;
@@ -286,9 +287,9 @@ describe("gamification read APIs", () => {
     );
     expect(second.status).toBe(200);
 
-    expect(
-      env.getXpLedger().filter((e) => e.user_id === userId).length,
-    ).toBe(ledgerBefore);
+    expect(env.getXpLedger().filter((e) => e.user_id === userId).length).toBe(
+      ledgerBefore,
+    );
     expect(
       env.getAchievementCompletions().filter((c) => c.user_id === userId)
         .length,
@@ -389,7 +390,9 @@ describe("gamification read APIs", () => {
     );
     expect(res.status).toBe(200);
     const body = (await res.json()) as { items: AchievementItem[] };
-    expect(body.items.find((i) => i.def.id === "streak_7")?.completedAt).toBeTruthy();
+    expect(
+      body.items.find((i) => i.def.id === "streak_7")?.completedAt,
+    ).toBeTruthy();
     expect(
       env
         .getAchievementCompletions()
@@ -536,14 +539,28 @@ describe("gamification read APIs", () => {
          id, user_id, amount, reason, idempotency_key, created_at
        ) VALUES (?, ?, ?, ?, ?, ?)`,
     )
-      .bind("xl-a1", "user-a", 100, "test", "test:a1", "2026-01-06T10:00:00.000Z")
+      .bind(
+        "xl-a1",
+        "user-a",
+        100,
+        "test",
+        "test:a1",
+        "2026-01-06T10:00:00.000Z",
+      )
       .run();
     await env.DB.prepare(
       `INSERT OR IGNORE INTO xp_ledger (
          id, user_id, amount, reason, idempotency_key, created_at
        ) VALUES (?, ?, ?, ?, ?, ?)`,
     )
-      .bind("xl-b1", "user-b", 50, "test", "test:b1", "2026-01-07T10:00:00.000Z")
+      .bind(
+        "xl-b1",
+        "user-b",
+        50,
+        "test",
+        "test:b1",
+        "2026-01-07T10:00:00.000Z",
+      )
       .run();
     // Opted-out user XP must not appear
     await env.DB.prepare(
@@ -551,7 +568,14 @@ describe("gamification read APIs", () => {
          id, user_id, amount, reason, idempotency_key, created_at
        ) VALUES (?, ?, ?, ?, ?, ?)`,
     )
-      .bind("xl-c1", "user-c", 999, "test", "test:c1", "2026-01-06T10:00:00.000Z")
+      .bind(
+        "xl-c1",
+        "user-c",
+        999,
+        "test",
+        "test:c1",
+        "2026-01-06T10:00:00.000Z",
+      )
       .run();
     // Outside week
     await env.DB.prepare(
@@ -559,7 +583,14 @@ describe("gamification read APIs", () => {
          id, user_id, amount, reason, idempotency_key, created_at
        ) VALUES (?, ?, ?, ?, ?, ?)`,
     )
-      .bind("xl-a0", "user-a", 500, "test", "test:a0", "2025-12-29T10:00:00.000Z")
+      .bind(
+        "xl-a0",
+        "user-a",
+        500,
+        "test",
+        "test:a0",
+        "2025-12-29T10:00:00.000Z",
+      )
       .run();
 
     // Ensure gamification rows exist for ledger users (PATCH already did for a/b)
