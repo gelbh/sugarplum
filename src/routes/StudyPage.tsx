@@ -369,8 +369,7 @@ export default function StudyPage() {
   }
 
   const finish = !current && surface === "complete";
-  // Empty / soft-wait / quiet / complete need a full-height column so pause
-  // content can vertically center (stage chrome alone is not enough).
+  // Full-height column so pause surfaces can vertically center.
   const pauseFill =
     !current &&
     (finish ||

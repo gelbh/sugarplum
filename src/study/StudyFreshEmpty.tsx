@@ -9,7 +9,6 @@ export type StudyFreshEmptyProps = {
   actionLabel: string;
   onAction: () => void;
   actionBusy?: boolean;
-  /** Contained primary (default) or outlined ivory on stage. */
   actionVariant?: "contained" | "outlined";
 };
 
