@@ -4,7 +4,7 @@ import { SESSION_COOKIE } from "../../worker/auth/session";
 import { createTestEnv } from "./test-env";
 
 describe("app.onError", () => {
-  it("returns HTTPException as JSON { message } with its status", async () => {
+  it("returns bare HTTPException as problem+json with its status", async () => {
     const env = createTestEnv();
     const res = await app.request(
       "/api/cards/any/regen",
@@ -16,11 +16,18 @@ describe("app.onError", () => {
       env,
     );
     expect(res.status).toBe(401);
-    expect(res.headers.get("content-type")).toMatch(/application\/json/);
-    expect(await res.json()).toEqual({ message: "Unauthorized" });
+    expect(res.headers.get("content-type")).toMatch(
+      /application\/problem\+json/i,
+    );
+    expect(await res.json()).toMatchObject({
+      type: "https://sugarplum.gelbhart.dev/problems/http-exception",
+      title: "Unauthorized",
+      status: 401,
+      detail: "Unauthorized",
+    });
   });
 
-  it("hides unexpected error details behind a generic 500", async () => {
+  it("hides unexpected error details behind a generic 500 problem+json", async () => {
     const env = createTestEnv();
     env.seedUser({
       id: "user-a",
@@ -44,8 +51,16 @@ describe("app.onError", () => {
         env,
       );
       expect(res.status).toBe(500);
+      expect(res.headers.get("content-type")).toMatch(
+        /application\/problem\+json/i,
+      );
       const text = await res.text();
-      expect(JSON.parse(text)).toEqual({ message: "Internal Server Error" });
+      expect(JSON.parse(text)).toMatchObject({
+        type: "https://sugarplum.gelbhart.dev/problems/internal-server-error",
+        title: "Internal Server Error",
+        status: 500,
+        detail: "Internal Server Error",
+      });
       expect(text).not.toContain("secret boom");
     } finally {
       consoleError.mockRestore();

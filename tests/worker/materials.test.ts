@@ -195,7 +195,9 @@ describe("PDF upload-url validation", () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(String(body.error ?? body.message ?? "")).toMatch(/50MB/i);
+    expect(
+      String(body.detail ?? body.error ?? body.message ?? ""),
+    ).toMatch(/50MB/i);
     expect(env.getMaterials()).toHaveLength(0);
   });
 

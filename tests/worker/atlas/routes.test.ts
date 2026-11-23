@@ -348,8 +348,13 @@ describe("atlas user-owned routes", () => {
       env,
     );
     expect(purge.status).toBe(400);
-    const purgeBody = (await purge.json()) as { message?: string };
-    expect(purgeBody.message).toMatch(/cannot be permanently deleted/i);
+    const purgeBody = (await purge.json()) as {
+      message?: string;
+      detail?: string;
+    };
+    expect(purgeBody.detail ?? purgeBody.message).toMatch(
+      /cannot be permanently deleted/i,
+    );
 
     const stillHidden = await app.request(
       `/api/atlas/${atlasId}/entries`,
@@ -395,8 +400,13 @@ describe("atlas user-owned routes", () => {
       env,
     );
     expect(missing.status).toBe(400);
-    const missingBody = (await missing.json()) as { message?: string };
-    expect(missingBody.message).toMatch(/group required/i);
+    const missingBody = (await missing.json()) as {
+      message?: string;
+      detail?: string;
+    };
+    expect(missingBody.detail ?? missingBody.message).toMatch(
+      /group required/i,
+    );
 
     const create = await app.request(
       `/api/atlas/${atlasId}/entries`,
