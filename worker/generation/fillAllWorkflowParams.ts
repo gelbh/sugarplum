@@ -9,7 +9,8 @@ export type FillAllStopReason =
   | "capacity"
   | "not_needs_review"
   | "empty"
-  | "error";
+  | "error"
+  | "soft_fail_budget";
 
 export type FillAllRunOutput = {
   attempted: number;
