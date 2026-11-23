@@ -1,10 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import {
-  capRegenSourceText,
-  resolveRegenCorpus,
-} from "../../worker/generation/card-regen";
+import { capRegenSourceText } from "../../worker/generation/card-regen";
 import {
   failStaleCardRegenOps,
   processCardRegenOp,
@@ -216,9 +213,13 @@ async function getRegenOp(
   opId: string,
   cookie = "sess-a",
 ) {
-  return app.request(`/api/card-regen-ops/${opId}`, {
-    headers: { cookie: `${SESSION_COOKIE}=${cookie}` },
-  }, env);
+  return app.request(
+    `/api/card-regen-ops/${opId}`,
+    {
+      headers: { cookie: `${SESSION_COOKIE}=${cookie}` },
+    },
+    env,
+  );
 }
 
 async function enqueueAndProcess(
@@ -258,8 +259,9 @@ describe("POST /api/cards/:id/regen", () => {
 
     const run = vi.fn(async (_model: string, input: unknown) => {
       expect(_model).toBe(WORKERS_AI_MODEL);
-      const messages = (input as { messages?: Array<{ role: string; content: string }> })
-        .messages;
+      const messages = (
+        input as { messages?: Array<{ role: string; content: string }> }
+      ).messages;
       const system = messages?.find((m) => m.role === "system")?.content ?? "";
       expect(system.toLowerCase()).not.toMatch(/extract/);
       expect(system.toLowerCase()).toMatch(/flashcard|claim|write/);
@@ -281,12 +283,122 @@ describe("POST /api/cards/:id/regen", () => {
     expect(run).toHaveBeenCalled();
     const updated = env.getCards().find((c) => c.id === "c-mid")!;
     expect(updated.claim_id).toBe("cl-mid");
-    expect(JSON.parse(updated.front_json)).toBe("Which organelle produces ATP?");
+    expect(JSON.parse(updated.front_json)).toBe(
+      "Which organelle produces ATP?",
+    );
     const getRes = await getRegenOp(env, body.op.id);
     expect(getRes.status).toBe(200);
-    const opBody = (await getRes.json()) as { status: string; card?: { front: string } };
+    const opBody = (await getRes.json()) as {
+      status: string;
+      card?: { front: string };
+    };
     expect(opBody.status).toBe("done");
     expect(opBody.card?.front).toBe("Which organelle produces ATP?");
+  });
+
+  it("resolves claim by exact excerpt when claim_id is null and heals claim_id", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    env.seedStudyClaim({
+      id: "cl-orphan",
+      job_id: "job-a",
+      deck_id: "deck-a",
+      subject: "Mitochondria",
+      predicate: "produce ATP",
+      source_span: "Mitochondria produce ATP",
+      object: "ATP",
+      qualifiers_json: null,
+      pages_json: JSON.stringify([1]),
+      created_at: "2026-01-01T01:06:00.000Z",
+    });
+    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const run = vi.fn(async (_model: string, input: unknown) => {
+      const messages = (
+        input as { messages?: Array<{ role: string; content: string }> }
+      ).messages;
+      const system = messages?.find((m) => m.role === "system")?.content ?? "";
+      expect(system.toLowerCase()).not.toMatch(/extract/);
+      return {
+        choices: [
+          {
+            index: 0,
+            message: { role: "assistant" as const, content: VALID_MCQ },
+            finish_reason: "stop" as const,
+          },
+        ],
+        usage: { prompt_tokens: 50, completion_tokens: 20, total_tokens: 70 },
+      };
+    });
+    env.AI = { run } as unknown as Ai;
+
+    const { result } = await enqueueAndProcess(env);
+    expect(result).toBe("done");
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(env.getCards().find((c) => c.id === "c-mid")!.claim_id).toBe(
+      "cl-orphan",
+    );
+  });
+
+  it("heals dangling claim_id when excerpt matches another study_claims row", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    env.seedStudyClaim({
+      id: "cl-real",
+      job_id: "job-a",
+      deck_id: "deck-a",
+      subject: "Mitochondria",
+      predicate: "produce ATP",
+      source_span: "Mitochondria produce ATP",
+      object: "ATP",
+      qualifiers_json: null,
+      pages_json: null,
+      created_at: "2026-01-01T01:06:00.000Z",
+    });
+    const mid = env.getCards().find((c) => c.id === "c-mid")!;
+    env.seedCard({ ...mid, claim_id: "cl-missing" });
+    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const run = stubWorkersAiSequence(env, [VALID_MCQ]);
+
+    const { result } = await enqueueAndProcess(env);
+    expect(result).toBe("done");
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(env.getCards().find((c) => c.id === "c-mid")!.claim_id).toBe(
+      "cl-real",
+    );
+  });
+
+  it("uses matched claim for write but does not steal claim_id owned by a sibling", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    env.seedStudyClaim({
+      id: "cl-owned",
+      job_id: "job-a",
+      deck_id: "deck-a",
+      subject: "Mitochondria",
+      predicate: "produce ATP",
+      source_span: "Mitochondria produce ATP",
+      object: "ATP",
+      qualifiers_json: null,
+      pages_json: null,
+      created_at: "2026-01-01T01:06:00.000Z",
+    });
+    const left = env.getCards().find((c) => c.id === "c-left")!;
+    env.seedCard({ ...left, claim_id: "cl-owned" });
+    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const run = stubWorkersAiSequence(env, [VALID_MCQ]);
+
+    const { result } = await enqueueAndProcess(env);
+    expect(result).toBe("done");
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(env.getCards().find((c) => c.id === "c-mid")!.claim_id ?? null).toBe(
+      null,
+    );
+    expect(env.getCards().find((c) => c.id === "c-left")!.claim_id).toBe(
+      "cl-owned",
+    );
   });
 
   it("regenerates middle draft as mcq and leaves sibling fronts intact", async () => {
@@ -347,9 +459,7 @@ describe("POST /api/cards/:id/regen", () => {
     expect(mid.type).toBe("mcq");
     expect(JSON.parse(mid.front_json)).toBe("Which organelle produces ATP?");
 
-    const regenEvents = env
-      .getUsageEvents()
-      .filter((e) => e.kind === "regen");
+    const regenEvents = env.getUsageEvents().filter((e) => e.kind === "regen");
     expect(regenEvents).toHaveLength(1);
     expect(regenEvents[0]).toMatchObject({
       user_id: "user-a",
@@ -376,15 +486,18 @@ describe("POST /api/cards/:id/regen", () => {
     const { body, result } = await enqueueAndProcess(env);
     expect(result).toBe("failed");
     const getRes = await getRegenOp(env, body.op.id);
-    const opBody = (await getRes.json()) as { status: string; error: string | null };
+    const opBody = (await getRes.json()) as {
+      status: string;
+      error: string | null;
+    };
     expect(opBody.status).toBe("failed");
     expect(opBody.error).toMatch(/Daily free generation limit/i);
     expect(env.getUsageEvents().filter((e) => e.kind === "regen")).toHaveLength(
       0,
     );
-    expect(JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json)).toBe(
-      "Middle front?",
-    );
+    expect(
+      JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json),
+    ).toBe("Middle front?");
   });
 
   it("prefers provenance excerpt over oversized material as extract corpus", async () => {
@@ -402,7 +515,8 @@ describe("POST /api/cards/:id/regen", () => {
     const body = run.mock.calls[0]![1] as {
       messages?: { role: string; content: string }[];
     };
-    const userMsg = body.messages?.find((m) => m.role === "user")?.content ?? "";
+    const userMsg =
+      body.messages?.find((m) => m.role === "user")?.content ?? "";
     expect(userMsg).toContain("Mitochondria produce ATP");
     expect(userMsg).not.toContain("XXXX");
     expect(capRegenSourceText(huge).length).toBe(CHUNK_CHAR_LIMIT);
@@ -450,9 +564,9 @@ describe("POST /api/cards/:id/regen", () => {
     };
     expect(opBody.card?.type).toBe("mcq");
     expect(opBody.card?.media_r2_keys ?? []).toEqual([]);
-    expect(env.getCards().find((c) => c.id === "c-vis")!.media_r2_keys_json).toBe(
-      null,
-    );
+    expect(
+      env.getCards().find((c) => c.id === "c-vis")!.media_r2_keys_json,
+    ).toBe(null);
   });
 
   it("returns 422 when provenance and material text are both missing", async () => {
@@ -832,9 +946,9 @@ describe("POST /api/cards/:id/regen", () => {
     expect(env.getCardRegenOps()).toHaveLength(1);
     // Second POST re-enqueues while still queued (lost-message recovery).
     expect(
-      env.getQueueMessages().filter(
-        (m) => (m as CardRegenQueueMessage).kind === "cardRegen",
-      ),
+      env
+        .getQueueMessages()
+        .filter((m) => (m as CardRegenQueueMessage).kind === "cardRegen"),
     ).toHaveLength(2);
   });
 
@@ -879,23 +993,5 @@ describe("POST /api/cards/:id/regen", () => {
     const op = env.getCardRegenOps().find((o) => o.id === "op-stale")!;
     expect(op.status).toBe("failed");
     expect(op.error).toBe(STALE_CARD_REGEN_FAIL_ERROR);
-  });
-});
-
-describe("resolveRegenCorpus", () => {
-  it("prefers a non-empty excerpt over material text", () => {
-    expect(
-      resolveRegenCorpus({
-        excerpt: "  ATP stores energy  ",
-        materialText: "Long material about many facts including ATP stores energy and more.",
-      }),
-    ).toBe("ATP stores energy");
-  });
-
-  it("falls back to capped material when excerpt is empty", () => {
-    const material = "x".repeat(CHUNK_CHAR_LIMIT + 50);
-    expect(
-      resolveRegenCorpus({ excerpt: "   ", materialText: material }),
-    ).toBe(material.slice(0, CHUNK_CHAR_LIMIT));
   });
 });

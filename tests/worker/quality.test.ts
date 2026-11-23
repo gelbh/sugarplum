@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { filterDraftsByQuality } from "../../worker/generation/quality";
+import {
+  filterDraftsByQuality,
+  layer1RejectReasons,
+} from "../../worker/generation/quality";
 import { harvestRuleDrafts } from "../../worker/generation/rules";
 import type { CardDraft } from "../../worker/generation/schema";
 
@@ -287,7 +290,10 @@ describe("filterDraftsByQuality", () => {
       "What is MHC class II presentation?",
       "Antigen-presenting cells process extracellular proteins into peptides that load onto MHC class II molecules in specialized compartments before traffic to the cell surface for CD4 T cell recognition during adaptive responses.",
     );
-    const short = qa("What is MHC class II?", "Presents antigen to CD4 T cells");
+    const short = qa(
+      "What is MHC class II?",
+      "Presents antigen to CD4 T cells",
+    );
     const emptyCloze: CardDraft = {
       type: "cloze",
       front: "MHC {{c1::II}} presents to CD4 T cells.",
@@ -329,7 +335,10 @@ describe("filterDraftsByQuality", () => {
 
   it("drops adverb debris and Learning Objectives / SIGNAL chrome; keeps mitochondria", () => {
     const adverb = qa("rapidly", "how cytokines act in inflammation");
-    const lo = qa("Learning Objectives", "List the steps of antigen presentation");
+    const lo = qa(
+      "Learning Objectives",
+      "List the steps of antigen presentation",
+    );
     const signal = qa("SIGNAL 1", "TCR recognition of peptide-MHC");
     const mito = qa("mitochondria", "powerhouse of the cell");
     expect(filterDraftsByQuality([adverb, lo, signal, mito])).toEqual([mito]);
@@ -431,5 +440,33 @@ describe("filterDraftsByQuality", () => {
         cryptoMcq,
       ]),
     ).toEqual([mito, gallinaeHost, liverCloze, cryptoMcq]);
+  });
+});
+
+describe("layer1RejectReasons", () => {
+  it("names essay_back for over-long backs", () => {
+    const essay = qa(
+      "What is MHC class II presentation?",
+      "Antigen-presenting cells process extracellular proteins into peptides that load onto MHC class II molecules in specialized compartments before traffic to the cell surface for CD4 T cell recognition during adaptive responses.",
+    );
+    expect(layer1RejectReasons(essay)).toContain("essay_back");
+  });
+
+  it("names compound_front for multi-fact stems", () => {
+    const compound = qa(
+      "What is MHC and what does it present?",
+      "Peptide antigen",
+    );
+    expect(layer1RejectReasons(compound)).toContain("compound_front");
+  });
+
+  it("names incomplete_back for stub answers", () => {
+    const stub = qa("What is the reservoir?", "see above");
+    expect(layer1RejectReasons(stub)).toContain("incomplete_back");
+  });
+
+  it("returns empty for a Layer-1-passing card", () => {
+    const ok = qa("What is ATP?", "Adenosine triphosphate");
+    expect(layer1RejectReasons(ok)).toEqual([]);
   });
 });

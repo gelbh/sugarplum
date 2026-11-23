@@ -18,12 +18,9 @@ import {
   type LlmTokenUsage,
 } from "./llm";
 import { CHUNK_CHAR_LIMIT } from "./pipeline";
-import { filterDraftsByQuality } from "./quality";
+import { filterDraftsByQuality, layer1RejectReasons } from "./quality";
 import { consumeFreeGenSlot } from "./quota";
-import {
-  createWorkersAiAdapter,
-  WorkersAiCapacityError,
-} from "./workers-ai";
+import { createWorkersAiAdapter, WorkersAiCapacityError } from "./workers-ai";
 import { buildExtraUserSuffix } from "./feedback-hints";
 import {
   parseProvenanceJson,
@@ -64,7 +61,9 @@ export function resolveRegenCorpus(args: {
 /**
  * Claim-aware single-card regen: stored claim or excerpt-first extract → typed write → Layer-1.
  * When `storedClaim` is set, skips extract (persist-claims D path).
- * Throws ClaimAwareRegenError when no claim or quality fails after one reask.
+ * Front-loads a baseline quality hint; reasks once only when Layer-1 fails with
+ * named `layer1RejectReasons`. Throws ClaimAwareRegenError when no claim or
+ * quality fails without a successful reask.
  */
 export async function regenerateClaimAwareCard(args: {
   excerpt: string;
@@ -130,15 +129,28 @@ export async function regenerateClaimAwareCard(args: {
     );
   }
 
-  let written = await writeOneCardFromClaim(claim, args.type, stageArgs);
+  const baselineQualityHint =
+    "Write a shorter single-fact card: avoid compound fronts, essay backs, and incomplete answers.";
+  const firstSuffix = [struggleSuffix, baselineQualityHint]
+    .filter(Boolean)
+    .join("\n\n");
+  let written = await writeOneCardFromClaim(claim, args.type, {
+    ...stageArgs,
+    extraUserSuffix: firstSuffix,
+  });
   let ok =
     filterDraftsByQuality([written.draft as CardDraft]).length === 1
       ? written.draft
       : null;
 
   if (!ok) {
-    const qualityHint =
-      "Previous card failed quality gates (too long, compound, or essay). Write a shorter single-fact card.";
+    const reasons = layer1RejectReasons(written.draft as CardDraft);
+    if (reasons.length === 0) {
+      throw new ClaimAwareRegenError(
+        "Regenerated card failed quality gates. Edit manually or try again.",
+      );
+    }
+    const qualityHint = `Previous card failed quality gates (${reasons.join(", ")}). Write a shorter single-fact card.`;
     const qualitySuffix = [struggleSuffix, qualityHint]
       .filter(Boolean)
       .join("\n\n");

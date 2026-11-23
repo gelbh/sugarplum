@@ -7,7 +7,12 @@ import {
   parseJsonField,
   type CardRow,
 } from "../cards/serialize";
-import { studyClaimFromRow, type StudyClaim } from "./claims";
+import {
+  resolveStoredClaimByExcerpt,
+  studyClaimFromRow,
+  type StoredClaim,
+  type StudyClaim,
+} from "./claims";
 import {
   ClaimAwareRegenError,
   loadCardSourceText,
@@ -43,8 +48,7 @@ export type CardRegenOpRow = {
 };
 
 export type ApplyRegenResult =
-  | { ok: true; updatedAt: string; row: CardRow }
-  | { ok: false; error: string };
+  { ok: true; updatedAt: string; row: CardRow } | { ok: false; error: string };
 
 /** Persist claim-aware regen draft onto one card row (fingerprint + usage). */
 export async function applyClaimAwareRegenToCard(
@@ -58,10 +62,13 @@ export async function applyClaimAwareRegenToCard(
     path: "free" | "byo";
     provider: string;
     releaseQuota: () => Promise<void>;
+    /** Claim id to persist (null clears / leaves unlinked). */
+    resolvedClaimId: string | null;
   },
 ): Promise<ApplyRegenResult> {
   const db = getDb(env);
   const { draft, usage, cardId, row } = args;
+  const nextClaimId = args.resolvedClaimId;
   const nextBackJson =
     draft.type === "mcq"
       ? encodeStoredBack(draft.type, draft.back, draft.options)
@@ -77,7 +84,7 @@ export async function applyClaimAwareRegenToCard(
     back: draft.type === "mcq" ? draft.back : undefined,
     options: draft.type === "mcq" ? draft.options : null,
   });
-  if (row.claim_id == null) {
+  if (nextClaimId == null) {
     const clash = await db
       .prepare(
         `SELECT id FROM cards
@@ -100,7 +107,7 @@ export async function applyClaimAwareRegenToCard(
       .prepare(
         `UPDATE cards
          SET type = ?, front_json = ?, back_json = ?, provenance_json = ?,
-             media_r2_keys_json = NULL, content_fp = ?, updated_at = ?
+             media_r2_keys_json = NULL, content_fp = ?, claim_id = ?, updated_at = ?
          WHERE id = ?`,
       )
       .bind(
@@ -109,6 +116,7 @@ export async function applyClaimAwareRegenToCard(
         nextBackJson,
         nextProvenanceJson,
         regenFp,
+        nextClaimId,
         updatedAt,
         cardId,
       )
@@ -117,9 +125,12 @@ export async function applyClaimAwareRegenToCard(
     const message = err instanceof Error ? err.message : String(err);
     if (/UNIQUE|unique|constraint/i.test(message)) {
       await args.releaseQuota().catch((e) => console.error(e));
+      const claimClash = /claim_id/i.test(message);
       return {
         ok: false,
-        error: "Another live card in this deck already has this content",
+        error: claimClash
+          ? "Another live card in this deck already links this claim"
+          : "Another live card in this deck already has this content",
       };
     }
     throw err;
@@ -147,9 +158,40 @@ export async function applyClaimAwareRegenToCard(
       back_json: nextBackJson,
       provenance_json: nextProvenanceJson,
       media_r2_keys_json: null,
+      claim_id: nextClaimId,
       updated_at: updatedAt,
     },
   };
+}
+
+type StudyClaimListRow = {
+  id: string;
+  subject: string;
+  predicate: string;
+  source_span: string;
+  object: string | null;
+  qualifiers_json: string | null;
+  pages_json: string | null;
+};
+
+async function loadStoredClaimsForCard(
+  db: D1Database,
+  row: CardRow,
+): Promise<StoredClaim[]> {
+  const sql = row.job_id
+    ? `SELECT id, subject, predicate, source_span, object, qualifiers_json, pages_json
+       FROM study_claims WHERE job_id = ?`
+    : `SELECT id, subject, predicate, source_span, object, qualifiers_json, pages_json
+       FROM study_claims WHERE deck_id = ?`;
+  const bindKey = row.job_id ?? row.deck_id;
+  const { results } = await db
+    .prepare(sql)
+    .bind(bindKey)
+    .all<StudyClaimListRow>();
+  return (results ?? []).map((r) => ({
+    id: r.id,
+    ...studyClaimFromRow(r),
+  }));
 }
 
 async function markOpFailed(
@@ -214,9 +256,7 @@ export async function processCardRegenOp(
     .run();
   if ((claim.meta.changes ?? 0) === 0) {
     const again = await db
-      .prepare(
-        `SELECT status FROM card_regen_ops WHERE id = ?`,
-      )
+      .prepare(`SELECT status FROM card_regen_ops WHERE id = ?`)
       .bind(msg.opId)
       .first<{ status: string }>();
     if (again?.status === "done") return "done";
@@ -244,6 +284,7 @@ export async function processCardRegenOp(
     parseProvenanceJson(row.provenance_json),
   );
   let storedClaim: StudyClaim | null = null;
+  let resolvedClaimId: string | null = null;
   const claimId = row.claim_id ?? null;
   if (claimId) {
     const claimRow = await db
@@ -262,6 +303,26 @@ export async function processCardRegenOp(
       }>();
     if (claimRow) {
       storedClaim = studyClaimFromRow(claimRow);
+      resolvedClaimId = claimId;
+    }
+  }
+  if (!storedClaim && excerpt.trim()) {
+    const candidates = await loadStoredClaimsForCard(db, row);
+    const hit = resolveStoredClaimByExcerpt(candidates, excerpt);
+    if (hit) {
+      storedClaim = hit;
+      resolvedClaimId = hit.id;
+    }
+  }
+  // Never steal a claim already linked to another live card; still use the
+  // claim for write (skip extract) but keep this card's prior claim_id.
+  if (resolvedClaimId) {
+    const owner = await db
+      .prepare(`SELECT id FROM cards WHERE claim_id = ? LIMIT 1`)
+      .bind(resolvedClaimId)
+      .first<{ id: string }>();
+    if (owner && owner.id !== msg.cardId) {
+      resolvedClaimId = row.claim_id ?? null;
     }
   }
   if (!storedClaim && !materialText && !excerpt) {
@@ -340,6 +401,7 @@ export async function processCardRegenOp(
       path: llmBundle.path,
       provider: llmBundle.provider,
       releaseQuota: llmBundle.releaseQuota,
+      resolvedClaimId,
     });
     if (!applied.ok) {
       return markOpFailed(db, msg.opId, applied.error);

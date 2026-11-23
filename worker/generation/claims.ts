@@ -181,6 +181,18 @@ export function pickClaimForRegen(
   return claims[0] ?? null;
 }
 
+/** Exact excerpt ↔ source_span join; returns the full stored claim or null. */
+export function resolveStoredClaimByExcerpt(
+  claims: StoredClaim[],
+  excerpt: string,
+): StoredClaim | null {
+  const needle = normalizeWs(excerpt);
+  if (!needle || claims.length === 0) return null;
+  return (
+    claims.find((claim) => normalizeWs(claim.source_span) === needle) ?? null
+  );
+}
+
 /**
  * Match a draft provenance excerpt to a buffered claim id.
  * Exact normalized equality only (no substring overlap) so short spans cannot steal joins.
@@ -189,12 +201,7 @@ export function matchClaimIdForDraft(
   claims: StoredClaim[],
   excerpt: string,
 ): string | null {
-  const needle = normalizeWs(excerpt);
-  if (!needle || claims.length === 0) return null;
-  const hit = claims.find(
-    (claim) => normalizeWs(claim.source_span) === needle,
-  );
-  return hit?.id ?? null;
+  return resolveStoredClaimByExcerpt(claims, excerpt)?.id ?? null;
 }
 
 type StudyClaimRow = {
