@@ -312,7 +312,12 @@ describe("cover routes", () => {
       env,
     );
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({ message: "Title required" });
+    expect(await res.json()).toMatchObject({
+      detail: "Title required",
+      title: "Title required",
+      status: 400,
+      type: "https://sugarplum.gelbhart.dev/problems/http-exception",
+    });
   });
 
   it("returns 503 when Unsplash is not configured", async () => {
