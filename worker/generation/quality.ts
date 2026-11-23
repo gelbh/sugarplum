@@ -30,6 +30,20 @@ const TABLE_COLUMN_SUFFIX_RE =
 const STUB_BACK_RE =
   /^(depends on|multiple|mainly|various|variable|unknown|see (above|below|text)|n\/?a|tbd)$/i;
 
+/** Mid-phrase truncation: back ends on a dangling connector (e.g. "Tropical and"). */
+const DANGLING_BACK_CONNECTOR_RE =
+  /\b(and|or|but|with|of|the|a|an|to|for|from|by|via|into|onto|as|than|in|on|at)\s*$/i;
+
+/**
+ * Prep + modifier with no head noun (e.g. "Large inornate with banded").
+ * Avoids dropping complete phrases like "associated with cattle".
+ */
+const OPEN_PREP_MODIFIER_BACK_RE =
+  /\b(with|of|for|from|by|via)\s+[A-Za-z][a-z-]*(?:ed|ing|ate|ous|ive|ary|ory|ic)\s*$/i;
+
+/** Tiny alphabetic stubs from truncated Workers AI backs (e.g. "inc"). */
+const TINY_STUB_BACK_RE = /^[A-Za-z]{1,4}$/;
+
 /** Yes/no stubs only when the front is not a question. */
 const YES_NO_BACK_RE = /^(yes|no)$/i;
 
@@ -59,8 +73,8 @@ function wordCount(text: string): number {
 /**
  * Short non-question fronts that are glossary terms (not table headers or
  * long bare fragments). Glossary may use MIN_GLOSSARY_FRONT; others use
- * MIN_FRONT. QA glossary-shaped fronts are kept; table headers and long
- * non-questions are dropped.
+ * MIN_FRONT. Cap at 3 words so slide debris like "Ixodinae Wide host range"
+ * is not treated as a term that bypasses non_question_front.
  */
 function isGlossaryShaped(front: string): boolean {
   const t = front.trim();
@@ -68,7 +82,7 @@ function isGlossaryShaped(front: string): boolean {
   if (TABLE_HEADER_FRONT_RE.test(t)) return false;
   if (TABLE_COLUMN_SUFFIX_RE.test(t)) return false;
   const words = t.split(/\s+/).filter(Boolean);
-  return words.length > 0 && words.length <= 5;
+  return words.length > 0 && words.length <= 3;
 }
 
 function isFragmentFront(front: string): boolean {
@@ -101,6 +115,10 @@ function isIncompleteBack(front: string, back: string): boolean {
   if (!front.includes("?") && YES_NO_BACK_RE.test(t)) return true;
   if (/\.\.\.|…\s*$/.test(t)) return true;
   if (/[,:;]\s*$/.test(t)) return true;
+  if (DANGLING_BACK_CONNECTOR_RE.test(t)) return true;
+  if (!/[.!?]$/.test(t) && OPEN_PREP_MODIFIER_BACK_RE.test(t)) return true;
+  // Truncated free-path stubs: keep real short answers on questions (e.g. "Yes").
+  if (!front.includes("?") && TINY_STUB_BACK_RE.test(t)) return true;
   return false;
 }
 
@@ -368,7 +386,10 @@ export function layer1RejectReasons(draft: CardDraft): string[] {
     reasons.push("back_length");
   }
   if (draft.type === "qa" && !front.includes("?") && !glossary) {
-    reasons.push("non_question_front");
+    // Section titles with a real answer are kept; thin ones hit section_header_debris.
+    const sectionOk =
+      isSectionHeaderFront(front) && !isSectionHeaderDebris(front, back);
+    if (!sectionOk) reasons.push("non_question_front");
   }
   if (sentenceCount(back) >= 3) reasons.push("too_many_sentences");
   if (draft.type === "mcq" && isInvalidMcq(draft)) reasons.push("invalid_mcq");
@@ -438,8 +459,13 @@ export function filterDraftsByQuality(drafts: CardDraft[]): CardDraft[] {
     ) {
       continue;
     }
-    // Non-question QA that is not glossary-shaped is junk (header / fragment).
-    if (draft.type === "qa" && !front.includes("?") && !glossary) continue;
+    // Non-question QA that is not glossary-shaped is junk, unless a section
+    // title with a substantive back (thin ones drop via shouldDrop).
+    if (draft.type === "qa" && !front.includes("?") && !glossary) {
+      const sectionOk =
+        isSectionHeaderFront(front) && !isSectionHeaderDebris(front, back);
+      if (!sectionOk) continue;
+    }
     if (sentenceCount(back) >= 3) continue;
     if (shouldDrop(draft)) continue;
     const key = front.toLowerCase();

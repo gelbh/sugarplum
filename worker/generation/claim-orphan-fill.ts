@@ -30,6 +30,9 @@ export type ClaimOrphanFillSummary = {
   skipped: number;
 };
 
+/** Per Fill-all run: stop re-attempting an orphan after this many soft fails. */
+export const FILL_ALL_SOFT_FAIL_BUDGET = 2;
+
 export type FillOrphanClaimsResult = ClaimOrphanFillSummary & {
   remaining: number;
   cards: Awaited<ReturnType<typeof fillDraftFromClaim>>[];
@@ -38,6 +41,13 @@ export type FillOrphanClaimsResult = ClaimOrphanFillSummary & {
    * Callers must not treat this as a successful empty fill.
    */
   inconclusive?: boolean;
+  /**
+   * True when orphans remain but every one has hit softFailBudget this run
+   * (do not start another Fill-all chunk).
+   */
+  softFailBudgetExhausted?: boolean;
+  /** Updated soft-fail counts for claim ids (durable across Fill-all chunks). */
+  softFailCounts?: Record<string, number>;
 };
 
 type DeckOwnerRow = {
@@ -85,6 +95,8 @@ export async function fillOrphanClaims(args: {
   jobId: string;
   cap: number;
   type?: RegenCardType;
+  softFailBudget?: number;
+  softFailCounts?: Record<string, number>;
 }): Promise<FillOrphanClaimsResult> {
   const zeros: FillOrphanClaimsResult = {
     attempted: 0,
@@ -96,6 +108,10 @@ export async function fillOrphanClaims(args: {
   const db = getDb(args.env);
   const type = args.type ?? DEFAULT_TYPE;
   const { jobId, userId, cap } = args;
+  const softFailBudget = args.softFailBudget ?? FILL_ALL_SOFT_FAIL_BUDGET;
+  const softFailCounts: Record<string, number> = {
+    ...(args.softFailCounts ?? {}),
+  };
 
   let orphanIds: string[];
   try {
@@ -110,16 +126,29 @@ export async function fillOrphanClaims(args: {
         created_at: string;
       }>();
     if (!statusRow || statusRow.status !== "needs_review") {
-      return { ...zeros, inconclusive: true };
+      return { ...zeros, inconclusive: true, softFailCounts };
     }
     orphanIds = await listOrphanIds(db, jobId);
   } catch (err) {
     console.error("fillOrphanClaims setup soft-failed", jobId, err);
-    return { ...zeros, inconclusive: true };
+    return { ...zeros, inconclusive: true, softFailCounts };
   }
 
   if (orphanIds.length === 0) {
-    return { ...zeros, remaining: 0 };
+    return { ...zeros, remaining: 0, softFailCounts };
+  }
+
+  const eligible = orphanIds.filter(
+    (id) => (softFailCounts[id] ?? 0) < softFailBudget,
+  );
+  if (eligible.length === 0) {
+    return {
+      ...zeros,
+      skipped: orphanIds.length,
+      remaining: orphanIds.length,
+      softFailBudgetExhausted: true,
+      softFailCounts,
+    };
   }
 
   const summary: FillOrphanClaimsResult = {
@@ -128,9 +157,10 @@ export async function fillOrphanClaims(args: {
     skipped: 0,
     remaining: 0,
     cards: [],
+    softFailCounts,
   };
 
-  for (const claimId of orphanIds) {
+  for (const claimId of eligible) {
     if (summary.attempted >= cap) break;
 
     summary.attempted += 1;
@@ -159,6 +189,7 @@ export async function fillOrphanClaims(args: {
         err instanceof ClaimFillNotFoundError
       ) {
         summary.skipped += 1;
+        softFailCounts[claimId] = (softFailCounts[claimId] ?? 0) + 1;
         console.warn("fillOrphanClaims soft skip", jobId, claimId, err);
         continue;
       }
@@ -174,12 +205,19 @@ export async function fillOrphanClaims(args: {
   }
 
   // Never wipe filled cards from the HTTP summary if remaining recount fails.
+  let remainingIds: string[] = [];
   try {
-    summary.remaining = (await listOrphanIds(db, jobId)).length;
+    remainingIds = await listOrphanIds(db, jobId);
+    summary.remaining = remainingIds.length;
   } catch (err) {
     console.error("fillOrphanClaims remaining recount failed", jobId, err);
     summary.remaining = Math.max(0, orphanIds.length - summary.filled);
+    remainingIds = [];
   }
+  summary.softFailBudgetExhausted =
+    summary.remaining > 0 &&
+    remainingIds.every((id) => (softFailCounts[id] ?? 0) >= softFailBudget);
+  summary.softFailCounts = softFailCounts;
   return summary;
 }
 

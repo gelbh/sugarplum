@@ -465,6 +465,27 @@ describe("layer1RejectReasons", () => {
     expect(layer1RejectReasons(stub)).toContain("incomplete_back");
   });
 
+  it("rejects Ixodes free-path truncated debris (job 0f1e85dd)", () => {
+    const hostRange = qa("Ixodinae Wide host range", "inc");
+    const habitat = qa("Habitat", "Tropical and");
+    const hyalomma = qa("Hyalomma spp", "Large inornate with banded");
+    expect(layer1RejectReasons(hostRange)).toEqual(
+      expect.arrayContaining(["incomplete_back"]),
+    );
+    expect(layer1RejectReasons(habitat)).toContain("incomplete_back");
+    expect(filterDraftsByQuality([hostRange, habitat, hyalomma])).toEqual([]);
+    // 4-word slide debris is not glossary-shaped → non_question_front.
+    expect(layer1RejectReasons(hostRange)).toContain("non_question_front");
+  });
+
+  it("still keeps short real glossary pairs after Ixodes gates", () => {
+    const mito = qa("mitochondria", "powerhouse of the cell");
+    const paris = qa("Capital of France", "Paris");
+    expect(layer1RejectReasons(mito)).toEqual([]);
+    expect(layer1RejectReasons(paris)).toEqual([]);
+    expect(filterDraftsByQuality([mito, paris])).toEqual([mito, paris]);
+  });
+
   it("returns empty for a Layer-1-passing card", () => {
     const ok = qa("What is ATP?", "Adenosine triphosphate");
     expect(layer1RejectReasons(ok)).toEqual([]);

@@ -16,6 +16,7 @@ type Props = {
   onJumpToDraft?: (cardId: string) => void;
   onGenerateOrphan?: (claimId: string) => void;
   onFillAllOrphans?: () => void;
+  onCancelFillAll?: () => void;
   generatingClaimId?: string | null;
   fillAllBusy?: boolean;
   generateDisabled?: boolean;
@@ -47,6 +48,7 @@ export default function ClaimCoveragePanel({
   onJumpToDraft,
   onGenerateOrphan,
   onFillAllOrphans,
+  onCancelFillAll,
   generatingClaimId = null,
   fillAllBusy = false,
   generateDisabled = false,
@@ -67,8 +69,7 @@ export default function ClaimCoveragePanel({
   if (total === 0 && claimSpanGaps.length === 0) return null;
 
   const draftIds = new Set(drafts.map((d) => d.id));
-  const orphanBusy =
-    generateDisabled || generatingClaimId != null || fillAllBusy;
+  const orphanBusy = generateDisabled || generatingClaimId != null;
   const filledSinceStart =
     baselineOrphan != null
       ? Math.max(0, baselineOrphan - orphan)
@@ -78,13 +79,15 @@ export default function ClaimCoveragePanel({
       ? Math.min(100, Math.round((filledSinceStart / baselineOrphan) * 100))
       : 0;
   const showFillControl = Boolean(
-    onFillAllOrphans && (orphan > 0 || fillAllBusy),
+    (onFillAllOrphans || onCancelFillAll) && (orphan > 0 || fillAllBusy),
   );
   const fillButtonLabel = fillAllBusy
-    ? baselineOrphan != null
-      ? `Filling ${filledSinceStart}/${baselineOrphan}…`
-      : "Filling…"
+    ? "Cancel"
     : `Fill all (${orphan})`;
+  const fillProgressLabel =
+    baselineOrphan != null
+      ? `Filling ${filledSinceStart}/${baselineOrphan}…`
+      : "Filling…";
 
   return (
     <Box
@@ -133,9 +136,16 @@ export default function ClaimCoveragePanel({
             <Button
               size="small"
               variant="outlined"
-              disabled={orphanBusy}
-              onClick={() => onFillAllOrphans?.()}
+              disabled={fillAllBusy ? !onCancelFillAll : orphanBusy}
+              onClick={() => {
+                if (fillAllBusy) {
+                  onCancelFillAll?.();
+                  return;
+                }
+                onFillAllOrphans?.();
+              }}
               aria-busy={fillAllBusy || undefined}
+              aria-label={fillAllBusy ? "Cancel fill all" : fillButtonLabel}
               sx={{
                 flexShrink: 0,
                 textTransform: "none",
@@ -172,7 +182,7 @@ export default function ClaimCoveragePanel({
         <LinearProgress
           variant={baselineOrphan != null ? "determinate" : "indeterminate"}
           value={baselineOrphan != null ? fillPercent : undefined}
-          aria-label={fillButtonLabel}
+          aria-label={fillProgressLabel}
           sx={{
             mb: 0.75,
             height: 3,

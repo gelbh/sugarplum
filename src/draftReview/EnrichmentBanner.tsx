@@ -12,7 +12,7 @@ export default function EnrichmentBanner({ percent }: Props) {
       : "";
   return (
     <Alert severity="info" sx={{ flexShrink: 0 }}>
-      {`Filling coverage gaps…${pct}`}
+      {`Drafts are ready to review while coverage gaps fill${pct}. Free-path quality is best-effort; edit or regen weak cards.`}
     </Alert>
   );
 }

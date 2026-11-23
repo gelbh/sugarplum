@@ -292,6 +292,7 @@ export default function DraftReviewPage() {
     onDismissFailed,
     onGenerateOrphan,
     onFillAllOrphans,
+    onCancelFillAll,
     resumeFillAllIfRunning,
   } = createDraftReviewRegen({
       jobId,
@@ -473,6 +474,9 @@ export default function DraftReviewPage() {
                 }}
                 onFillAllOrphans={() => {
                   void onFillAllOrphans();
+                }}
+                onCancelFillAll={() => {
+                  void onCancelFillAll();
                 }}
                 generatingClaimId={generatingClaimId}
                 fillAllBusy={fillAllBusy}
@@ -688,6 +692,9 @@ export default function DraftReviewPage() {
                     }}
                     onFillAllOrphans={() => {
                       void onFillAllOrphans();
+                    }}
+                    onCancelFillAll={() => {
+                      void onCancelFillAll();
                     }}
                     generatingClaimId={generatingClaimId}
                     fillAllBusy={fillAllBusy}
