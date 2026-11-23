@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { getFreeGenUsage } from "../../worker/generation/quota";
-import { WORKERS_AI_MODEL } from "../../worker/generation/workers-ai";
+import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/workers-ai";
 import { createTestEnv } from "./test-env";
 
 const VALID_QA = JSON.stringify({
@@ -82,7 +82,7 @@ function seedOrphanClaim(env: ReturnType<typeof createTestEnv>) {
 
 function stubWriteOnlyQa(env: ReturnType<typeof createTestEnv>, content = VALID_QA) {
   const run = vi.fn(async (_model: string, input: unknown) => {
-    expect(_model).toBe(WORKERS_AI_MODEL);
+    expect(_model).toBe(WORKERS_AI_CLAIM_CARD_MODEL);
     const messages = (
       input as { messages?: Array<{ role: string; content: string }> }
     ).messages;

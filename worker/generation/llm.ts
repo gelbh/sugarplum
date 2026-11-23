@@ -104,6 +104,15 @@ export type CompleteInput = {
    * Claim→card write leaves this unset (KV owns draft hits; Gateway can sticky-cache failures).
    */
   gatewayCache?: CompleteGatewayCache;
+  /**
+   * Workers AI only: override `env.AI.run` model for this complete call.
+   * Unset keeps the adapter default (`WORKERS_AI_MODEL`).
+   */
+  model?: string;
+  /**
+   * Workers AI gpt-oss only: pin reasoning effort (claim→card specialist uses low).
+   */
+  reasoningEffort?: "low" | "medium" | "high";
 };
 
 /** Best-effort token counts from a provider response (nulls when silent). */

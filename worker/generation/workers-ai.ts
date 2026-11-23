@@ -21,8 +21,12 @@ import {
   generateCompactUserPrompt,
 } from "./prompts";
 
-/** Free-plan-eligible Workers AI instruct model (locked). */
+/** Free-plan-eligible Workers AI instruct model (locked default + claim→card fallback). */
 export const WORKERS_AI_MODEL = "@cf/zai-org/glm-4.7-flash" as const;
+
+/** Free-path claim→card specialist (reasoning low); quality-gates fall back to WORKERS_AI_MODEL. */
+export const WORKERS_AI_CLAIM_CARD_MODEL =
+  "@cf/openai/gpt-oss-20b" as const;
 
 /**
  * Workers AI defaults completion length to 256 when omitted, which truncates
@@ -78,6 +82,73 @@ function isWorkersAiRequestTimeoutError(err: unknown): boolean {
     err instanceof Error ? err.message : String(err ?? "")
   ).toLowerCase();
   return /3046|request timeout/.test(msg);
+}
+
+/** HTTP 410 / code 5028: catalog deprecated model (escalate claim→card to glm). */
+export function isWorkersAiDeprecatedModelError(err: unknown): boolean {
+  if (err && typeof err === "object") {
+    const status =
+      "status" in err ? Number((err as { status: unknown }).status) : NaN;
+    if (status === 410) return true;
+    const code =
+      "code" in err ? Number((err as { code: unknown }).code) : NaN;
+    if (code === 5028) return true;
+  }
+  const msg = (
+    err instanceof Error ? err.message : String(err ?? "")
+  ).toLowerCase();
+  return /5028|model has been deprecated|model.*?deprecated/.test(msg);
+}
+
+function isRemappedWorkersAiCapacityMessage(msg: string): boolean {
+  // trackingLlm remaps WorkersAiCapacityError → Error after a prior success
+  // so free-slot refund stays correct; still escalate claim→card to glm.
+  return (
+    msg.includes(CAPACITY_ERROR.toLowerCase()) ||
+    /temporarily at capacity/.test(msg)
+  );
+}
+
+/** True when free-path claim→card should hop once to glm-4.7-flash. */
+export function isClaimCardModelFallbackError(err: unknown): boolean {
+  if (err instanceof WorkersAiCapacityError) return true;
+  if (isWorkersAiDeprecatedModelError(err)) return true;
+  const msg = (
+    err instanceof Error ? err.message : String(err ?? "")
+  ).toLowerCase();
+  if (isRemappedWorkersAiCapacityMessage(msg)) return true;
+  if (msg.includes(TIMEOUT_ERROR.toLowerCase()) || /3046|request timeout|timed out/.test(msg)) {
+    return true;
+  }
+  // Known write/parse failures from writeOneCardFromClaim / contentFromAiRun
+  return /did not return|mid-json|truncated mid-json|empty content|non-json/.test(
+    msg,
+  );
+}
+
+export type ClaimCardFallbackReason =
+  | "parse"
+  | "layer1"
+  | "capacity"
+  | "timeout"
+  | "deprecated";
+
+export function claimCardFallbackReason(
+  err: unknown,
+): Exclude<ClaimCardFallbackReason, "layer1"> {
+  if (err instanceof WorkersAiCapacityError) return "capacity";
+  if (isWorkersAiDeprecatedModelError(err)) return "deprecated";
+  const msg = (
+    err instanceof Error ? err.message : String(err ?? "")
+  ).toLowerCase();
+  if (isRemappedWorkersAiCapacityMessage(msg)) return "capacity";
+  if (
+    msg.includes(TIMEOUT_ERROR.toLowerCase()) ||
+    /3046|request timeout|timed out/.test(msg)
+  ) {
+    return "timeout";
+  }
+  return "parse";
 }
 
 function mapWorkersAiRunError(err: unknown): never {
@@ -192,6 +263,8 @@ export function createWorkersAiAdapter(
     user: string,
     jsonShape: CompleteJsonShape = "cards",
     gatewayCache?: CompleteInput["gatewayCache"],
+    model: string = WORKERS_AI_MODEL,
+    reasoningEffort?: CompleteInput["reasoningEffort"],
   ): Promise<AiRunContent> {
     const preferredFormat = responseFormatForJsonShape(jsonShape);
     const base = {
@@ -203,6 +276,12 @@ export function createWorkersAiAdapter(
       max_tokens: WORKERS_AI_MAX_TOKENS,
       temperature: 0.3,
       chat_template_kwargs: { enable_thinking: false },
+      ...(reasoningEffort
+        ? {
+            reasoning_effort: reasoningEffort,
+            reasoning: { effort: reasoningEffort },
+          }
+        : {}),
     };
 
     async function tryRun(withJsonMode: boolean): Promise<unknown | null> {
@@ -222,7 +301,7 @@ export function createWorkersAiAdapter(
 
       for (let attempt = 0; ; attempt++) {
         try {
-          return await env.AI!.run(WORKERS_AI_MODEL, inputs, gateway);
+          return await env.AI!.run(model, inputs, gateway);
         } catch (err) {
           if (withJsonMode && isJsonModeUnmetError(err)) return null;
           if (
@@ -232,7 +311,7 @@ export function createWorkersAiAdapter(
             console.warn(
               "Workers AI request timeout; retrying",
               attempt + 1,
-              WORKERS_AI_MODEL,
+              model,
             );
             await new Promise((resolve) =>
               setTimeout(resolve, TIMEOUT_BACKOFF_MS[attempt]),
@@ -259,6 +338,8 @@ export function createWorkersAiAdapter(
       input.user,
       input.jsonShape ?? "cards",
       input.gatewayCache,
+      input.model?.trim() || WORKERS_AI_MODEL,
+      input.reasoningEffort,
     );
     const usage = {
       prompt_tokens: run.promptTokens,
