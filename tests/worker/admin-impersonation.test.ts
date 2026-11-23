@@ -147,7 +147,10 @@ describe("admin view-as impersonation", () => {
     );
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({
-      message: "Cannot modify allowlisted admin",
+      detail: "Cannot modify allowlisted admin",
+      title: "Cannot modify allowlisted admin",
+      status: 400,
+      type: "https://sugarplum.gelbhart.dev/problems/http-exception",
     });
   });
 
@@ -161,7 +164,10 @@ describe("admin view-as impersonation", () => {
     );
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({
-      message: "Cannot impersonate yourself",
+      detail: "Cannot impersonate yourself",
+      title: "Cannot impersonate yourself",
+      status: 400,
+      type: "https://sugarplum.gelbhart.dev/problems/http-exception",
     });
   });
 
@@ -224,7 +230,10 @@ describe("admin view-as impersonation", () => {
     );
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({
-      message: "Cannot modify sandbox user",
+      detail: "Cannot modify sandbox user",
+      title: "Cannot modify sandbox user",
+      status: 400,
+      type: "https://sugarplum.gelbhart.dev/problems/http-exception",
     });
   });
 
