@@ -30,7 +30,11 @@ import {
 import { type ReviewSwipeDecision } from "./cardGestures";
 import { gradeColorVars } from "./gradeColors";
 import { StudyCardPlate } from "./CardFace";
-import { OcclusionReviewFace, TextReviewFace } from "./reviewCardFaces";
+import {
+  OcclusionReviewFace,
+  TextReviewFace,
+  type OcclusionRegionEditorSlot,
+} from "./reviewCardFaces";
 import { ReviewMcqFace } from "./reviewCardMcq";
 import { FACE_SANS, FACE_SX } from "./studyFaceSx";
 import { useReviewSwipe } from "./useReviewSwipe";
@@ -46,6 +50,8 @@ export type ReviewCardProps = {
   fillHeight?: boolean;
   regen: { busy: boolean; disabled: boolean; onClick: () => void };
   onChange: (next: DraftEditorChange) => void;
+  /** Routes compose OcclusionRegionEditor (study stays draftReview-UI-free). */
+  renderOcclusionRegionEditor: OcclusionRegionEditorSlot;
   /** Resolve true once the card was decided; false unlocks it again. */
   onDecide: (
     decision: ReviewDecision,
@@ -175,6 +181,7 @@ export default function ReviewCard({
   fillHeight = false,
   regen,
   onChange,
+  renderOcclusionRegionEditor,
   onDecide,
 }: ReviewCardProps) {
   const [reason, setReason] = useState<RejectReason | null>(null);
@@ -203,7 +210,12 @@ export default function ReviewCard({
       face = <ReviewMcqFace {...faceProps} />;
       break;
     case "occlusion":
-      face = <OcclusionReviewFace {...faceProps} />;
+      face = (
+        <OcclusionReviewFace
+          {...faceProps}
+          renderOcclusionRegionEditor={renderOcclusionRegionEditor}
+        />
+      );
       break;
     case "text":
       face = <TextReviewFace key={card.type} {...faceProps} />;

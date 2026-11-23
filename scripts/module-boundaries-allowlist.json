@@ -8,15 +8,5 @@
     "file": "routes/DeckHubPage.tsx",
     "spec": "../deckHub/deckHubMotion.css",
     "reason": "Route-level CSS side-effect; no barrel re-export for stylesheets."
-  },
-  {
-    "file": "study/reviewCardFaces.tsx",
-    "spec": "../draftReview/OcclusionRegionEditor",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/StudyCardActions.tsx",
-    "spec": "../draftReview/DraftCardEditor",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
   }
 ]
