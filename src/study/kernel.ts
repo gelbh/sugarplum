@@ -1,8 +1,8 @@
 /**
- * Cycle-safe study public surface for composition/infra (guest, api, insights).
+ * Cycle-safe study public surface for composition/infra (guest, api).
  * Must not re-export modules that import guest/ or resolve api/client (even
- * type-only): worker builds follow insights → this file and reject DOM/api.
- * Product UI continues to use ./index.ts.
+ * type-only): those edges poison CF worker graphs that touch this entry.
+ * Worker insights stay on study leaves (allowlisted). Product UI uses ./index.ts.
  */
 export { pendingCardIdSet, clearPendingGrades, type PendingGrade } from "./pendingGrades";
 export { STUDY_MEDIA_CACHE } from "./studyMediaCache";
