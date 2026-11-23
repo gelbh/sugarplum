@@ -10,9 +10,11 @@ import {
 import { isTruncationParseError } from "../../worker/generation/llm-json";
 import {
   WORKERS_AI_CLAIM_CARD_MODEL,
+  classifyClaimCardFallback,
+} from "../../worker/generation/claim-card-fallback";
+import {
   WORKERS_AI_MODEL,
   createWorkersAiAdapter,
-  isClaimCardModelFallbackError,
   isWorkersAiDeprecatedModelError,
 } from "../../worker/generation/workers-ai";
 import { createTestEnv } from "./test-env";
@@ -169,18 +171,16 @@ describe("Workers AI adapter", () => {
       isWorkersAiDeprecatedModelError({ code: 5028, message: "deprecated" }),
     ).toBe(true);
     expect(
-      isClaimCardModelFallbackError(
-        new Error("LLM did not return a qa card"),
-      ),
-    ).toBe(true);
+      classifyClaimCardFallback(new Error("LLM did not return a qa card")),
+    ).toBe("parse");
     expect(
-      isClaimCardModelFallbackError(
+      classifyClaimCardFallback(
         new Error("Workers AI is temporarily at capacity. Add your own key."),
       ),
-    ).toBe(true);
+    ).toBe("capacity");
     expect(
-      isClaimCardModelFallbackError(new Error("invalid auth parse token")),
-    ).toBe(false);
+      classifyClaimCardFallback(new Error("invalid auth parse token")),
+    ).toBeNull();
   });
 
   it("complete honors gatewayCache when set (default remains skipCache true)", async () => {

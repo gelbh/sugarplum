@@ -20,7 +20,7 @@ import {
   resolveRegenLlm,
   type RegenCardType,
 } from "./card-regen";
-import type { TypedRegenDraft } from "./claim-stages";
+import type { TypedRegenDraft } from "./claim-card-write";
 import type { CardRegenQueueMessage } from "./enqueue";
 import { RUNNING_JOB_STALE_MS } from "./progress";
 import {

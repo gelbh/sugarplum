@@ -13,10 +13,8 @@ import {
 } from "../../worker/generation/consumer";
 import type { CardRegenQueueMessage } from "../../worker/generation/enqueue";
 import { RUNNING_JOB_STALE_MS } from "../../worker/generation/progress";
-import {
-  WORKERS_AI_CLAIM_CARD_MODEL,
-  WORKERS_AI_MODEL,
-} from "../../worker/generation/workers-ai";
+import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/claim-card-fallback";
+import { WORKERS_AI_MODEL } from "../../worker/generation/workers-ai";
 import { createTestEnv } from "./test-env";
 
 function mockBatch(body: CardRegenQueueMessage) {

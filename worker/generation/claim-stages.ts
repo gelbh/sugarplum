@@ -3,10 +3,6 @@ import {
   CARD_FROM_CLAIM_SYSTEM_PROMPT,
   cardFromClaimCompactUserPrompt,
   cardFromClaimUserPrompt,
-  cardFromOneClaimTypedCompactUserPrompt,
-  cardFromOneClaimTypedUserPrompt,
-  CARD_FROM_ONE_CLAIM_TYPED_COMPACT_SYSTEM_PROMPT,
-  CARD_FROM_ONE_CLAIM_TYPED_SYSTEM_PROMPT,
 } from "./card-from-claim-prompts";
 import {
   CLAIM_EXTRACT_COMPACT_SYSTEM_PROMPT,
@@ -28,22 +24,12 @@ import {
   withCompactTruncationRetry,
 } from "./llm-json";
 import type { LlmAdapter, LlmTokenUsage } from "./llm";
-import { assertValidMcqOptions, type CardDraft } from "./schema";
+import type { CardDraft } from "./schema";
 
 export type ClaimStageLlm = {
   llm: LlmAdapter;
   apiKey: string;
   provider: string;
-};
-
-export type TypedRegenCardType = "qa" | "cloze" | "mcq";
-
-export type TypedRegenDraft = {
-  type: TypedRegenCardType;
-  front: string;
-  back: string;
-  options?: string[];
-  provenance: CardDraft["provenance"];
 };
 
 function isCardsParseFailure(err: unknown): boolean {
@@ -195,75 +181,5 @@ export async function writeCardsFromClaims(
   } catch (err) {
     if (isTruncationParseError(err) || isCardsParseFailure(err)) return [];
     throw err;
-  }
-}
-
-function parseTypedClaimCard(
-  raw: string,
-  type: TypedRegenCardType,
-): TypedRegenDraft {
-  const drafts = parseCardsPayload(raw);
-  const hit = drafts.find((d) => d.type === type && typeof d.front === "string");
-  if (!hit || typeof hit.front !== "string" || typeof hit.back !== "string") {
-    throw new Error(`LLM did not return a ${type} card`);
-  }
-  const draft: TypedRegenDraft = {
-    type,
-    front: hit.front,
-    back: hit.back,
-    provenance: hit.provenance,
-  };
-  return hit.type === "mcq"
-    ? { ...draft, ...assertValidMcqOptions(hit.back, hit.options) }
-    : draft;
-}
-
-/**
- * Write exactly one card of the requested type from a single claim (sync regen).
- * Does not opt into AI Gateway response cache: sticky truncated/Layer-1-failing
- * completions would burn latency for the TTL; KV draft cache owns claim→card hits.
- */
-export async function writeOneCardFromClaim(
-  claim: StudyClaim,
-  type: TypedRegenCardType,
-  args: ClaimStageLlm & { extraUserSuffix?: string },
-): Promise<{ draft: TypedRegenDraft; usage: LlmTokenUsage | null }> {
-  const { llm, apiKey, provider, extraUserSuffix } = args;
-  const ask = (system: string, user: string) =>
-    llm.complete({
-      system,
-      user: appendExtraUserSuffix(user, extraUserSuffix ?? ""),
-      apiKey,
-      provider,
-      jsonShape: "cards",
-    });
-
-  const user = cardFromOneClaimTypedUserPrompt(claim, type);
-  const first = await ask(CARD_FROM_ONE_CLAIM_TYPED_SYSTEM_PROMPT, user);
-  try {
-    return {
-      draft: parseTypedClaimCard(first.text, type),
-      usage: first.usage ?? null,
-    };
-  } catch (err) {
-    if (isTruncationParseError(err)) {
-      const second = await ask(
-        CARD_FROM_ONE_CLAIM_TYPED_COMPACT_SYSTEM_PROMPT,
-        cardFromOneClaimTypedCompactUserPrompt(claim, type),
-      );
-      return {
-        draft: parseTypedClaimCard(second.text, type),
-        usage: addUsage(first.usage, second.usage),
-      };
-    }
-    const message = err instanceof Error ? err.message : String(err);
-    const second = await ask(
-      CARD_FROM_ONE_CLAIM_TYPED_SYSTEM_PROMPT,
-      `${user}\n\nYour previous reply was rejected: ${message}. Respond with JSON only containing exactly one "${type}" card.`,
-    );
-    return {
-      draft: parseTypedClaimCard(second.text, type),
-      usage: addUsage(first.usage, second.usage),
-    };
   }
 }

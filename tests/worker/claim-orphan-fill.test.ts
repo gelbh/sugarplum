@@ -6,7 +6,7 @@ import {
   runClaimOrphanFillPhase,
 } from "../../worker/generation/claim-orphan-fill";
 import { FREE_GEN_DAILY_CAP, consumeFreeGenSlot } from "../../worker/generation/quota";
-import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/workers-ai";
+import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/claim-card-fallback";
 import { createTestEnv } from "./test-env";
 
 function seedOwnerNeedsReview(env: ReturnType<typeof createTestEnv>) {

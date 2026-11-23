@@ -6,13 +6,20 @@ import { pdfTextOrOcrSidecar, readOcrSidecar } from "../materials/ocr-sidecar";
 import {
   addUsage,
   extractClaimsForChunk,
-  writeOneCardFromClaim,
-  type TypedRegenDraft,
 } from "./claim-stages";
 import {
   readClaimCardDraft,
   writeClaimCardDraft,
 } from "./claim-card-draft-cache";
+import {
+  classifyClaimCardFallback,
+  WORKERS_AI_CLAIM_CARD_MODEL,
+  type ClaimCardFallbackReason,
+} from "./claim-card-fallback";
+import {
+  writeOneCardFromClaim,
+  type TypedRegenDraft,
+} from "./claim-card-write";
 import { pickClaimForRegen, type StudyClaim } from "./claims";
 import {
   BYO_PROVIDERS_PHRASE,
@@ -25,13 +32,9 @@ import { CHUNK_CHAR_LIMIT } from "./pipeline";
 import { filterDraftsByQuality, layer1RejectReasons } from "./quality";
 import { consumeFreeGenSlot } from "./quota";
 import {
-  claimCardFallbackReason,
   createWorkersAiAdapter,
-  isClaimCardModelFallbackError,
-  WORKERS_AI_CLAIM_CARD_MODEL,
   WORKERS_AI_MODEL,
   WorkersAiCapacityError,
-  type ClaimCardFallbackReason,
 } from "./workers-ai";
 import { buildExtraUserSuffix } from "./feedback-hints";
 import {
@@ -245,12 +248,12 @@ export async function regenerateClaimAwareCard(args: {
     try {
       return await attemptWrite(extraUserSuffix);
     } catch (err) {
-      if (
-        freeWorkersAi &&
-        !escalatedToGlm &&
-        isClaimCardModelFallbackError(err)
-      ) {
-        switchToGlmFallback(claimCardFallbackReason(err));
+      const fallbackReason =
+        freeWorkersAi && !escalatedToGlm
+          ? classifyClaimCardFallback(err)
+          : null;
+      if (fallbackReason) {
+        switchToGlmFallback(fallbackReason);
         return await attemptWrite(extraUserSuffix);
       }
       throw err;

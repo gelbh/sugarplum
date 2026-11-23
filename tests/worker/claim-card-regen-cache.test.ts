@@ -2,8 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import { regenerateClaimAwareCard } from "../../worker/generation/card-regen";
 import type { LlmAdapter } from "../../worker/generation/llm";
 import type { StudyClaim } from "../../worker/generation/claims";
+import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/claim-card-fallback";
 import {
-  WORKERS_AI_CLAIM_CARD_MODEL,
   WORKERS_AI_MODEL,
   WorkersAiCapacityError,
 } from "../../worker/generation/workers-ai";

@@ -24,10 +24,6 @@ import {
 /** Free-plan-eligible Workers AI instruct model (locked default + claim→card fallback). */
 export const WORKERS_AI_MODEL = "@cf/zai-org/glm-4.7-flash" as const;
 
-/** Free-path claim→card specialist (reasoning low); quality-gates fall back to WORKERS_AI_MODEL. */
-export const WORKERS_AI_CLAIM_CARD_MODEL =
-  "@cf/openai/gpt-oss-20b" as const;
-
 /**
  * Workers AI defaults completion length to 256 when omitted, which truncates
  * multi-card JSON mid-string. GLM docs prefer max_completion_tokens; keep
@@ -35,7 +31,7 @@ export const WORKERS_AI_CLAIM_CARD_MODEL =
  */
 export const WORKERS_AI_MAX_TOKENS = 8192;
 
-const CAPACITY_ERROR =
+export const WORKERS_AI_CAPACITY_ERROR =
   "Workers AI is temporarily at capacity. " +
   `Add your own ${BYO_PROVIDERS_PHRASE} (free Flash) API key in Settings for BYO generation, or retry after UTC midnight.`;
 
@@ -52,7 +48,7 @@ export class WorkersAiCapacityError extends Error {}
 /** Mirror BYO `postLlm` BACKOFF_MS: two sleeps after the first timeout. */
 const TIMEOUT_BACKOFF_MS = [2000, 5000] as const;
 
-const TIMEOUT_ERROR =
+export const WORKERS_AI_TIMEOUT_ERROR =
   "Workers AI timed out. Try again, or add a BYO API key in Settings.";
 
 function isWorkersAiCapacityError(err: unknown): boolean {
@@ -100,60 +96,9 @@ export function isWorkersAiDeprecatedModelError(err: unknown): boolean {
   return /5028|model has been deprecated|model.*?deprecated/.test(msg);
 }
 
-function isRemappedWorkersAiCapacityMessage(msg: string): boolean {
-  // trackingLlm remaps WorkersAiCapacityError → Error after a prior success
-  // so free-slot refund stays correct; still escalate claim→card to glm.
-  return (
-    msg.includes(CAPACITY_ERROR.toLowerCase()) ||
-    /temporarily at capacity/.test(msg)
-  );
-}
-
-/** True when free-path claim→card should hop once to glm-4.7-flash. */
-export function isClaimCardModelFallbackError(err: unknown): boolean {
-  if (err instanceof WorkersAiCapacityError) return true;
-  if (isWorkersAiDeprecatedModelError(err)) return true;
-  const msg = (
-    err instanceof Error ? err.message : String(err ?? "")
-  ).toLowerCase();
-  if (isRemappedWorkersAiCapacityMessage(msg)) return true;
-  if (msg.includes(TIMEOUT_ERROR.toLowerCase()) || /3046|request timeout|timed out/.test(msg)) {
-    return true;
-  }
-  // Known write/parse failures from writeOneCardFromClaim / contentFromAiRun
-  return /did not return|mid-json|truncated mid-json|empty content|non-json/.test(
-    msg,
-  );
-}
-
-export type ClaimCardFallbackReason =
-  | "parse"
-  | "layer1"
-  | "capacity"
-  | "timeout"
-  | "deprecated";
-
-export function claimCardFallbackReason(
-  err: unknown,
-): Exclude<ClaimCardFallbackReason, "layer1"> {
-  if (err instanceof WorkersAiCapacityError) return "capacity";
-  if (isWorkersAiDeprecatedModelError(err)) return "deprecated";
-  const msg = (
-    err instanceof Error ? err.message : String(err ?? "")
-  ).toLowerCase();
-  if (isRemappedWorkersAiCapacityMessage(msg)) return "capacity";
-  if (
-    msg.includes(TIMEOUT_ERROR.toLowerCase()) ||
-    /3046|request timeout|timed out/.test(msg)
-  ) {
-    return "timeout";
-  }
-  return "parse";
-}
-
 function mapWorkersAiRunError(err: unknown): never {
   if (isWorkersAiCapacityError(err)) {
-    throw new WorkersAiCapacityError(CAPACITY_ERROR);
+    throw new WorkersAiCapacityError(WORKERS_AI_CAPACITY_ERROR);
   }
   throw err instanceof Error ? err : new Error(String(err));
 }
@@ -319,7 +264,7 @@ export function createWorkersAiAdapter(
             continue;
           }
           if (isWorkersAiRequestTimeoutError(err)) {
-            throw new Error(TIMEOUT_ERROR);
+            throw new Error(WORKERS_AI_TIMEOUT_ERROR);
           }
           mapWorkersAiRunError(err);
         }
