@@ -17,37 +17,24 @@
       <a class="brand" href="/">Sugarplum</a>
       <article class="panel">
         <h1>http-exception</h1>
-        <p class="lede">
-          Generic Worker error for a bare <code>HTTPException</code>.
-        </p>
+        <p class="lede">Generic Worker error for a bare <code>HTTPException</code>.</p>
         <dl>
           <div>
             <dt>Type URI</dt>
             <dd>
-              <code
-                >https://sugarplum.gelbhart.dev/problems/http-exception</code
-              >
+              <code>https://sugarplum.gelbhart.dev/problems/http-exception</code>
             </dd>
           </div>
           <div>
             <dt>Typical status</dt>
-            <dd>
-              Status from the thrown exception (for example
-              <span class="status">400</span>,
-              <span class="status">401</span>,
-              <span class="status">404</span>,
-              <span class="status">503</span>).
-            </dd>
+            <dd>Status from the thrown exception (for example <span class="status">400</span>, <span class="status">401</span>, <span class="status">404</span>, <span class="status">503</span>).</dd>
           </div>
           <div>
             <dt>Extensions</dt>
             <dd>None required. <code>detail</code> / <code>title</code> carry the message.</dd>
           </div>
         </dl>
-        <p class="remediation">
-          Read <code>detail</code> for the occurrence. Fix the request or auth
-          state and retry.
-        </p>
+        <p class="remediation">Read <code>detail</code> for the occurrence. Fix the request or auth state and retry.</p>
       </article>
     </main>
   </body>
