@@ -17,7 +17,6 @@ import {
 } from "../api/client";
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
-import { MAX_CLIENT_FIGURES } from "../materials/figureGeometry";
 import {
   diyOcclusionNotice,
   freePathImageHelperText,
@@ -27,16 +26,15 @@ import {
   uploadSubmitLabel,
 } from "../materials/learningObjectivesOffer";
 import {
-  batchAllReused,
-  storedUploadNotice,
-} from "../materials/storedUploadNotice";
-import {
+  MAX_CLIENT_FIGURES,
   MAX_FILE_BYTES,
   MAX_IMAGE_BYTES,
   MAX_SPLIT_SOURCE_BYTES,
+  batchAllReused,
   fileTooLargeMessage,
   splitSourceTooLargeMessage,
-} from "../materials/materialUploadLimits";
+  storedUploadNotice,
+} from "../materials/kernel";
 import { runConsentedPdfCompressUpload } from "../materials/runConsentedPdfCompressUpload";
 import { runConsentedPdfSplitUpload } from "../materials/runConsentedPdfSplitUpload";
 import { runConsentedPptxSplitUpload } from "../materials/runConsentedPptxSplitUpload";
