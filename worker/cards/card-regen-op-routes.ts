@@ -11,6 +11,7 @@ type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
 export const cardRegenOpRoutes = new Hono<AppEnv>();
 
+// view-as: allow
 cardRegenOpRoutes.get("/:opId", async (c) => {
   const userId = await requireUser(c);
   const opId = c.req.param("opId");

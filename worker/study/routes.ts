@@ -119,6 +119,7 @@ export const studyRoutes = new Hono<AppEnv>();
  * Does NOT mutate schedules (deferrals are preview-only until POST commit-pacing).
  * Response: `{ cards, meta, pendingDeferrals }`.
  */
+// view-as: allow
 studyRoutes.get("/due", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -155,6 +156,7 @@ studyRoutes.get("/due", async (c) => {
  * Apply R-aware review deferrals for today's over-budget cards.
  * Overdue boundary uses server UTC day (not client localDay).
  */
+// view-as: deny
 studyRoutes.post("/commit-pacing", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -183,6 +185,7 @@ studyRoutes.post("/commit-pacing", async (c) => {
  * Accepted cards ranked by weakness score (Again/Hard/lapses/R); capped at 50.
  * Drafts never appear. Ownership mirrors /due via decks.user_id.
  */
+// view-as: allow
 studyRoutes.get("/struggling", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -271,6 +274,7 @@ studyRoutes.get("/struggling", async (c) => {
 });
 
 /** Grade a due accepted card with FSRS; writes review_logs and updates schedule. */
+// view-as: deny
 studyRoutes.post("/review", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);

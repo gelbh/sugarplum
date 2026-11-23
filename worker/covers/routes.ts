@@ -235,6 +235,7 @@ function mediaContentType(key: string): string {
 
 export const coverRoutes = new Hono<AppEnv>();
 
+// view-as: allow
 coverRoutes.get("/", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -248,6 +249,7 @@ coverRoutes.get("/", async (c) => {
   return c.json({ covers });
 });
 
+// view-as: allow
 coverRoutes.get("/search", async (c) => {
   await requireUser(c);
   const accessKey = unsplashKey(c.env);
@@ -265,6 +267,7 @@ coverRoutes.get("/search", async (c) => {
   });
 });
 
+// view-as: allow
 coverRoutes.get("/media", async (c) => {
   const userId = await requireUser(c);
   const key = c.req.query("key")?.trim();
@@ -285,6 +288,7 @@ coverRoutes.get("/media", async (c) => {
   });
 });
 
+// view-as: deny
 coverRoutes.post("/upload-url", async (c) => {
   const userId = await requireUser(c);
   const body = await readJson(c);
@@ -358,6 +362,7 @@ async function beginCoverPut(c: Context<AppEnv>): Promise<{
   return { userId, owner, record, db };
 }
 
+// view-as: deny
 coverRoutes.put("/custom", async (c) => {
   const { userId, owner, record, db } = await beginCoverPut(c);
 
@@ -395,6 +400,7 @@ coverRoutes.put("/custom", async (c) => {
   } satisfies StoredCoverRow);
 });
 
+// view-as: deny
 coverRoutes.put("/", async (c) => {
   const { userId, owner, record, db } = await beginCoverPut(c);
 
@@ -440,6 +446,7 @@ coverRoutes.put("/", async (c) => {
   return c.json(row);
 });
 
+// view-as: deny
 coverRoutes.delete("/", async (c) => {
   const userId = await requireUser(c);
   const owner = readOwner(await readJson(c));

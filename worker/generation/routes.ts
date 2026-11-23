@@ -118,6 +118,7 @@ export type JobListItem = {
 };
 
 /** List owner jobs that still have draft cards (newest first). */
+// view-as: allow
 jobRoutes.get("/", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -158,6 +159,7 @@ jobRoutes.get("/", async (c) => {
 });
 
 /** Poll generation job status (owner only). */
+// view-as: allow
 jobRoutes.get("/:id", async (c) => {
   const userId = await requireUser(c);
   const jobId = c.req.param("id");
@@ -231,6 +233,7 @@ jobRoutes.get("/:id", async (c) => {
   });
 });
 
+// view-as: allow
 jobRoutes.get("/:id/claim-coverage", async (c) => {
   const userId = await requireUser(c);
   const jobId = c.req.param("id");
@@ -282,6 +285,7 @@ jobRoutes.get("/:id/claim-coverage", async (c) => {
 });
 
 /** Kick off durable Fill-all Workflow (202) or return zeros when no orphans (200). */
+// view-as: deny
 jobRoutes.post("/:id/claims/fill-orphans", async (c) => {
   const userId = await requireUser(c);
   const jobId = c.req.param("id");
@@ -369,6 +373,7 @@ jobRoutes.post("/:id/claims/fill-orphans", async (c) => {
 });
 
 /** Fill-all Workflow run status (P1; does not read generation progress_json). */
+// view-as: allow
 jobRoutes.get("/:id/claims/fill-orphans", async (c) => {
   const userId = await requireUser(c);
   const jobId = c.req.param("id");
@@ -391,6 +396,7 @@ jobRoutes.get("/:id/claims/fill-orphans", async (c) => {
 });
 
 /** Generate one draft from an orphan study_claims row (write + Layer-1; no extract). */
+// view-as: deny
 jobRoutes.post("/:id/claims/:claimId/generate", async (c) => {
   const userId = await requireUser(c);
   const jobId = c.req.param("id");
@@ -442,6 +448,7 @@ jobRoutes.post("/:id/claims/:claimId/generate", async (c) => {
  * Clear a failed (or empty needs_review) job from pending chrome.
  * Rejects leftover drafts, marks job done; returns deck_id for navigation.
  */
+// view-as: deny
 jobRoutes.post("/:id/dismiss", async (c) => {
   const userId = await requireUser(c);
   const jobId = c.req.param("id");
@@ -511,6 +518,7 @@ jobRoutes.post("/:id/dismiss", async (c) => {
 });
 
 /** Soft-clean: mark remaining drafts rejected; keep accepted; no requeue (owner only). */
+// view-as: deny
 jobRoutes.post("/:id/reject-drafts", async (c) => {
   const userId = await requireUser(c);
   const jobId = c.req.param("id");
@@ -545,6 +553,7 @@ jobRoutes.post("/:id/reject-drafts", async (c) => {
 });
 
 /** Wipe job cards, reset to queued, and requeue generation (owner only). */
+// view-as: deny
 jobRoutes.post("/:id/regen", async (c) => {
   const userId = await requireUser(c);
   const jobId = c.req.param("id");

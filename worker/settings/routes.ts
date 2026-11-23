@@ -63,6 +63,7 @@ function requireWrapKey(env: Env): string {
 
 export const settingsRoutes = new Hono<AppEnv>();
 
+// view-as: allow
 settingsRoutes.get("/llm", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -90,6 +91,7 @@ settingsRoutes.get("/llm", async (c) => {
   } satisfies LlmSettingsConfigured);
 });
 
+// view-as: deny
 settingsRoutes.put("/llm", async (c) => {
   const userId = await requireUser(c);
   await assertNotImpersonating(c);
@@ -161,6 +163,7 @@ settingsRoutes.put("/llm", async (c) => {
   } satisfies LlmSettingsConfigured);
 });
 
+// view-as: deny
 settingsRoutes.delete("/llm", async (c) => {
   const userId = await requireUser(c);
   await assertNotImpersonating(c);
@@ -171,12 +174,14 @@ settingsRoutes.delete("/llm", async (c) => {
   return c.json({ configured: false } satisfies LlmSettingsMissing);
 });
 
+// view-as: allow
 settingsRoutes.get("/study", async (c) => {
   const userId = await requireUser(c);
   const prefs = await loadStudyPrefs(getDb(c.env), userId);
   return c.json(studyPrefsResponse(prefs) satisfies StudyPrefs);
 });
 
+// view-as: deny
 settingsRoutes.put("/study", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -202,6 +207,7 @@ settingsRoutes.put("/study", async (c) => {
   return c.json(prefs satisfies StudyPrefs);
 });
 
+// view-as: deny
 settingsRoutes.get("/study/fsrs-optimize", async (c) => {
   const userId = await requireUser(c);
   const status = await getFsrsOptimizeStatus(getDb(c.env), userId, new Date(), {
@@ -210,6 +216,7 @@ settingsRoutes.get("/study/fsrs-optimize", async (c) => {
   return c.json(status);
 });
 
+// view-as: allow
 settingsRoutes.get("/study/fsrs-revlog.csv", async (c) => {
   const userId = await requireUser(c);
   const csv = await exportRevlogCsv(getDb(c.env), userId);
@@ -222,6 +229,7 @@ settingsRoutes.get("/study/fsrs-revlog.csv", async (c) => {
   });
 });
 
+// view-as: deny
 settingsRoutes.put("/study/fsrs-weights", async (c) => {
   const userId = await requireUser(c);
   let body: { w?: unknown };
@@ -252,6 +260,7 @@ settingsRoutes.put("/study/fsrs-weights", async (c) => {
   }
 });
 
+// view-as: deny
 settingsRoutes.post("/study/fsrs-weights/reset", async (c) => {
   const userId = await requireUser(c);
   try {
@@ -265,6 +274,7 @@ settingsRoutes.post("/study/fsrs-weights/reset", async (c) => {
   }
 });
 
+// view-as: deny
 settingsRoutes.post("/study/fsrs-optimize/run", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
