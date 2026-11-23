@@ -7,6 +7,7 @@ import { buildCoverageLedger } from "./coverage";
 import { buildClaimSpanCoverage } from "./claim-span-coverage";
 import { parseAtlasJobProvenance } from "../atlas/makeCardsSource";
 import { afterRunningJobTerminal } from "./jobTerminal";
+import { recordStageDurationsBestEffort } from "./stageDurations";
 import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
 import {
   loadDeckFronts,
@@ -130,6 +131,7 @@ async function finalizeAfterPersist(
     .bind("needs_review", coverageJson, finishedAt, args.jobId)
     .run();
   await afterRunningJobTerminal(env, args.jobId);
+  await recordStageDurationsBestEffort(env, args.jobId);
 }
 
 /** Resume gap-fill + finalize after a durable pass-1 step (Workflow). */

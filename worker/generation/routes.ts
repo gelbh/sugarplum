@@ -26,6 +26,7 @@ import {
   getFillAllWorkflowStatus,
   startFillAllWorkflow,
 } from "./fillAllLifecycle";
+import { readEtaPriors } from "./stageDurations";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -44,6 +45,7 @@ export type JobProgressPayload = {
   drafts_so_far?: number;
   events?: { at: string; kind: string; stage: string; text: string }[];
   path?: "free" | "byo";
+  present_stages?: string[];
 };
 
 export type JobPollRow = {
@@ -99,6 +101,11 @@ function parseProgressJson(raw: string | null): JobProgressPayload | null {
     if (Array.isArray(parsed.events)) out.events = parsed.events as any;
     if (parsed.path === "free" || parsed.path === "byo")
       out.path = parsed.path as "free" | "byo";
+    if (Array.isArray(parsed.present_stages)) {
+      out.present_stages = parsed.present_stages.filter(
+        (s): s is string => typeof s === "string",
+      );
+    }
     return out;
   } catch {
     return null;
@@ -216,6 +223,13 @@ jobRoutes.get("/:id", async (c) => {
     free_quota = await getFreeGenUsage(c.env, userId);
   }
 
+  let eta_priors: Awaited<ReturnType<typeof readEtaPriors>> = null;
+  try {
+    eta_priors = await readEtaPriors(c.env.CACHE);
+  } catch {
+    eta_priors = null;
+  }
+
   return c.json({
     id: row.id,
     material_id: row.material_id,
@@ -224,6 +238,7 @@ jobRoutes.get("/:id", async (c) => {
     coverage_json: row.coverage_json,
     progress,
     free_quota,
+    eta_priors,
     created_at: row.created_at,
     finished_at: row.finished_at,
     deck_id: row.deck_id,

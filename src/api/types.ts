@@ -240,6 +240,12 @@ export type GenerationJobProgress = {
     text: string;
   }[];
   path?: "free" | "byo";
+  /** Pipeline stages for this run (worker catalog). */
+  present_stages?: string[];
+};
+
+export type GenerationJobEtaPriors = {
+  stages: Partial<Record<string, { p50_ms: number; n: number }>>;
 };
 
 export type GenerationJob = {
@@ -250,6 +256,8 @@ export type GenerationJob = {
   coverage_json: string | null;
   progress: GenerationJobProgress | null;
   free_quota: { used: number; cap: number; remaining: number } | null;
+  /** Historical stage p50s for ETA (omitted/null when KV rollup empty). */
+  eta_priors?: GenerationJobEtaPriors | null;
   created_at: string;
   finished_at: string | null;
   /** Deck/subject for draft-review crumbs (GET /api/jobs/:id). */
