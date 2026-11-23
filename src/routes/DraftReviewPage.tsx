@@ -89,6 +89,7 @@ export default function DraftReviewPage() {
     total: number | null;
     percent: number | null;
   }>({ stage: null, current: null, total: null, percent: null });
+  const [enrichPollDone, setEnrichPollDone] = useState(false);
   const { user } = useSession();
   const jobProgress = useJobProgress(user && progressGate ? jobId : null);
   const { begin: beginLoad, end: endLoad } = useTrackedOp("Loading drafts…");
@@ -108,6 +109,7 @@ export default function DraftReviewPage() {
       total: null,
       percent: null,
     });
+    setEnrichPollDone(false);
   }, [jobId]);
 
   useEffect(() => {
@@ -147,18 +149,27 @@ export default function DraftReviewPage() {
 
   // useJobProgress settles on needs_review; keep a light getJob poll while
   // enrich may still run so the banner and gap-fill drafts stay honest.
+  // Include stage===enrich even after the banner hides so one final tick can reload drafts.
   const pollEnrichProgress =
     ready &&
     Boolean(jobId) &&
     jobStatus === "needs_review" &&
+    !enrichPollDone &&
     (showEnrichmentBanner ||
+      enrichProgress.stage === "enrich" ||
       enrichProgress.stage === "persist" ||
       enrichProgress.stage == null);
 
   useEffect(() => {
     if (!pollEnrichProgress || !jobId) return;
     let cancelled = false;
+    let inFlight = false;
+    let sawEnrichBanner = false;
+    let nextTimer: ReturnType<typeof setTimeout> | undefined;
     const tick = async () => {
+      if (cancelled || inFlight) return;
+      inFlight = true;
+      let keepPolling = true;
       try {
         const job = await getJob(jobId);
         if (cancelled) return;
@@ -171,29 +182,40 @@ export default function DraftReviewPage() {
           percent:
             typeof progress?.percent === "number" ? progress.percent : null,
         });
-        if (
-          shouldShowEnrichmentBanner({
-            jobStatus: job.status,
-            stage: progress?.stage,
-            current: progress?.current,
-            total: progress?.total,
-          })
-        ) {
+        const showBanner = shouldShowEnrichmentBanner({
+          jobStatus: job.status,
+          stage: progress?.stage,
+          current: progress?.current,
+          total: progress?.total,
+        });
+        if (showBanner) sawEnrichBanner = true;
+        const enrichJustFinished =
+          sawEnrichBanner && !showBanner && job.status === "needs_review";
+        // Skip draft reload while the user has unsaved edits.
+        if (!dirty && (showBanner || enrichJustFinished)) {
           await load(jobId);
+        }
+        if (enrichJustFinished) {
+          keepPolling = false;
+          setEnrichPollDone(true);
         }
       } catch {
         // Transient poll failures should not block review.
+      } finally {
+        inFlight = false;
+        if (!cancelled && keepPolling) {
+          nextTimer = setTimeout(() => {
+            void tick();
+          }, ENRICH_POLL_MS);
+        }
       }
     };
     void tick();
-    const timer = setInterval(() => {
-      void tick();
-    }, ENRICH_POLL_MS);
     return () => {
       cancelled = true;
-      clearInterval(timer);
+      if (nextTimer) clearTimeout(nextTimer);
     };
-  }, [pollEnrichProgress, jobId, load]);
+  }, [pollEnrichProgress, jobId, load, dirty]);
 
   const current = drafts[0] ?? null;
 

@@ -968,7 +968,12 @@ export async function runPass1Phase(
       // recovers when the sidecar is missing but cards exist.
       console.error("extract sidecar write failed after persist", jobId, err);
     }
-    await softCompleteGenerationJob(env, jobId, null);
+    try {
+      await softCompleteGenerationJob(env, jobId, null);
+    } catch (err) {
+      // Drafts already persisted; leave status for sweeper / afterPersist heal.
+      console.error("soft-complete failed after persist", jobId, err);
+    }
     return "done";
   } catch (err) {
     // Leave last progress_json; only mark status failed.

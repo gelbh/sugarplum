@@ -188,15 +188,17 @@ async function finalizeAfterPersist(
   }
 
   const finishedAt = new Date().toISOString();
-  // Soft-complete already set needs_review; refresh coverage only.
-  await db
+  // Soft-complete already set needs_review; refresh coverage only when still that job.
+  const updated = await db
     .prepare(
-      "UPDATE generation_jobs SET error = NULL, coverage_json = ?, finished_at = ? WHERE id = ?",
+      "UPDATE generation_jobs SET error = NULL, coverage_json = ?, finished_at = ? WHERE id = ? AND status = ?",
     )
-    .bind(coverageJson, finishedAt, args.jobId)
+    .bind(coverageJson, finishedAt, args.jobId, "needs_review")
     .run();
-  await afterRunningJobTerminal(env, args.jobId);
-  await recordStageDurationsBestEffort(env, args.jobId);
+  if ((updated.meta.changes ?? 0) > 0) {
+    await afterRunningJobTerminal(env, args.jobId);
+    await recordStageDurationsBestEffort(env, args.jobId);
+  }
 }
 
 /** Resume gap-fill + finalize after a durable pass-1 step (Workflow). */
