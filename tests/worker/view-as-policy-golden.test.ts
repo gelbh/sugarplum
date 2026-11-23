@@ -6,7 +6,10 @@ import {
 } from "../../worker/admin/impersonation";
 import { VIEW_AS_MUTATE_ALLOW } from "../../worker/admin/viewAsRoutePolicy";
 
-/** Frozen SoT - update only with intentional policy PRs. */
+/**
+ * Frozen SoT - update only with intentional policy PRs that also change
+ * VIEW_AS_MUTATE_ALLOW (and annotations parity) in the same PR.
+ */
 const EXPECT_MUTATE_ALLOW = [
   "/api/auth/logout",
   "/api/admin/impersonation/exit",

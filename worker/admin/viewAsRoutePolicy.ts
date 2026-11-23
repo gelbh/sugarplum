@@ -1,6 +1,11 @@
 import { isViewAsBlockedGetPath } from "./impersonation";
 
-/** Exact paths that may mutate while view-as (Exit + logout). */
+/**
+ * View-as mutate allowlist (default deny). Intentional widen requires the same PR to update:
+ * (1) this SoT array, (2) EXPECT_* in tests/worker/view-as-policy-golden.test.ts,
+ * (3) keep tests/worker/view-as-route-annotations.test.ts green.
+ * Do not silently widen; exit + logout only until a named product need.
+ */
 export const VIEW_AS_MUTATE_ALLOW = [
   "/api/auth/logout",
   "/api/admin/impersonation/exit",
