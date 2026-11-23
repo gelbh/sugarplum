@@ -273,6 +273,35 @@ describe("weight overlay on merge / read", () => {
     );
     expect(await readStageWeightOverlay(kv)).toBeNull();
   });
+
+  it("readEtaPriors attaches normalized weights when rollup has them", async () => {
+    const kv = memoryKv();
+    await seedN(kv, { extract: 10_000, persist: 30_000 }, 5);
+    const priors = await readEtaPriors(kv);
+    expect(priors?.stages.extract?.n).toBe(5);
+    expect(priors?.weights?.extract).toBeCloseTo(0.25, 5);
+    expect(priors?.weights?.persist).toBeCloseTo(0.75, 5);
+  });
+
+  it("readEtaPriors omits weights when overlay is corrupt", async () => {
+    const kv = memoryKv();
+    await seedN(kv, { extract: 10_000, persist: 30_000 }, 3);
+    await kv.put(
+      STAGE_DURATION_KV_KEY,
+      JSON.stringify({
+        v: 1,
+        updated_at: "2026-11-23T12:00:00.000Z",
+        stages: {
+          extract: { samples_ms: [10_000, 10_000, 10_000], p50_ms: 10_000 },
+          persist: { samples_ms: [30_000, 30_000, 30_000], p50_ms: 30_000 },
+        },
+        weights: { extract: 0.9, persist: 0.9 },
+      }),
+    );
+    const priors = await readEtaPriors(kv);
+    expect(priors?.stages.extract?.n).toBe(3);
+    expect(priors?.weights).toBeUndefined();
+  });
 });
 
 describe("etaAccuracySnapshot", () => {

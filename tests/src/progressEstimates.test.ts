@@ -191,6 +191,67 @@ describe("effectiveClientWeights parity", () => {
     const worker = effectiveWeights(TEXT_LLM_STAGES);
     expect(client).toEqual(worker);
   });
+
+  it("prefers duration-share overlay when it covers present stages", () => {
+    const present = ["queued", "extract", "persist"] as const;
+    const overlay = { extract: 0.25, persist: 0.75 };
+    const client = effectiveClientWeights([...present], overlay);
+    const worker = effectiveWeights(present, overlay);
+    expect(client).toEqual(worker);
+    expect(client.extract).toBeCloseTo(0.25, 5);
+    expect(client.persist).toBeCloseTo(0.75, 5);
+  });
+
+  it("falls back to catalog when overlay is corrupt or omits a present stage", () => {
+    const present = ["queued", "extract", "figures", "persist"] as const;
+    const catalog = effectiveClientWeights([...present]);
+    expect(effectiveClientWeights([...present], null)).toEqual(catalog);
+    expect(
+      effectiveClientWeights([...present], { extract: 0.9, persist: 0.9 }),
+    ).toEqual(catalog);
+    expect(
+      effectiveClientWeights([...present], { extract: 0.25, persist: 0.75 }),
+    ).toEqual(catalog);
+    expect(effectiveClientWeights([...present], { extract: Number.NaN })).toEqual(
+      catalog,
+    );
+  });
+
+  it("combineEtaMs defaults apply priors.weights without stageWeight override", () => {
+    const present = ["extract", "persist"];
+    const overlay = { extract: 0.25, persist: 0.75 };
+    const withOverlay = combineEtaMs({
+      percent: 10,
+      stage: "extract",
+      presentStages: present,
+      ewma: null,
+      priors: { stages: {}, weights: overlay },
+      current: 1,
+      total: 2,
+    });
+    const catalog = combineEtaMs({
+      percent: 10,
+      stage: "extract",
+      presentStages: present,
+      ewma: null,
+      priors: { stages: {} },
+      current: 1,
+      total: 2,
+    });
+    // Mid-stage: overlay extract share 0.25 vs catalog 0.08 → different current left.
+    expect(withOverlay).toBe(
+      0.25 * 0.5 * ETA_SEED_TOTAL_MS + 0.75 * ETA_SEED_TOTAL_MS,
+    );
+    expect(catalog).toBe(
+      0.08 * 0.5 * ETA_SEED_TOTAL_MS +
+        remainingPriorMs({
+          stage: "extract",
+          presentStages: present,
+          priors: { stages: {} },
+        }),
+    );
+    expect(withOverlay).not.toBe(catalog);
+  });
 });
 
 describe("formatEta coarsening", () => {

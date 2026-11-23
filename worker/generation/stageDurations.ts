@@ -30,6 +30,8 @@ export type StageDurationRollup = {
 
 export type EtaPriorsPayload = {
   stages: Partial<Record<string, { p50_ms: number; n: number }>>;
+  /** Duration-share overlay when rollup weights normalize; omit if corrupt/missing. */
+  weights?: Partial<Record<string, number>>;
 };
 
 const KNOWN = new Set<string>(Object.keys(STAGE_WEIGHTS));
@@ -238,7 +240,8 @@ export async function readEtaPriors(
     stages[stage] = { p50_ms: row.p50_ms, n };
   }
   if (Object.keys(stages).length === 0) return null;
-  return { stages };
+  const weights = normalizeWeightOverlay(rollup.weights ?? null);
+  return weights ? { stages, weights } : { stages };
 }
 
 /** Ops: compare job wall clock to sum of rollup p50 for stages in the sample. */
