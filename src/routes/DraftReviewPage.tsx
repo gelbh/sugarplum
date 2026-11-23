@@ -48,10 +48,12 @@ import { createDraftReviewDecide } from "../draftReview";
 import { createDraftReviewRegen } from "../draftReview";
 import type { DraftReviewNotice } from "../draftReview";
 import { friendlyJobError } from "../draftReview";
-import { ClaimCoveragePanel } from "../draftReview";
-import { useDraftReviewLoad } from "../draftReview";
-import EnrichmentBanner from "../draftReview/EnrichmentBanner";
-import { shouldShowEnrichmentBanner } from "../draftReview/enrichmentBannerVisibility";
+import {
+  ClaimCoveragePanel,
+  EnrichmentBanner,
+  shouldShowEnrichmentBanner,
+  useDraftReviewLoad,
+} from "../draftReview";
 
 const ENRICH_POLL_MS = 1_500;
 
