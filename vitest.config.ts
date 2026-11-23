@@ -15,6 +15,17 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
+    // Workers suite runs under vitest.worker.config.ts (real D1 bindings)
+    include: [
+      "tests/client/**/*.test.ts",
+      "tests/client/**/*.test.tsx",
+      "tests/lib/**/*.test.ts",
+      "tests/deckHub/**/*.test.ts",
+      "tests/eval/**/*.test.ts",
+      "tests/export/**/*.test.ts",
+      "tests/scripts/**/*.test.ts",
+      "tests/shell/**/*.test.ts",
+      "tests/src/**/*.test.ts",
+    ],
   },
 });
