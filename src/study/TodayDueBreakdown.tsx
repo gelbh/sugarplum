@@ -14,8 +14,8 @@ export type TodayDueBreakdownProps = {
 };
 
 const LEGEND = [
-  { label: "new", color: "grey.400" },
-  { label: "review", color: "info.main" },
+  { label: "new", color: "grey.500" },
+  { label: "review", color: "var(--sp-grade-good-border, #8b5a9e)" },
 ] as const;
 
 export default function TodayDueBreakdown({
@@ -74,7 +74,7 @@ export default function TodayDueBreakdown({
                 sx={{
                   flexGrow: introUsed,
                   flexBasis: 0,
-                  bgcolor: "grey.400",
+                  bgcolor: "grey.500",
                   minWidth: 2,
                 }}
               />
@@ -84,7 +84,7 @@ export default function TodayDueBreakdown({
                 sx={{
                   flexGrow: reviewUsed,
                   flexBasis: 0,
-                  bgcolor: "info.main",
+                  bgcolor: "var(--sp-grade-good-border, #8b5a9e)",
                   minWidth: 2,
                 }}
               />

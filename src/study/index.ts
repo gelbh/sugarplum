@@ -74,6 +74,7 @@ export {
 export { useStudyNotesOverlay } from "./notes/useStudyNotesOverlay";
 export { scopeLibraryBack } from "./scopeLibraryBack";
 export { default as LearningSoftWait } from "./LearningSoftWait";
+export { default as StudyFreshEmpty } from "./StudyFreshEmpty";
 export { default as SessionComplete } from "./SessionComplete";
 export { default as SessionQuietEnd } from "./SessionQuietEnd";
 export { StudyCardActions } from "./StudyCardActions";

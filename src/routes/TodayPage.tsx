@@ -23,6 +23,7 @@ import { useSession } from "../session/SessionContext";
 import { deriveJourney } from "../journey/derive";
 import type { JourneyView } from "../journey/types";
 import JourneyNextButton from "../journey/JourneyNextButton";
+import NoteAddIcon from "@mui/icons-material/NoteAdd";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import {
@@ -219,21 +220,62 @@ export default function TodayPage() {
   return (
     <Container
       maxWidth="sm"
-      sx={{
+      sx={(t) => ({
         py: { xs: 6, sm: 8 },
         minHeight: { sm: "100%" },
         display: "flex",
         flexDirection: "column",
         justifyContent: { sm: "center" },
-      }}
+        ...t.applyStyles("dark", {
+          backgroundImage:
+            "radial-gradient(ellipse 70% 55% at 50% 38%, var(--sp-lamp-glow, rgba(196, 165, 116, 0.28)) 0%, transparent 70%)",
+        }),
+      })}
     >
       <Stack
-        spacing={3}
+        spacing={4}
         sx={{
           alignItems: "center",
-          textAlign: "center"
-        }}>
+          textAlign: "center",
+          "@keyframes todayHeroIn": {
+            from: { opacity: 0, transform: "translateY(8px)" },
+            to: { opacity: 1, transform: "translateY(0)" },
+          },
+          "@media (prefers-reduced-motion: reduce)": {
+            "@keyframes todayHeroIn": {
+              from: { opacity: 0 },
+              to: { opacity: 1 },
+            },
+          },
+          animation: "todayHeroIn 400ms cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      >
         <Box sx={{ width: "100%", maxWidth: 420 }}>
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{
+              fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
+              fontWeight: 400,
+              letterSpacing: "0.02em",
+              color: "text.primary",
+              m: 0,
+            }}
+          >
+            {dueCount > 0 ? "Ready to study" : "Caught up for now"}
+          </Typography>
+          <Box
+            aria-hidden
+            sx={{
+              width: 48,
+              height: "1px",
+              bgcolor: "var(--sp-grade-hard-border, #c4a574)",
+              mx: "auto",
+              mt: 1.25,
+              mb: 2,
+              flexShrink: 0,
+            }}
+          />
           <Typography
             component="p"
             aria-label={`${dueCount} ${dueCaption}`}
@@ -241,7 +283,7 @@ export default function TodayPage() {
               m: 0,
               fontSize: { xs: "5.5rem", sm: "7rem", md: "8rem" },
               fontWeight: 700,
-              lineHeight: 0.95,
+              lineHeight: 0.92,
               letterSpacing: "-0.04em",
               color: "text.primary",
               fontVariantNumeric: "tabular-nums",
@@ -253,11 +295,11 @@ export default function TodayPage() {
             variant="h6"
             component="p"
             sx={{
-              mt: 1,
+              mt: 1.25,
               fontFamily: "inherit",
               fontWeight: 500,
-              color: "text.primary",
-              letterSpacing: "0.02em",
+              color: "text.secondary",
+              letterSpacing: "0.04em",
             }}
           >
             {dueCaption}
@@ -312,12 +354,21 @@ export default function TodayPage() {
 
         <Stack
           direction="column"
-          spacing={1.5}
+          spacing={1.25}
           sx={{
             alignItems: "stretch",
             width: "100%",
-            maxWidth: 360
-          }}>
+            maxWidth: 360,
+            "& .MuiButton-root": {
+              py: 1.5,
+              px: 3,
+              fontWeight: 600,
+              fontSize: "1.05rem",
+              borderRadius: 1.5,
+              letterSpacing: "0.04em",
+            },
+          }}
+        >
           {dueCount > 0 ? (
             <Button
               variant="contained"
@@ -325,39 +376,61 @@ export default function TodayPage() {
               size="large"
               href="/study"
               startIcon={<PlayArrowIcon />}
-              sx={{
-                py: 1.5,
-                px: 3,
-                fontWeight: 600,
-                fontSize: "1.05rem",
-                borderRadius: 1.5,
-              }}
             >
               Start study
             </Button>
+          ) : showJourneyNext ? (
+            <>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "text.secondary",
+                  letterSpacing: "0.02em",
+                  mb: 0.5,
+                }}
+              >
+                Next step to your first review
+              </Typography>
+              <JourneyNextButton
+                view={view}
+                onAction={(action) => {
+                  if (
+                    action === "create_deck" ||
+                    action === "add_material" ||
+                    action === "add_more"
+                  ) {
+                    window.location.assign("/library");
+                  }
+                }}
+              />
+            </>
           ) : (
-            <Typography variant="body2" sx={{
-              color: "text.secondary"
-            }}>
-              {showJourneyNext
-                ? "Next step to your first review:"
-                : "Nothing due. Enjoy the break, or add material when you are ready."}
-            </Typography>
-          )}
-          {showJourneyNext ? (
-            <JourneyNextButton
-              view={view}
-              onAction={(action) => {
-                if (
-                  action === "create_deck" ||
-                  action === "add_material" ||
-                  action === "add_more"
-                ) {
+            <>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "text.secondary",
+                  letterSpacing: "0.02em",
+                  mb: 0.5,
+                }}
+              >
+                Nothing due. Enjoy the break.
+              </Typography>
+              <Button
+                variant="outlined"
+                color="primary"
+                size="large"
+                startIcon={<NoteAddIcon />}
+                href="/library"
+                onClick={(ev) => {
+                  ev.preventDefault();
                   window.location.assign("/library");
-                }
-              }}
-            />
-          ) : null}
+                }}
+              >
+                Add material
+              </Button>
+            </>
+          )}
         </Stack>
       </Stack>
     </Container>

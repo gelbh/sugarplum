@@ -24,7 +24,7 @@ import { CardFace } from "../study";
 import { GradeButtons } from "../study";
 import { FACE_SANS } from "../study";
 import { useStudyCardGesture } from "../study";
-import { ApiError } from "../api/client";
+import { ApiError, listDueCards } from "../api/client";
 import { isGuest } from "../guest/session";
 import { navigate } from "../shared/nav/navigate";
 import { useSession } from "../session/SessionContext";
@@ -39,6 +39,7 @@ import {
 import { useStudyNotesOverlay } from "../study";
 import { scopeLibraryBack } from "../study";
 import { LearningSoftWait } from "../study";
+import { StudyFreshEmpty } from "../study";
 import { SessionComplete } from "../study";
 import { SessionQuietEnd } from "../study";
 import { StudyCardActions } from "../study";
@@ -47,6 +48,8 @@ import {
   gradedTotal,
   sessionSurface,
 } from "../study";
+import { getIntroBonus } from "../study/introBonus";
+import { clientLocalDay } from "../study/localDay";
 import { hubDiyTypes } from "../deckHub";
 import { DraftCardEditor } from "../draftReview";
 import { useLearningRequeue } from "../study";
@@ -143,6 +146,7 @@ export default function StudyPage() {
     nextLearningDue,
     parkShortTermFollowUp,
     advanceAfterGrade,
+    clearPendingLearning,
   } = useLearningRequeue({
     queueRef,
     setQueue,
@@ -150,6 +154,8 @@ export default function StudyPage() {
     setHadCards,
     setRevealed,
   });
+
+  const [readyDueCount, setReadyDueCount] = useState<number | null>(null);
 
   const queueHead = queue[0] ?? null;
   const { stage, mobile, toggleZen, exitZen } = useStudyImmersion(
@@ -160,6 +166,21 @@ export default function StudyPage() {
     exitZen();
     navigate("/today");
   }, [exitZen]);
+
+  const onStartStudyFromSoftWait = useCallback(() => {
+    if (!user?.id) return;
+    // Load first so queue can fill while park still holds soft_wait; clear only after success.
+    void load(user.id)
+      .then(() => {
+        clearPendingLearning();
+        setReadyDueCount(null);
+      })
+      .catch((err) => {
+        setError(
+          err instanceof ApiError ? err.message : "Failed to refresh study",
+        );
+      });
+  }, [clearPendingLearning, load, setError, user?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -213,6 +234,34 @@ export default function StudyPage() {
     gradedTotal(tally),
     pendingLearning.length,
   );
+
+  useEffect(() => {
+    if (surface !== "soft_wait" || !user?.id) {
+      setReadyDueCount(null);
+      return;
+    }
+    setReadyDueCount(null);
+    let cancelled = false;
+    const pendingIds = new Set(pendingLearning.map((p) => p.cardId));
+    const bonus = getIntroBonus();
+    const dueOpts = {
+      ...scopeOpts,
+      localDay: clientLocalDay(),
+      ...(bonus > 0 ? { introBonus: bonus } : {}),
+    };
+    void listDueCards(dueOpts)
+      .then((res) => {
+        if (cancelled) return;
+        const other = res.cards.filter((c) => !pendingIds.has(c.id)).length;
+        setReadyDueCount(other);
+      })
+      .catch(() => {
+        if (!cancelled) setReadyDueCount(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [surface, user?.id, scopeOpts, pendingLearning]);
   const mcqMode = isMcqCard(current);
   const occlusionParts = current
     ? occlusionStudyParts(current)
@@ -320,7 +369,15 @@ export default function StudyPage() {
   }
 
   const finish = !current && surface === "complete";
-  const fillColumn = finish
+  // Empty / soft-wait / quiet / complete need a full-height column so pause
+  // content can vertically center (stage chrome alone is not enough).
+  const pauseFill =
+    !current &&
+    (finish ||
+      surface === "soft_wait" ||
+      surface === "quiet" ||
+      !hadCards);
+  const fillColumn = pauseFill
     ? ({
         minHeight: "100%",
         height: "100%",
@@ -331,17 +388,25 @@ export default function StudyPage() {
 
   return (
     <Box
-      className={stage ? "sp-stage" : undefined}
+      className={stage || finish ? "sp-stage" : undefined}
       sx={{
-        minHeight: stage ? "100%" : fillColumn?.minHeight,
-        height: stage ? "100%" : fillColumn?.height,
+        minHeight: stage || finish ? "100%" : fillColumn?.minHeight,
+        height: stage || finish ? "100%" : fillColumn?.height,
         display: fillColumn?.display,
         flexDirection: fillColumn?.flexDirection,
         boxSizing: "border-box",
-        ...(stage
+        ...(stage || finish
           ? {
               color: "var(--sp-ivory)",
               "& .MuiIconButton-root": { color: "var(--sp-ivory)" },
+              ...(surface === "soft_wait" ||
+              surface === "complete" ||
+              !hadCards
+                ? {
+                    backgroundImage:
+                      "radial-gradient(ellipse 75% 58% at 50% 42%, rgba(196, 165, 116, 0.38) 0%, transparent 72%)",
+                  }
+                : {}),
             }
           : {}),
       }}
@@ -349,21 +414,25 @@ export default function StudyPage() {
       <Container
         maxWidth="sm"
         sx={{
-          py: stage ? { xs: 1, sm: 3 } : 4,
-          height: stage ? "100%" : fillColumn?.height,
-          maxHeight: stage ? "100%" : undefined,
+          py: stage || finish ? { xs: 1, sm: 3 } : 4,
+          height: stage || finish ? "100%" : fillColumn?.height,
+          maxHeight: stage || finish ? "100%" : undefined,
           display: "flex",
           flexDirection: "column",
           position: "relative",
-          overflow: stage ? "hidden" : undefined,
-          pb: stage
+          overflow: stage || finish ? "hidden" : undefined,
+          pb: stage || finish
             ? { xs: "max(8px, env(safe-area-inset-bottom))", sm: 3 }
             : undefined,
         }}
       >
         <Stack
           spacing={stage ? { xs: 0.75, sm: 1.5 } : 2}
-          sx={stage || finish ? { flex: 1, minHeight: 0 } : undefined}
+          sx={
+            stage || pauseFill
+              ? { flex: 1, minHeight: 0, height: "100%" }
+              : undefined
+          }
         >
           <Stack
             direction="row"
@@ -374,36 +443,57 @@ export default function StudyPage() {
               position: "relative",
               flexShrink: 0
             }}>
-            <IconButton
-              aria-label="Leave study"
-              onClick={leaveStudy}
-              color="primary"
-              size="small"
-              sx={{ minWidth: 44, minHeight: 44 }}
-            >
-              {mobile ? (
-                <ArrowBackIcon fontSize="small" />
-              ) : (
-                <CloseIcon fontSize="small" />
-              )}
-            </IconButton>
-            <Typography
-              variant="h6"
-              component="p"
-              sx={{
-                position: "absolute",
-                left: 0,
-                right: 0,
-                textAlign: "center",
-                fontWeight: 400,
-                letterSpacing: "0.02em",
-                color: stage ? "var(--sp-ivory)" : "text.primary",
-                opacity: 0.92,
-                pointerEvents: "none",
-              }}
-            >
-              Sugarplum
-            </Typography>
+            {stage && !mobile ? (
+              <Box sx={{ width: 44, height: 44, flexShrink: 0 }} aria-hidden />
+            ) : (
+              <IconButton
+                aria-label="Leave study"
+                onClick={leaveStudy}
+                color="primary"
+                size="small"
+                sx={{ minWidth: 44, minHeight: 44 }}
+              >
+                {mobile ? (
+                  <ArrowBackIcon fontSize="small" />
+                ) : (
+                  <CloseIcon fontSize="small" />
+                )}
+              </IconButton>
+            )}
+            {stage || finish ? (
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 1,
+                  pointerEvents: "none",
+                }}
+              >
+                <Box
+                  component="img"
+                  src="/logo.png"
+                  alt=""
+                  sx={{ height: 28, width: "auto", display: "block" }}
+                />
+                <Typography
+                  variant="h6"
+                  component="p"
+                  sx={{
+                    m: 0,
+                    fontWeight: 400,
+                    letterSpacing: "0.02em",
+                    color: "var(--sp-ivory)",
+                    opacity: 0.92,
+                  }}
+                >
+                  Sugarplum
+                </Typography>
+              </Box>
+            ) : null}
             {mobile ? (
               <Box sx={{ width: 44, height: 44, flexShrink: 0 }} aria-hidden />
             ) : (
@@ -472,65 +562,87 @@ export default function StudyPage() {
                 ) : null}
               </Stack>
             ) : !hadCards && canStudyMore ? (
-              <Stack spacing={1.5} sx={{
-                alignItems: "stretch"
-              }}>
-                <Typography
-                  variant="body1"
-                  sx={{ textAlign: "center", opacity: stage ? 0.9 : 1 }}
-                >
-                  Nothing due yet. You can study held introductions early.
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  disabled={studyMoreBusy}
-                  onClick={() => void onStudyMore()}
-                >
-                  {studyMoreBusy ? "Loading…" : "Study more"}
-                </Button>
-              </Stack>
+              <Box
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "safe center",
+                }}
+              >
+                <StudyFreshEmpty
+                  title="Nothing due yet"
+                  body="You can study held introductions early."
+                  actionLabel={studyMoreBusy ? "Loading…" : "Study more"}
+                  actionBusy={studyMoreBusy}
+                  onAction={() => void onStudyMore()}
+                />
+              </Box>
             ) : !hadCards ? (
-              <Stack spacing={1.5} sx={{
-                alignItems: "stretch"
-              }}>
-                <Typography
-                  variant="body1"
-                  sx={{ textAlign: "center", opacity: stage ? 0.9 : 1 }}
-                >
-                  Nothing due yet. Add material to create your first cards.
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  href="/library"
-                  onClick={(ev) => {
-                    ev.preventDefault();
+              <Box
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "safe center",
+                }}
+              >
+                <StudyFreshEmpty
+                  title="Nothing due yet"
+                  body="Add material to create your first cards."
+                  actionLabel="Open Library"
+                  onAction={() => {
                     exitZen();
                     navigate("/library");
                   }}
-                >
-                  Open Library
-                </Button>
-              </Stack>
+                />
+              </Box>
             ) : surface === "soft_wait" ? (
-              <LearningSoftWait
-                pendingCount={pendingLearning.length}
-                nextDueAt={nextLearningDue}
-                onToday={leaveStudy}
-              />
+              <Box
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "safe center",
+                }}
+              >
+                <LearningSoftWait
+                  pendingCount={pendingLearning.length}
+                  nextDueAt={nextLearningDue}
+                  readyDueCount={readyDueCount}
+                  onToday={leaveStudy}
+                  onStartStudy={onStartStudyFromSoftWait}
+                />
+              </Box>
             ) : surface === "quiet" ? (
-              <SessionQuietEnd
-                canStudyMore={canStudyMore}
-                studyMoreBusy={studyMoreBusy}
-                onStudyMore={() => void onStudyMore()}
-                onToday={leaveStudy}
-                scopeBack={
-                  scopeBack
-                    ? { ...scopeBack, onClick: () => openScopeBack(true) }
-                    : null
-                }
-              />
+              <Box
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "safe center",
+                }}
+              >
+                <SessionQuietEnd
+                  canStudyMore={canStudyMore}
+                  studyMoreBusy={studyMoreBusy}
+                  onStudyMore={() => void onStudyMore()}
+                  onToday={leaveStudy}
+                  scopeBack={
+                    scopeBack
+                      ? { ...scopeBack, onClick: () => openScopeBack(true) }
+                      : null
+                  }
+                />
+              </Box>
             ) : (
               <Box
                 sx={{
@@ -543,7 +655,7 @@ export default function StudyPage() {
                 }}
               >
                 <SessionComplete
-                  zen={stage}
+                  zen={stage || finish}
                   tally={tally}
                   unlocks={unlocks}
                   showAchievements={!isGuest()}
