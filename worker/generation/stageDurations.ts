@@ -115,9 +115,13 @@ export async function mergeStageDurationRollup(
   sample: Partial<Record<string, number>>,
   nowIso: string = new Date().toISOString(),
 ): Promise<void> {
-  const entries = Object.entries(sample).filter(
-    ([stage, ms]) => KNOWN.has(stage) && typeof ms === "number" && inRange(ms),
-  );
+  const entries: Array<[string, number]> = [];
+  for (const [stage, raw] of Object.entries(sample)) {
+    if (!KNOWN.has(stage) || typeof raw !== "number" || !inRange(raw)) {
+      continue;
+    }
+    entries.push([stage, raw]);
+  }
   if (entries.length === 0) return;
 
   const existing = parseRollup(await kv.get(STAGE_DURATION_KV_KEY));
@@ -127,7 +131,7 @@ export async function mergeStageDurationRollup(
 
   for (const [stage, ms] of entries) {
     const prev = stages[stage]?.samples_ms ?? [];
-    const samples = [...prev, ms].slice(-STAGE_DURATION_RING_MAX);
+    const samples: number[] = [...prev, ms].slice(-STAGE_DURATION_RING_MAX);
     const sorted = [...samples].sort((a, b) => a - b);
     stages[stage] = {
       samples_ms: samples,
