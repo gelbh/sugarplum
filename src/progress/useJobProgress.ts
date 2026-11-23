@@ -215,10 +215,13 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
               percent,
               nowMs,
             );
-            // Seen stages alone omit future priors early; use full catalog for ETA.
-            const presentStages = PROGRESS_STAGE_ORDER.filter(
-              (s) => s !== "queued",
+            const fromJob = job.progress.present_stages?.filter(
+              (s) => s && s !== "queued",
             );
+            const presentStages =
+              fromJob && fromJob.length > 0
+                ? fromJob
+                : PROGRESS_STAGE_ORDER.filter((s) => s !== "queued");
             const rawEta = combineEtaMs({
               percent,
               stage: job.progress.stage ?? ext.stage,

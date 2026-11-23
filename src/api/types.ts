@@ -240,6 +240,8 @@ export type GenerationJobProgress = {
     text: string;
   }[];
   path?: "free" | "byo";
+  /** Pipeline stages for this run (worker catalog). */
+  present_stages?: string[];
 };
 
 export type GenerationJobEtaPriors = {

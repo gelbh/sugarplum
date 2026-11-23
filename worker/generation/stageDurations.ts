@@ -106,6 +106,10 @@ function parseRollup(raw: string | null): StageDurationRollup | null {
   }
 }
 
+/**
+ * Best-effort read-modify-write. Concurrent job finals may drop a sample;
+ * acceptable for v1 ring noise (no CAS). See ETA accuracy design §KV rollup.
+ */
 export async function mergeStageDurationRollup(
   kv: KVNamespace,
   sample: Partial<Record<string, number>>,

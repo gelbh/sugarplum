@@ -149,6 +149,7 @@ function makeEmit(
       ...(acc.free_gen_slots !== undefined
         ? { free_gen_slots: acc.free_gen_slots }
         : {}),
+      present_stages: [...stages],
     };
   }
 

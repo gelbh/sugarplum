@@ -45,6 +45,7 @@ export type JobProgressPayload = {
   drafts_so_far?: number;
   events?: { at: string; kind: string; stage: string; text: string }[];
   path?: "free" | "byo";
+  present_stages?: string[];
 };
 
 export type JobPollRow = {
@@ -100,6 +101,11 @@ function parseProgressJson(raw: string | null): JobProgressPayload | null {
     if (Array.isArray(parsed.events)) out.events = parsed.events as any;
     if (parsed.path === "free" || parsed.path === "byo")
       out.path = parsed.path as "free" | "byo";
+    if (Array.isArray(parsed.present_stages)) {
+      out.present_stages = parsed.present_stages.filter(
+        (s): s is string => typeof s === "string",
+      );
+    }
     return out;
   } catch {
     return null;

@@ -12,8 +12,8 @@ export const ETA_EWMA_ALPHA = 0.25;
 export const ETA_SEED_TOTAL_MS = 12 * 60 * 1000;
 export const ETA_PRIOR_MIN_N = 3;
 
-/** Static catalog weights (mirror worker STAGE_WEIGHTS). */
-const CLIENT_STAGE_WEIGHTS: Record<string, number> = {
+/** Static catalog weights (keep in lockstep with worker STAGE_WEIGHTS). */
+export const CLIENT_STAGE_WEIGHTS: Record<string, number> = {
   queued: 0.02,
   extract: 0.08,
   figures: 0.1,
@@ -24,7 +24,39 @@ const CLIENT_STAGE_WEIGHTS: Record<string, number> = {
   persist: 0.1,
 };
 
-export function defaultStageWeight(stage: string): number {
+/**
+ * Mirror worker `effectiveWeights`: skipped catalog weights roll into generate
+ * when present, else persist.
+ */
+export function effectiveClientWeights(
+  presentStages: readonly string[],
+): Record<string, number> {
+  const present = new Set(presentStages);
+  const weights: Record<string, number> = { ...CLIENT_STAGE_WEIGHTS };
+  let skipped = 0;
+  for (const stage of Object.keys(CLIENT_STAGE_WEIGHTS)) {
+    if (!present.has(stage)) {
+      skipped += weights[stage] ?? 0;
+      weights[stage] = 0;
+    }
+  }
+  if (skipped > 0) {
+    if (present.has("generate")) {
+      weights.generate = (weights.generate ?? 0) + skipped;
+    } else if (present.has("persist")) {
+      weights.persist = (weights.persist ?? 0) + skipped;
+    }
+  }
+  return weights;
+}
+
+export function defaultStageWeight(
+  stage: string,
+  presentStages?: readonly string[],
+): number {
+  if (presentStages && presentStages.length > 0) {
+    return effectiveClientWeights(presentStages)[stage] ?? 0;
+  }
   return CLIENT_STAGE_WEIGHTS[stage] ?? 0;
 }
 
@@ -148,7 +180,9 @@ export function remainingPriorMs(args: {
   stageWeight?: (stage: string) => number;
 }): number {
   const order = args.stageOrder ?? PROGRESS_STAGE_ORDER;
-  const weight = args.stageWeight ?? defaultStageWeight;
+  const weightFn =
+    args.stageWeight ??
+    ((s: string) => defaultStageWeight(s, args.presentStages));
   const stage = args.stage ?? "";
   const present = new Set(
     args.presentStages.filter((s) => s && s !== "queued"),
@@ -165,7 +199,7 @@ export function remainingPriorMs(args: {
     if (prior && prior.n >= ETA_PRIOR_MIN_N) {
       sum += prior.p50_ms;
     } else {
-      sum += weight(s) * ETA_SEED_TOTAL_MS;
+      sum += weightFn(s) * ETA_SEED_TOTAL_MS;
     }
   }
   return sum;
@@ -185,7 +219,9 @@ export function combineEtaMs(args: {
   const stage = args.stage;
   if (stage == null || stage === "queued") return null;
 
-  const weightFn = args.stageWeight ?? defaultStageWeight;
+  const weightFn =
+    args.stageWeight ??
+    ((s: string) => defaultStageWeight(s, args.presentStages));
   const total = args.total ?? 0;
   const current = args.current ?? 0;
   const within =

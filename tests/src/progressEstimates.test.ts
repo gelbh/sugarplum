@@ -12,8 +12,15 @@ import {
   projectCardsThisJob,
   remainingCardsToday,
   ETA_SEED_TOTAL_MS,
+  CLIENT_STAGE_WEIGHTS,
+  effectiveClientWeights,
 } from "../../src/progress/estimates";
 import { formatEtaCompact, formatEtaSubline } from "../../src/progress/copy";
+import {
+  STAGE_WEIGHTS,
+  effectiveWeights,
+  TEXT_LLM_STAGES,
+} from "../../worker/generation/progress";
 
 describe("etaMs", () => {
   it("returns null when percent < 5", () => {
@@ -174,6 +181,18 @@ describe("updateEwmaRate / combineEtaMs", () => {
   });
 });
 
+describe("effectiveClientWeights parity", () => {
+  it("matches worker STAGE_WEIGHTS catalog", () => {
+    expect(CLIENT_STAGE_WEIGHTS).toEqual({ ...STAGE_WEIGHTS });
+  });
+
+  it("matches worker effectiveWeights for text LLM catalog", () => {
+    const client = effectiveClientWeights([...TEXT_LLM_STAGES]);
+    const worker = effectiveWeights(TEXT_LLM_STAGES);
+    expect(client).toEqual(worker);
+  });
+});
+
 describe("formatEta coarsening", () => {
   it("drops seconds at or above 2 minutes", () => {
     expect(formatEtaSubline(18 * 60 * 1000)).toBe("About 18m left");
@@ -182,6 +201,11 @@ describe("formatEta coarsening", () => {
 
   it("keeps seconds under 2 minutes", () => {
     expect(formatEtaSubline(90_000)).toBe("About 1m 30s left");
+  });
+
+  it("rounds to nearest minute at or above 2 minutes", () => {
+    expect(formatEtaSubline(179_000)).toBe("About 3m left");
+    expect(formatEtaCompact(149_000)).toBe("~2m");
   });
 });
 

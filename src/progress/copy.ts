@@ -67,8 +67,11 @@ function fmtEtaCore(ms: number): string {
   const s = Math.round(ms / 1000);
   const m = Math.floor(s / 60);
   const rem = s % 60;
-  // Coarsen above 2 minutes: avoid false second-level precision.
-  if (m >= 2) return `${m}m`;
+  // Coarsen above 2 minutes: nearest minute (avoid truncating ~59s low).
+  if (s >= 120) {
+    const mins = Math.max(2, Math.round(s / 60));
+    return `${mins}m`;
+  }
   if (m > 0) return `${m}m ${rem}s`;
   return `${rem}s`;
 }
