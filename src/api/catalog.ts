@@ -34,7 +34,7 @@ import type {
   StoredCoverRow,
   Subject,
 } from "./types";
-import type { SubjectKnowledge } from "../study/subjectKnowledge";
+import type { SubjectKnowledge } from "../study/kernel";
 import type { SubjectCompositionSummary } from "../guest/composition";
 
 function rejectGuestCover(): never {

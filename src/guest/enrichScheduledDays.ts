@@ -1,13 +1,13 @@
 import {
   schedulerForPrefs,
   type FsrsPrefs,
-} from "../study/fsrs/fsrsFactory";
+} from "../study/kernel";
 import { buildGuestFsrsPrefs } from "../study/fsrs/guestFsrsOptimize";
 import {
   normalizeSchedulerCard,
   ratingToGrade,
-} from "../study/fsrs/fsrsReplay";
-import { emptyFsrsCard } from "../study/retrievability";
+} from "../study/kernel";
+import { emptyFsrsCard } from "../study/kernel";
 import {
   enqueueGuestMutation,
   readStore,

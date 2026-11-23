@@ -1,9 +1,9 @@
 import type { CardDraftView } from "../api/client";
-import { assertSingleCloze } from "../study/clozeFormat";
+import { assertSingleCloze } from "../study/kernel";
 import {
   mergeProvenancePagesIntoJson,
   normalizeProvenancePages,
-} from "../study/notes/notesProvenanceWrite";
+} from "../study/kernel";
 import { nowIso, readStore, writeStore } from "./storePersist";
 import type {
   GuestCardPatch,

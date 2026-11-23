@@ -6,7 +6,7 @@ import type {
   OcclusionFrontView,
   Subject,
 } from "../api/client";
-import type { StudyPrefs } from "../study/policyQueue";
+import type { StudyPrefs } from "../study/kernel";
 import type { GuestFsrsOptimizeFields } from "../study/fsrs/guestFsrsOptimize";
 import type {
   GuestCardSchedule,

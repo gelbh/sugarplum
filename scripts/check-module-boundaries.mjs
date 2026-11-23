@@ -3,7 +3,10 @@
  * Enforce src domain module boundaries:
  * - Cross-domain imports must use domain index barrels only.
  * - shared/ must not import any feature domain.
- * - routes/ and app/ must use barrels unless allowlisted (CSS side-effects OK).
+ * - Composition tops (routes/, app/, and every other non-domain src top) must
+ *   use barrels (or domain/kernel) unless allowlisted.
+ * - domain/kernel.ts is an extra public entry when the index barrel pulls
+ *   React or guest cycles (today: study, materials).
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, extname, normalize } from "node:path";
@@ -38,6 +41,8 @@ if (existsSync(allowlistPath)) {
 const IMPORT_RE =
   /(?:import\s+(?:type\s+)?(?:[\w*{}\s,]+\s+from\s+)?|import\s*\(\s*)["']([^"']+)["']/g;
 const SIDE_EFFECT_RE = /import\s+["']([^"']+)["']/g;
+const EXPORT_FROM_RE =
+  /export\s+(?:type\s+)?(?:[\w*{}\s,]+\s+from\s+|[\w*]+\s+from\s+)["']([^"']+)["']/g;
 
 /**
  * @param {string} dir
@@ -108,7 +113,7 @@ function domainOfFile(fileAbs) {
  */
 function isBarrelTarget(resolvedAbs) {
   const rel = srcRelative(resolvedAbs);
-  return /^[^/]+\/index\.tsx?$/.test(rel);
+  return /^[^/]+\/(index|kernel)\.tsx?$/.test(rel);
 }
 
 /**
@@ -130,7 +135,7 @@ function isAllowlisted(fileRel, spec, resolvedRel) {
 function collectSpecs(content) {
   /** @type {string[]} */
   const specs = [];
-  for (const re of [IMPORT_RE, SIDE_EFFECT_RE]) {
+  for (const re of [IMPORT_RE, SIDE_EFFECT_RE, EXPORT_FROM_RE]) {
     re.lastIndex = 0;
     let m;
     while ((m = re.exec(content)) !== null) specs.push(m[1]);
@@ -173,10 +178,10 @@ for (const fileAbs of walkTs(SRC)) {
       continue;
     }
 
-    if (zone === "routesApp") {
+    if (zone === "routesApp" || zone === "other") {
       if (barrel || isAllowlisted(fileRel, spec, resolvedRel)) continue;
       violations.push({
-        kind: "routesAppDeep",
+        kind: zone === "routesApp" ? "routesAppDeep" : "compositionDeep",
         file: fileRel,
         spec,
         toDom,

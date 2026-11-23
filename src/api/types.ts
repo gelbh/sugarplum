@@ -1,13 +1,13 @@
 import type { GuestHubCardBody } from "../guest/store";
 import type { AchievementItem, UnlockView } from "../achievements/wire";
-import type { SourceRole } from "../materials/sourceRole";
+import type { SourceRole } from "../materials/kernel";
 
 export type {
   SubjectKnowledge,
   SubjectKnowledgeBucketsAggregate,
-} from "../study/subjectKnowledge";
+} from "../study/kernel";
 export type { SubjectCompositionSummary } from "../guest/composition";
-export type { FsrsOptimizeStatus } from "../study/fsrs/fsrsOptimizeTypes";
+export type { FsrsOptimizeStatus } from "../study/kernel";
 export type { InsightsGradeCounts, InsightsSummary } from "../insights/types";
 
 export type AuthUser = {

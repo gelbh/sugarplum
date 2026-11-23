@@ -90,6 +90,11 @@ export {
   maybeRunFsrsOptimize,
   runFsrsOptimizeTrainNow,
 } from "./fsrs/fsrsOptimizeClient";
+export { FSRS_MIN_REVIEWS } from "./fsrs/fsrsOptimizeConstants";
+export {
+  type StudyPrefs,
+  DEFAULT_STUDY_PREFS,
+} from "./policyQueue";
 export {
   MATURE_INTERVAL_DAYS,
   classifyKnowledgeBucket,

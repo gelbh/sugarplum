@@ -6,15 +6,15 @@ import type {
   StrugglingRow,
   StudyRating,
 } from "../api/client";
-import { clientLocalDay, serverUtcDayStartIso } from "../study/localDay";
+import { clientLocalDay, serverUtcDayStartIso } from "../study/kernel";
 import {
   buildStudyQueue,
   type QueueCandidate,
   type StudyPrefs,
-} from "../study/policyQueue";
-import { cardFromScheduleRow, retrievability } from "../study/retrievability";
-import { cardHasRegenSource } from "../study/regenSource";
-import { rankWeakness, type WeaknessCandidate } from "../study/weakness";
+} from "../study/kernel";
+import { cardFromScheduleRow, retrievability } from "../study/kernel";
+import { cardHasRegenSource } from "../study/kernel";
+import { rankWeakness, type WeaknessCandidate } from "../study/kernel";
 
 const MS_PER_DAY = 86_400_000;
 

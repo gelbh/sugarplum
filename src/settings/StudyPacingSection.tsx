@@ -9,9 +9,9 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import type { EasyDay } from "../study/loadBalance";
-import type { StudyPrefs } from "../study/policyQueue";
-import { maybeRunFsrsOptimize } from "../study/fsrs/fsrsOptimizeClient";
+import type { EasyDay } from "../study";
+import type { StudyPrefs } from "../study";
+import { maybeRunFsrsOptimize } from "../study";
 import { ankiExportFsrsBlurb } from "./ankiExportFsrsBlurb";
 import FsrsWeightsSettings from "./FsrsWeightsSettings";
 import {

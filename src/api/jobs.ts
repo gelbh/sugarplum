@@ -136,7 +136,7 @@ export function asRegenType(type: string): RegenCardType | null {
   return null;
 }
 
-export { cardHasRegenSource } from "../study/regenSource";
+export { cardHasRegenSource } from "../study/kernel";
 
 export type CardRegenOpView = {
   id: string;

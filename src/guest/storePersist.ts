@@ -3,7 +3,7 @@ import {
   DEFAULT_GUEST_FSRS_OPTIMIZE,
   normalizeGuestFsrsOptimize,
 } from "../study/fsrs/guestFsrsOptimize";
-import { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "../study/policyPrefs";
+import { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "../study/kernel";
 import type {
   GuestStore,
   LegacyGuestStore,

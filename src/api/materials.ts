@@ -1,5 +1,5 @@
 import { isGuest } from "../guest/session";
-import type { SourceRole } from "../materials/sourceRole";
+import type { SourceRole } from "../materials/kernel";
 import {
   UploadError,
   uploadWithProgress,
@@ -8,7 +8,7 @@ import {
   ocrEmptyPdfPages,
   ocrEmptyPdfPagesInWindow,
   type PageText,
-} from "../materials/pdfScanOcr";
+} from "../materials/kernel";
 import { api, ApiError, guestUnsupported } from "./core";
 import type {
   CompleteMaterialResponse,

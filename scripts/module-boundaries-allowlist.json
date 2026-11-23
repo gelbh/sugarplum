@@ -213,5 +213,90 @@
     "file": "anatomy/viewer/AnatomyViewerGate.tsx",
     "spec": "../../atlas/paths",
     "reason": "Path helpers only; avoid eager full atlas barrel."
+  },
+  {
+    "file": "guest/enrichScheduledDays.ts",
+    "spec": "../study/fsrs/guestFsrsOptimize",
+    "reason": "Leaf import breaks circular barrel graph (guestFsrs* imports guest)."
+  },
+  {
+    "file": "guest/storePersist.ts",
+    "spec": "../study/fsrs/guestFsrsOptimize",
+    "reason": "Leaf import breaks circular barrel graph (guestFsrs* imports guest)."
+  },
+  {
+    "file": "guest/storeStudy.ts",
+    "spec": "../study/fsrs/guestFsrsOptimize",
+    "reason": "Leaf import breaks circular barrel graph (guestFsrs* imports guest)."
+  },
+  {
+    "file": "guest/storeStudy.ts",
+    "spec": "../study/fsrs/guestFsrsReschedule",
+    "reason": "Leaf import breaks circular barrel graph (guestFsrs* imports guest)."
+  },
+  {
+    "file": "guest/storeTypes.ts",
+    "spec": "../study/fsrs/guestFsrsOptimize",
+    "reason": "Leaf import breaks circular barrel graph (guestFsrs* imports guest)."
+  },
+  {
+    "file": "api/auth.ts",
+    "spec": "../study/dueCache",
+    "reason": "dueCache type-imports api/client; cannot live on study/kernel (worker graph)."
+  },
+  {
+    "file": "api/cards.ts",
+    "spec": "../study/dueCache",
+    "reason": "dueCache type-imports api/client; cannot live on study/kernel (worker graph)."
+  },
+  {
+    "file": "guest/endGuestLocal.ts",
+    "spec": "../study/dueCache",
+    "reason": "dueCache type-imports api/client; cannot live on study/kernel (worker graph)."
+  },
+  {
+    "file": "insights/GradeMixChart.tsx",
+    "spec": "../study/gradeColors",
+    "reason": "gradeColors type-imports api/client; cannot live on study/kernel (worker graph)."
+  },
+  {
+    "file": "insights/GradeMixChart.tsx",
+    "spec": "../study/gradeLabels",
+    "reason": "gradeLabels type-imports api/client; cannot live on study/kernel (worker graph)."
+  },
+  {
+    "file": "insights/GradeMixByMaturityChart.tsx",
+    "spec": "../study/gradeColors",
+    "reason": "gradeColors type-imports api/client; cannot live on study/kernel (worker graph)."
+  },
+  {
+    "file": "insights/GradeMixByMaturityChart.tsx",
+    "spec": "../study/gradeLabels",
+    "reason": "gradeLabels type-imports api/client; cannot live on study/kernel (worker graph)."
+  },
+  {
+    "file": "api/cards.ts",
+    "spec": "../draftReview/rejectReasons",
+    "reason": "Single api consumer; avoid draftReview React barrel / extra kernel."
+  },
+  {
+    "file": "insights/buildMetrics.ts",
+    "spec": "../study/loadBalance",
+    "reason": "Worker insights path; leaf import avoids fat study/kernel fan-in."
+  },
+  {
+    "file": "insights/buildMetrics.ts",
+    "spec": "../study/subjectKnowledge",
+    "reason": "Worker insights path; leaf import avoids fat study/kernel fan-in."
+  },
+  {
+    "file": "insights/buildSeries.ts",
+    "spec": "../study/loadBalance",
+    "reason": "Worker insights path; leaf import avoids fat study/kernel fan-in."
+  },
+  {
+    "file": "insights/types.ts",
+    "spec": "../study/subjectKnowledge",
+    "reason": "Worker insights path; leaf import avoids fat study/kernel fan-in."
   }
 ]

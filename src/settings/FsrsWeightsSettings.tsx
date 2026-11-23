@@ -11,11 +11,11 @@ import {
   type FsrsOptimizeStatus,
   type FsrsRescheduleSummary,
 } from "../api/client";
-import { FSRS_MIN_REVIEWS } from "../study/fsrs/fsrsOptimizeConstants";
+import { FSRS_MIN_REVIEWS } from "../study";
 import {
   maybeRunFsrsOptimize,
   runFsrsOptimizeTrainNow,
-} from "../study/fsrs/fsrsOptimizeClient";
+} from "../study";
 
 function formatFsrsStatusLine(
   status: FsrsOptimizeStatus,

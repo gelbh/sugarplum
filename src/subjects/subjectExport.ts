@@ -8,7 +8,7 @@ import {
 import {
   formatExportWarnings,
   runAnkiExportDownload,
-} from "../export/runAnkiExport";
+} from "../export";
 
 export type SubjectExportCtx = {
   subject: Subject | null;
