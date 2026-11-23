@@ -105,6 +105,7 @@ export {
   FSRS_CRON_MARK_LIMIT,
   FSRS_NEXT_DAY_STARTS_AT,
 } from "./fsrs/fsrsOptimizeConstants";
+export { isOptimizeDue } from "./fsrs/fsrsOptimizeDue";
 export type { FsrsOptimizeStatus } from "./fsrs/fsrsOptimizeTypes";
 export {
   ratingToGrade,

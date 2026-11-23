@@ -1,15 +1,15 @@
-import type { CardDraftView } from "../../api/client";
+import type { CardDraftView } from "../api/client";
 import type {
   GuestCardSchedule,
   GuestReviewLog,
-} from "../../guest/policyDue";
-import type { FsrsPrefs } from "./fsrsFactory";
+} from "./policyDue";
 import {
   replayCardFromLogs,
+  scheduleColumnsFromCard,
+  type FsrsPrefs,
   type RescheduleSummary,
   type ReviewLogReplayRow,
-} from "./fsrsReplay";
-import { scheduleColumnsFromCard } from "../retrievability";
+} from "../study/kernel";
 
 export type GuestRescheduleInput = {
   cards: readonly CardDraftView[];

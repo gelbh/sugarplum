@@ -5,9 +5,11 @@ import type {
   GuestCardSchedule,
   GuestReviewLog,
 } from "../../src/guest/policyDue";
-import { rescheduleGuestSchedules } from "../../src/study/fsrs/guestFsrsReschedule";
-import { replayCardFromLogs } from "../../src/study/fsrs/fsrsReplay";
-import { scheduleColumnsFromCard } from "../../src/study/retrievability";
+import { rescheduleGuestSchedules } from "../../src/guest/guestFsrsReschedule";
+import {
+  replayCardFromLogs,
+  scheduleColumnsFromCard,
+} from "../../src/study/kernel";
 
 const customW = FSRS7_DEFAULT_WEIGHTS.map((x, i) => (i < 10 ? x * 2 : x));
 

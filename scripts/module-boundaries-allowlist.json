@@ -85,31 +85,6 @@
     "reason": "dueCache type-imports api/client; cannot live on study/kernel (worker graph)."
   },
   {
-    "file": "guest/enrichScheduledDays.ts",
-    "spec": "../study/fsrs/guestFsrsOptimize",
-    "reason": "Leaf import breaks circular barrel graph (guestFsrs* imports guest)."
-  },
-  {
-    "file": "guest/storePersist.ts",
-    "spec": "../study/fsrs/guestFsrsOptimize",
-    "reason": "Leaf import breaks circular barrel graph (guestFsrs* imports guest)."
-  },
-  {
-    "file": "guest/storeStudy.ts",
-    "spec": "../study/fsrs/guestFsrsOptimize",
-    "reason": "Leaf import breaks circular barrel graph (guestFsrs* imports guest)."
-  },
-  {
-    "file": "guest/storeStudy.ts",
-    "spec": "../study/fsrs/guestFsrsReschedule",
-    "reason": "Leaf import breaks circular barrel graph (guestFsrs* imports guest)."
-  },
-  {
-    "file": "guest/storeTypes.ts",
-    "spec": "../study/fsrs/guestFsrsOptimize",
-    "reason": "Leaf import breaks circular barrel graph (guestFsrs* imports guest)."
-  },
-  {
     "file": "insights/buildMetrics.ts",
     "spec": "../study/loadBalance",
     "reason": "Worker insights path; leaf import avoids fat study/kernel fan-in."
