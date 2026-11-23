@@ -3,6 +3,7 @@ import { getDb } from "../db/client";
 import {
   STAGE_ORDER,
   STAGE_WEIGHTS,
+  normalizeWeightOverlay,
   type ProgressStage,
 } from "./progress";
 
@@ -12,6 +13,10 @@ export const STAGE_DURATION_RING_MAX = 24;
 export const STAGE_DURATION_MIN_MS = 200;
 export const STAGE_DURATION_MAX_MS = 7_200_000;
 export const STAGE_PRIOR_MIN_N = 3;
+/** Gate before writing duration-share STAGE_WEIGHTS overlay. */
+export const STAGE_WEIGHT_OVERLAY_MIN_N = 5;
+/** Isolate-local TTL so progress emit does not hit KV every tick. */
+export const STAGE_WEIGHT_OVERLAY_CACHE_TTL_MS = 30_000;
 
 export type StageDurationRollup = {
   v: 1;
@@ -19,6 +24,8 @@ export type StageDurationRollup = {
   stages: Partial<
     Record<string, { samples_ms: number[]; p50_ms: number }>
   >;
+  /** Duration-share overlay; written when every present stage has n≥5. */
+  weights?: Partial<Record<string, number>>;
 };
 
 export type EtaPriorsPayload = {
@@ -107,6 +114,52 @@ function parseRollup(raw: string | null): StageDurationRollup | null {
 }
 
 /**
+ * p50 duration shares for rollup stages with enough samples.
+ * Excludes queued. Null when any present stage is below the n≥5 gate.
+ */
+export function computeDurationShareWeights(
+  stages: StageDurationRollup["stages"],
+): Partial<Record<string, number>> | null {
+  const present: Array<{ stage: string; p50: number; n: number }> = [];
+  for (const [stage, row] of Object.entries(stages)) {
+    if (stage === "queued" || !KNOWN.has(stage) || !row) continue;
+    if (!Array.isArray(row.samples_ms)) continue;
+    if (typeof row.p50_ms !== "number" || !Number.isFinite(row.p50_ms)) {
+      continue;
+    }
+    if (row.p50_ms <= 0) continue;
+    present.push({
+      stage,
+      p50: row.p50_ms,
+      n: row.samples_ms.length,
+    });
+  }
+  if (present.length === 0) return null;
+  if (present.some((s) => s.n < STAGE_WEIGHT_OVERLAY_MIN_N)) return null;
+
+  const sum = present.reduce((acc, s) => acc + s.p50, 0);
+  if (!(sum > 0)) return null;
+
+  const weights: Partial<Record<string, number>> = {};
+  for (const s of present) {
+    weights[s.stage] = s.p50 / sum;
+  }
+  return weights;
+}
+
+type OverlayCache = {
+  atMs: number;
+  value: Partial<Record<ProgressStage, number>> | null;
+};
+
+let overlayCache: OverlayCache | null = null;
+
+/** Test-only: clear isolate overlay cache. */
+export function resetStageWeightOverlayCacheForTests(): void {
+  overlayCache = null;
+}
+
+/**
  * Best-effort read-modify-write. Concurrent job finals may drop a sample;
  * acceptable for v1 ring noise (no CAS). See ETA accuracy design §KV rollup.
  */
@@ -139,14 +192,34 @@ export async function mergeStageDurationRollup(
     };
   }
 
+  const shares = computeDurationShareWeights(stages);
   const body: StageDurationRollup = {
     v: 1,
     updated_at: nowIso,
     stages,
+    ...(shares ? { weights: shares } : {}),
   };
   await kv.put(STAGE_DURATION_KV_KEY, JSON.stringify(body), {
     expirationTtl: STAGE_DURATION_KV_TTL_SECONDS,
   });
+  overlayCache = null;
+}
+
+/** Cached KV read of duration-share weights; null on miss/corrupt. */
+export async function readStageWeightOverlay(
+  kv: KVNamespace,
+  nowMs: number = Date.now(),
+): Promise<Partial<Record<ProgressStage, number>> | null> {
+  if (
+    overlayCache &&
+    nowMs - overlayCache.atMs < STAGE_WEIGHT_OVERLAY_CACHE_TTL_MS
+  ) {
+    return overlayCache.value;
+  }
+  const rollup = parseRollup(await kv.get(STAGE_DURATION_KV_KEY));
+  const value = normalizeWeightOverlay(rollup?.weights ?? null);
+  overlayCache = { atMs: nowMs, value };
+  return value;
 }
 
 export async function readEtaPriors(
@@ -166,6 +239,28 @@ export async function readEtaPriors(
   }
   if (Object.keys(stages).length === 0) return null;
   return { stages };
+}
+
+/** Ops: compare job wall clock to sum of rollup p50 for stages in the sample. */
+export function etaAccuracySnapshot(args: {
+  startedAt?: string | null;
+  finishedAt?: string | null;
+  sampleStages: readonly string[];
+  stageP50: Partial<Record<string, number>>;
+}): { wallMs: number; p50SumMs: number } | null {
+  const startedMs = parseIsoMs(args.startedAt);
+  const finishedMs = parseIsoMs(args.finishedAt);
+  if (startedMs == null || finishedMs == null || finishedMs <= startedMs) {
+    return null;
+  }
+  let p50SumMs = 0;
+  for (const stage of args.sampleStages) {
+    const p50 = args.stageP50[stage];
+    if (typeof p50 === "number" && Number.isFinite(p50)) {
+      p50SumMs += p50;
+    }
+  }
+  return { wallMs: finishedMs - startedMs, p50SumMs };
 }
 
 /** Best-effort: merge durations after successful terminal only. */
@@ -207,6 +302,23 @@ export async function recordStageDurationsBestEffort(
     });
     if (Object.keys(sample).length === 0) return;
     await mergeStageDurationRollup(env.CACHE, sample);
+
+    const rollup = parseRollup(await env.CACHE.get(STAGE_DURATION_KV_KEY));
+    const stageP50: Partial<Record<string, number>> = {};
+    for (const [stage, entry] of Object.entries(rollup?.stages ?? {})) {
+      if (entry && typeof entry.p50_ms === "number") {
+        stageP50[stage] = entry.p50_ms;
+      }
+    }
+    const accuracy = etaAccuracySnapshot({
+      startedAt: progress.started_at,
+      finishedAt: row.finished_at,
+      sampleStages: Object.keys(sample),
+      stageP50,
+    });
+    if (accuracy) {
+      console.info("eta accuracy", { jobId, ...accuracy });
+    }
   } catch (err) {
     console.error("stage duration rollup failed", jobId, err);
   }

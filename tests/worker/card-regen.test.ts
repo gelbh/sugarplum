@@ -200,9 +200,8 @@ function regenRequest(
 function latestCardRegenMessage(
   env: ReturnType<typeof createTestEnv>,
 ): CardRegenQueueMessage {
-  const msgs = env.getQueueMessages() as CardRegenQueueMessage[];
-  const regen = msgs.filter((m) => m.kind === "cardRegen");
-  const last = regen[regen.length - 1];
+  const msgs = env.getCardRegenQueueMessages() as CardRegenQueueMessage[];
+  const last = msgs[msgs.length - 1];
   if (!last) throw new Error("expected cardRegen queue message");
   return last;
 }
@@ -949,11 +948,8 @@ describe("POST /api/cards/:id/regen", () => {
     expect(secondBody.op.id).toBe(firstBody.op.id);
     expect(env.getCardRegenOps()).toHaveLength(1);
     // Second POST re-enqueues while still queued (lost-message recovery).
-    expect(
-      env
-        .getQueueMessages()
-        .filter((m) => (m as CardRegenQueueMessage).kind === "cardRegen"),
-    ).toHaveLength(2);
+    expect(env.getCardRegenQueueMessages()).toHaveLength(2);
+    expect(env.getQueueMessages()).toHaveLength(0);
   });
 
   it("processCardRegenOp is idempotent after done", async () => {

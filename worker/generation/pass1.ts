@@ -70,6 +70,7 @@ import { afterRunningJobTerminal } from "./jobTerminal";
 import { filterDraftsByQuality } from "./quality";
 import { harvestRuleDrafts } from "./rules";
 import { type CardDraft } from "./schema";
+import { readStageWeightOverlay } from "./stageDurations";
 import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
 import { resolveTextLlm } from "./resolve-text-llm";
 import { stampDraftProvenancePages } from "../../src/study/notes/excerptPages";
@@ -86,11 +87,13 @@ function makeEmit(
     freeGenCharged?: boolean;
     freeGenSlots?: number;
     startedAt?: string;
+    weightOverlay?: Partial<Record<ProgressStage, number>> | null;
   },
 ) {
   // Mutable accumulator merged into every progress write.
   // drafts_so_far stays unset until the first batch (avoids mid-job "0 cards left").
   let stages = presentStages;
+  const weightOverlay = opts?.weightOverlay ?? null;
   const acc: {
     path?: "free" | "byo";
     free_gen_charged?: boolean;
@@ -120,8 +123,13 @@ function makeEmit(
     const percent =
       halfStepsDone !== undefined &&
       (stage === "claims" || stage === "generate" || stage === "critique")
-        ? computePipelineBandPercent(halfStepsDone, total, stages)
-        : computePercent(stage, current, total, stages);
+        ? computePipelineBandPercent(
+            halfStepsDone,
+            total,
+            stages,
+            weightOverlay,
+          )
+        : computePercent(stage, current, total, stages, weightOverlay);
 
     return {
       stage,
@@ -578,6 +586,9 @@ export async function runPass1Phase(
     const freeGenCharged = isFreeGenCharged(progressRow?.progress_json);
     const freeGenSlots = readFreeGenSlots(progressRow?.progress_json);
     const startedAt = readStartedAt(progressRow?.progress_json);
+    const weightOverlay = env.CACHE
+      ? await readStageWeightOverlay(env.CACHE).catch(() => null)
+      : null;
     const topicHints = mergeTopicHints(
       parseTopicHintsJson(progressRow?.run_topic_hints_json),
       parseTopicHintsJson(progressRow?.topic_hints_json),
@@ -601,6 +612,7 @@ export async function runPass1Phase(
         freeGenCharged,
         freeGenSlots,
         startedAt,
+        weightOverlay,
       });
       // Vision needs a BYO provider; free Workers AI path is text-only.
       if (!secret && !opts?.llm) {
@@ -684,6 +696,7 @@ export async function runPass1Phase(
         freeGenCharged,
         freeGenSlots,
         startedAt,
+        weightOverlay,
       });
       await progress.emit("queued", 0, 0, "Queued");
       await progress.emit("extract", 0, 0, "Extracting material");
@@ -824,6 +837,7 @@ export async function runPass1Phase(
         freeGenCharged,
         freeGenSlots,
         startedAt,
+        weightOverlay,
       });
       await progress.emit("queued", 0, 0, "Queued");
       await progress.emit("extract", 0, 0, "Extracting material");
