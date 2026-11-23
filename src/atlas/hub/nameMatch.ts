@@ -1,6 +1,19 @@
 export const searchable = (s: string) =>
   s.toLowerCase().replace(/\s+/g, " ").trim();
 
+export const collapseSeparators = (s: string) => s.replace(/[_-]+/g, " ");
+
+/**
+ * Shared haystack/form normalize for pack and Focus matching: collapse
+ * separators, then unglue OCR/abbrev forms like `F.hepatica` → `f. hepatica`.
+ */
+export function normalizeMatchText(s: string): string {
+  return searchable(collapseSeparators(s)).replace(
+    /\b([a-z])\.([a-z])/g,
+    "$1. $2",
+  );
+}
+
 /** Slides abbreviate the genus ("F. hepatica"), so that form matches too. */
 export function genusInitialForms(canonicalName: string): string[] {
   const [genus, species] = canonicalName.split(" ");
@@ -15,15 +28,20 @@ export type NameMatchEntry = {
   aliases: string[];
 };
 
-export const collapseSeparators = (s: string) => s.replace(/[_-]+/g, " ");
-
-export function entryNameForms(entry: NameMatchEntry): string[] {
-  const names = [entry.canonicalName, entry.commonName, ...entry.aliases]
+/** Canonical / common / aliases only (no genus-initial expansions). */
+export function entryExactForms(entry: NameMatchEntry): string[] {
+  return [entry.canonicalName, entry.commonName, ...entry.aliases]
     .filter((n): n is string => n !== null)
-    .map((n) => searchable(collapseSeparators(n)))
+    .map((n) => normalizeMatchText(n))
     // An empty form would match every haystack.
     .filter((n) => n !== "");
-  return [...names, ...genusInitialForms(entry.canonicalName)];
+}
+
+export function entryNameForms(entry: NameMatchEntry): string[] {
+  return [
+    ...entryExactForms(entry),
+    ...genusInitialForms(entry.canonicalName).map(normalizeMatchText),
+  ];
 }
 
 export function textMentionsEntry(
@@ -31,10 +49,8 @@ export function textMentionsEntry(
   forms: readonly string[],
 ): boolean {
   // Filenames often use Fasciola_hepatica / F._hepatica; treat _ and - as spaces.
-  const hay = searchable(collapseSeparators(haystack));
-  return forms.some((form) =>
-    hay.includes(searchable(collapseSeparators(form))),
-  );
+  const hay = normalizeMatchText(haystack);
+  return forms.some((form) => hay.includes(normalizeMatchText(form)));
 }
 
 export const ALIAS_MAX_ITEMS = 20;

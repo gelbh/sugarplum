@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  atlasAbbrevIndex,
   atlasGenera,
   materialMentionsForPack,
 } from "../../../src/atlas/hub/packMatch";
@@ -30,7 +31,9 @@ const entries = new Map(
   ]),
 );
 
-const genera = atlasGenera([...entries.values()]);
+const datasetEntries = [...entries.values()];
+const genera = atlasGenera(datasetEntries);
+const abbrevCounts = atlasAbbrevIndex(datasetEntries);
 
 const MIN_RECALL = 0.95;
 const MIN_PRECISION = 0.85;
@@ -44,7 +47,7 @@ function matches(key: string, text: string): boolean {
     sourceRole: "lecture" as const,
     pages: [{ page: 1, text }],
   };
-  return materialMentionsForPack(entry, material, genera);
+  return materialMentionsForPack(entry, material, genera, abbrevCounts);
 }
 
 describe("labelled pack-match eval", () => {

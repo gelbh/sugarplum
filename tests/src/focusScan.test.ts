@@ -4,6 +4,7 @@ import {
   type FocusEntry,
   type FocusMaterial,
 } from "../../src/atlas/hub/focusScan";
+import { atlasAbbrevIndex } from "../../src/atlas/hub/packMatch";
 
 const entry: FocusEntry = {
   canonicalName: "Fasciola hepatica",
@@ -256,6 +257,79 @@ describe("scanFocus", () => {
       materialIds: ["tut"],
       inPack: true,
     });
+  });
+
+  it("glued F.hepatica in a tutorial is Key (high)", () => {
+    expect(
+      scanFocus(entry, [
+        mat({
+          id: "g",
+          sourceRole: "tutorial",
+          pages: [{ page: 1, text: "Key parasite: F.hepatica" }],
+        }),
+      ]).tier,
+    ).toBe("key");
+  });
+
+  it("OCR fuzzy-only in a tutorial stays Standard but in pack (low)", () => {
+    const otodectes: FocusEntry = {
+      canonicalName: "Otodectes cynotis",
+      commonName: null,
+      aliases: [],
+    };
+    expect(
+      scanFocus(otodectes, [
+        mat({
+          id: "ocr",
+          sourceRole: "tutorial",
+          pages: [{ page: 1, text: "Otodectes cyanosis in the ear canal" }],
+        }),
+      ]),
+    ).toEqual({
+      tier: "standard",
+      reason: "Standard",
+      materialIds: ["ocr"],
+      inPack: true,
+    });
+  });
+
+  it("ambiguous genus initial is not Key until the full genus appears", () => {
+    const foo: FocusEntry = {
+      canonicalName: "Foo canis",
+      commonName: null,
+      aliases: [],
+    };
+    const felis: FocusEntry = {
+      canonicalName: "Felis canis",
+      commonName: null,
+      aliases: [],
+    };
+    const abbrev = atlasAbbrevIndex([foo, felis]);
+    const bare = [
+      mat({
+        id: "bare",
+        sourceRole: "tutorial",
+        pages: [{ page: 1, text: "F. canis eggs in soil" }],
+      }),
+    ];
+    expect(scanFocus(foo, bare, null, undefined, abbrev).tier).toBe("standard");
+    expect(scanFocus(felis, bare, null, undefined, abbrev).tier).toBe(
+      "standard",
+    );
+
+    const scoped = [
+      mat({
+        id: "scoped",
+        sourceRole: "tutorial",
+        pages: [
+          { page: 1, text: "Foo is common. Later F. canis eggs persist." },
+        ],
+      }),
+    ];
+    expect(scanFocus(foo, scoped, null, undefined, abbrev).tier).toBe("key");
+    expect(scanFocus(felis, scoped, null, undefined, abbrev).tier).toBe(
+      "standard",
+    );
   });
 
   it("an entry no material names is out of pack", () => {

@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  atlasAbbrevIndex,
   atlasGenera,
   damerauLevenshtein,
+  matchMaterialForPack,
   materialMentionsForPack,
+  packTargets,
   tokenMatches,
 } from "../../src/atlas/hub/packMatch";
 import type { FocusMaterial } from "../../src/atlas/hub/focusScan";
@@ -204,5 +207,72 @@ describe("atlasGenera", () => {
     expect(
       atlasGenera([named("Eimeria spp."), named("Fasciola hepatica")]),
     ).toEqual(new Set(["eimeria", "fasciola"]));
+  });
+});
+
+describe("match confidence ladder", () => {
+  it("glued F.hepatica is high", () => {
+    const entry = named("Fasciola hepatica");
+    const m = matchMaterialForPack(
+      packTargets(entry),
+      material("See F.hepatica in sheep"),
+    );
+    expect(m.high).toBe(true);
+    expect(m.strict).toBe(true);
+    expect(m.lenient).toBe(true);
+  });
+
+  it("ambiguous F. canis is not high without a full genus in the material", () => {
+    const foo = named("Foo canis");
+    const felis = named("Felis canis");
+    const abbrev = atlasAbbrevIndex([foo, felis]);
+    const text = "F. canis eggs persist in soil";
+    const fooHit = matchMaterialForPack(
+      packTargets(foo, new Set(), abbrev),
+      material(text),
+    );
+    const felisHit = matchMaterialForPack(
+      packTargets(felis, new Set(), abbrev),
+      material(text),
+    );
+    expect(fooHit.high).toBe(false);
+    expect(felisHit.high).toBe(false);
+  });
+
+  it("full genus in the same material makes an ambiguous initial high", () => {
+    const foo = named("Foo canis");
+    const felis = named("Felis canis");
+    const abbrev = atlasAbbrevIndex([foo, felis]);
+    const text = "Foo overview. Later F. canis eggs persist.";
+    expect(
+      matchMaterialForPack(packTargets(foo, new Set(), abbrev), material(text))
+        .high,
+    ).toBe(true);
+    expect(
+      matchMaterialForPack(
+        packTargets(felis, new Set(), abbrev),
+        material(text),
+      ).high,
+    ).toBe(false);
+  });
+
+  it("rule 5 OCR typo is low, not high", () => {
+    const m = matchMaterialForPack(
+      packTargets(named("Otodectes cynotis")),
+      material("Otodectes cyanosis in the ear canal"),
+    );
+    expect(m.high).toBe(false);
+    expect(m.low).toBe(true);
+    expect(m.lenient).toBe(true);
+  });
+
+  it("genus plus nearby epithet is medium when not high", () => {
+    const m = matchMaterialForPack(
+      packTargets(named("Demodex canis")),
+      material("Demodex (canis, bovis, etc)"),
+    );
+    expect(m.high).toBe(false);
+    expect(m.medium).toBe(true);
+    expect(m.lenient).toBe(true);
   });
 });
