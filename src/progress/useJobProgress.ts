@@ -5,6 +5,7 @@ import type { ProgressSnapshot } from "./types";
 import {
   calmDisplayEtaMs,
   combineEtaMs,
+  effectiveClientWeights,
   updateEwmaRate,
   type CalmEtaSample,
   type EwmaRateState,
@@ -222,6 +223,10 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
               fromJob && fromJob.length > 0
                 ? fromJob
                 : PROGRESS_STAGE_ORDER.filter((s) => s !== "queued");
+            const weightMap = effectiveClientWeights(
+              presentStages,
+              job.eta_priors?.weights ?? null,
+            );
             const rawEta = combineEtaMs({
               percent,
               stage: job.progress.stage ?? ext.stage,
@@ -230,6 +235,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
               priors: job.eta_priors ?? null,
               current: job.progress.current,
               total: job.progress.total,
+              stageWeight: (s) => weightMap[s] ?? 0,
             });
             const calm = calmDisplayEtaMs({
               percent,

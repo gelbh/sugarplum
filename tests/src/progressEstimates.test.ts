@@ -191,6 +191,31 @@ describe("effectiveClientWeights parity", () => {
     const worker = effectiveWeights(TEXT_LLM_STAGES);
     expect(client).toEqual(worker);
   });
+
+  it("prefers duration-share overlay when it covers present stages", () => {
+    const present = ["queued", "extract", "persist"] as const;
+    const overlay = { extract: 0.25, persist: 0.75 };
+    const client = effectiveClientWeights([...present], overlay);
+    const worker = effectiveWeights(present, overlay);
+    expect(client).toEqual(worker);
+    expect(client.extract).toBeCloseTo(0.25, 5);
+    expect(client.persist).toBeCloseTo(0.75, 5);
+  });
+
+  it("falls back to catalog when overlay is corrupt or omits a present stage", () => {
+    const present = ["queued", "extract", "figures", "persist"] as const;
+    const catalog = effectiveClientWeights([...present]);
+    expect(effectiveClientWeights([...present], null)).toEqual(catalog);
+    expect(
+      effectiveClientWeights([...present], { extract: 0.9, persist: 0.9 }),
+    ).toEqual(catalog);
+    expect(
+      effectiveClientWeights([...present], { extract: 0.25, persist: 0.75 }),
+    ).toEqual(catalog);
+    expect(effectiveClientWeights([...present], { extract: Number.NaN })).toEqual(
+      catalog,
+    );
+  });
 });
 
 describe("formatEta coarsening", () => {
