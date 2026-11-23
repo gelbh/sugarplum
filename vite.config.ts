@@ -73,7 +73,7 @@ export default defineConfig({
         ],
         // Fail soft if another large asset slips past ignores (default 2 MiB).
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /^\/problems\//],
         runtimeCaching: [
           {
             // Session-gated study faces: warm via fetch, serve offline after warm.

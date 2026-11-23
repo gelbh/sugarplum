@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>export-business: Sugarplum problem type</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Alice&family=Source+Sans+3:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./problem.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <a class="brand" href="/">Sugarplum</a>
+      <article class="panel">
+        <h1>export-business</h1>
+        <p class="lede">Anki export could not complete as a business failure.</p>
+        <dl>
+          <div>
+            <dt>Type URI</dt>
+            <dd>
+              <code
+                >https://sugarplum.gelbhart.dev/problems/export-business</code
+              >
+            </dd>
+          </div>
+          <div>
+            <dt>Typical status</dt>
+            <dd><span class="status">400</span></dd>
+          </div>
+          <div>
+            <dt>Extensions</dt>
+            <dd>
+              <code>warnings</code> =
+              <code>{ missingMedia: number, skippedCards: number }</code>
+            </dd>
+          </div>
+        </dl>
+        <p class="remediation">
+          Fix deck or selection contents (for example no owned decks, or no
+          exportable cards) and retry. Occurrence text is in
+          <code>detail</code>.
+        </p>
+      </article>
+    </main>
+  </body>
+</html>
