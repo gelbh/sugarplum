@@ -20,6 +20,7 @@ import { ReviewCard } from "../study";
 import {
   asRegenType,
   cardHasRegenSource,
+  getJob,
   type CardDraftView,
   type ClaimCoverage,
 } from "../api/client";
@@ -49,6 +50,10 @@ import type { DraftReviewNotice } from "../draftReview";
 import { friendlyJobError } from "../draftReview";
 import { ClaimCoveragePanel } from "../draftReview";
 import { useDraftReviewLoad } from "../draftReview";
+import EnrichmentBanner from "../draftReview/EnrichmentBanner";
+import { shouldShowEnrichmentBanner } from "../draftReview/enrichmentBanner";
+
+const ENRICH_POLL_MS = 1_500;
 
 export default function DraftReviewPage() {
   const jobId = jobIdFromPath();
@@ -78,6 +83,12 @@ export default function DraftReviewPage() {
   const [fillAllBusy, setFillAllBusy] = useState(false);
   /** When false, drop jobId from useJobProgress so the same id can remount and poll again after regen. */
   const [progressGate, setProgressGate] = useState(true);
+  const [enrichProgress, setEnrichProgress] = useState<{
+    stage: string | null;
+    current: number | null;
+    total: number | null;
+    percent: number | null;
+  }>({ stage: null, current: null, total: null, percent: null });
   const { user } = useSession();
   const jobProgress = useJobProgress(user && progressGate ? jobId : null);
   const { begin: beginLoad, end: endLoad } = useTrackedOp("Loading drafts…");
@@ -89,6 +100,26 @@ export default function DraftReviewPage() {
       setProgressGate(true);
     }
   }, [progressGate, jobId]);
+
+  useEffect(() => {
+    setEnrichProgress({
+      stage: null,
+      current: null,
+      total: null,
+      percent: null,
+    });
+  }, [jobId]);
+
+  useEffect(() => {
+    const snap = jobProgress.snapshot;
+    if (!snap) return;
+    setEnrichProgress({
+      stage: snap.stage ?? null,
+      current: snap.current ?? null,
+      total: snap.total ?? null,
+      percent: typeof snap.percent === "number" ? snap.percent : null,
+    });
+  }, [jobProgress.snapshot]);
 
   const { load, refreshJourney } = useDraftReviewLoad({
     jobId,
@@ -106,6 +137,63 @@ export default function DraftReviewPage() {
     setClaimCoverage,
     setClaimSpanGaps,
   });
+
+  const showEnrichmentBanner = shouldShowEnrichmentBanner({
+    jobStatus,
+    stage: enrichProgress.stage,
+    current: enrichProgress.current,
+    total: enrichProgress.total,
+  });
+
+  // useJobProgress settles on needs_review; keep a light getJob poll while
+  // enrich may still run so the banner and gap-fill drafts stay honest.
+  const pollEnrichProgress =
+    ready &&
+    Boolean(jobId) &&
+    jobStatus === "needs_review" &&
+    (showEnrichmentBanner ||
+      enrichProgress.stage === "persist" ||
+      enrichProgress.stage == null);
+
+  useEffect(() => {
+    if (!pollEnrichProgress || !jobId) return;
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const job = await getJob(jobId);
+        if (cancelled) return;
+        setJobStatus(job.status);
+        const progress = job.progress;
+        setEnrichProgress({
+          stage: progress?.stage ?? null,
+          current: progress?.current ?? null,
+          total: progress?.total ?? null,
+          percent:
+            typeof progress?.percent === "number" ? progress.percent : null,
+        });
+        if (
+          shouldShowEnrichmentBanner({
+            jobStatus: job.status,
+            stage: progress?.stage,
+            current: progress?.current,
+            total: progress?.total,
+          })
+        ) {
+          await load(jobId);
+        }
+      } catch {
+        // Transient poll failures should not block review.
+      }
+    };
+    void tick();
+    const timer = setInterval(() => {
+      void tick();
+    }, ENRICH_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [pollEnrichProgress, jobId, load]);
 
   const current = drafts[0] ?? null;
 
@@ -306,6 +394,9 @@ export default function DraftReviewPage() {
             >
               {error}
             </Alert>
+          ) : null}
+          {showEnrichmentBanner ? (
+            <EnrichmentBanner percent={enrichProgress.percent} />
           ) : null}
           <Box sx={{ flexShrink: 0 }}>
             <CreateFlowNoticeFade
