@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
-import { termLabel } from "../hub/filter";
+import { termLabel } from "../lib/labels";
 import {
   type Axis,
   type DetectableWindow,

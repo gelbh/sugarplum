@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entryTitles } from "../../src/atlas/entry/entryTitles";
+import { entryTitles } from "../../src/atlas/lib/entryTitles";
 
 describe("entryTitles", () => {
   it("uses common name as primary with scientific subtitle", () => {

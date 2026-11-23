@@ -5,7 +5,7 @@ import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
 import AtlasImage from "../hub/AtlasImage";
 import { atlasStageTitleSx } from "../hub/atlasOperateSx";
-import { termLabel } from "../hub/filter";
+import { termLabel } from "../lib/labels";
 import { durationLabel, stageIsDiagnostic } from "./lifecycle";
 import type { AtlasImageView, DatasetFields } from "../types";
 

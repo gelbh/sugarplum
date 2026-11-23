@@ -1,5 +1,5 @@
 import { FIELD_LABELS } from "./entryFields";
-import { pppLabel, termLabel } from "../hub/filter";
+import { pppLabel, termLabel } from "../lib/labels";
 import type { EditSectionId } from "../mutate/entryPatch";
 import type { DatasetFields, FieldKey } from "../types";
 

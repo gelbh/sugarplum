@@ -6,7 +6,7 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { termLabel } from "../hub/filter";
+import { termLabel } from "../lib/labels";
 import { stageIsDiagnostic } from "./lifecycle";
 import { lifecyclePanelImage } from "./lifecyclePanelImage";
 import SelectedStagePanel from "./SelectedStagePanel";

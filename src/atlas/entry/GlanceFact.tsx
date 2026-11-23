@@ -15,7 +15,7 @@ import {
   zoonoticPortraitLabel,
 } from "../hub/zoonoticPortraits";
 import TermList from "./TermList";
-import { isTaxonTerm, termLabel } from "../hub/filter";
+import { isTaxonTerm, termLabel } from "../lib/labels";
 import type { DatasetFields } from "../types";
 
 export const HOST_KEYS = new Set([

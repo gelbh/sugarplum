@@ -22,7 +22,7 @@ import {
   litRegions,
   tagsToMeta,
 } from "../../src/atlas/hub/distributionTags";
-import { entryTitles } from "../../src/atlas/entry/entryTitles";
+import { entryTitles } from "../../src/atlas/lib/entryTitles";
 import { isShortcutTarget } from "../../src/atlas/hub/keys";
 import { isAtlasToAtlas } from "../../src/atlas/paths";
 

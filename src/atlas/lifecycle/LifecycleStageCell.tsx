@@ -3,7 +3,7 @@ import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import { stageIsDiagnostic } from "./lifecycle";
-import { termLabel } from "../hub/filter";
+import { termLabel } from "../lib/labels";
 import type { DatasetFields } from "../types";
 
 const LANE_PX = 70;

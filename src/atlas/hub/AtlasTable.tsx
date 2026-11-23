@@ -10,7 +10,7 @@ import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import AtlasImage, { heroImage } from "./AtlasImage";
 import NotInPackChip, { NOT_IN_PACK_DIM } from "./NotInPackChip";
-import { entryTitles } from "../entry/entryTitles";
+import { entryTitles } from "../lib/entryTitles";
 import { atlasHeroName } from "../paths";
 import {
   GROUP_LABELS,

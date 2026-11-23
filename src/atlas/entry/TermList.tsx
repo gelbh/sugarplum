@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { isTaxonTerm, termLabel } from "../hub/filter";
+import { isTaxonTerm, termLabel } from "../lib/labels";
 
 type Props = {
   terms: string[];

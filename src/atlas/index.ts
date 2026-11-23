@@ -38,7 +38,7 @@ export {
   VIEW_AS_READ_ONLY_CODE,
   atlasOpenErrorMessage,
 } from "./hub/atlasOpenCopy";
-export { entryTitles } from "./entry/entryTitles";
+export { entryTitles } from "./lib/entryTitles";
 export { packHiddenIds, packIsActive } from "./hub/filter";
 export { useShowHiddenPref } from "./hub/packHidePref";
 export { readLastDeckId, writeLastDeckId } from "./hub/lastDeckStorage";
