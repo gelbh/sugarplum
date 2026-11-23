@@ -9,6 +9,7 @@ import {
   listKnowledgeSummariesForUser,
   recomputeSubjectKnowledgeSummary,
 } from "./knowledgeSummary";
+import { problemJsonResponse } from "../http/problemJson";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -132,12 +133,7 @@ subjectRoutes.get("/composition-summaries", async (c) => {
   for (const subject of subjectRows) {
     let row = bySubject.get(subject.id);
     if (!row) {
-      row = await recomputeSubjectKnowledgeSummary(
-        db,
-        userId,
-        subject.id,
-        now,
-      );
+      row = await recomputeSubjectKnowledgeSummary(db, userId, subject.id, now);
     }
     out.push(compositionJsonFromSummary(row));
   }
@@ -243,7 +239,13 @@ subjectRoutes.delete("/:id", async (c) => {
 
   const deck_count = await deckCountForSubject(db, subjectId);
   if (deck_count > 0) {
-    return c.json({ error: "Subject still has decks", deck_count }, 409);
+    return problemJsonResponse({
+      status: 409,
+      slug: "subject-has-decks",
+      title: "Subject still has decks",
+      detail: "Subject still has decks",
+      extensions: { deck_count },
+    });
   }
 
   const result = await db
