@@ -28,7 +28,6 @@ import {
 } from "../draftReview/kernel";
 import { FaceOverline, FlipCardPlate, StudyCardPlate } from "./CardFace";
 import ClozePrompt from "./ClozePrompt";
-import OcclusionRegionEditor from "../draftReview/OcclusionRegionEditor";
 import {
   FACE_ANSWER_TEXT_SX,
   FACE_BODY_SX,
@@ -50,6 +49,19 @@ type FaceProps = {
   card: CardDraftView;
   disabled: boolean;
   onChange: (next: DraftEditorChange) => void;
+};
+
+export type OcclusionRegionEditorSlot = (args: {
+  front: OcclusionFrontView;
+  onChange: (next: {
+    front: OcclusionFrontView;
+    back: { answer: string };
+  }) => void;
+}) => ReactNode;
+
+type OcclusionFaceProps = FaceProps & {
+  /** Routes compose OcclusionRegionEditor from draftReview. */
+  renderOcclusionRegionEditor: OcclusionRegionEditorSlot;
 };
 
 function EditableText({
@@ -250,7 +262,12 @@ export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
   );
 }
 
-export function OcclusionReviewFace({ card, disabled, onChange }: FaceProps) {
+export function OcclusionReviewFace({
+  card,
+  disabled,
+  onChange,
+  renderOcclusionRegionEditor,
+}: OcclusionFaceProps) {
   const fullScreen = useMediaQuery((theme: Theme) =>
     theme.breakpoints.down("sm"),
   );
@@ -310,9 +327,12 @@ export function OcclusionReviewFace({ card, disabled, onChange }: FaceProps) {
         >
           <DialogTitle>Edit regions</DialogTitle>
           <DialogContent>
-            {draft ? (
-              <OcclusionRegionEditor front={draft.front} onChange={setDraft} />
-            ) : null}
+            {draft
+              ? renderOcclusionRegionEditor({
+                  front: draft.front,
+                  onChange: setDraft,
+                })
+              : null}
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setDraft(null)}>Cancel</Button>

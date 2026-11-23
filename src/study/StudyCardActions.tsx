@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -22,12 +22,24 @@ import {
   type CardDraftView,
   type CardType,
 } from "../api/client";
-import { cardPatchBody } from "../draftReview/kernel";
-import DraftCardEditor, {
+import {
+  cardPatchBody,
   type DraftEditorChange,
-} from "../draftReview/DraftCardEditor";
+} from "../draftReview/kernel";
 import { isGuest } from "../guest/session";
 import { dropPendingGrade } from "./pendingGrades";
+
+export type DraftCardEditorSlot = (args: {
+  card: CardDraftView;
+  disabled: boolean;
+  onChange: (next: DraftEditorChange) => void;
+  allowedTypes: CardType[];
+  regenAction?: {
+    busy: boolean;
+    disabled: boolean;
+    onClick: () => void;
+  };
+}) => ReactNode;
 
 const DIALOG_PAPER_SX = {
   borderRadius: 2,
@@ -70,6 +82,8 @@ type StudyCardActionsProps = {
   userId: string | null;
   /** Routes supply hub DIY allowed types (study stays deckHub-free). */
   allowedTypes: CardType[];
+  /** Routes compose DraftCardEditor from draftReview. */
+  renderDraftCardEditor: DraftCardEditorSlot;
   onDialogOpen: (open: boolean) => void;
   onSaved: (card: CardDraftView) => void;
   onRegenerated: (card: CardDraftView) => void;
@@ -83,6 +97,7 @@ export function StudyCardActions({
   offlineCopy,
   userId,
   allowedTypes,
+  renderDraftCardEditor,
   onDialogOpen,
   onSaved,
   onRegenerated,
@@ -256,14 +271,13 @@ export function StudyCardActions({
               {editError}
             </Alert>
           ) : null}
-          {editCard ? (
-            <DraftCardEditor
-              card={editCard}
-              disabled={editDialogBusy}
-              onChange={onEditChange}
-              allowedTypes={allowedTypes}
-              regenAction={
-                isGuest()
+          {editCard
+            ? renderDraftCardEditor({
+                card: editCard,
+                disabled: editDialogBusy,
+                onChange: onEditChange,
+                allowedTypes,
+                regenAction: isGuest()
                   ? undefined
                   : {
                       busy: cardRegenBusy,
@@ -273,10 +287,9 @@ export function StudyCardActions({
                       onClick: () => {
                         void onRegenEditCard();
                       },
-                    }
-              }
-            />
-          ) : null}
+                    },
+              })
+            : null}
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
           <Button
