@@ -28,7 +28,8 @@ export {
   structureToQaFields,
   makeCardsStructureIds,
 } from "./structure/structureCard";
-export { default as TestYourself, type AnatomyStudyMode } from "./quiz/TestYourself";
+export type { AnatomyStudyMode } from "./anatomyStudyMode";
+export { default as TestYourself } from "./quiz/TestYourself";
 export { sessionAnatomyViewerEnabled } from "./viewer/anatomyViewerAccess";
 export { default as AnatomyClipBar } from "./viewer/AnatomyClipBar";
 export { default as AnatomyClipHud } from "./viewer/AnatomyClipHud";

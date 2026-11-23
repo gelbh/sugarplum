@@ -2,7 +2,7 @@ import { Mesh, type Material, type MeshStandardMaterial, type Object3D } from "t
 import {
   didacticColorFor,
   type DidacticTintKey,
-} from "./didacticPalette";
+} from "../didacticPalette";
 
 /** Overlay packs that must stay readable on top of textured skeleton bones. */
 const FORCE_TINT_REGIONS = new Set(["brachial-plexus"]);

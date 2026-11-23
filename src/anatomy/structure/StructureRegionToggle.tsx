@@ -7,7 +7,7 @@ import ViewInArOutlinedIcon from "@mui/icons-material/ViewInArOutlined";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
-import { didacticColorFor } from "../viewer/didacticPalette";
+import { didacticColorFor } from "../didacticPalette";
 import type { RegionDisplay } from "./regionDisplay";
 
 function regionIcon(id: string): ReactNode {
