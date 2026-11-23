@@ -16,7 +16,7 @@ export function genericShellBackHref(pathname: string): string | null {
 
 /**
  * In-app parent for the mobile Back control. Null on shell roots (Today,
- * Insights, Library, Atlas, Achievements, Settings, Study) even when browser
+ * Insights, Library, Atlas, Orchard, Settings, Study) even when browser
  * history is longer.
  */
 export function shellBackHref(pathname: string): string | null {
