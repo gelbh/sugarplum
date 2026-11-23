@@ -191,6 +191,7 @@ export function createWorkersAiAdapter(
     system: string,
     user: string,
     jsonShape: CompleteJsonShape = "cards",
+    gatewayCache?: CompleteInput["gatewayCache"],
   ): Promise<AiRunContent> {
     const preferredFormat = responseFormatForJsonShape(jsonShape);
     const base = {
@@ -212,7 +213,10 @@ export function createWorkersAiAdapter(
       const gateway = {
         gateway: {
           id: "sugarplum",
-          skipCache: true,
+          skipCache: gatewayCache?.skipCache ?? true,
+          ...(gatewayCache?.cacheTtl != null
+            ? { cacheTtl: gatewayCache.cacheTtl }
+            : {}),
         },
       };
 
@@ -254,6 +258,7 @@ export function createWorkersAiAdapter(
       input.system,
       input.user,
       input.jsonShape ?? "cards",
+      input.gatewayCache,
     );
     const usage = {
       prompt_tokens: run.promptTokens,

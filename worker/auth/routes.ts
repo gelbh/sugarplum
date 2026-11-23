@@ -73,6 +73,7 @@ function normalizeEmail(email: unknown): string | null {
 
 export const authRoutes = new Hono<AuthEnv>();
 
+// view-as: allow
 authRoutes.get("/turnstile", (c) => {
   const siteKey = c.env.TURNSTILE_SITE_KEY?.trim();
   if (!siteKey) {
@@ -81,6 +82,7 @@ authRoutes.get("/turnstile", (c) => {
   return c.json({ siteKey });
 });
 
+// view-as: deny
 authRoutes.post("/register", async (c) => {
   let body: { email?: unknown; password?: unknown; turnstileToken?: unknown };
   try {
@@ -145,6 +147,7 @@ authRoutes.post("/register", async (c) => {
   );
 });
 
+// view-as: deny
 authRoutes.post("/login", async (c) => {
   let body: { email?: unknown; password?: unknown; turnstileToken?: unknown };
   try {
@@ -196,11 +199,13 @@ authRoutes.post("/login", async (c) => {
   });
 });
 
+// view-as: allow
 authRoutes.post("/logout", async (c) => {
   await destroySession(c);
   return c.json({ ok: true });
 });
 
+// view-as: allow
 authRoutes.get("/me", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -343,6 +348,7 @@ function oauthCtxMatches(
 }
 
 /** Start Google OIDC (PKCE). Redirects the browser to Google. */
+// view-as: deny
 authRoutes.get("/google/start", async (c) => {
   const { clientId } = requireGoogleCreds(c.env);
   const intentRaw = c.req.query("intent");
@@ -401,6 +407,7 @@ async function consumeOAuthDone(
 }
 
 /** Google OAuth callback: login upsert or authenticated Settings link. */
+// view-as: deny
 authRoutes.get("/google/callback", async (c) => {
   const { clientId, clientSecret } = requireGoogleCreds(c.env);
   const appUrl = c.env.APP_URL;

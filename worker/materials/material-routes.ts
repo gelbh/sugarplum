@@ -86,6 +86,7 @@ async function discardProvisionalMaterialUpload(
 
 export const materialRoutes = new Hono<AppEnv>();
 
+// view-as: deny
 materialRoutes.post("/:id/figures/presign", async (c) => {
   const userId = await requireUser(c);
   const pdfMaterialId = c.req.param("id");
@@ -176,6 +177,7 @@ materialRoutes.post("/:id/figures/presign", async (c) => {
 });
 
 /** Session-gated media fetch by R2 key (owned material, or figure under owned PDF). */
+// view-as: allow
 materialRoutes.get("/media", async (c) => {
   const userId = await requireUser(c);
   const key = c.req.query("key")?.trim();
@@ -228,6 +230,7 @@ materialRoutes.get("/media", async (c) => {
   });
 });
 
+// view-as: allow
 materialRoutes.get("/:id/download", async (c) => {
   const userId = await requireUser(c);
   const materialId = c.req.param("id");
@@ -256,6 +259,7 @@ materialRoutes.get("/:id/download", async (c) => {
   });
 });
 
+// view-as: deny
 materialRoutes.delete("/:id", async (c) => {
   const userId = await requireUser(c);
   const materialId = c.req.param("id");
@@ -376,6 +380,7 @@ materialRoutes.delete("/:id", async (c) => {
   return c.body(null, 204);
 });
 
+// view-as: allow
 materialRoutes.get("/", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -394,6 +399,7 @@ materialRoutes.get("/", async (c) => {
   return c.json(results ?? []);
 });
 
+// view-as: deny
 materialRoutes.patch("/:id", async (c) => {
   const userId = await requireUser(c);
   const materialId = c.req.param("id");
@@ -433,6 +439,7 @@ materialRoutes.patch("/:id", async (c) => {
   });
 });
 
+// view-as: deny
 materialRoutes.post("/:id/complete", async (c) => {
   const userId = await requireUser(c);
   const materialId = c.req.param("id");
@@ -581,6 +588,7 @@ materialRoutes.post("/:id/complete", async (c) => {
   });
 });
 
+// view-as: deny
 materialRoutes.post("/:id/ocr-refetch", async (c) => {
   const userId = await requireUser(c);
   const materialId = c.req.param("id");
@@ -624,6 +632,7 @@ materialRoutes.post("/:id/ocr-refetch", async (c) => {
   });
 });
 
+// view-as: deny
 materialRoutes.post("/:id/ocr-pages", async (c) => {
   const userId = await requireUser(c);
   const materialId = c.req.param("id");

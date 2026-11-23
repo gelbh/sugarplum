@@ -126,7 +126,13 @@ export async function fillDraftFromClaim(args: {
       llm: llmBundle.llm,
       apiKey: llmBundle.apiKey,
       provider: llmBundle.provider,
+      model: llmBundle.model,
+      cache: args.env.CACHE,
     });
+
+    if (generated.servedFromCache) {
+      await llmBundle.releaseQuota().catch((e) => console.error(e));
+    }
 
     const linkedAfter = await db
       .prepare(`SELECT id FROM cards WHERE claim_id = ? LIMIT 1`)

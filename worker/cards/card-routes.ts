@@ -47,6 +47,7 @@ type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
 export const cardRoutes = new Hono<AppEnv>();
 
+// view-as: deny
 cardRoutes.patch("/:id", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");
@@ -170,6 +171,7 @@ cardRoutes.patch("/:id", async (c) => {
   );
 });
 
+// view-as: deny
 cardRoutes.post("/:id/accept", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");
@@ -206,6 +208,7 @@ cardRoutes.post("/:id/accept", async (c) => {
   });
 });
 
+// view-as: deny
 cardRoutes.post("/:id/reject", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");
@@ -242,6 +245,7 @@ cardRoutes.post("/:id/reject", async (c) => {
 });
 
 /** Undo accept or reject: put the card back into draft review. */
+// view-as: deny
 cardRoutes.post("/:id/undo-review", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");
@@ -284,6 +288,7 @@ cardRoutes.post("/:id/undo-review", async (c) => {
   );
 });
 
+// view-as: deny
 cardRoutes.post("/:id/move", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");
@@ -343,6 +348,7 @@ cardRoutes.post("/:id/move", async (c) => {
  * GENERATE_QUEUE consumer via processCardRegenOp. Quota reserved at process
  * time (not accept) so reconnect polls do not double-reserve.
  */
+// view-as: deny
 cardRoutes.post("/:id/regen", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");
@@ -455,6 +461,7 @@ cardRoutes.post("/:id/regen", async (c) => {
   return c.json({ op: { id: opId, status: "queued", cardId } }, 202);
 });
 
+// view-as: deny
 cardRoutes.post("/:id/archive", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");
@@ -487,6 +494,7 @@ cardRoutes.post("/:id/archive", async (c) => {
   );
 });
 
+// view-as: deny
 cardRoutes.delete("/:id", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");
@@ -521,6 +529,7 @@ cardRoutes.delete("/:id", async (c) => {
   return c.body(null, 204);
 });
 
+// view-as: deny
 cardRoutes.post("/:id/restore", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");
@@ -553,6 +562,7 @@ cardRoutes.post("/:id/restore", async (c) => {
   );
 });
 
+// view-as: deny
 cardRoutes.post("/:id/reset-schedule", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");

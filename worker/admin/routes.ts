@@ -63,6 +63,7 @@ type AdminOverviewJson = {
 
 export const adminRoutes = new Hono<AppEnv>();
 
+// view-as: allow
 adminRoutes.get("/overview", async (c) => {
   await requireAdmin(c);
 
@@ -114,6 +115,7 @@ adminRoutes.get("/overview", async (c) => {
   return c.json(body);
 });
 
+// view-as: allow
 adminRoutes.get("/users", async (c) => {
   await requireAdmin(c);
   const q = (c.req.query("q") ?? "").trim();
@@ -135,12 +137,14 @@ adminRoutes.get("/users", async (c) => {
   return c.json({ users });
 });
 
+// view-as: deny
 adminRoutes.post("/usage/backfill", async (c) => {
   await requireAdmin(c);
   const inserted = await backfillUsageEventsFromJobs(getDb(c.env));
   return c.json({ inserted });
 });
 
+// view-as: deny
 adminRoutes.post("/provenance/backfill", async (c) => {
   await requireAdmin(c);
   const raw = await c.req.text();
@@ -203,12 +207,14 @@ async function readAtlasScopeBody(c: Context<AppEnv>): Promise<{
   return { dry_run, userId, atlasId };
 }
 
+// view-as: deny
 adminRoutes.post("/atlas/heal-wiped-fields", async (c) => {
   await requireAdmin(c);
   const opts = await readAtlasScopeBody(c);
   return c.json(await runHealWipedFields(getDb(c.env), opts));
 });
 
+// view-as: deny
 adminRoutes.post("/atlas/backfill-field-overrides", async (c) => {
   await requireAdmin(c);
   const opts = await readAtlasScopeBody(c);
@@ -217,6 +223,7 @@ adminRoutes.post("/atlas/backfill-field-overrides", async (c) => {
 
 adminRoutes.route("/atlas/corrections", atlasCorrectionAdminRoutes);
 
+// view-as: allow
 adminRoutes.get("/users/:id", async (c) => {
   await requireAdmin(c);
   const id = c.req.param("id");
@@ -354,6 +361,7 @@ adminRoutes.get("/users/:id", async (c) => {
   return c.json(detail);
 });
 
+// view-as: deny
 adminRoutes.post("/users/:id/impersonate", async (c) => {
   await requireAdmin(c);
   const id = c.req.param("id");
@@ -361,12 +369,14 @@ adminRoutes.post("/users/:id/impersonate", async (c) => {
   return c.json({ ok: true, impersonation });
 });
 
+// view-as: allow
 adminRoutes.post("/impersonation/exit", async (c) => {
   await requireAdmin(c);
   await exitImpersonation(c);
   return c.json({ ok: true });
 });
 
+// view-as: deny
 adminRoutes.post("/users/:id/disable", async (c) => {
   await requireAdmin(c);
   const id = c.req.param("id");
@@ -382,6 +392,7 @@ adminRoutes.post("/users/:id/disable", async (c) => {
   return c.json({ id, disabled_at: disabledAt });
 });
 
+// view-as: deny
 adminRoutes.post("/users/:id/enable", async (c) => {
   await requireAdmin(c);
   const id = c.req.param("id");
@@ -395,6 +406,7 @@ adminRoutes.post("/users/:id/enable", async (c) => {
   return c.json({ id, disabled_at: null });
 });
 
+// view-as: deny
 adminRoutes.post("/users/:id/wipe", async (c) => {
   await requireAdmin(c);
   const id = c.req.param("id");
@@ -430,6 +442,7 @@ adminRoutes.post("/users/:id/wipe", async (c) => {
   return c.json({ ok: true });
 });
 
+// view-as: allow
 adminRoutes.get("/users/:id/export", async (c) => {
   await requireAdmin(c);
   const id = c.req.param("id");
