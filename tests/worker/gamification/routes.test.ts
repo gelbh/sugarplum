@@ -122,8 +122,8 @@ describe("gamification read APIs", () => {
     expect(plum!.progress).toEqual({
       kind: "composite",
       parts: [
-        { key: "streak_best", current: 0, target: 30 },
-        { key: "reviews", current: 0, target: 200 },
+        { key: "streak_best", current: 0, target: 60 },
+        { key: "reviews", current: 0, target: 2000 },
       ],
     });
   });
@@ -225,7 +225,7 @@ describe("gamification read APIs", () => {
       last_review: NOW,
     });
 
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 50; i++) {
       const day = String(1 + (i % 28)).padStart(2, "0");
       env.seedReviewLog({
         id: `rl-bf-${i}`,
@@ -273,8 +273,9 @@ describe("gamification read APIs", () => {
     expect(markerKeys).toHaveLength(1);
     expect(markerKeys[0]!.amount).toBe(0);
 
-    const ledgerBefore = env.getXpLedger().filter((e) => e.user_id === userId)
-      .length;
+    const ledgerBefore = env
+      .getXpLedger()
+      .filter((e) => e.user_id === userId).length;
     const completionCountBefore = env
       .getAchievementCompletions()
       .filter((c) => c.user_id === userId).length;
@@ -286,9 +287,9 @@ describe("gamification read APIs", () => {
     );
     expect(second.status).toBe(200);
 
-    expect(
-      env.getXpLedger().filter((e) => e.user_id === userId).length,
-    ).toBe(ledgerBefore);
+    expect(env.getXpLedger().filter((e) => e.user_id === userId).length).toBe(
+      ledgerBefore,
+    );
     expect(
       env.getAchievementCompletions().filter((c) => c.user_id === userId)
         .length,
@@ -369,7 +370,7 @@ describe("gamification read APIs", () => {
       last_review: NOW,
     });
 
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 14; i++) {
       const day = String(i + 1).padStart(2, "0");
       env.seedReviewLog({
         id: `rl-st-${i}`,
@@ -389,7 +390,9 @@ describe("gamification read APIs", () => {
     );
     expect(res.status).toBe(200);
     const body = (await res.json()) as { items: AchievementItem[] };
-    expect(body.items.find((i) => i.def.id === "streak_7")?.completedAt).toBeTruthy();
+    expect(
+      body.items.find((i) => i.def.id === "streak_7")?.completedAt,
+    ).toBeTruthy();
     expect(
       env
         .getAchievementCompletions()
@@ -405,8 +408,8 @@ describe("gamification read APIs", () => {
     expect(g.status).toBe(200);
     const gam = (await g.json()) as GamificationBody;
     expect(gam.streakCurrent).toBe(0);
-    expect(gam.streakBest).toBe(7);
-    expect(gam.streakDay).toBe("2025-01-07");
+    expect(gam.streakBest).toBe(14);
+    expect(gam.streakDay).toBe("2025-01-14");
   });
 
   it("GET /api/gamification returns defaults after ensure", async () => {
@@ -536,14 +539,28 @@ describe("gamification read APIs", () => {
          id, user_id, amount, reason, idempotency_key, created_at
        ) VALUES (?, ?, ?, ?, ?, ?)`,
     )
-      .bind("xl-a1", "user-a", 100, "test", "test:a1", "2026-01-06T10:00:00.000Z")
+      .bind(
+        "xl-a1",
+        "user-a",
+        100,
+        "test",
+        "test:a1",
+        "2026-01-06T10:00:00.000Z",
+      )
       .run();
     await env.DB.prepare(
       `INSERT OR IGNORE INTO xp_ledger (
          id, user_id, amount, reason, idempotency_key, created_at
        ) VALUES (?, ?, ?, ?, ?, ?)`,
     )
-      .bind("xl-b1", "user-b", 50, "test", "test:b1", "2026-01-07T10:00:00.000Z")
+      .bind(
+        "xl-b1",
+        "user-b",
+        50,
+        "test",
+        "test:b1",
+        "2026-01-07T10:00:00.000Z",
+      )
       .run();
     // Opted-out user XP must not appear
     await env.DB.prepare(
@@ -551,7 +568,14 @@ describe("gamification read APIs", () => {
          id, user_id, amount, reason, idempotency_key, created_at
        ) VALUES (?, ?, ?, ?, ?, ?)`,
     )
-      .bind("xl-c1", "user-c", 999, "test", "test:c1", "2026-01-06T10:00:00.000Z")
+      .bind(
+        "xl-c1",
+        "user-c",
+        999,
+        "test",
+        "test:c1",
+        "2026-01-06T10:00:00.000Z",
+      )
       .run();
     // Outside week
     await env.DB.prepare(
@@ -559,7 +583,14 @@ describe("gamification read APIs", () => {
          id, user_id, amount, reason, idempotency_key, created_at
        ) VALUES (?, ?, ?, ?, ?, ?)`,
     )
-      .bind("xl-a0", "user-a", 500, "test", "test:a0", "2025-12-29T10:00:00.000Z")
+      .bind(
+        "xl-a0",
+        "user-a",
+        500,
+        "test",
+        "test:a0",
+        "2025-12-29T10:00:00.000Z",
+      )
       .run();
 
     // Ensure gamification rows exist for ledger users (PATCH already did for a/b)

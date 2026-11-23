@@ -5,7 +5,10 @@ import {
   evaluateAfterAccept,
   evaluateAfterReview,
 } from "../../../worker/gamification/evaluate";
-import { onReviewGraded, onCardAccepted } from "../../../worker/gamification/onStudyEvent";
+import {
+  onReviewGraded,
+  onCardAccepted,
+} from "../../../worker/gamification/onStudyEvent";
 import { traitsForAchievement } from "../../../worker/gamification/traits";
 import { XP } from "../../../worker/gamification/constants";
 import {
@@ -269,6 +272,86 @@ function testDef(
     catalog_version: catalogVersion,
   };
 }
+
+describe("harder fruit ladder durability", () => {
+  const reviews25Threshold = ACHIEVEMENT_DEF_SEEDS.find(
+    (d) => d.id === "reviews_25",
+  )!.threshold!;
+
+  it("does not revoke a pre-seeded completion below the current threshold", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    const below = reviews25Threshold - 20;
+    for (let i = 0; i < below; i++) seedReview(env, `rl-keep-${i}`, "c1");
+    await env.DB.prepare(
+      `INSERT OR IGNORE INTO achievement_completions
+         (user_id, achievement_id, completed_at, trigger_event_id, backdated)
+       VALUES (?, ?, ?, ?, ?)`,
+    )
+      .bind("u1", "reviews_25", NOW, "rl-keep-0", 0)
+      .run();
+
+    await evaluateAfterReview(env.DB, "u1", {
+      reviewLogId: `rl-keep-${below - 1}`,
+      reviewedAt: new Date(NOW),
+    });
+
+    expect(
+      env
+        .getAchievementCompletions()
+        .some((c) => c.achievement_id === "reviews_25"),
+    ).toBe(true);
+    expect(
+      env
+        .getAchievementCompletions()
+        .some((c) => c.achievement_id === "reviews_100"),
+    ).toBe(false);
+  });
+
+  it("requires the live def threshold for incomplete medals", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    const below = reviews25Threshold - 10;
+    for (let i = 0; i < below; i++) seedReview(env, `rl-mid-${i}`, "c1");
+
+    await evaluateAfterReview(env.DB, "u1", {
+      reviewLogId: `rl-mid-${below - 1}`,
+      reviewedAt: new Date(NOW),
+    });
+
+    expect(
+      env
+        .getAchievementCompletions()
+        .some((c) => c.achievement_id === "reviews_25"),
+    ).toBe(false);
+    const mid = await env.DB.prepare(
+      `SELECT achievement_id, current_value, threshold
+       FROM achievement_progress WHERE user_id = ?`,
+    )
+      .bind("u1")
+      .all<{
+        achievement_id: string;
+        current_value: number;
+        threshold: number;
+      }>();
+    const reviews25 = mid.results.find(
+      (r) => r.achievement_id === "reviews_25",
+    );
+    expect(reviews25?.current_value).toBe(below);
+    expect(reviews25?.threshold).toBe(reviews25Threshold);
+
+    for (let i = below; i < reviews25Threshold; i++) {
+      seedReview(env, `rl-mid-${i}`, "c1");
+    }
+    const unlocks = await evaluateAfterReview(env.DB, "u1", {
+      reviewLogId: `rl-mid-${reviews25Threshold - 1}`,
+      reviewedAt: new Date(NOW),
+    });
+    expect(unlocks.unlocks.map((u) => u.id)).toContain("reviews_25");
+  });
+});
 
 describe("evaluateAchievements write discipline", () => {
   it("skips completed defs and writes only changed progress", async () => {
