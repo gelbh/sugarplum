@@ -1,17 +1,42 @@
+# Dependencies
 node_modules/
+
+# Build
 dist/
+
+# Cloudflare / Wrangler
 .wrangler/
+.mf/
 .dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# Env
 .env
 .env.*
 !.env.example
+
+# Tooling caches
+*.tsbuildinfo
+.eslintcache
+coverage/
+
+# Logs & OS
 *.log
 .DS_Store
+
+# Local scratch (OAuth demos, browser profiles, etc.)
+/tmp/
+
+# Asset (kept out of the repo)
 public/logo-photo.png
+
 # ONNX is loaded from pinned HF (not shipped; CF asset limit 25 MiB)
 public/models/*.onnx
+
 # Legacy ORT copies (runtime uses Vite-bundled onnxruntime-web/wasm)
 public/ort/
+
 # OCR (fetched on prebuild; pins in scripts/fetch-ocr-assets.mjs)
 public/ocr/worker.min.js
 public/ocr/core/
