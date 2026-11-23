@@ -425,8 +425,14 @@ describe("admin view-as impersonation", () => {
       env,
     );
     expect(wipe.status).toBe(403);
+    expect(wipe.headers.get("content-type")).toMatch(
+      /application\/problem\+json/i,
+    );
     expect(await wipe.json()).toMatchObject({
-      message: "Read-only while viewing as user",
+      type: "https://sugarplum.gelbhart.dev/problems/view-as-read-only",
+      title: "Read-only while viewing as user",
+      status: 403,
+      detail: "Read-only while viewing as user",
       code: "VIEW_AS_READ_ONLY",
     });
   });
