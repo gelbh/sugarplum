@@ -107,14 +107,19 @@ export async function rejectIfViewingAs(c: AdminContext): Promise<void> {
   }
 }
 
-/** GET paths that mutate identity / schedules / OAuth while view-as. */
+/** Exact GET paths that mutate identity / schedules / OAuth while view-as. */
+export const VIEW_AS_BLOCKED_GET_EXACT = [
+  "/api/calendar/connect",
+  "/api/calendar/callback",
+  "/api/settings/study/fsrs-optimize",
+] as const;
+
+/** Path prefixes blocked for GET while view-as. */
+export const VIEW_AS_BLOCKED_GET_PREFIXES = ["/api/auth/google"] as const;
+
 export function isViewAsBlockedGetPath(path: string): boolean {
-  return (
-    path.startsWith("/api/auth/google") ||
-    path === "/api/calendar/connect" ||
-    path === "/api/calendar/callback" ||
-    path === "/api/settings/study/fsrs-optimize"
-  );
+  if (VIEW_AS_BLOCKED_GET_PREFIXES.some((p) => path.startsWith(p))) return true;
+  return (VIEW_AS_BLOCKED_GET_EXACT as readonly string[]).includes(path);
 }
 
 export async function startImpersonation(
