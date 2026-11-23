@@ -1,4 +1,4 @@
-import type { StudyRating } from "../api/client";
+import type { StudyRating } from "./studyRating";
 
 /** User-facing FSRS grade copy (ratings stay 1–4 / Again–Easy under the hood). */
 export const GRADE_LABELS: Record<StudyRating, string> = {

@@ -7,7 +7,7 @@ import {
   guestRestoreCard,
 } from "../guest/store";
 import type { RejectReason } from "../draftReview/rejectReasons";
-import { clearDueCache } from "../study/dueCache";
+import { clearDueCache } from "../study/kernel";
 import { api, ApiError, guestUnsupported } from "./core";
 import { notifyGamificationChanged } from "./events";
 import type {
