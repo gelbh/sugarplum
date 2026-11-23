@@ -16,6 +16,7 @@ import {
   parseExportWarningsJson,
 } from "./types";
 import { resolveExportDeckIds } from "./resolveExportDecks";
+import { problemJsonResponse } from "../http/problemJson";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 type ExportRow = {
@@ -174,10 +175,13 @@ exportRoutes.post("/", async (c) => {
       createdAt,
       expiresAt,
     });
-    return c.json(
-      { message: emptyMessage, warnings: EMPTY_EXPORT_WARNINGS },
-      400,
-    );
+    return problemJsonResponse({
+      status: 400,
+      slug: "export-business",
+      title: emptyMessage,
+      detail: emptyMessage,
+      extensions: { warnings: EMPTY_EXPORT_WARNINGS },
+    });
   }
 
   const workload = await estimateExportWorkload(c.env, userId, deckIds);
@@ -253,7 +257,13 @@ exportRoutes.post("/", async (c) => {
   }
 
   if (result.kind === "business" || result.httpStatus === 400) {
-    return c.json({ message: result.error, warnings: result.warnings }, 400);
+    return problemJsonResponse({
+      status: 400,
+      slug: "export-business",
+      title: result.error,
+      detail: result.error,
+      extensions: { warnings: result.warnings },
+    });
   }
   if (result.kind === "not_found" || result.httpStatus === 404) {
     throw new HTTPException(404, { message: result.error });

@@ -10,6 +10,7 @@ export function problemJsonResponse(opts: {
   detail?: string;
   code?: string;
   slug: string;
+  extensions?: Record<string, unknown>;
 }): Response {
   const detail = opts.detail ?? opts.title;
   return Response.json(
@@ -19,6 +20,7 @@ export function problemJsonResponse(opts: {
       status: opts.status,
       detail,
       ...(opts.code ? { code: opts.code } : {}),
+      ...(opts.extensions ?? {}),
     },
     {
       status: opts.status,
