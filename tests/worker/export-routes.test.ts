@@ -103,8 +103,14 @@ describe("export routes", () => {
     );
 
     expect(response.status).toBe(400);
+    expect(response.headers.get("content-type")).toMatch(
+      /application\/problem\+json/i,
+    );
     expect(await response.json()).toEqual({
-      message: "No accepted cards to export",
+      type: "https://sugarplum.gelbhart.dev/problems/export-business",
+      title: "No accepted cards to export",
+      status: 400,
+      detail: "No accepted cards to export",
       warnings: { missingMedia: 0, skippedCards: 0 },
     });
   });
@@ -182,8 +188,14 @@ describe("export routes", () => {
     );
 
     expect(response.status).toBe(400);
+    expect(response.headers.get("content-type")).toMatch(
+      /application\/problem\+json/i,
+    );
     expect(await response.json()).toEqual({
-      message: "No exportable cards (1 skipped)",
+      type: "https://sugarplum.gelbhart.dev/problems/export-business",
+      title: "No exportable cards (1 skipped)",
+      status: 400,
+      detail: "No exportable cards (1 skipped)",
       warnings: { missingMedia: 0, skippedCards: 1 },
     });
   });
@@ -415,8 +427,15 @@ describe("export routes", () => {
     );
 
     expect(response.status).toBe(400);
+    expect(response.headers.get("content-type")).toMatch(
+      /application\/problem\+json/i,
+    );
     expect(await response.json()).toMatchObject({
-      message: "No decks to export",
+      type: "https://sugarplum.gelbhart.dev/problems/export-business",
+      title: "No decks to export",
+      status: 400,
+      detail: "No decks to export",
+      warnings: { missingMedia: 0, skippedCards: 0 },
     });
     expect(env.getExportJobs()[0]?.status).toBe("failed");
   });
@@ -460,8 +479,15 @@ describe("export routes", () => {
     );
 
     expect(response.status).toBe(400);
+    expect(response.headers.get("content-type")).toMatch(
+      /application\/problem\+json/i,
+    );
     expect(await response.json()).toMatchObject({
-      message: "No decks to export",
+      type: "https://sugarplum.gelbhart.dev/problems/export-business",
+      title: "No decks to export",
+      status: 400,
+      detail: "No decks to export",
+      warnings: { missingMedia: 0, skippedCards: 0 },
     });
   });
 
