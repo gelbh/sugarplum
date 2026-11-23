@@ -7,6 +7,7 @@ export const PROGRESS_STAGE_ORDER = [
   "generate",
   "critique",
   "persist",
+  "enrich",
 ] as const;
 
 const STAGE_HEADLINES: Record<(typeof PROGRESS_STAGE_ORDER)[number], string> = {
@@ -18,6 +19,7 @@ const STAGE_HEADLINES: Record<(typeof PROGRESS_STAGE_ORDER)[number], string> = {
   generate: "Writing cards",
   critique: "Reviewing your cards",
   persist: "Saving your cards",
+  enrich: "Filling coverage gaps",
 };
 
 const FALLBACK_HEADLINE = "Preparing your cards";
@@ -42,6 +44,7 @@ const STAGE_CHIP_LABELS: Record<(typeof PROGRESS_STAGE_ORDER)[number], string> =
     generate: "Write",
     critique: "Review",
     persist: "Save",
+    enrich: "Enrich",
   };
 
 export function shortStageChipLabel(stage: string): string {
@@ -84,11 +87,18 @@ export function formatEtaSubline(etaMs: number | null | undefined): string {
 /** Neutral wait copy: no queue-depth API, so do not claim another job is ahead. */
 const QUEUED_SUBLINE = "You'll start when a worker is free";
 
+/** Active stage with unknown ETA: honest wait, not "Calculating…". */
+const ACTIVE_WAIT_SUBLINE = "Still working…";
+
 export function formatProgressSubline(args: {
   stage?: string | null;
   etaMs?: number | null;
 }): string {
   if (args.stage === "queued") return QUEUED_SUBLINE;
+  if (args.etaMs == null) {
+    if (args.stage && args.stage !== "queued") return ACTIVE_WAIT_SUBLINE;
+    return "Calculating…";
+  }
   return formatEtaSubline(args.etaMs);
 }
 

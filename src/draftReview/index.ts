@@ -86,3 +86,5 @@ export type {
 export { friendlyJobError } from "./friendlyJobError";
 export { default as ClaimCoveragePanel } from "./ClaimCoveragePanel";
 export { useDraftReviewLoad } from "./useDraftReviewLoad";
+export { default as EnrichmentBanner } from "./EnrichmentBanner";
+export { shouldShowEnrichmentBanner } from "./enrichmentBannerVisibility";

@@ -20,8 +20,9 @@ export const CLIENT_STAGE_WEIGHTS: Record<string, number> = {
   rules: 0.05,
   claims: 0.15,
   generate: 0.2,
-  critique: 0.3,
-  persist: 0.1,
+  critique: 0.2,
+  persist: 0.05,
+  enrich: 0.15,
 };
 
 const CLIENT_STAGE_ORDER = Object.keys(CLIENT_STAGE_WEIGHTS);
@@ -59,8 +60,9 @@ function clientOverlayCoversPresent(
 
 /**
  * Mirror worker `effectiveWeights`: skipped catalog weights roll into generate
- * when present, else persist. Prefers a valid duration-share overlay when it
- * covers every non-queued present stage; else CLIENT_STAGE_WEIGHTS.
+ * when present, else enrich (post-persist), else persist. Prefers a valid
+ * duration-share overlay when it covers every non-queued present stage; else
+ * CLIENT_STAGE_WEIGHTS.
  */
 export function effectiveClientWeights(
   presentStages: readonly string[],
@@ -85,6 +87,8 @@ export function effectiveClientWeights(
   if (skipped > 0) {
     if (present.has("generate")) {
       weights.generate = (weights.generate ?? 0) + skipped;
+    } else if (present.has("enrich")) {
+      weights.enrich = (weights.enrich ?? 0) + skipped;
     } else if (present.has("persist")) {
       weights.persist = (weights.persist ?? 0) + skipped;
     }

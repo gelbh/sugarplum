@@ -67,6 +67,7 @@ import {
 import type { StoredClaim } from "./claims";
 import { putExtractSidecar } from "./extractSidecar";
 import { afterRunningJobTerminal } from "./jobTerminal";
+import { softCompleteGenerationJob } from "./softComplete";
 import { filterDraftsByQuality } from "./quality";
 import { harvestRuleDrafts } from "./rules";
 import { type CardDraft } from "./schema";
@@ -79,7 +80,7 @@ export { mergeAndDedupeDrafts };
 
 const IMAGE_BYO_REQUIRED = `Image generation requires an ${BYO_PROVIDERS_PHRASE} API key under Settings.`;
 
-function makeEmit(
+export function makeEmit(
   db: D1Database,
   jobId: string,
   presentStages: readonly ProgressStage[],
@@ -89,7 +90,7 @@ function makeEmit(
     startedAt?: string;
     weightOverlay?: Partial<Record<ProgressStage, number>> | null;
   },
-) {
+): JobProgressEmit {
   // Mutable accumulator merged into every progress write.
   // drafts_so_far stays unset until the first batch (avoids mid-job "0 cards left").
   let stages = presentStages;
@@ -218,6 +219,12 @@ function makeEmit(
     acc.free_gen_slots = Math.max(acc.free_gen_slots ?? 0, 1);
   }
 
+  function noteFreeGenSlots(slots: number) {
+    const n = Math.max(0, Math.trunc(slots));
+    acc.free_gen_slots = Math.max(acc.free_gen_slots ?? 0, n);
+    if (n >= 1) acc.free_gen_charged = true;
+  }
+
   return {
     emit,
     addEvent,
@@ -226,6 +233,7 @@ function makeEmit(
     setPath,
     setPresentStages,
     noteFreeGenCharged,
+    noteFreeGenSlots,
   };
 }
 
@@ -956,9 +964,15 @@ export async function runPass1Phase(
         drafts,
       });
     } catch (err) {
-      // Drafts are already in D1; leave running so afterPersist / soft-complete
-      // can recover without marking the job failed.
+      // Drafts are already in D1; soft-complete still opens review; afterPersist
+      // recovers when the sidecar is missing but cards exist.
       console.error("extract sidecar write failed after persist", jobId, err);
+    }
+    try {
+      await softCompleteGenerationJob(env, jobId, null);
+    } catch (err) {
+      // Drafts already persisted; leave status for sweeper / afterPersist heal.
+      console.error("soft-complete failed after persist", jobId, err);
     }
     return "done";
   } catch (err) {
