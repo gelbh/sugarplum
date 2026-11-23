@@ -76,7 +76,7 @@ app.use("/api/*", async (c, next) => {
   await next();
 });
 
-app.onError((err, c) => {
+app.onError((err, _c) => {
   if (err instanceof HTTPException) {
     if (err.res) return err.getResponse();
     return problemJsonResponse({
@@ -94,6 +94,7 @@ app.onError((err, c) => {
     slug: "internal-server-error",
   });
 });
+
 
 
 app.route("/api/auth", authRoutes);
