@@ -76,9 +76,10 @@ export async function handleGenerateQueue(
       await startGenerationWorkflow(env, msg.body);
       msg.ack();
     } catch (err) {
-      const label = isLegacyCardRegenBody(msg.body)
-        ? `legacy card regen ${msg.body.opId}`
-        : `generation workflow create failed ${msg.body.jobId}`;
+      const raw = msg.body as unknown;
+      const label = isLegacyCardRegenBody(raw)
+        ? `legacy card regen ${raw.opId}`
+        : `generation workflow create failed ${(msg.body as MaterialGenerateQueueMessage).jobId}`;
       console.error(label, err);
       msg.retry({ delaySeconds: GENERATE_QUEUE_RETRY_DELAY_SEC });
     }
