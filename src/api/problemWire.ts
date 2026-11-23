@@ -1,7 +1,9 @@
 /**
- * Shared API problem wire (RFC 9457 + legacy dual-read).
+ * Shared API problem wire (RFC 9457).
  * Imported by Worker emitters and the client parser.
  * Add new known codes to API_ERROR_CODES only.
+ * Flat `message` / `error` fields may still parse onto ApiErrorBody but are
+ * not used for human message text (see messageFromApiErrorBody).
  */
 import { z } from "zod";
 
@@ -79,5 +81,5 @@ export function messageFromApiErrorBody(
   data: ApiErrorBody,
   fallback: string,
 ): string {
-  return data.detail ?? data.title ?? data.message ?? data.error ?? fallback;
+  return data.detail ?? data.title ?? fallback;
 }
