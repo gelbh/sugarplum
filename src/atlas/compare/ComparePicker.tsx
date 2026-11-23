@@ -14,7 +14,7 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import type { Theme } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
-import { entryTitles } from "../entry/entryTitles";
+import { entryTitles } from "../lib/entryTitles";
 import {
   browseSections,
   matchesSearch,

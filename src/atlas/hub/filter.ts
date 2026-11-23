@@ -5,9 +5,28 @@ import {
   organCovers,
 } from "../../../worker/atlas/datasets/vocab";
 import { PARASITE_GROUPS } from "../../../worker/atlas/templates/parasite";
-import { entryTitles } from "../entry/entryTitles";
+import { entryTitles } from "../lib/entryTitles";
+import {
+  GROUP_LABELS,
+  TIER_LABELS,
+  TIER_ORDER,
+  hostSummary,
+  isTaxonTerm,
+  pppLabel,
+  termLabel,
+} from "../lib/labels";
 import { entryNameForms, searchable } from "./nameMatch";
 import type { AtlasEntryView, AtlasTier, ParasiteGroup } from "../types";
+
+export {
+  GROUP_LABELS,
+  TIER_LABELS,
+  TIER_ORDER,
+  hostSummary,
+  isTaxonTerm,
+  pppLabel,
+  termLabel,
+};
 
 export type TaxonomyRank = "phylum" | "order" | "family";
 
@@ -32,27 +51,8 @@ export const NO_FILTERS: AtlasFilters = {
   tier: null,
 };
 
-export const TIER_LABELS: Record<AtlasTier, string> = {
-  key: "Key",
-  frequent: "Frequent",
-  standard: "Standard",
-};
-
-export const TIER_ORDER: AtlasTier[] = ["key", "frequent", "standard"];
-
 export const focusActive = (entries: AtlasEntryView[]) =>
   entries.some((e) => e.tier !== null);
-
-export const GROUP_LABELS: Record<
-  ParasiteGroup,
-  { plural: string; common: string }
-> = {
-  protozoan: { plural: "Protozoa", common: "Single-celled parasites" },
-  nematode: { plural: "Nematodes", common: "Roundworms" },
-  cestode: { plural: "Cestodes", common: "Tapeworms" },
-  trematode: { plural: "Trematodes", common: "Flukes" },
-  arthropod: { plural: "Arthropods", common: "Mites, ticks and insects" },
-};
 
 export function matchesSearch(entry: AtlasEntryView, q: string): boolean {
   const needle = searchable(q);
@@ -371,27 +371,4 @@ export function organOptions(entries: AtlasEntryView[]): TermOption[] {
     ORGAN_TERMS,
     entries.flatMap((e) => (e.fields.majorOrgan ? [e.fields.majorOrgan] : [])),
   );
-}
-
-/** Vocabulary taxa ("Galba truncatula", "Radix") are capitalised; render them in italics. */
-export const isTaxonTerm = (term: string) => /^[A-Z]/.test(term);
-
-export const termLabel = (term: string) =>
-  isTaxonTerm(term) ? term : term[0].toUpperCase() + term.slice(1);
-
-export function hostSummary(hosts: string[], max = 2): string {
-  if (hosts.length === 0) return "";
-  const shown = hosts.slice(0, max).join(", ");
-  const rest = hosts.length - max;
-  const text = rest > 0 ? `${shown} +${rest}` : shown;
-  return isTaxonTerm(text) ? text : text[0].toUpperCase() + text.slice(1);
-}
-
-export function pppLabel(
-  ppp: { min: number; max: number } | null,
-): string | null {
-  if (ppp === null) return null;
-  return ppp.min === ppp.max
-    ? `${ppp.min} days`
-    : `${ppp.min} to ${ppp.max} days`;
 }

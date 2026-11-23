@@ -22,7 +22,7 @@ import AtlasImage, { heroImage } from "../hub/AtlasImage";
 import EntryFacts from "./EntryFacts";
 import EntryRail from "./EntryRail";
 import { entryMetaLine } from "./entryGlance";
-import { entryTitles } from "./entryTitles";
+import { entryTitles } from "../lib/entryTitles";
 import LifecycleBoard from "../lifecycle/LifecycleBoard";
 import {
   entryRefs,

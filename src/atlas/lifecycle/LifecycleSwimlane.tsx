@@ -6,7 +6,7 @@ import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { termLabel } from "../hub/filter";
+import { termLabel } from "../lib/labels";
 import LifecycleStageCell, { LANE_PX } from "./LifecycleStageCell";
 import TermList from "../entry/TermList";
 import type { DatasetFields } from "../types";

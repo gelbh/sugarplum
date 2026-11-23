@@ -5,7 +5,7 @@ import {
   restoreEntry,
 } from "../hub/apiSource";
 import { errMessage } from "./atlasMutateHelpers";
-import { entryTitles } from "../entry/entryTitles";
+import { entryTitles } from "../lib/entryTitles";
 import type { AtlasEntryView } from "../types";
 
 type Args = {

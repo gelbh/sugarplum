@@ -9,7 +9,7 @@ import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import AtlasImage, { heroImage } from "../hub/AtlasImage";
-import { entryTitles } from "./entryTitles";
+import { entryTitles } from "../lib/entryTitles";
 import NotInPackChip from "../hub/NotInPackChip";
 import type { RailSection } from "../hub/filter";
 import type { AtlasEntryView } from "../types";

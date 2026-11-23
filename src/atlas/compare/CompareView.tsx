@@ -10,7 +10,7 @@ import Typography from "@mui/material/Typography";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import AtlasImage, { heroImage } from "../hub/AtlasImage";
 import { compareRows, type CompareValue } from "./compare";
-import { entryTitles } from "../entry/entryTitles";
+import { entryTitles } from "../lib/entryTitles";
 import {
   byName,
   matchesSearch,

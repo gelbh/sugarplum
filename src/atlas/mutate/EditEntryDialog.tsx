@@ -29,9 +29,9 @@ import {
   ZOONOTIC_LABELS,
   isFieldKey,
 } from "../entry/entryFields";
-import { entryTitles } from "../entry/entryTitles";
+import { entryTitles } from "../lib/entryTitles";
 import { BAND_LABELS, REGION_LABELS } from "../hub/distributionTags";
-import { GROUP_LABELS } from "../hub/filter";
+import { GROUP_LABELS } from "../lib/labels";
 import { ALIAS_MAX_CHARS, ALIAS_MAX_ITEMS } from "../hub/nameMatch";
 import { shouldAutoFocusText } from "../../shared/lib/autoFocusText";
 import type { AtlasEntryView, FieldKey } from "../types";
