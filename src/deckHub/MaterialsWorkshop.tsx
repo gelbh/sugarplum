@@ -7,17 +7,21 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
 import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import ClearRoundedIcon from "@mui/icons-material/ClearRounded";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
 import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
 import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import SlideshowOutlinedIcon from "@mui/icons-material/SlideshowOutlined";
 import TextSnippetOutlinedIcon from "@mui/icons-material/TextSnippetOutlined";
 import ViewListOutlinedIcon from "@mui/icons-material/ViewListOutlined";
@@ -26,11 +30,33 @@ import type { MaterialListItem } from "../api/client";
 import { downloadMaterialUrl, mediaUrl } from "../api/client";
 import EmptyNext from "./EmptyNext";
 import {
+  materialMatchesWorkshopQuery,
+  normalizeWorkshopQuery,
+} from "./workshopSearch";
+import {
   PILL_BTN,
   ROW_ACTION,
   createWorkshopViewPref,
   type WorkshopViewMode,
 } from "./workshopChrome";
+
+const SEARCH_FIELD_SX = {
+  minWidth: 160,
+  maxWidth: 260,
+  flex: "1 1 160px",
+  "& .MuiOutlinedInput-root": {
+    color: "rgba(232, 216, 199, 0.88)",
+    bgcolor: "rgba(18, 7, 15, 0.35)",
+    borderRadius: 2,
+    "& fieldset": { borderColor: "rgba(232, 216, 199, 0.16)" },
+    "&:hover fieldset": { borderColor: "rgba(232, 216, 199, 0.28)" },
+    "&.Mui-focused fieldset": { borderColor: "rgba(209, 163, 226, 0.55)" },
+  },
+  "& .MuiInputBase-input::placeholder": {
+    color: "rgba(232, 216, 199, 0.42)",
+    opacity: 1,
+  },
+} as const;
 
 const { readViewMode, writeViewMode } = createWorkshopViewPref(
   "sugarplum.materialsWorkshop.view",
@@ -137,14 +163,19 @@ export default function MaterialsWorkshop({
   onDelete,
 }: Props) {
   const [view, setView] = useState<ViewMode>(() => readViewMode());
+  const [query, setQuery] = useState("");
   const [preview, setPreview] = useState<MaterialListItem | null>(null);
   const busy = busyId !== null;
+  const visible = materials.filter((m) => materialMatchesWorkshopQuery(m, query));
+  const searching = normalizeWorkshopQuery(query) !== "";
   const countLabel =
     materials.length === 0
       ? "No files yet"
-      : materials.length === 1
-        ? "1 file"
-        : `${materials.length} files`;
+      : searching
+        ? `${visible.length} of ${materials.length} files`
+        : materials.length === 1
+          ? "1 file"
+          : `${materials.length} files`;
 
   function onViewChange(_: unknown, next: ViewMode | null) {
     if (!next) return;
@@ -190,6 +221,51 @@ export default function MaterialsWorkshop({
           >
             {countLabel}
           </Typography>
+          {materials.length > 0 ? (
+            <TextField
+              type="search"
+              size="small"
+              placeholder="Search files…"
+              value={query}
+              onChange={(ev) => setQuery(ev.target.value)}
+              sx={SEARCH_FIELD_SX}
+              slotProps={{
+                htmlInput: {
+                  "aria-label": "Search files",
+                  "aria-controls": "materials-workshop-results",
+                },
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchRoundedIcon
+                        fontSize="small"
+                        sx={{ color: "rgba(232, 216, 199, 0.42)" }}
+                      />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searching ? (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        aria-label="Clear search"
+                        onClick={() => setQuery("")}
+                        edge="end"
+                        sx={{
+                          color: "rgba(232, 216, 199, 0.55)",
+                          "&:hover": {
+                            color: "primary.light",
+                            bgcolor: "rgba(91, 44, 111, 0.28)",
+                          },
+                        }}
+                      >
+                        <ClearRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : undefined,
+                },
+              }}
+            />
+          ) : null}
         </Stack>
 
         {materials.length > 0 ? (
@@ -238,8 +314,22 @@ export default function MaterialsWorkshop({
             primary={{ label: "Upload file", onClick: onUpload }}
           />
         )
+      ) : searching && visible.length === 0 ? (
+        <Box
+          id="materials-workshop-results"
+          sx={{
+            ...SURFACE,
+            px: 2.25,
+            py: 2.5,
+          }}
+        >
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            {`No files match "${query.trim()}"`}
+          </Typography>
+        </Box>
       ) : view === "icons" ? (
         <Box
+          id="materials-workshop-results"
           component="ul"
           sx={{
             m: 0,
@@ -250,7 +340,7 @@ export default function MaterialsWorkshop({
             gap: 1.25,
           }}
         >
-          {materials.map((material) => {
+          {visible.map((material) => {
             const title = materialTitle(material);
             const rowBusy = busyId === material.id;
             const openable = canOpenFile(material);
@@ -338,11 +428,12 @@ export default function MaterialsWorkshop({
         </Box>
       ) : (
         <Stack
+          id="materials-workshop-results"
           component="ul"
           spacing={0.75}
           sx={{ m: 0, p: 0, listStyle: "none" }}
         >
-          {materials.map((material) => {
+          {visible.map((material) => {
             const title = materialTitle(material);
             const metaParts = [
               kindLabel(material.kind),
