@@ -4,6 +4,29 @@
  * type-only): those edges poison CF worker graphs that touch this entry.
  * Worker insights stay on study leaves (allowlisted). Product UI uses ./index.ts.
  */
+export type { StudyRating } from "./studyRating";
+export type {
+  CardType,
+  CardDraftView,
+  OcclusionFrontView,
+} from "./cardDraftView";
+export {
+  clearDueCache,
+  saveDueCache,
+  loadDueCache,
+  pruneDueCacheCard,
+  filterDueExcludingPending,
+  dueCacheKey,
+  dueScopeFromSearch,
+  type DueScopeOpts,
+  type DueCacheSnapshot,
+} from "./dueCache";
+export {
+  gradeColorVars,
+  gradeChartFill,
+  type GradeColorVars,
+} from "./gradeColors";
+export { GRADE_LABELS, gradeLabelMultiline } from "./gradeLabels";
 export { pendingCardIdSet, clearPendingGrades, type PendingGrade } from "./pendingGrades";
 export { STUDY_MEDIA_CACHE } from "./studyMediaCache";
 export {

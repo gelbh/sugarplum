@@ -6,9 +6,11 @@ import {
 import type { GuestImportPayload } from "../guest/importPayload";
 import { GUEST_USER, isGuest } from "../guest/session";
 import { ensureGuestStore } from "../guest/store";
-import { clearDueCache } from "../study/dueCache";
-import { clearPendingGrades } from "../study/kernel";
-import { STUDY_MEDIA_CACHE } from "../study/kernel";
+import {
+  clearDueCache,
+  clearPendingGrades,
+  STUDY_MEDIA_CACHE,
+} from "../study/kernel";
 import { api } from "./core";
 import type { AuthUser } from "./types";
 
