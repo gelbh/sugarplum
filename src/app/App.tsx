@@ -94,6 +94,14 @@ function AnatomySceneRoute({
   );
 }
 
+/** Legacy Fruits URL: paint Orchard, then replace the path (no mid-render navigate). */
+function LegacyOrchardRoute() {
+  useEffect(() => {
+    navigateReplace("/orchard");
+  }, []);
+  return <AchievementsPage />;
+}
+
 function matchPage(path: string, search: string): ReactNode {
   if (path === "/" || path === "") return bare(<HomePage />);
   if (path === "/login") return bare(<LoginPage />);
@@ -153,10 +161,7 @@ function matchPage(path: string, search: string): ReactNode {
   }
 
   if (path === "/settings") return shell(<SettingsPage />);
-  if (path === "/achievements") {
-    navigateReplace("/orchard");
-    return null;
-  }
+  if (path === "/achievements") return shell(<LegacyOrchardRoute />);
   if (path === "/orchard") return shell(<AchievementsPage />);
   // Remount when search changes so scoped study does not freeze the old filter.
   if (path === "/study") {
