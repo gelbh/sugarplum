@@ -1,4 +1,4 @@
-import { clearDueCache } from "../study/dueCache";
+import { clearDueCache } from "../study/kernel";
 import { exitGuest, GUEST_USER_ID } from "./session";
 import { clearGuestStore } from "./store";
 
