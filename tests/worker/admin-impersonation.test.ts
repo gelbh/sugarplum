@@ -5,6 +5,7 @@ import {
   parseSessionRecord,
   SESSION_COOKIE,
 } from "../../worker/auth/session";
+import { VIEW_AS_READ_ONLY_CODE } from "../../src/api/problemWire";
 import { createTestEnv } from "./test-env";
 
 const ADMIN_EMAIL = "ops@example.com";
@@ -442,7 +443,7 @@ describe("admin view-as impersonation", () => {
       title: "Read-only while viewing as user",
       status: 403,
       detail: "Read-only while viewing as user",
-      code: "VIEW_AS_READ_ONLY",
+      code: VIEW_AS_READ_ONLY_CODE,
     });
   });
 

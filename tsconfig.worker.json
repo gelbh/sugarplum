@@ -15,6 +15,7 @@
     "src/study/localDay.ts",
     "src/achievements/wire.ts",
     "src/achievements/catalog.ts",
-    "src/achievements/traits.ts"
+    "src/achievements/traits.ts",
+    "src/api/problemWire.ts"
   ]
 }
