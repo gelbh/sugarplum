@@ -8,6 +8,7 @@
  * Workflow inspect: same pattern via installWorkflowRecorders (create/get/terminate
  * recording). Prefer HTTP/app.request asserts when instance introspection is enough (§D).
  */
+import { applyD1Migrations, reset } from "cloudflare:test";
 import type { Env } from "../../worker/env";
 import type { AchievementDefSeed } from "./gamification-seeds";
 
@@ -442,7 +443,14 @@ export function withTestBindings(
 export async function seedUser(env: Bindings, row: UserRow): Promise<void> {
   await env.DB.prepare(
     `INSERT INTO users (id, email, password_hash, oauth_subject, created_at, disabled_at, sandbox_of)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       email = excluded.email,
+       password_hash = excluded.password_hash,
+       oauth_subject = excluded.oauth_subject,
+       created_at = excluded.created_at,
+       disabled_at = excluded.disabled_at,
+       sandbox_of = excluded.sandbox_of`,
   )
     .bind(
       row.id,
@@ -461,7 +469,11 @@ export async function seedSubject(
   row: SubjectRow,
 ): Promise<void> {
   await env.DB.prepare(
-    `INSERT INTO subjects (id, user_id, title, created_at) VALUES (?, ?, ?, ?)`,
+    `INSERT INTO subjects (id, user_id, title, created_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       user_id = excluded.user_id,
+       title = excluded.title,
+       created_at = excluded.created_at`,
   )
     .bind(row.id, row.user_id, row.title, row.created_at)
     .run();
@@ -470,7 +482,13 @@ export async function seedSubject(
 export async function seedDeck(env: Bindings, row: DeckRow): Promise<void> {
   await env.DB.prepare(
     `INSERT INTO decks (id, user_id, title, subject_hint, subject_id, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       user_id = excluded.user_id,
+       title = excluded.title,
+       subject_hint = excluded.subject_hint,
+       subject_id = excluded.subject_id,
+       created_at = excluded.created_at`,
   )
     .bind(
       row.id,
@@ -490,7 +508,17 @@ export async function seedMaterial(
   await env.DB.prepare(
     `INSERT INTO materials
        (id, deck_id, kind, r2_key, filename, page_count, status, created_at, content_hash, source_role)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       deck_id = excluded.deck_id,
+       kind = excluded.kind,
+       r2_key = excluded.r2_key,
+       filename = excluded.filename,
+       page_count = excluded.page_count,
+       status = excluded.status,
+       created_at = excluded.created_at,
+       content_hash = excluded.content_hash,
+       source_role = excluded.source_role`,
   )
     .bind(
       row.id,
@@ -510,7 +538,12 @@ export async function seedMaterial(
 export async function seedAtlas(env: Bindings, row: AtlasRow): Promise<void> {
   await env.DB.prepare(
     `INSERT INTO atlases (id, user_id, template_key, created_at, focus_pack_fingerprint)
-     VALUES (?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       user_id = excluded.user_id,
+       template_key = excluded.template_key,
+       created_at = excluded.created_at,
+       focus_pack_fingerprint = excluded.focus_pack_fingerprint`,
   )
     .bind(
       row.id,
@@ -529,7 +562,17 @@ export async function seedAtlasMaterial(
   await env.DB.prepare(
     `INSERT INTO atlas_materials
        (id, atlas_id, kind, r2_key, filename, page_count, status, created_at, content_hash, source_role)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       atlas_id = excluded.atlas_id,
+       kind = excluded.kind,
+       r2_key = excluded.r2_key,
+       filename = excluded.filename,
+       page_count = excluded.page_count,
+       status = excluded.status,
+       created_at = excluded.created_at,
+       content_hash = excluded.content_hash,
+       source_role = excluded.source_role`,
   )
     .bind(
       row.id,
@@ -578,7 +621,13 @@ export async function seedUserSecret(
 ): Promise<void> {
   await env.DB.prepare(
     `INSERT INTO user_secrets (user_id, provider, ciphertext, model, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(user_id) DO UPDATE SET
+       provider = excluded.provider,
+       ciphertext = excluded.ciphertext,
+       model = excluded.model,
+       created_at = excluded.created_at,
+       updated_at = excluded.updated_at`,
   )
     .bind(
       row.user_id,
@@ -600,7 +649,19 @@ export async function seedUserStudyPrefs(
        (user_id, intro_budget, review_budget, r_floor, desired_retention, enable_fuzz,
         enable_load_balance, easy_days_json, fsrs_w_json, fsrs_last_optimized_at,
         fsrs_optimize_pending, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(user_id) DO UPDATE SET
+       intro_budget = excluded.intro_budget,
+       review_budget = excluded.review_budget,
+       r_floor = excluded.r_floor,
+       desired_retention = excluded.desired_retention,
+       enable_fuzz = excluded.enable_fuzz,
+       enable_load_balance = excluded.enable_load_balance,
+       easy_days_json = excluded.easy_days_json,
+       fsrs_w_json = excluded.fsrs_w_json,
+       fsrs_last_optimized_at = excluded.fsrs_last_optimized_at,
+       fsrs_optimize_pending = excluded.fsrs_optimize_pending,
+       updated_at = excluded.updated_at`,
   )
     .bind(
       row.user_id,
@@ -625,7 +686,9 @@ export async function seedUserStudyDay(
   row: UserStudyDayRow,
 ): Promise<void> {
   await env.DB.prepare(
-    `INSERT INTO user_study_day (user_id, day, intros_used) VALUES (?, ?, ?)`,
+    `INSERT INTO user_study_day (user_id, day, intros_used) VALUES (?, ?, ?)
+     ON CONFLICT(user_id, day) DO UPDATE SET
+       intros_used = excluded.intros_used`,
   )
     .bind(row.user_id, row.day, row.intros_used)
     .run();
@@ -637,7 +700,21 @@ export async function seedCard(env: Bindings, row: CardRow): Promise<void> {
        id, deck_id, job_id, type, front_json, back_json,
        media_r2_keys_json, provenance_json, status, reject_reason,
        created_at, updated_at, claim_id, content_fp
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       deck_id = excluded.deck_id,
+       job_id = excluded.job_id,
+       type = excluded.type,
+       front_json = excluded.front_json,
+       back_json = excluded.back_json,
+       media_r2_keys_json = excluded.media_r2_keys_json,
+       provenance_json = excluded.provenance_json,
+       status = excluded.status,
+       reject_reason = excluded.reject_reason,
+       created_at = excluded.created_at,
+       updated_at = excluded.updated_at,
+       claim_id = excluded.claim_id,
+       content_fp = excluded.content_fp`,
   )
     .bind(
       row.id,
@@ -666,7 +743,17 @@ export async function seedStudyClaim(
     `INSERT INTO study_claims (
        id, job_id, deck_id, subject, predicate, source_span,
        object, qualifiers_json, pages_json, created_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       job_id = excluded.job_id,
+       deck_id = excluded.deck_id,
+       subject = excluded.subject,
+       predicate = excluded.predicate,
+       source_span = excluded.source_span,
+       object = excluded.object,
+       qualifiers_json = excluded.qualifiers_json,
+       pages_json = excluded.pages_json,
+       created_at = excluded.created_at`,
   )
     .bind(
       row.id,
@@ -690,7 +777,15 @@ export async function seedCardRegenOp(
   await env.DB.prepare(
     `INSERT INTO card_regen_ops
        (id, card_id, user_id, regen_type, status, error, created_at, finished_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       card_id = excluded.card_id,
+       user_id = excluded.user_id,
+       regen_type = excluded.regen_type,
+       status = excluded.status,
+       error = excluded.error,
+       created_at = excluded.created_at,
+       finished_at = excluded.finished_at`,
   )
     .bind(
       row.id,
@@ -714,7 +809,20 @@ export async function seedGenerationJob(
        id, material_id, status, error, coverage_json, progress_json,
        created_at, finished_at, figure_extract_mode, topic_hints_json,
        avoid_patterns_json, run_topic_hints_json, atlas_provenance_json
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       material_id = excluded.material_id,
+       status = excluded.status,
+       error = excluded.error,
+       coverage_json = excluded.coverage_json,
+       progress_json = excluded.progress_json,
+       created_at = excluded.created_at,
+       finished_at = excluded.finished_at,
+       figure_extract_mode = excluded.figure_extract_mode,
+       topic_hints_json = excluded.topic_hints_json,
+       avoid_patterns_json = excluded.avoid_patterns_json,
+       run_topic_hints_json = excluded.run_topic_hints_json,
+       atlas_provenance_json = excluded.atlas_provenance_json`,
   )
     .bind(
       row.id,
@@ -742,7 +850,17 @@ export async function seedUsageEvent(
     `INSERT INTO usage_events (
        id, user_id, job_id, kind, path, provider,
        tokens_prompt, tokens_completion, tokens_total, created_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       user_id = excluded.user_id,
+       job_id = excluded.job_id,
+       kind = excluded.kind,
+       path = excluded.path,
+       provider = excluded.provider,
+       tokens_prompt = excluded.tokens_prompt,
+       tokens_completion = excluded.tokens_completion,
+       tokens_total = excluded.tokens_total,
+       created_at = excluded.created_at`,
   )
     .bind(
       row.id,
@@ -767,7 +885,17 @@ export async function seedExportJob(
     `INSERT INTO export_jobs
        (id, user_id, status, request_json, r2_key, error, warning_json,
         created_at, updated_at, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       user_id = excluded.user_id,
+       status = excluded.status,
+       request_json = excluded.request_json,
+       r2_key = excluded.r2_key,
+       error = excluded.error,
+       warning_json = excluded.warning_json,
+       created_at = excluded.created_at,
+       updated_at = excluded.updated_at,
+       expires_at = excluded.expires_at`,
   )
     .bind(
       row.id,
@@ -792,7 +920,19 @@ export async function seedSchedule(
     `INSERT INTO card_schedules (
        card_id, due, stability, difficulty, elapsed_days, scheduled_days,
        learning_steps, reps, lapses, state, last_review, stability_fast
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(card_id) DO UPDATE SET
+       due = excluded.due,
+       stability = excluded.stability,
+       difficulty = excluded.difficulty,
+       elapsed_days = excluded.elapsed_days,
+       scheduled_days = excluded.scheduled_days,
+       learning_steps = excluded.learning_steps,
+       reps = excluded.reps,
+       lapses = excluded.lapses,
+       state = excluded.state,
+       last_review = excluded.last_review,
+       stability_fast = excluded.stability_fast`,
   )
     .bind(
       row.card_id,
@@ -818,7 +958,14 @@ export async function seedReviewLog(
   await env.DB.prepare(
     `INSERT INTO review_logs (
        id, card_id, rating, scheduled_days, elapsed_days, reviewed_at, state_json
-     ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+     ) VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       card_id = excluded.card_id,
+       rating = excluded.rating,
+       scheduled_days = excluded.scheduled_days,
+       elapsed_days = excluded.elapsed_days,
+       reviewed_at = excluded.reviewed_at,
+       state_json = excluded.state_json`,
   )
     .bind(
       row.id,
@@ -888,7 +1035,22 @@ export async function seedUserGamification(
        user_id, streak_current, streak_best, streak_day, xp_total, level,
        display_name, board_opt_in, updated_at, clear_due_days, clear_due_last_day,
        catalog_version, streak_freezes, daily_goal_reviews, daily_goal_day
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(user_id) DO UPDATE SET
+       streak_current = excluded.streak_current,
+       streak_best = excluded.streak_best,
+       streak_day = excluded.streak_day,
+       xp_total = excluded.xp_total,
+       level = excluded.level,
+       display_name = excluded.display_name,
+       board_opt_in = excluded.board_opt_in,
+       updated_at = excluded.updated_at,
+       clear_due_days = excluded.clear_due_days,
+       clear_due_last_day = excluded.clear_due_last_day,
+       catalog_version = excluded.catalog_version,
+       streak_freezes = excluded.streak_freezes,
+       daily_goal_reviews = excluded.daily_goal_reviews,
+       daily_goal_day = excluded.daily_goal_day`,
   )
     .bind(
       row.user_id,
@@ -908,4 +1070,287 @@ export async function seedUserGamification(
       row.daily_goal_day,
     )
     .run();
+}
+
+/** Wipe storage + re-apply migrations (per-file D1 is shared across `it`s). */
+export async function resetTestDb(env: Bindings): Promise<void> {
+  clearQueueMessages();
+  clearWorkflowMessages();
+  clearAdminOverviewPrepareCount();
+  clearProgressWrites();
+  await reset();
+  await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
+}
+
+export type FreeGenUsageRow = {
+  user_id: string;
+  day: string;
+  used: number;
+};
+
+export type AchievementCompletionRow = {
+  user_id: string;
+  achievement_id: string;
+  completed_at: string;
+  trigger_event_id: string | null;
+  backdated: number;
+};
+
+export type XpLedgerRow = {
+  id: string;
+  user_id: string;
+  amount: number;
+  reason: string;
+  idempotency_key: string;
+  created_at: string;
+};
+
+export type AchievementProgressRow = {
+  user_id: string;
+  achievement_id: string;
+  current_value: number;
+  threshold: number;
+};
+
+async function selectAll<T extends Record<string, unknown>>(
+  env: Bindings,
+  sql: string,
+): Promise<T[]> {
+  const { results } = await env.DB.prepare(sql).all<T>();
+  return results ?? [];
+}
+
+export async function getUsers(env: Bindings): Promise<UserRow[]> {
+  return selectAll(
+    env,
+    `SELECT id, email, password_hash, oauth_subject, created_at, disabled_at, sandbox_of
+     FROM users`,
+  );
+}
+
+export async function getDecks(env: Bindings): Promise<DeckRow[]> {
+  return selectAll(
+    env,
+    `SELECT id, user_id, title, subject_hint, subject_id, created_at FROM decks`,
+  );
+}
+
+export async function getMaterials(env: Bindings): Promise<MaterialRow[]> {
+  return selectAll(
+    env,
+    `SELECT id, deck_id, kind, r2_key, filename, page_count, status, created_at,
+            content_hash, source_role
+     FROM materials`,
+  );
+}
+
+export async function getAtlases(env: Bindings): Promise<AtlasRow[]> {
+  return selectAll(
+    env,
+    `SELECT id, user_id, template_key, created_at, focus_pack_fingerprint FROM atlases`,
+  );
+}
+
+export async function getAtlasMaterials(
+  env: Bindings,
+): Promise<AtlasMaterialRow[]> {
+  return selectAll(
+    env,
+    `SELECT id, atlas_id, kind, r2_key, filename, page_count, status, created_at,
+            content_hash, source_role
+     FROM atlas_materials`,
+  );
+}
+
+export async function getExportJobs(env: Bindings): Promise<ExportJobRow[]> {
+  return selectAll(
+    env,
+    `SELECT id, user_id, status, request_json, r2_key, error, warning_json,
+            created_at, updated_at, expires_at
+     FROM export_jobs`,
+  );
+}
+
+export async function getGenerationJobs(
+  env: Bindings,
+): Promise<GenerationJobRow[]> {
+  return selectAll(
+    env,
+    `SELECT id, material_id, status, error, coverage_json, progress_json,
+            created_at, finished_at, figure_extract_mode, topic_hints_json,
+            avoid_patterns_json, run_topic_hints_json, atlas_provenance_json
+     FROM generation_jobs`,
+  );
+}
+
+export async function getUserSecrets(env: Bindings): Promise<UserSecretRow[]> {
+  return selectAll(
+    env,
+    `SELECT user_id, provider, ciphertext, model, created_at, updated_at
+     FROM user_secrets`,
+  );
+}
+
+export async function getUserStudyPrefs(
+  env: Bindings,
+): Promise<UserStudyPrefsRow[]> {
+  return selectAll(
+    env,
+    `SELECT user_id, intro_budget, review_budget, r_floor, desired_retention,
+            enable_fuzz, enable_load_balance, easy_days_json, fsrs_w_json,
+            fsrs_last_optimized_at, fsrs_optimize_pending, updated_at
+     FROM user_study_prefs`,
+  );
+}
+
+export async function getCards(env: Bindings): Promise<CardRow[]> {
+  return selectAll(
+    env,
+    `SELECT id, deck_id, job_id, type, front_json, back_json, media_r2_keys_json,
+            provenance_json, status, reject_reason, created_at, updated_at,
+            claim_id, content_fp
+     FROM cards`,
+  );
+}
+
+export async function getStudyClaims(env: Bindings): Promise<StudyClaimRow[]> {
+  return selectAll(
+    env,
+    `SELECT id, job_id, deck_id, subject, predicate, source_span, object,
+            qualifiers_json, pages_json, created_at
+     FROM study_claims`,
+  );
+}
+
+export async function getCardRegenOps(
+  env: Bindings,
+): Promise<CardRegenOpRow[]> {
+  return selectAll(
+    env,
+    `SELECT id, card_id, user_id, regen_type, status, error, created_at, finished_at
+     FROM card_regen_ops`,
+  );
+}
+
+export async function getReviewLogs(env: Bindings): Promise<ReviewLogRow[]> {
+  return selectAll(
+    env,
+    `SELECT id, card_id, rating, scheduled_days, elapsed_days, reviewed_at, state_json
+     FROM review_logs`,
+  );
+}
+
+export async function getUsageEvents(env: Bindings): Promise<UsageEventRow[]> {
+  return selectAll(
+    env,
+    `SELECT id, user_id, job_id, kind, path, provider, tokens_prompt,
+            tokens_completion, tokens_total, created_at
+     FROM usage_events`,
+  );
+}
+
+export async function getFreeGenUsageRows(
+  env: Bindings,
+): Promise<FreeGenUsageRow[]> {
+  return selectAll(env, `SELECT user_id, day, used FROM free_gen_usage`);
+}
+
+export async function getAchievementCompletions(
+  env: Bindings,
+): Promise<AchievementCompletionRow[]> {
+  return selectAll(
+    env,
+    `SELECT user_id, achievement_id, completed_at, trigger_event_id, backdated
+     FROM achievement_completions`,
+  );
+}
+
+export async function getXpLedger(env: Bindings): Promise<XpLedgerRow[]> {
+  return selectAll(
+    env,
+    `SELECT id, user_id, amount, reason, idempotency_key, created_at FROM xp_ledger`,
+  );
+}
+
+export async function getAchievementProgress(
+  env: Bindings,
+): Promise<AchievementProgressRow[]> {
+  return selectAll(
+    env,
+    `SELECT user_id, achievement_id, current_value, threshold FROM achievement_progress`,
+  );
+}
+
+export async function getUserGamification(
+  env: Bindings,
+  userId: string,
+): Promise<UserGamificationRow | undefined> {
+  const row = await env.DB.prepare(
+    `SELECT user_id, streak_current, streak_best, streak_day, xp_total, level,
+            display_name, board_opt_in, updated_at, clear_due_days, clear_due_last_day,
+            catalog_version, streak_freezes, daily_goal_reviews, daily_goal_day
+     FROM user_gamification WHERE user_id = ?`,
+  )
+    .bind(userId)
+    .first<UserGamificationRow>();
+  return row ?? undefined;
+}
+
+let adminOverviewPrepareCount = 0;
+const progressWrites: string[] = [];
+
+export function clearAdminOverviewPrepareCount(): void {
+  adminOverviewPrepareCount = 0;
+}
+
+export function getAdminOverviewPrepareCount(): number {
+  return adminOverviewPrepareCount;
+}
+
+/** Count prepares whose SQL includes the admin-overview marker comment. */
+export function installAdminOverviewPrepareCounter(env: Bindings): Bindings {
+  const db = env.DB;
+  return {
+    ...env,
+    DB: {
+      ...db,
+      prepare(query: string) {
+        if (query.includes("sugarplum:admin-overview")) {
+          adminOverviewPrepareCount += 1;
+        }
+        return db.prepare(query);
+      },
+    } as D1Database,
+  };
+}
+
+export function clearProgressWrites(): void {
+  progressWrites.length = 0;
+}
+
+export function getProgressWrites(): string[] {
+  return [...progressWrites];
+}
+
+/** Record achievement_progress UPSERT targets (evaluate write-discipline tests). */
+export function installProgressWriteRecorder(env: Bindings): Bindings {
+  const db = env.DB;
+  return {
+    ...env,
+    DB: {
+      ...db,
+      prepare(query: string) {
+        const stmt = db.prepare(query);
+        if (query.includes("INSERT INTO achievement_progress")) {
+          const originalBind = stmt.bind.bind(stmt);
+          stmt.bind = (...args: unknown[]) => {
+            // UPSERT_PROGRESS binds: user_id, achievement_id, current_value, threshold
+            if (typeof args[1] === "string") progressWrites.push(args[1]);
+            return originalBind(...args);
+          };
+        }
+        return stmt;
+      },
+    } as D1Database,
+  };
 }

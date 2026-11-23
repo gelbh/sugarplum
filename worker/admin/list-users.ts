@@ -88,7 +88,11 @@ SELECT u.id, u.email, u.created_at, u.oauth_subject, u.disabled_at,
   COALESCE(ue.tokens_30d, 0) AS tokens_30d,
   COALESCE(ue.free_jobs_30d, 0) AS free_jobs_30d,
   COALESCE(ue.byo_jobs_30d, 0) AS byo_jobs_30d,
-  MAX(ue.last_usage_at, us.last_study_at, u.created_at) AS last_activity_at
+  (SELECT MAX(v) FROM (
+     SELECT ue.last_usage_at AS v
+     UNION ALL SELECT us.last_study_at
+     UNION ALL SELECT u.created_at
+   )) AS last_activity_at
 FROM users u
 LEFT JOIN (
   SELECT user_id, COUNT(*) AS deck_count FROM decks
@@ -164,7 +168,11 @@ SELECT u.id, u.email, u.created_at, u.oauth_subject, u.disabled_at,
   COALESCE(ue.tokens_30d, 0) AS tokens_30d,
   COALESCE(ue.free_jobs_30d, 0) AS free_jobs_30d,
   COALESCE(ue.byo_jobs_30d, 0) AS byo_jobs_30d,
-  MAX(ue.last_usage_at, us.last_study_at, u.created_at) AS last_activity_at
+  (SELECT MAX(v) FROM (
+     SELECT ue.last_usage_at AS v
+     UNION ALL SELECT us.last_study_at
+     UNION ALL SELECT u.created_at
+   )) AS last_activity_at
 FROM users u
 LEFT JOIN (
   SELECT user_id, COUNT(*) AS deck_count FROM decks GROUP BY user_id
@@ -252,12 +260,19 @@ export async function fetchAdminUserList(
     if (page.length === 0) return [];
 
     const ids = page.map((r) => r.id);
-    const metrics = metricsSqlForIds(ids, opts.cutoff30);
-    const { results: metricRows } = await db
-      .prepare(metrics.sql)
-      .bind(...metrics.binds)
-      .all<ListRow>();
-    const byId = new Map((metricRows ?? []).map((r) => [r.id, r]));
+    // D1 caps bound parameters (~100). metricsSqlForIds repeats ids 7× + 3 cutoffs.
+    const METRICS_ID_CHUNK = 12;
+    const metricRows: ListRow[] = [];
+    for (let i = 0; i < ids.length; i += METRICS_ID_CHUNK) {
+      const chunk = ids.slice(i, i + METRICS_ID_CHUNK);
+      const metrics = metricsSqlForIds(chunk, opts.cutoff30);
+      const { results } = await db
+        .prepare(metrics.sql)
+        .bind(...metrics.binds)
+        .all<ListRow>();
+      metricRows.push(...(results ?? []));
+    }
+    const byId = new Map(metricRows.map((r) => [r.id, r]));
     const ordered: ListRow[] = ids.map((id) => {
       const hit = byId.get(id);
       const leanRow = page.find((r) => r.id === id)!;

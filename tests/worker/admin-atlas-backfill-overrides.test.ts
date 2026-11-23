@@ -1,34 +1,45 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedSession,
+  seedUser,
+  withTestBindings,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { loadParasiteDataset } from "../../worker/atlas/datasets/parasites/index";
 import type { AtlasEntryView } from "../../src/atlas/types";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const ADMIN_EMAIL = "ops@example.com";
 const URL = "/api/admin/atlas/backfill-field-overrides";
-type Env = ReturnType<typeof createTestEnv>;
+type Env = Bindings;
 
 const fasciola = () =>
   loadParasiteDataset().entries.find((e) => e.key === "fasciola-hepatica")!;
 
-function seed(env: Env) {
-  env.seedUser({
+async function seed(env: Env) {
+  await seedUser(env, {
     id: "admin-u",
     email: ADMIN_EMAIL,
     password_hash: null,
     oauth_subject: "google-admin",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-admin", "admin-u");
-  env.seedUser({
+  await seedSession(env, "sess-admin", "admin-u");
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
 }
 
 async function atlasWithLegacyRow(
@@ -97,20 +108,20 @@ async function fasciolaView(env: Env, atlasId: string) {
 
 describe("POST /api/admin/atlas/backfill-field-overrides", () => {
   it("rejects non-admins", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seed(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seed(env);
     expect((await post(env, "sess-a", {})).status).toBe(403);
   });
 
   it("requires a scope when dry_run is false", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seed(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seed(env);
     expect((await post(env, "sess-admin", { dry_run: false })).status).toBe(400);
   });
 
   it("dry_run (the default) reports counts and writes nothing", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seed(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seed(env);
     const atlasId = await atlasWithLegacyRow(env);
     const res = await post(env, "sess-admin", { atlasId });
     expect(res.status).toBe(200);
@@ -127,8 +138,8 @@ describe("POST /api/admin/atlas/backfill-field-overrides", () => {
   });
 
   it("writes the legacy diff, keeps the view, and is idempotent", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seed(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seed(env);
     const atlasId = await atlasWithLegacyRow(env);
     const first = await post(env, "sess-admin", { atlasId, dry_run: false });
     expect(await first.json()).toMatchObject({ converted: 1, dry_run: false });
@@ -160,8 +171,8 @@ describe("POST /api/admin/atlas/backfill-field-overrides", () => {
   });
 
   it("keeps a learner's own common name and leaves dry runs untouched", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seed(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seed(env);
     const atlasId = await atlasWithLegacyRow(env, { commonName: "Sheep fluke" });
     await post(env, "sess-admin", { atlasId });
     expect((await overridesOf(env)).common_name).toBe("Sheep fluke");
@@ -170,8 +181,8 @@ describe("POST /api/admin/atlas/backfill-field-overrides", () => {
   });
 
   it("backfills a copy differing only by a missing nested default to {}", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seed(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seed(env);
     const dataset = fasciola();
     expect(dataset.fields.lifecycleStages.length).toBeGreaterThan(0);
     // Written before lifecycle stages carried imageId.
@@ -190,8 +201,8 @@ describe("POST /api/admin/atlas/backfill-field-overrides", () => {
   });
 
   it("heals wiped fields from the dataset before converting", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seed(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seed(env);
     const dataset = fasciola();
     expect(dataset.fields.distribution).not.toBeNull();
     const atlasId = await atlasWithLegacyRow(env, {
@@ -213,8 +224,8 @@ describe("POST /api/admin/atlas/backfill-field-overrides", () => {
   });
 
   it("skips and counts a row whose fields_json cannot be parsed", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seed(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seed(env);
     const atlasId = await atlasWithLegacyRow(env, { fieldsJson: "{not json" });
     const res = await post(env, "sess-admin", { atlasId, dry_run: false });
     expect(await res.json()).toEqual({

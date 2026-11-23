@@ -1,35 +1,47 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedSession,
+  seedSubject,
+  seedUser,
+  withTestBindings,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { emptyParasiteFields } from "../../worker/atlas/templates/parasite";
 import { loadParasiteDataset } from "../../worker/atlas/datasets/parasites/index";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const ADMIN_EMAIL = "ops@example.com";
 const LEARNER_ID = "user-a";
 const ADMIN_ID = "admin-u";
 
-function seedAdmin(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+async function seedAdmin(env: Bindings) {
+  await seedUser(env, {
     id: ADMIN_ID,
     email: ADMIN_EMAIL,
     password_hash: null,
     oauth_subject: "google-admin",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-admin", ADMIN_ID);
+  await seedSession(env, "sess-admin", ADMIN_ID);
 }
 
-function seedLearnerWithAtlas(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+async function seedLearnerWithAtlas(env: Bindings) {
+  await seedUser(env, {
     id: LEARNER_ID,
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", LEARNER_ID);
-  env.seedSubject({
+  await seedSession(env, "sess-a", LEARNER_ID);
+  await seedSubject(env, {
     id: "sub-1",
     user_id: LEARNER_ID,
     title: "Parasitology",
@@ -37,7 +49,7 @@ function seedLearnerWithAtlas(env: ReturnType<typeof createTestEnv>) {
   });
 }
 
-async function createAtlas(env: ReturnType<typeof createTestEnv>) {
+async function createAtlas(env: Bindings) {
   const res = await app.request(
     "/api/atlas",
     {
@@ -52,8 +64,8 @@ async function createAtlas(env: ReturnType<typeof createTestEnv>) {
 
 describe("POST /api/admin/atlas/heal-wiped-fields", () => {
   it("400 when dry_run:false without userId or atlasId", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdmin(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdmin(env);
     const res = await app.request(
       "/api/admin/atlas/heal-wiped-fields",
       {
@@ -70,8 +82,8 @@ describe("POST /api/admin/atlas/heal-wiped-fields", () => {
   });
 
   it("403 for non-admin", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedLearnerWithAtlas(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedLearnerWithAtlas(env);
     const res = await app.request(
       "/api/admin/atlas/heal-wiped-fields",
       {
@@ -88,9 +100,9 @@ describe("POST /api/admin/atlas/heal-wiped-fields", () => {
   });
 
   it("defaults dry_run and reports healed without writing", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdmin(env);
-    seedLearnerWithAtlas(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdmin(env);
+    await seedLearnerWithAtlas(env);
     const { id: atlasId } = await createAtlas(env);
     const dataset = loadParasiteDataset().entries.find(
       (e) => e.key === "fasciola-hepatica",
@@ -152,9 +164,9 @@ describe("POST /api/admin/atlas/heal-wiped-fields", () => {
   });
 
   it("dry_run:false updates fields_json and second run healed===0", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdmin(env);
-    seedLearnerWithAtlas(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdmin(env);
+    await seedLearnerWithAtlas(env);
     const { id: atlasId } = await createAtlas(env);
     const dataset = loadParasiteDataset().entries.find(
       (e) => e.key === "fasciola-hepatica",
@@ -228,9 +240,9 @@ describe("POST /api/admin/atlas/heal-wiped-fields", () => {
   });
 
   it("skips rows that already store field overrides", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdmin(env);
-    seedLearnerWithAtlas(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdmin(env);
+    await seedLearnerWithAtlas(env);
     const { id: atlasId } = await createAtlas(env);
     const dataset = loadParasiteDataset().entries.find(
       (e) => e.key === "fasciola-hepatica",
