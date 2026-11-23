@@ -274,11 +274,16 @@ function testDef(
 }
 
 describe("harder fruit ladder durability", () => {
-  it("keeps an unlocked medal after its threshold rises", async () => {
+  const reviews25Threshold = ACHIEVEMENT_DEF_SEEDS.find(
+    (d) => d.id === "reviews_25",
+  )!.threshold!;
+
+  it("does not revoke a pre-seeded completion below the current threshold", async () => {
     const env = createTestEnv();
     seedStudyUser(env);
     seedAcceptedCard(env, { id: "c1", due: FUTURE });
-    for (let i = 0; i < 30; i++) seedReview(env, `rl-keep-${i}`, "c1");
+    const below = reviews25Threshold - 20;
+    for (let i = 0; i < below; i++) seedReview(env, `rl-keep-${i}`, "c1");
     await env.DB.prepare(
       `INSERT OR IGNORE INTO achievement_completions
          (user_id, achievement_id, completed_at, trigger_event_id, backdated)
@@ -288,7 +293,7 @@ describe("harder fruit ladder durability", () => {
       .run();
 
     await evaluateAfterReview(env.DB, "u1", {
-      reviewLogId: "rl-keep-29",
+      reviewLogId: `rl-keep-${below - 1}`,
       reviewedAt: new Date(NOW),
     });
 
@@ -304,14 +309,15 @@ describe("harder fruit ladder durability", () => {
     ).toBe(false);
   });
 
-  it("requires the new threshold for incomplete medals", async () => {
+  it("requires the live def threshold for incomplete medals", async () => {
     const env = createTestEnv();
     seedStudyUser(env);
     seedAcceptedCard(env, { id: "c1", due: FUTURE });
-    for (let i = 0; i < 40; i++) seedReview(env, `rl-mid-${i}`, "c1");
+    const below = reviews25Threshold - 10;
+    for (let i = 0; i < below; i++) seedReview(env, `rl-mid-${i}`, "c1");
 
     await evaluateAfterReview(env.DB, "u1", {
-      reviewLogId: "rl-mid-39",
+      reviewLogId: `rl-mid-${below - 1}`,
       reviewedAt: new Date(NOW),
     });
 
@@ -333,12 +339,14 @@ describe("harder fruit ladder durability", () => {
     const reviews25 = mid.results.find(
       (r) => r.achievement_id === "reviews_25",
     );
-    expect(reviews25?.current_value).toBe(40);
-    expect(reviews25?.threshold).toBe(50);
+    expect(reviews25?.current_value).toBe(below);
+    expect(reviews25?.threshold).toBe(reviews25Threshold);
 
-    for (let i = 40; i < 50; i++) seedReview(env, `rl-mid-${i}`, "c1");
+    for (let i = below; i < reviews25Threshold; i++) {
+      seedReview(env, `rl-mid-${i}`, "c1");
+    }
     const unlocks = await evaluateAfterReview(env.DB, "u1", {
-      reviewLogId: "rl-mid-49",
+      reviewLogId: `rl-mid-${reviews25Threshold - 1}`,
       reviewedAt: new Date(NOW),
     });
     expect(unlocks.unlocks.map((u) => u.id)).toContain("reviews_25");
