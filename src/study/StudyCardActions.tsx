@@ -21,7 +21,7 @@ import {
   regenCard,
   type CardDraftView,
 } from "../api/client";
-import { cardPatchBody } from "../draftReview/cardPatchBody";
+import { cardPatchBody } from "../draftReview/kernel";
 import DraftCardEditor, {
   type DraftEditorChange,
 } from "../draftReview/DraftCardEditor";

@@ -20,7 +20,7 @@ import {
 import {
   occlusionMaskScrollTop,
   type OcclusionMaskBox,
-} from "../deckHub/occlusionLayout";
+} from "../deckHub/kernel";
 import { CardFaceMcqBody } from "./cardFaceMcq";
 import ClozePrompt from "./ClozePrompt";
 import { FaceOverline } from "./faceOverline";
