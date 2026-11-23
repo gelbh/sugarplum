@@ -165,7 +165,10 @@ export default function DraftReviewPage() {
     let cancelled = false;
     let inFlight = false;
     let sawEnrichBanner = false;
+    let idleWaitingForEnrich = 0;
     let nextTimer: ReturnType<typeof setTimeout> | undefined;
+    /** ~30s of persist/null with no enrich → stop (gap-fill skipped). */
+    const IDLE_ENRICH_TICKS = 20;
     const tick = async () => {
       if (cancelled || inFlight) return;
       inFlight = true;
@@ -188,14 +191,24 @@ export default function DraftReviewPage() {
           current: progress?.current,
           total: progress?.total,
         });
-        if (showBanner) sawEnrichBanner = true;
+        if (showBanner) {
+          sawEnrichBanner = true;
+          idleWaitingForEnrich = 0;
+        } else if (progress?.stage === "enrich") {
+          idleWaitingForEnrich = 0;
+        } else {
+          idleWaitingForEnrich += 1;
+        }
         const enrichJustFinished =
           sawEnrichBanner && !showBanner && job.status === "needs_review";
         // Skip draft reload while the user has unsaved edits.
         if (!dirty && (showBanner || enrichJustFinished)) {
           await load(jobId);
         }
-        if (enrichJustFinished) {
+        if (
+          enrichJustFinished ||
+          (!sawEnrichBanner && idleWaitingForEnrich >= IDLE_ENRICH_TICKS)
+        ) {
           keepPolling = false;
           setEnrichPollDone(true);
         }

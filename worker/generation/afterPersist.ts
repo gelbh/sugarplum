@@ -188,12 +188,14 @@ async function finalizeAfterPersist(
   }
 
   const finishedAt = new Date().toISOString();
-  // Soft-complete already set needs_review; refresh coverage only when still that job.
+  // Prefer soft-complete's needs_review; still flip running→needs_review if soft-complete missed.
   const updated = await db
     .prepare(
-      "UPDATE generation_jobs SET error = NULL, coverage_json = ?, finished_at = ? WHERE id = ? AND status = ?",
+      `UPDATE generation_jobs
+       SET status = ?, error = NULL, coverage_json = ?, finished_at = ?
+       WHERE id = ? AND status IN ('running', 'needs_review')`,
     )
-    .bind(coverageJson, finishedAt, args.jobId, "needs_review")
+    .bind("needs_review", coverageJson, finishedAt, args.jobId)
     .run();
   if ((updated.meta.changes ?? 0) > 0) {
     await afterRunningJobTerminal(env, args.jobId);
