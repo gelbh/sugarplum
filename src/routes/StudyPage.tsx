@@ -48,6 +48,7 @@ import {
   sessionSurface,
 } from "../study";
 import { hubDiyTypes } from "../deckHub";
+import { DraftCardEditor } from "../draftReview";
 import { useLearningRequeue } from "../study";
 import { usePendingGradeSync } from "../study";
 import { useStudyImmersion } from "../study";
@@ -571,6 +572,7 @@ export default function StudyPage() {
                 offlineCopy={offlineCopy}
                 userId={userId}
                 allowedTypes={hubDiyTypes(isGuest())}
+                renderDraftCardEditor={(args) => <DraftCardEditor {...args} />}
                 onDialogOpen={onCardDialogOpen}
                 onSaved={(updated) => {
                   replaceQueuedCard(updated);

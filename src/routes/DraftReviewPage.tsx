@@ -17,6 +17,7 @@ import HighlightOffRoundedIcon from "@mui/icons-material/HighlightOffRounded";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
 import { ReviewCard } from "../study";
+import { OcclusionRegionEditor } from "../draftReview";
 import {
   asRegenType,
   cardHasRegenSource,
@@ -726,6 +727,9 @@ export default function DraftReviewPage() {
                     disabled={busy || cardRegenBusy}
                     onChange={onEditorChange}
                     onDecide={onDecide}
+                    renderOcclusionRegionEditor={({ front, onChange }) => (
+                      <OcclusionRegionEditor front={front} onChange={onChange} />
+                    )}
                     regen={{
                       busy: cardRegenBusy,
                       disabled:
