@@ -102,6 +102,10 @@
         "queue": "sugarplum-generate",
       },
       {
+        "binding": "CARD_REGEN_QUEUE",
+        "queue": "sugarplum-card-regen",
+      },
+      {
         "binding": "EXPORT_QUEUE",
         "queue": "sugarplum-export",
       },
@@ -113,6 +117,14 @@
         // 2 is the locked modest ceiling from the queue-responsiveness design
         "max_concurrency": 2,
         // Keep in sync with GENERATE_QUEUE_* in worker/generation/progress.ts
+        "max_retries": 21,
+        "retry_delay": 60,
+      },
+      {
+        "queue": "sugarplum-card-regen",
+        "max_batch_size": 1,
+        // 2C: omit max_concurrency so Cloudflare autoscales
+        // Keep in sync with CARD_REGEN_QUEUE_* in worker/generation/card-regen-op.ts
         "max_retries": 21,
         "retry_delay": 60,
       },

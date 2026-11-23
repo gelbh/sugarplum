@@ -33,6 +33,13 @@ import { WorkersAiCapacityError } from "./workers-ai";
 
 const STUDY_STRUGGLE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
+/** Must match wrangler sugarplum-card-regen consumers.retry_delay. */
+export const CARD_REGEN_QUEUE_RETRY_DELAY_SEC = 60;
+
+/** Must match wrangler sugarplum-card-regen consumers.max_retries. */
+export const CARD_REGEN_QUEUE_MAX_RETRIES =
+  Math.ceil(RUNNING_JOB_STALE_MS / 1000 / CARD_REGEN_QUEUE_RETRY_DELAY_SEC) + 1;
+
 export const STALE_CARD_REGEN_FAIL_ERROR =
   "Card regeneration stalled and was stopped. Try regenerating again.";
 

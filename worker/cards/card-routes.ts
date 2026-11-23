@@ -345,7 +345,7 @@ cardRoutes.post("/:id/move", async (c) => {
 
 /**
  * Single-card regen: enqueue async op (202). LLM + UPDATE run in the
- * GENERATE_QUEUE consumer via processCardRegenOp. Quota reserved at process
+ * CARD_REGEN_QUEUE consumer via processCardRegenOp. Quota reserved at process
  * time (not accept) so reconnect polls do not double-reserve.
  */
 // view-as: deny
@@ -409,7 +409,7 @@ cardRoutes.post("/:id/regen", async (c) => {
         userId,
         type: regenType,
       });
-      if (!c.env.GENERATE_QUEUE) {
+      if (!c.env.CARD_REGEN_QUEUE) {
         c.executionCtx.waitUntil(
           processCardRegenOp(c.env, {
             kind: "cardRegen",
@@ -450,7 +450,7 @@ cardRoutes.post("/:id/regen", async (c) => {
   await enqueueCardRegen(c.env, message);
   // Without a queue binding (some local/test harnesses), process inline so
   // the op cannot sit forever in queued.
-  if (!c.env.GENERATE_QUEUE) {
+  if (!c.env.CARD_REGEN_QUEUE) {
     c.executionCtx.waitUntil(
       processCardRegenOp(c.env, message).catch((err) =>
         console.error("inline card regen failed", opId, err),

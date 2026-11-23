@@ -1,10 +1,15 @@
 import type { Env } from "../env";
 import type {
+  CardRegenQueueMessage,
   GenerateQueueMessage,
   MaterialGenerateQueueMessage,
 } from "./enqueue";
 import { failStaleRunningJobs } from "./staleFail";
-import { failStaleCardRegenOps, processCardRegenOp } from "./card-regen-op";
+import {
+  CARD_REGEN_QUEUE_RETRY_DELAY_SEC,
+  failStaleCardRegenOps,
+  processCardRegenOp,
+} from "./card-regen-op";
 import { GENERATE_QUEUE_RETRY_DELAY_SEC } from "./progress";
 import { insertDraftCards } from "./gap-fill";
 export { insertDraftCards };
@@ -45,14 +50,34 @@ export async function processGenerateJob(
   return after;
 }
 
+function isLegacyCardRegenBody(
+  body: unknown,
+): body is CardRegenQueueMessage {
+  return (
+    typeof body === "object" &&
+    body !== null &&
+    (body as { kind?: unknown }).kind === "cardRegen"
+  );
+}
+
+function safeErrorType(err: unknown): string {
+  return err instanceof Error ? err.name : typeof err;
+}
+
+/** Consumer may still see in-flight cardRegen after cutover; producer stays material-only. */
+export type GenerateConsumerMessage =
+  | GenerateQueueMessage
+  | CardRegenQueueMessage;
+
 /** Cloudflare Queues consumer: create Workflow + ack; sweep stale orphans. */
 export async function handleGenerateQueue(
-  batch: MessageBatch<GenerateQueueMessage>,
+  batch: MessageBatch<GenerateConsumerMessage>,
   env: Env,
 ): Promise<void> {
   for (const msg of batch.messages) {
     try {
-      if (msg.body.kind === "cardRegen") {
+      // Deploy compat: drain in-flight cardRegen still on sugarplum-generate.
+      if (isLegacyCardRegenBody(msg.body)) {
         await processCardRegenOp(env, msg.body);
         msg.ack();
         continue;
@@ -60,14 +85,29 @@ export async function handleGenerateQueue(
       await startGenerationWorkflow(env, msg.body);
       msg.ack();
     } catch (err) {
-      const label =
-        msg.body.kind === "cardRegen"
-          ? `card regen ${msg.body.opId}`
-          : `generation workflow create failed ${msg.body.jobId}`;
-      console.error(label, err);
+      const label = isLegacyCardRegenBody(msg.body)
+        ? `legacy card regen ${msg.body.opId}`
+        : `generation workflow create failed ${msg.body.jobId}`;
+      console.error(label, safeErrorType(err));
       msg.retry({ delaySeconds: GENERATE_QUEUE_RETRY_DELAY_SEC });
     }
   }
   await failStaleRunningJobs(env);
+}
+
+/** Dedicated card-regen consumer; does not share GENERATE_QUEUE slots. */
+export async function handleCardRegenQueue(
+  batch: MessageBatch<CardRegenQueueMessage>,
+  env: Env,
+): Promise<void> {
+  for (const msg of batch.messages) {
+    try {
+      await processCardRegenOp(env, msg.body);
+      msg.ack();
+    } catch (err) {
+      console.error(`card regen ${msg.body.opId}`, safeErrorType(err));
+      msg.retry({ delaySeconds: CARD_REGEN_QUEUE_RETRY_DELAY_SEC });
+    }
+  }
   await failStaleCardRegenOps(env);
 }

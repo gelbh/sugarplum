@@ -23,9 +23,8 @@ export type CardRegenQueueMessage = {
   type: "qa" | "cloze" | "mcq";
 };
 
-export type GenerateQueueMessage =
-  | MaterialGenerateQueueMessage
-  | CardRegenQueueMessage;
+/** Material generate only; card regen uses CARD_REGEN_QUEUE. */
+export type GenerateQueueMessage = MaterialGenerateQueueMessage;
 
 function newId(): string {
   return crypto.randomUUID();
@@ -108,7 +107,7 @@ export async function enqueueCardRegen(
   env: Env,
   message: CardRegenQueueMessage,
 ): Promise<void> {
-  if (env.GENERATE_QUEUE) {
-    await env.GENERATE_QUEUE.send(message);
+  if (env.CARD_REGEN_QUEUE) {
+    await env.CARD_REGEN_QUEUE.send(message);
   }
 }

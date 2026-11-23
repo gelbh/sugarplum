@@ -311,6 +311,7 @@ export type TestEnv = Env & {
   getUsageEvents: () => UsageEventRow[];
   getFreeGenUsageRows: () => FreeGenUsageRow[];
   getQueueMessages: () => unknown[];
+  getCardRegenQueueMessages: () => unknown[];
   getExportQueueMessages: () => unknown[];
   getAdminOverviewPrepareCount: () => number;
   clearCache: () => void;
@@ -330,6 +331,8 @@ export function createTestEnv(opts?: {
   anatomyViewerEmails?: string;
   /** When false, omit EXPORT_QUEUE binding (503 path). Default true. */
   exportQueue?: boolean;
+  /** When false, omit CARD_REGEN_QUEUE (inline waitUntil path). Default true. */
+  cardRegenQueue?: boolean;
 }): TestEnv {
   const users = new Map<string, UserRow>();
   const subjects = new Map<string, SubjectRow>();
@@ -397,6 +400,7 @@ export function createTestEnv(opts?: {
   const exportJobs = new Map<string, ExportJobRow>();
   const r2 = new Map<string, string | ArrayBuffer>();
   const queueMessages: unknown[] = [];
+  const cardRegenQueueMessages: unknown[] = [];
   const exportQueueMessages: unknown[] = [];
 
   const gamificationState = initGamificationState(
@@ -5601,6 +5605,15 @@ export function createTestEnv(opts?: {
         queueMessages.push(body);
       },
     } as unknown as Queue,
+    ...(opts?.cardRegenQueue === false
+      ? {}
+      : {
+          CARD_REGEN_QUEUE: {
+            send: async (body: unknown) => {
+              cardRegenQueueMessages.push(body);
+            },
+          } as unknown as Queue,
+        }),
     GENERATION_WORKFLOW: {
       create: async (options?: { id?: string; params?: unknown }) => {
         const id = options?.id ?? crypto.randomUUID();
@@ -5807,6 +5820,7 @@ export function createTestEnv(opts?: {
     getUsageEvents: () => [...usageEvents.values()],
     getFreeGenUsageRows: () => [...freeGenUsage.values()],
     getQueueMessages: () => [...queueMessages],
+    getCardRegenQueueMessages: () => [...cardRegenQueueMessages],
     getExportQueueMessages: () => [...exportQueueMessages],
     getAdminOverviewPrepareCount: () => adminOverviewPrepareCount,
     clearCache: () => {
