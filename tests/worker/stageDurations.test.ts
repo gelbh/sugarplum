@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   STAGE_DURATION_KV_KEY,
+  STAGE_WEIGHT_OVERLAY_MIN_N,
+  computeDurationShareWeights,
   deriveStageDurationsMs,
   mergeStageDurationRollup,
   percentileMs,
   readEtaPriors,
+  readStageWeightOverlay,
   recordStageDurationsBestEffort,
+  resetStageWeightOverlayCacheForTests,
 } from "../../worker/generation/stageDurations";
 import type { Env } from "../../worker/env";
 
@@ -161,5 +165,111 @@ describe("recordStageDurationsBestEffort", () => {
 
     await recordStageDurationsBestEffort(env, "job-fail");
     expect(await readEtaPriors(kv)).toBeNull();
+  });
+});
+
+describe("computeDurationShareWeights", () => {
+  it("returns null when any present stage has n below gate", () => {
+    const out = computeDurationShareWeights({
+      extract: { samples_ms: [1, 2, 3, 4], p50_ms: 10_000 },
+      persist: {
+        samples_ms: [1, 2, 3, 4, 5],
+        p50_ms: 30_000,
+      },
+    });
+    expect(out).toBeNull();
+  });
+
+  it("shares match p50 proportions when every present stage meets n gate", () => {
+    const out = computeDurationShareWeights({
+      extract: {
+        samples_ms: [1, 2, 3, 4, 5],
+        p50_ms: 10_000,
+      },
+      persist: {
+        samples_ms: [1, 2, 3, 4, 5],
+        p50_ms: 30_000,
+      },
+    });
+    expect(out).not.toBeNull();
+    expect(out!.extract).toBeCloseTo(0.25, 5);
+    expect(out!.persist).toBeCloseTo(0.75, 5);
+    const sum = Object.values(out!).reduce((a, b) => a + b, 0);
+    expect(sum).toBeCloseTo(1, 5);
+  });
+
+  it("ignores queued even if present in rollup", () => {
+    const out = computeDurationShareWeights({
+      queued: {
+        samples_ms: [1, 2, 3, 4, 5],
+        p50_ms: 1_000,
+      },
+      extract: {
+        samples_ms: [1, 2, 3, 4, 5],
+        p50_ms: 10_000,
+      },
+      persist: {
+        samples_ms: [1, 2, 3, 4, 5],
+        p50_ms: 30_000,
+      },
+    });
+    expect(out?.queued).toBeUndefined();
+    expect(out!.extract).toBeCloseTo(0.25, 5);
+    expect(out!.persist).toBeCloseTo(0.75, 5);
+  });
+});
+
+describe("weight overlay on merge / read", () => {
+  async function seedN(
+    kv: KVNamespace,
+    sample: Record<string, number>,
+    n: number,
+  ) {
+    for (let i = 0; i < n; i++) {
+      await mergeStageDurationRollup(kv, sample);
+    }
+  }
+
+  it(`writes weights when every present stage reaches n>=${STAGE_WEIGHT_OVERLAY_MIN_N}`, async () => {
+    const kv = memoryKv();
+    await seedN(kv, { extract: 10_000, persist: 30_000 }, 5);
+    const raw = await kv.get(STAGE_DURATION_KV_KEY);
+    const parsed = JSON.parse(raw!) as {
+      weights?: Record<string, number>;
+    };
+    expect(parsed.weights?.extract).toBeCloseTo(0.25, 5);
+    expect(parsed.weights?.persist).toBeCloseTo(0.75, 5);
+  });
+
+  it("omits weights when any present stage is below the gate", async () => {
+    const kv = memoryKv();
+    await seedN(kv, { extract: 10_000 }, 5);
+    await seedN(kv, { persist: 30_000 }, 4);
+    const raw = await kv.get(STAGE_DURATION_KV_KEY);
+    const parsed = JSON.parse(raw!) as {
+      weights?: Record<string, number>;
+    };
+    expect(parsed.weights).toBeUndefined();
+  });
+
+  it("readStageWeightOverlay returns shares and falls back on corrupt", async () => {
+    resetStageWeightOverlayCacheForTests();
+    const kv = memoryKv();
+    await seedN(kv, { extract: 10_000, persist: 30_000 }, 5);
+    const overlay = await readStageWeightOverlay(kv);
+    expect(overlay?.extract).toBeCloseTo(0.25, 5);
+    expect(overlay?.persist).toBeCloseTo(0.75, 5);
+
+    resetStageWeightOverlayCacheForTests();
+    await kv.put(
+      STAGE_DURATION_KV_KEY,
+      JSON.stringify({
+        v: 1,
+        updated_at: "2026-11-23T12:00:00.000Z",
+        stages: {},
+        weights: { extract: 0.9, persist: 0.9 },
+      }),
+    );
+    expect(await readStageWeightOverlay(kv)).toBeNull();
   });
 });

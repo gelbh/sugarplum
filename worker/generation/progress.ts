@@ -350,15 +350,42 @@ export const RULES_ONLY_STAGES = [
   "persist",
 ] as const satisfies readonly ProgressStage[];
 
+/** Accept overlay when finite, known stages, and sum ≈ 1.0 (±0.01). */
+export function normalizeWeightOverlay(
+  overlay: Partial<Record<string, number>> | null | undefined,
+): Partial<Record<ProgressStage, number>> | null {
+  if (!overlay || typeof overlay !== "object") return null;
+  const out: Partial<Record<ProgressStage, number>> = {};
+  let sum = 0;
+  for (const [stage, raw] of Object.entries(overlay)) {
+    if (!(stage in STAGE_WEIGHTS)) continue;
+    if (typeof raw !== "number" || !Number.isFinite(raw) || raw < 0) {
+      return null;
+    }
+    out[stage as ProgressStage] = raw;
+    sum += raw;
+  }
+  if (Object.keys(out).length === 0) return null;
+  if (Math.abs(sum - 1) > 0.01) return null;
+  return out;
+}
+
 /**
  * Effective weights for stages present in this run.
  * Skipped weights roll into generate when present, else into persist.
+ * Prefers a valid duration-share overlay when provided; else catalog STAGE_WEIGHTS.
  */
 export function effectiveWeights(
   presentStages: readonly ProgressStage[],
+  overlay?: Partial<Record<string, number>> | null,
 ): Record<ProgressStage, number> {
   const present = new Set(presentStages);
-  const weights: Record<ProgressStage, number> = { ...STAGE_WEIGHTS };
+  const normalized = normalizeWeightOverlay(overlay);
+  const weights: Record<ProgressStage, number> = normalized
+    ? (Object.fromEntries(
+        STAGE_ORDER.map((s) => [s, normalized[s] ?? 0]),
+      ) as Record<ProgressStage, number>)
+    : { ...STAGE_WEIGHTS };
 
   let skipped = 0;
   for (const stage of STAGE_ORDER) {
@@ -390,9 +417,10 @@ export function computePercent(
   current: number,
   total: number,
   presentStages: readonly ProgressStage[],
+  overlay?: Partial<Record<string, number>> | null,
 ): number {
   // Do not jump to 100 when a mid-pipeline stage finishes; later stages still weigh.
-  const weights = effectiveWeights(presentStages);
+  const weights = effectiveWeights(presentStages, overlay);
   const present = presentStages.filter((s) => weights[s] > 0 || s === stage);
   const ordered = STAGE_ORDER.filter((s) => present.includes(s));
 
@@ -425,8 +453,9 @@ export function computePipelineBandPercent(
   halfStepsDone: number,
   chunkTotal: number,
   presentStages: readonly ProgressStage[],
+  overlay?: Partial<Record<string, number>> | null,
 ): number {
-  const weights = effectiveWeights(presentStages);
+  const weights = effectiveWeights(presentStages, overlay);
   const bandStages = PIPELINE_BAND.filter((s) => presentStages.includes(s));
   const bandStart = bandStages[0] ?? "generate";
   let base = 0;

@@ -12,6 +12,7 @@ import {
   accumulateTokenUsage,
   computePercent,
   computePipelineBandPercent,
+  effectiveWeights,
   isFreeGenCharged,
   isRunningJobStale,
   pushProgressEvent,
@@ -56,6 +57,31 @@ describe("STAGE_WEIGHTS", () => {
     expect(PDF_STAGES).toContain("claims");
     expect(IMAGE_STAGES).not.toContain("claims");
     expect(RULES_ONLY_STAGES).not.toContain("claims");
+  });
+});
+
+describe("effectiveWeights overlay", () => {
+  const present = ["queued", "extract", "persist"] as const;
+
+  it("prefers duration-share overlay when sum is within ±0.01 of 1", () => {
+    const weights = effectiveWeights(present, {
+      extract: 0.25,
+      persist: 0.75,
+    });
+    expect(weights.extract).toBeCloseTo(0.25, 5);
+    expect(weights.persist).toBeCloseTo(0.75, 5);
+    expect(weights.queued).toBe(0);
+  });
+
+  it("falls back to catalog when overlay is corrupt or missing", () => {
+    const catalog = effectiveWeights(present);
+    expect(effectiveWeights(present, null)).toEqual(catalog);
+    expect(
+      effectiveWeights(present, { extract: 0.9, persist: 0.9 }),
+    ).toEqual(catalog);
+    expect(effectiveWeights(present, { extract: Number.NaN })).toEqual(
+      catalog,
+    );
   });
 });
 
