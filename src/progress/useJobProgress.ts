@@ -12,6 +12,7 @@ import {
   projectTokensFromPercent,
   projectCardsFromPercent,
 } from "./estimates";
+import { PROGRESS_STAGE_ORDER } from "./copy";
 import { buildJobProgressSnapshot } from "./jobSnapshot";
 import {
   JOB_POLL_RUNNING_TIMEOUT_MS,
@@ -214,8 +215,10 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
               percent,
               nowMs,
             );
-            const presentStages =
-              (ext.presentStages as string[] | undefined) ?? [];
+            // Seen stages alone omit future priors early; use full catalog for ETA.
+            const presentStages = PROGRESS_STAGE_ORDER.filter(
+              (s) => s !== "queued",
+            );
             const rawEta = combineEtaMs({
               percent,
               stage: job.progress.stage ?? ext.stage,
