@@ -221,7 +221,6 @@ describe("MedalCabinet", () => {
     expect(bodyText()).toContain("180 / 500");
     expect(bodyText()).toContain("Golden apple");
     expect(bodyText()).toContain("Next · Complete 500 reviews.");
-    // Tile title + dialog title + stem node name the held medal.
     expect(bodyText().split("Orchard regular").length - 1).toBeGreaterThanOrEqual(2);
     closeModal();
     expect(bodyText()).not.toContain("Full bushel");
