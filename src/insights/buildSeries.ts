@@ -1,4 +1,4 @@
-import { localDayKey } from "../study/loadBalance";
+import { localDayKey } from "../study/kernel";
 import type { InsightsGradeCounts } from "./types";
 
 export const INSIGHTS_REVIEWS_DAYS = 30;
