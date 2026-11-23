@@ -224,10 +224,6 @@ export default function ReviewCard({
         ...(fillHeight
           ? { flex: 1, minHeight: 0, height: "100%" }
           : {}),
-        "&:focus-visible": {
-          outline: "2px solid var(--sp-ivory)",
-          outlineOffset: 2,
-        },
       }}
     >
       <Stack

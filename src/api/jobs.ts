@@ -113,6 +113,14 @@ export function getFillAllOrphansStatus(jobId: string, init?: RequestInit) {
   return api<FillAllRunStatus>(`/api/jobs/${jobId}/claims/fill-orphans`, init);
 }
 
+/** Cancel a hung or in-flight Fill-all Workflow. */
+export function cancelFillAllOrphans(jobId: string) {
+  if (isGuest()) guestUnsupported("cancel fill-all");
+  return api<FillAllRunStatus>(`/api/jobs/${jobId}/claims/fill-orphans`, {
+    method: "DELETE",
+  });
+}
+
 /** Wipe all job cards (including accepted), reset to queued, and requeue generation. */
 export function regenJob(jobId: string, topicHints: string[] = []) {
   if (isGuest()) guestUnsupported("regenerate cards");

@@ -13,6 +13,9 @@ describe("friendlyStageHeadline", () => {
   it("maps critique", () => {
     expect(friendlyStageHeadline("critique")).toBe("Reviewing your cards");
   });
+  it("maps enrich", () => {
+    expect(friendlyStageHeadline("enrich")).toBe("Filling coverage gaps");
+  });
   it("falls back for unknown", () => {
     expect(friendlyStageHeadline("nope")).toBe("Preparing your cards");
   });
@@ -22,6 +25,9 @@ describe("shortStageChipLabel", () => {
   it("maps critique to Review and generate to Write", () => {
     expect(shortStageChipLabel("critique")).toBe("Review");
     expect(shortStageChipLabel("generate")).toBe("Write");
+  });
+  it("maps enrich to Enrich", () => {
+    expect(shortStageChipLabel("enrich")).toBe("Enrich");
   });
   it("falls back to stage id for unknown", () => {
     expect(shortStageChipLabel("custom")).toBe("custom");
@@ -35,6 +41,11 @@ describe("orderPresentStages", () => {
       "generate",
       "critique",
     ]);
+  });
+  it("places enrich after persist", () => {
+    expect(
+      orderPresentStages(["enrich", "persist", "generate", "critique"]),
+    ).toEqual(["generate", "critique", "persist", "enrich"]);
   });
 });
 
@@ -53,9 +64,28 @@ describe("formatProgressSubline", () => {
       "You'll start when a worker is free",
     );
   });
-  it("falls through to ETA otherwise", () => {
+  it("active stage with null eta is not Calculating", () => {
+    expect(
+      formatProgressSubline({ stage: "persist", etaMs: null }),
+    ).not.toBe("Calculating…");
+    expect(formatProgressSubline({ stage: "persist", etaMs: null })).toBe(
+      "Still working…",
+    );
     expect(formatProgressSubline({ stage: "generate", etaMs: null })).toBe(
+      "Still working…",
+    );
+    expect(formatProgressSubline({ stage: "enrich", etaMs: null })).toBe(
+      "Still working…",
+    );
+  });
+  it("cold start without stage may still Calculating", () => {
+    expect(formatProgressSubline({ stage: null, etaMs: null })).toBe(
       "Calculating…",
+    );
+  });
+  it("falls through to ETA when known", () => {
+    expect(formatProgressSubline({ stage: "generate", etaMs: 52_000 })).toBe(
+      "About 52s left",
     );
   });
 });

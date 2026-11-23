@@ -11,14 +11,61 @@ import { recordStageDurationsBestEffort } from "./stageDurations";
 import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
 import {
   loadDeckFronts,
+  makeEmit,
   markJobFailed,
   runTextDraftPipeline,
   type ProcessGenerateOptions,
   type ProcessGenerateResult,
   type SecretRow,
 } from "./pass1";
+import {
+  isFreeGenCharged,
+  readFreeGenSlots,
+  readStartedAt,
+  TEXT_LLM_STAGES,
+  type JobProgressEmit,
+} from "./progress";
 import type { CardDraft } from "./schema";
 import type { WindowResume } from "./study-windows";
+
+function seedEmitFromProgressJson(
+  emit: JobProgressEmit,
+  progressJson: string | null | undefined,
+): void {
+  if (!progressJson) return;
+  try {
+    const parsed = JSON.parse(progressJson) as {
+      tokens_used?: unknown;
+      tokens_prompt?: unknown;
+      tokens_completion?: unknown;
+      path?: unknown;
+      drafts_so_far?: unknown;
+    };
+    const prompt =
+      typeof parsed.tokens_prompt === "number" ? parsed.tokens_prompt : null;
+    const completion =
+      typeof parsed.tokens_completion === "number"
+        ? parsed.tokens_completion
+        : null;
+    const total =
+      typeof parsed.tokens_used === "number" ? parsed.tokens_used : null;
+    if (prompt != null || completion != null || total != null) {
+      emit.addUsage({
+        prompt_tokens: prompt,
+        completion_tokens: completion,
+        total_tokens: total,
+      });
+    }
+    if (parsed.path === "free" || parsed.path === "byo") {
+      emit.setPath(parsed.path);
+    }
+    if (typeof parsed.drafts_so_far === "number" && parsed.drafts_so_far > 0) {
+      emit.addDrafts(parsed.drafts_so_far);
+    }
+  } catch {
+    // Corrupt progress_json: leave emit unseeded.
+  }
+}
 
 type DeckOwnerRow = {
   id: string;
@@ -60,11 +107,27 @@ async function finalizeAfterPersist(
     drafts,
     autoFollowup: args.autoFollowup,
     atlasProvenance: args.atlasProvenance,
+    createEmit: args.autoFollowup
+      ? async () => {
+          const row = await db
+            .prepare("SELECT progress_json FROM generation_jobs WHERE id = ?")
+            .bind(args.jobId)
+            .first<{ progress_json: string | null }>();
+          const emit = makeEmit(db, args.jobId, TEXT_LLM_STAGES, {
+            startedAt: readStartedAt(row?.progress_json),
+            freeGenSlots: readFreeGenSlots(row?.progress_json),
+            freeGenCharged: isFreeGenCharged(row?.progress_json),
+          });
+          seedEmitFromProgressJson(emit, row?.progress_json);
+          return emit;
+        }
+      : undefined,
     runPipeline: async ({
       topicHints: hints,
       avoidFronts,
       onUsage,
       heartbeat,
+      emit,
     }) => {
       const result = await runTextDraftPipeline({
         text: args.coverageMaterial,
@@ -76,8 +139,9 @@ async function finalizeAfterPersist(
         topicHints: hints,
         avoidPatterns: args.avoidPatterns,
         avoidFronts,
+        emit,
         onUsage,
-        heartbeat,
+        heartbeat: emit ? undefined : heartbeat,
       });
       // Gap-fill cards stay claim_id null (no claim persist on follow-up).
       return result.drafts;
@@ -124,14 +188,19 @@ async function finalizeAfterPersist(
   }
 
   const finishedAt = new Date().toISOString();
-  await db
+  // Prefer soft-complete's needs_review; still flip running→needs_review if soft-complete missed.
+  const updated = await db
     .prepare(
-      "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = ?, finished_at = ? WHERE id = ?",
+      `UPDATE generation_jobs
+       SET status = ?, error = NULL, coverage_json = ?, finished_at = ?
+       WHERE id = ? AND status IN ('running', 'needs_review')`,
     )
     .bind("needs_review", coverageJson, finishedAt, args.jobId)
     .run();
-  await afterRunningJobTerminal(env, args.jobId);
-  await recordStageDurationsBestEffort(env, args.jobId);
+  if ((updated.meta.changes ?? 0) > 0) {
+    await afterRunningJobTerminal(env, args.jobId);
+    await recordStageDurationsBestEffort(env, args.jobId);
+  }
 }
 
 /** Resume gap-fill + finalize after a durable pass-1 step (Workflow). */
@@ -153,7 +222,10 @@ export async function runAfterPersistPhase(
       progress_json: string | null;
       created_at: string;
     }>();
-  if (!statusRow || statusRow.status !== "running") {
+  if (
+    !statusRow ||
+    (statusRow.status !== "running" && statusRow.status !== "needs_review")
+  ) {
     return "done";
   }
 

@@ -7,6 +7,7 @@ import {
   touchJobHeartbeat,
   withAddedTokenUsage,
   withFreeGenSlots,
+  type JobProgressEmit,
   type TokenUsageAcc,
   type TokenUsageDelta,
 } from "./progress";
@@ -175,12 +176,31 @@ export async function insertDraftCards(
   return ids;
 }
 
+const ENRICH_LABEL = "Filling coverage gaps";
+
 type GapFillPipeline = (args: {
   topicHints: string[];
   avoidFronts: string[];
   onUsage: (usage: TokenUsageDelta) => void;
   heartbeat: () => Promise<void>;
+  emit?: JobProgressEmit;
 }) => Promise<CardDraft[]>;
+
+/** Keep banner/`stage === enrich` while the follow-up pipeline reports band stages. */
+function scopeEmitToEnrich(inner: JobProgressEmit): JobProgressEmit {
+  return {
+    emit: async () => {
+      await inner.emit("enrich", 0, 1, ENRICH_LABEL);
+    },
+    addEvent: (kind, _stage, text) => inner.addEvent(kind, "enrich", text),
+    addUsage: (usage) => inner.addUsage(usage),
+    addDrafts: (n) => inner.addDrafts(n),
+    setPath: (p) => inner.setPath(p),
+    setPresentStages: (stages) => inner.setPresentStages(stages),
+    noteFreeGenCharged: () => inner.noteFreeGenCharged(),
+    noteFreeGenSlots: (slots) => inner.noteFreeGenSlots(slots),
+  };
+}
 
 export function stringFronts(drafts: CardDraft[]): string[] {
   const out: string[] = [];
@@ -221,6 +241,8 @@ export async function appendGapFillDrafts(args: {
   autoFollowup: boolean;
   runPipeline: GapFillPipeline;
   atlasProvenance?: AtlasJobProvenance | null;
+  /** Build emit after slot reserve so free_gen_slots seed matches DB. */
+  createEmit?: () => Promise<JobProgressEmit>;
 }): Promise<CardDraft[]> {
   if (
     !args.autoFollowup ||
@@ -229,10 +251,39 @@ export async function appendGapFillDrafts(args: {
   ) {
     return args.drafts;
   }
-  const gaps = buildCoverageLedger(args.coverageMaterial, args.drafts).gaps;
-  if (gaps.length === 0) return args.drafts;
 
-  if (!args.secret && !(await reserveFollowupSlot(args))) return args.drafts;
+  const emitEnrichDone = async (emit: JobProgressEmit | undefined) => {
+    if (!emit) return;
+    await emit.emit("enrich", 1, 1, ENRICH_LABEL);
+  };
+
+  const emitEnrichSkip = async () => {
+    if (!args.createEmit) return;
+    const emit = await args.createEmit();
+    await emit.emit("enrich", 0, 1, ENRICH_LABEL);
+    await emit.emit("enrich", 1, 1, ENRICH_LABEL);
+  };
+
+  const gaps = buildCoverageLedger(args.coverageMaterial, args.drafts).gaps;
+  if (gaps.length === 0) {
+    await emitEnrichSkip();
+    return args.drafts;
+  }
+
+  if (!args.secret && !(await reserveFollowupSlot(args))) {
+    await emitEnrichSkip();
+    return args.drafts;
+  }
+
+  const emit = args.createEmit ? await args.createEmit() : undefined;
+  if (emit) {
+    const row = await args.db
+      .prepare("SELECT progress_json FROM generation_jobs WHERE id = ?")
+      .bind(args.jobId)
+      .first<{ progress_json: string | null }>();
+    emit.noteFreeGenSlots(readFreeGenSlots(row?.progress_json));
+    await emit.emit("enrich", 0, 1, ENRICH_LABEL);
+  }
 
   const usage: TokenUsageAcc = {};
   let novel: CardDraft[] = [];
@@ -242,6 +293,7 @@ export async function appendGapFillDrafts(args: {
       avoidFronts: [...args.deckFronts, ...stringFronts(args.drafts)],
       onUsage: (delta) => accumulateTokenUsage(usage, delta),
       heartbeat: () => touchJobHeartbeat(args.db, args.jobId),
+      emit: emit ? scopeEmitToEnrich(emit) : undefined,
     });
     const knownFronts = [...args.deckFronts, ...stringFronts(args.drafts)];
     novel = filterNovelDrafts(filterDraftsByQuality(second), knownFronts);
@@ -255,31 +307,41 @@ export async function appendGapFillDrafts(args: {
     }
   } catch (err) {
     console.error("gap-fill failed", args.jobId, err);
+    await emitEnrichDone(emit);
     return args.drafts;
   }
 
   if (usage.tokens_used !== undefined) {
-    try {
-      const row = await args.db
-        .prepare("SELECT progress_json FROM generation_jobs WHERE id = ?")
-        .bind(args.jobId)
-        .first<{ progress_json: string | null }>();
-      await args.db
-        .prepare("UPDATE generation_jobs SET progress_json = ? WHERE id = ?")
-        .bind(
-          withAddedTokenUsage(row?.progress_json, {
-            prompt_tokens: usage.tokens_prompt,
-            completion_tokens: usage.tokens_completion,
-            total_tokens: usage.tokens_used,
-          }),
-          args.jobId,
-        )
-        .run();
-    } catch (err) {
-      console.error("gap-fill usage write failed", args.jobId, err);
+    if (emit) {
+      emit.addUsage({
+        prompt_tokens: usage.tokens_prompt,
+        completion_tokens: usage.tokens_completion,
+        total_tokens: usage.tokens_used,
+      });
+    } else {
+      try {
+        const row = await args.db
+          .prepare("SELECT progress_json FROM generation_jobs WHERE id = ?")
+          .bind(args.jobId)
+          .first<{ progress_json: string | null }>();
+        await args.db
+          .prepare("UPDATE generation_jobs SET progress_json = ? WHERE id = ?")
+          .bind(
+            withAddedTokenUsage(row?.progress_json, {
+              prompt_tokens: usage.tokens_prompt,
+              completion_tokens: usage.tokens_completion,
+              total_tokens: usage.tokens_used,
+            }),
+            args.jobId,
+          )
+          .run();
+      } catch (err) {
+        console.error("gap-fill usage write failed", args.jobId, err);
+      }
     }
   }
 
+  await emitEnrichDone(emit);
   return novel.length > 0 ? [...args.drafts, ...novel] : args.drafts;
 }
 

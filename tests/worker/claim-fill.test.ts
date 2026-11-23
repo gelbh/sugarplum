@@ -470,4 +470,31 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
     );
     expect(res.status).toBe(409);
   });
+
+  it("DELETE terminates an in-flight Fill-all", async () => {
+    const env = createTestEnv();
+    seedOwnerNeedsReview(env);
+    seedOrphanClaim(env);
+    const headers = {
+      "content-type": "application/json",
+      cookie: `${SESSION_COOKIE}=sess-a`,
+    };
+    const started = await app.request(
+      "/api/jobs/job-a/claims/fill-orphans",
+      { method: "POST", headers, body: "{}" },
+      env,
+    );
+    expect(started.status).toBe(202);
+
+    const canceled = await app.request(
+      "/api/jobs/job-a/claims/fill-orphans",
+      { method: "DELETE", headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(canceled.status).toBe(200);
+    expect(await canceled.json()).toMatchObject({
+      runId: "fill-all-job-a",
+      status: "terminated",
+    });
+  });
 });

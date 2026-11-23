@@ -256,7 +256,8 @@ describe("processGenerateJob gap-fill", () => {
       percent: number;
       free_gen_slots?: number;
     };
-    expect(progress.stage).toBe("persist");
+    // Claim-gap closed coverage; draft follow-up soft-skips enrich 0→1.
+    expect(progress.stage).toBe("enrich");
     expect(progress.percent).toBe(100);
     expect(progress.free_gen_slots).toBe(1);
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
@@ -343,6 +344,48 @@ describe("processGenerateJob gap-fill", () => {
       env.getGenerationJobs().find((row) => row.id === msg.jobId)?.status,
     ).toBe("needs_review");
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(2);
+  });
+
+  it("emits enrich progress during draft gap-fill follow-up", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    const msg = await seedPasteJob(env, gappyText);
+
+    let claimGapExtracts = 0;
+    let enrichDuringFollowup = false;
+    let percentDuringFollowup = 100;
+    const llm = gappyLlm(true, () => {
+      claimGapExtracts += 1;
+      if (claimGapExtracts < 2) return;
+      const job = env.getGenerationJobs().find((row) => row.id === msg.jobId);
+      const progress = JSON.parse(job!.progress_json!) as {
+        stage: string;
+        percent: number;
+      };
+      expect(progress.stage).toBe("enrich");
+      expect(progress.percent).toBeLessThan(100);
+      enrichDuringFollowup = true;
+      percentDuringFollowup = progress.percent;
+    });
+
+    const result = await processGenerateJob(
+      env,
+      { ...msg, autoFollowup: true },
+      { llm },
+    );
+
+    expect(result).toBe("done");
+    expect(claimGapExtracts).toBeGreaterThanOrEqual(2);
+    expect(enrichDuringFollowup).toBe(true);
+    expect(percentDuringFollowup).toBeLessThan(100);
+    const job = env.getGenerationJobs().find((row) => row.id === msg.jobId);
+    expect(job?.status).toBe("needs_review");
+    const progress = JSON.parse(job!.progress_json!) as {
+      stage: string;
+      percent: number;
+    };
+    expect(progress.stage).toBe("enrich");
+    expect(progress.percent).toBe(100);
   });
 
   it("does not take a third free slot when two slots were already charged", async () => {

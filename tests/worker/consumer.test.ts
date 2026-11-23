@@ -828,7 +828,7 @@ describe("processGenerateJob free path", () => {
     const block = "x".repeat(3500);
     const msg = await seedPasteJob(env, `${block}\n\n${block}`);
 
-    await processGenerateJob(env, msg, { llm });
+    await processGenerateJob(env, { ...msg, autoFollowup: true }, { llm });
 
     expect(llm.generateDrafts).not.toHaveBeenCalled();
     const extractCalls = vi
@@ -837,7 +837,8 @@ describe("processGenerateJob free path", () => {
         const s = (c[0] as { system: string }).system.toLowerCase();
         return s.includes("extract") && s.includes("claim");
       });
-    expect(extractCalls).toHaveLength(2);
+    // Pass-1 multi-chunk extract; draft follow-up may extract again on coverage gaps.
+    expect(extractCalls.length).toBeGreaterThanOrEqual(2);
     expect(midGenerate.length).toBeGreaterThanOrEqual(1);
     expect(midGenerate[0]!.stage).toBe("claims");
     expect(midGenerate[0]!.total).toBeGreaterThanOrEqual(2);
@@ -851,7 +852,7 @@ describe("processGenerateJob free path", () => {
       stage: string;
       percent: number;
     };
-    expect(final.stage).toBe("persist");
+    expect(final.stage).toBe("enrich");
     expect(final.percent).toBe(100);
 
     // Silence unused import if CHUNK used only for doc — ensure text actually chunks

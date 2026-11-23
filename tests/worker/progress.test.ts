@@ -34,6 +34,7 @@ const FULL_STAGES = [
   "generate",
   "critique",
   "persist",
+  "enrich",
 ] as const;
 
 const NO_FREE_GEN = ["queued", "extract", "generate", "persist"] as const;
@@ -46,8 +47,9 @@ describe("STAGE_WEIGHTS", () => {
     expect(STAGE_WEIGHTS.rules).toBe(0.05);
     expect(STAGE_WEIGHTS.claims).toBe(0.15);
     expect(STAGE_WEIGHTS.generate).toBe(0.2);
-    expect(STAGE_WEIGHTS.critique).toBe(0.3);
-    expect(STAGE_WEIGHTS.persist).toBe(0.1);
+    expect(STAGE_WEIGHTS.critique).toBe(0.2);
+    expect(STAGE_WEIGHTS.persist).toBe(0.05);
+    expect(STAGE_WEIGHTS.enrich).toBe(0.15);
     const sum = Object.values(STAGE_WEIGHTS).reduce((a, b) => a + b, 0);
     expect(sum).toBeCloseTo(1, 10);
   });
@@ -57,6 +59,13 @@ describe("STAGE_WEIGHTS", () => {
     expect(PDF_STAGES).toContain("claims");
     expect(IMAGE_STAGES).not.toContain("claims");
     expect(RULES_ONLY_STAGES).not.toContain("claims");
+  });
+
+  it("includes enrich in TEXT_LLM and PDF catalogs only", () => {
+    expect(TEXT_LLM_STAGES).toContain("enrich");
+    expect(PDF_STAGES).toContain("enrich");
+    expect(IMAGE_STAGES).not.toContain("enrich");
+    expect(RULES_ONLY_STAGES).not.toContain("enrich");
   });
 });
 
@@ -108,10 +117,10 @@ describe("computePercent", () => {
   });
 
   it("rolls skipped rules and critique weights into generate", () => {
-    // generate effective = 0.45 + 0.05 + 0.30 = 0.80
-    // completed: queued+extract = 0.10; within = 2/5 → 0.10 + 0.32 = 0.42 → 42%
+    // skipped figures+rules+claims+critique+enrich = 0.65 → generate 0.85
+    // completed: queued+extract = 0.10; within = 2/5 → 0.10 + 0.34 = 0.44 → 44%
     expect(computePercent("generate", 2, 5, [...NO_FREE_GEN])).toBeCloseTo(
-      42,
+      44,
       5,
     );
 
@@ -121,16 +130,16 @@ describe("computePercent", () => {
       5,
     );
 
-    // after generate chunks done, still in generate: 0.10 + 0.80 = 0.90 → 90%
+    // after generate chunks done, still in generate: 0.10 + 0.85 = 0.95 → 95%
     expect(computePercent("generate", 5, 5, [...NO_FREE_GEN])).toBeCloseTo(
-      90,
+      95,
       5,
     );
 
     // persist with no within-stage units: completed before persist
-    // 0.02+0.08+0.80 = 0.90 → 90%
+    // 0.02+0.08+0.85 = 0.95 → 95%
     expect(computePercent("persist", 0, 0, [...NO_FREE_GEN])).toBeCloseTo(
-      90,
+      95,
       5,
     );
   });
@@ -157,7 +166,7 @@ describe("computePercent", () => {
 
   it("rolls skipped generate/critique into persist for rules-only runs", () => {
     const rulesOnly = ["queued", "extract", "rules", "persist"] as const;
-    // completed before persist: 0.02+0.08+0.05 = 0.15; persist gets 0.10+0.75 = 0.85
+    // completed before persist: 0.02+0.08+0.05 = 0.15; persist gets 0.05+0.80 = 0.85
     expect(computePercent("persist", 0, 1, [...rulesOnly])).toBeCloseTo(15, 5);
     expect(computePercent("persist", 1, 1, [...rulesOnly])).toBeCloseTo(100, 5);
   });
@@ -167,6 +176,21 @@ describe("computePercent", () => {
     const atGenerateDone = computePercent("generate", 2, 2, stages);
     const atCritiqueStart = computePercent("critique", 0, 2, stages);
     expect(atCritiqueStart).toBeGreaterThanOrEqual(atGenerateDone);
+  });
+
+  it("persist complete stays under 100 when enrich is present", () => {
+    const stages = [
+      "queued",
+      "extract",
+      "rules",
+      "claims",
+      "generate",
+      "critique",
+      "persist",
+      "enrich",
+    ] as const;
+    expect(computePercent("persist", 1, 1, [...stages])).toBeLessThan(100);
+    expect(computePercent("enrich", 1, 1, [...stages])).toBe(100);
   });
 });
 
@@ -185,21 +209,22 @@ describe("computePipelineBandPercent", () => {
       expect(p).toBeGreaterThanOrEqual(prev);
       prev = p;
     }
-    // After all LLM half-steps: base 0.15 + band 0.75 = 0.90 → 90%
-    expect(computePipelineBandPercent(4, n, stages)).toBeCloseTo(90, 5);
-    // Mid: after first generate done (1/4 of band): 0.15 + 0.75*0.25 = 0.3375 → 33.75%
-    expect(computePipelineBandPercent(1, n, stages)).toBeCloseTo(33.75, 5);
+    // After all LLM half-steps: base 0.15 + band 0.65 = 0.80 → 80%
+    // (figures→generate; persist+enrich remain after band)
+    expect(computePipelineBandPercent(4, n, stages)).toBeCloseTo(80, 5);
+    // Mid: after first generate done (1/4 of band): 0.15 + 0.65*0.25 = 0.3125 → 31.25%
+    expect(computePipelineBandPercent(1, n, stages)).toBeCloseTo(31.25, 5);
   });
 
   it("drops claims from the band when the catalog omits claims", () => {
     const withClaims = [...FULL_STAGES];
     const withoutClaims = FULL_STAGES.filter((s) => s !== "claims");
     // Same pre-band base (queued+extract+rules); without claims, that weight
-    // rolls into generate so end-of-band percent stays 90.
+    // rolls into generate so end-of-band percent stays 80.
     expect(computePipelineBandPercent(0, 2, withClaims)).toBeCloseTo(15, 5);
     expect(computePipelineBandPercent(0, 2, withoutClaims)).toBeCloseTo(15, 5);
-    expect(computePipelineBandPercent(4, 2, withClaims)).toBeCloseTo(90, 5);
-    expect(computePipelineBandPercent(4, 2, withoutClaims)).toBeCloseTo(90, 5);
+    expect(computePipelineBandPercent(4, 2, withClaims)).toBeCloseTo(80, 5);
+    expect(computePipelineBandPercent(4, 2, withoutClaims)).toBeCloseTo(80, 5);
   });
 
   it("does not rewind when re-entering generate after critique (vs computePercent)", () => {

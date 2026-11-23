@@ -3,6 +3,7 @@ import {
   fillAllInstanceId,
   getFillAllWorkflowStatus,
   startFillAllWorkflow,
+  terminateFillAllWorkflow,
 } from "../../worker/generation/fillAllLifecycle";
 import { executeFillAllChunks } from "../../worker/generation/fillAllWorkflow";
 import { FILL_ALL_REQUEST_CAP } from "../../worker/generation/claim-orphan-fill";
@@ -67,6 +68,28 @@ describe("fillAllLifecycle", () => {
     const status = await getFillAllWorkflowStatus(env, "job-a");
     expect(status.status).toBe("complete");
     expect(status.output).toEqual(output);
+  });
+
+  it("terminateFillAllWorkflow stops an in-flight run", async () => {
+    const env = createTestEnv();
+    await startFillAllWorkflow(env, { jobId: "job-a", userId: "user-a" });
+    expect((await getFillAllWorkflowStatus(env, "job-a")).status).toBe(
+      "running",
+    );
+    await terminateFillAllWorkflow(env, "job-a");
+    expect((await getFillAllWorkflowStatus(env, "job-a")).status).toBe(
+      "terminated",
+    );
+  });
+
+  it("terminateFillAllWorkflow is a no-op when idle", async () => {
+    const env = createTestEnv();
+    await expect(
+      terminateFillAllWorkflow(env, "missing"),
+    ).resolves.toBeUndefined();
+    expect((await getFillAllWorkflowStatus(env, "missing")).status).toBe(
+      "idle",
+    );
   });
 });
 
