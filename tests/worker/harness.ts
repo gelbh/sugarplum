@@ -4,16 +4,65 @@
  *
  * Queue inspect: cloudflare:test has no producer-send capture API, so
  * installQueueRecorders wraps GENERATE/CARD_REGEN/EXPORT send into in-memory arrays.
+ *
+ * Workflow inspect: same pattern via installWorkflowRecorders (create/get/terminate
+ * recording). Prefer HTTP/app.request asserts when instance introspection is enough (§D).
  */
 import type { Env } from "../../worker/env";
-import type { AtlasMaterialRow, AtlasRow } from "./atlas-test-handlers";
-import type { CardRegenOpRow } from "./card-regen-ops-test-handlers";
 import type { AchievementDefSeed } from "./gamification-seeds";
-import type { UserGamificationRow } from "./gamification-test-handlers";
 
 export const TEST_SECRETS_WRAP_KEY =
   "0123456789abcdef0123456789abcdef";
 
+export type AtlasRow = {
+  id: string;
+  user_id: string;
+  template_key: string;
+  created_at: string;
+  focus_pack_fingerprint?: string | null;
+};
+
+export type AtlasMaterialRow = {
+  id: string;
+  atlas_id: string;
+  kind: string;
+  r2_key: string | null;
+  filename: string | null;
+  page_count: number | null;
+  status: string;
+  created_at: string;
+  content_hash: string | null;
+  source_role: string;
+};
+
+export type CardRegenOpRow = {
+  id: string;
+  card_id: string;
+  user_id: string;
+  regen_type: string;
+  status: string;
+  error: string | null;
+  created_at: string;
+  finished_at: string | null;
+};
+
+export type UserGamificationRow = {
+  user_id: string;
+  streak_current: number;
+  streak_best: number;
+  streak_day: string | null;
+  xp_total: number;
+  level: number;
+  display_name: string | null;
+  board_opt_in: number;
+  updated_at: string;
+  clear_due_days: number;
+  clear_due_last_day: string | null;
+  catalog_version: number;
+  streak_freezes: number;
+  daily_goal_reviews: number;
+  daily_goal_day: string | null;
+};
 export type UserRow = {
   id: string;
   email: string;
@@ -194,14 +243,19 @@ export type ExportJobRow = {
   expires_at: string;
 };
 
-export type { AtlasRow, AtlasMaterialRow, CardRegenOpRow, AchievementDefSeed, UserGamificationRow };
+export type { AchievementDefSeed };
 
 type Bindings = Env;
+
+type WorkflowBinding = NonNullable<Env["GENERATION_WORKFLOW"]>;
+type WorkflowInstanceRow = { status: string; output?: unknown; params?: unknown };
 
 const generateQueueMessages: unknown[] = [];
 const cardRegenQueueMessages: unknown[] = [];
 const exportQueueMessages: unknown[] = [];
-
+const workflowCreates: unknown[] = [];
+const workflowTerminates: string[] = [];
+const workflowInstances = new Map<string, WorkflowInstanceRow>();
 function wrapQueue(
   queue: Queue | undefined,
   sink: unknown[],
@@ -245,6 +299,86 @@ export function clearQueueMessages(): void {
   generateQueueMessages.length = 0;
   cardRegenQueueMessages.length = 0;
   exportQueueMessages.length = 0;
+}
+
+function wrapWorkflow(binding: WorkflowBinding | undefined): WorkflowBinding | undefined {
+  if (!binding) return undefined;
+  return {
+    create: async (options?: { id?: string; params?: unknown }) => {
+      const id = options?.id ?? crypto.randomUUID();
+      if (workflowInstances.has(id)) {
+        throw new Error(`Workflow instance already exists: ${id}`);
+      }
+      workflowCreates.push(options ?? { id });
+      workflowInstances.set(id, {
+        status: "running",
+        params: options?.params,
+      });
+      return {
+        id,
+        status: async () => ({
+          status: workflowInstances.get(id)?.status ?? "unknown",
+          output: workflowInstances.get(id)?.output,
+        }),
+        terminate: async () => {
+          workflowTerminates.push(id);
+          const row = workflowInstances.get(id);
+          if (row) row.status = "terminated";
+        },
+        delete: async () => {
+          workflowInstances.delete(id);
+        },
+      };
+    },
+    get: async (id: string) => {
+      const row = workflowInstances.get(id);
+      if (!row) throw new Error(`Workflow instance not found: ${id}`);
+      return {
+        id,
+        status: async () => ({ status: row.status, output: row.output }),
+        terminate: async () => {
+          workflowTerminates.push(id);
+          row.status = "terminated";
+        },
+        delete: async () => {
+          workflowInstances.delete(id);
+        },
+      };
+    },
+  } as WorkflowBinding;
+}
+
+/** Wrap workflow bindings so getWorkflowCreates* can observe create/terminate. */
+export function installWorkflowRecorders(env: Bindings): Bindings {
+  return {
+    ...env,
+    GENERATION_WORKFLOW: wrapWorkflow(env.GENERATION_WORKFLOW),
+    FILL_ALL_WORKFLOW: wrapWorkflow(env.FILL_ALL_WORKFLOW),
+  };
+}
+
+export function getWorkflowCreates(): unknown[] {
+  return [...workflowCreates];
+}
+
+export function getWorkflowTerminates(): string[] {
+  return [...workflowTerminates];
+}
+
+export function setWorkflowInstance(
+  id: string,
+  patch: { status?: string; output?: unknown },
+): void {
+  const row = workflowInstances.get(id) ?? { status: "running" };
+  if (patch.status !== undefined) row.status = patch.status;
+  if (patch.output !== undefined) row.output = patch.output;
+  workflowInstances.set(id, row);
+}
+
+export function clearWorkflowMessages(): void {
+  workflowCreates.length = 0;
+  workflowTerminates.length = 0;
+  workflowInstances.clear();
 }
 
 export async function getR2(
