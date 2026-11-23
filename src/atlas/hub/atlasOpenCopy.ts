@@ -1,4 +1,8 @@
-import { ApiError, VIEW_AS_READ_ONLY_CODE } from "../../api/client";
+import {
+  ApiError,
+  VIEW_AS_READ_ONLY_CODE,
+  mapApiErrorToUi,
+} from "../../api/client";
 
 export { VIEW_AS_READ_ONLY_CODE };
 
@@ -12,6 +16,8 @@ export function atlasOpenErrorMessage(err: unknown): string {
   ) {
     return VIEW_AS_ATLAS_EMPTY;
   }
-  if (err instanceof ApiError) return err.message;
-  return "Could not open the Atlas";
+  if (err instanceof ApiError) {
+    return mapApiErrorToUi(err.code, err.message).copy;
+  }
+  return mapApiErrorToUi(undefined, "Could not open the Atlas").copy;
 }
