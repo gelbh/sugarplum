@@ -36,8 +36,9 @@ export function scanFocus(
   materials: FocusMaterial[],
   manualOverride?: FocusManualOverride,
   genera?: ReadonlySet<string>,
+  abbrevCounts?: ReadonlyMap<string, number>,
 ): FocusScanResult {
-  const targets = packTargets(entry, genera);
+  const targets = packTargets(entry, genera, abbrevCounts);
   const matches = materials.map((material) => ({
     material,
     ...matchMaterialForPack(targets, material),
@@ -56,9 +57,9 @@ export function scanFocus(
     };
   }
 
-  // Tiers keep the strict matcher so ranking does not change.
+  // Tiers keep the high-confidence matcher so ranking does not change.
   const keyHit = matches.find(
-    (m) => m.strict && KEY_ROLES.has(m.material.sourceRole),
+    (m) => m.high && KEY_ROLES.has(m.material.sourceRole),
   )?.material;
   if (keyHit) {
     const label = SOURCE_ROLE_LABELS[keyHit.sourceRole].toLowerCase();
@@ -71,7 +72,7 @@ export function scanFocus(
     };
   }
 
-  const mentionCount = matches.filter((m) => m.strict).length;
+  const mentionCount = matches.filter((m) => m.high).length;
   if (mentionCount >= 3) {
     return {
       tier: "frequent",

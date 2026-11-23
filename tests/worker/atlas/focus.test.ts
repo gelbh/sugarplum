@@ -742,7 +742,7 @@ describe("atlas focus empty materials and lazy GET", () => {
     )
       .bind(atlasId)
       .first<{ focus_pack_fingerprint: string | null }>();
-    expect(current?.focus_pack_fingerprint?.startsWith("v4:")).toBe(true);
+    expect(current?.focus_pack_fingerprint?.startsWith("v5:")).toBe(true);
 
     await env.DB.prepare(
       `INSERT OR REPLACE INTO atlas_entry_focus (
@@ -823,7 +823,7 @@ describe("atlas focus empty materials and lazy GET", () => {
     )
       .bind(atlasId)
       .first<{ focus_pack_fingerprint: string | null }>();
-    expect(fpRow?.focus_pack_fingerprint).toMatch(/^v4:/);
+    expect(fpRow?.focus_pack_fingerprint).toMatch(/^v5:/);
 
     await env.DB.prepare(
       `INSERT OR REPLACE INTO atlas_entry_focus (
@@ -1000,7 +1000,7 @@ describe("atlas focus in_pack", () => {
     )
       .bind(atlasId)
       .first<{ focus_pack_fingerprint: string }>();
-    expect(fp?.focus_pack_fingerprint).toMatch(/^v4:/);
+    expect(fp?.focus_pack_fingerprint).toMatch(/^v5:/);
     // Simulate a pre-0041 row: old fingerprint version, in_pack defaulted to 0.
     await env.DB.prepare(
       `INSERT OR REPLACE INTO atlas_entry_focus (
@@ -1012,7 +1012,7 @@ describe("atlas focus in_pack", () => {
     await env.DB.prepare(
       "UPDATE atlases SET focus_pack_fingerprint = ? WHERE id = ?",
     )
-      .bind(fp!.focus_pack_fingerprint.replace(/^v4:/, "v3:"), atlasId)
+      .bind(fp!.focus_pack_fingerprint.replace(/^v5:/, "v3:"), atlasId)
       .run();
 
     const result = await list(env, atlasId);
