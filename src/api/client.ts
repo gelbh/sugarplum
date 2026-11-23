@@ -8,6 +8,12 @@ export {
   type ApiErrorBody,
 } from "./core";
 export {
+  DEFAULT_API_ERROR_UI,
+  mapApiErrorToUi,
+  type ApiErrorPlacement,
+  type ApiErrorUiHint,
+} from "./mapApiErrorToUi";
+export {
   GAMIFICATION_CHANGED_EVENT,
   notifyGamificationChanged,
 } from "./events";
