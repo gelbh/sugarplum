@@ -8,8 +8,9 @@ export const STAGE_WEIGHTS = {
   rules: 0.05,
   claims: 0.15,
   generate: 0.2,
-  critique: 0.3,
-  persist: 0.1,
+  critique: 0.2,
+  persist: 0.05,
+  enrich: 0.15,
 } as const;
 
 export type ProgressStage = keyof typeof STAGE_WEIGHTS;
@@ -23,6 +24,7 @@ export const STAGE_ORDER: ProgressStage[] = [
   "generate",
   "critique",
   "persist",
+  "enrich",
 ];
 
 /** Stages whose weights form the interleaved LLM progress band. */
@@ -322,6 +324,7 @@ export const TEXT_LLM_STAGES = [
   "generate",
   "critique",
   "persist",
+  "enrich",
 ] as const satisfies readonly ProgressStage[];
 
 export const PDF_STAGES = [
@@ -333,6 +336,7 @@ export const PDF_STAGES = [
   "generate",
   "critique",
   "persist",
+  "enrich",
 ] as const satisfies readonly ProgressStage[];
 
 /** PDF with figures but no usable text (no rules/generate/critique band). */
@@ -383,7 +387,8 @@ function overlayCoversPresent(
 
 /**
  * Effective weights for stages present in this run.
- * Skipped weights roll into generate when present, else into persist.
+ * Skipped weights roll into generate when present, else enrich (post-persist),
+ * else persist.
  * Prefers a valid duration-share overlay when it covers every non-queued
  * present stage; else catalog STAGE_WEIGHTS.
  */
@@ -412,6 +417,9 @@ export function effectiveWeights(
   if (skipped > 0) {
     if (present.has("generate")) {
       weights.generate += skipped;
+    } else if (present.has("enrich")) {
+      // Post-persist work present without generate: fold leftover into enrich.
+      weights.enrich += skipped;
     } else if (present.has("persist")) {
       // Rules-only runs omit generate/critique; fold leftover into persist.
       weights.persist += skipped;

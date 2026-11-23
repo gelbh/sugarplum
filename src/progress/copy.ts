@@ -7,6 +7,7 @@ export const PROGRESS_STAGE_ORDER = [
   "generate",
   "critique",
   "persist",
+  "enrich",
 ] as const;
 
 const STAGE_HEADLINES: Record<(typeof PROGRESS_STAGE_ORDER)[number], string> = {
@@ -18,6 +19,7 @@ const STAGE_HEADLINES: Record<(typeof PROGRESS_STAGE_ORDER)[number], string> = {
   generate: "Writing cards",
   critique: "Reviewing your cards",
   persist: "Saving your cards",
+  enrich: "Filling coverage gaps",
 };
 
 const FALLBACK_HEADLINE = "Preparing your cards";
@@ -42,6 +44,7 @@ const STAGE_CHIP_LABELS: Record<(typeof PROGRESS_STAGE_ORDER)[number], string> =
     generate: "Write",
     critique: "Review",
     persist: "Save",
+    enrich: "Enrich",
   };
 
 export function shortStageChipLabel(stage: string): string {

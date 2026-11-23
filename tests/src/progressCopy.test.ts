@@ -13,6 +13,9 @@ describe("friendlyStageHeadline", () => {
   it("maps critique", () => {
     expect(friendlyStageHeadline("critique")).toBe("Reviewing your cards");
   });
+  it("maps enrich", () => {
+    expect(friendlyStageHeadline("enrich")).toBe("Filling coverage gaps");
+  });
   it("falls back for unknown", () => {
     expect(friendlyStageHeadline("nope")).toBe("Preparing your cards");
   });
@@ -22,6 +25,9 @@ describe("shortStageChipLabel", () => {
   it("maps critique to Review and generate to Write", () => {
     expect(shortStageChipLabel("critique")).toBe("Review");
     expect(shortStageChipLabel("generate")).toBe("Write");
+  });
+  it("maps enrich to Enrich", () => {
+    expect(shortStageChipLabel("enrich")).toBe("Enrich");
   });
   it("falls back to stage id for unknown", () => {
     expect(shortStageChipLabel("custom")).toBe("custom");
@@ -35,6 +41,11 @@ describe("orderPresentStages", () => {
       "generate",
       "critique",
     ]);
+  });
+  it("places enrich after persist", () => {
+    expect(
+      orderPresentStages(["enrich", "persist", "generate", "critique"]),
+    ).toEqual(["generate", "critique", "persist", "enrich"]);
   });
 });
 
