@@ -25,8 +25,14 @@ import { insightsRoutes } from "./insights/routes";
 import { calendarRoutes } from "./calendar/routes";
 import { handleExportQueue } from "./export/consumer";
 import type { ExportQueueMessage } from "./export/enqueue";
-import { handleGenerateQueue } from "./generation/consumer";
-import type { GenerateQueueMessage } from "./generation/enqueue";
+import {
+  handleCardRegenQueue,
+  handleGenerateQueue,
+} from "./generation/consumer";
+import type {
+  CardRegenQueueMessage,
+  GenerateQueueMessage,
+} from "./generation/enqueue";
 import { GenerationWorkflow } from "./generation/workflow";
 import { FillAllWorkflow } from "./generation/fillAllWorkflow";
 import { GenerationSlotDO } from "./generation/GenerationSlotDO";
@@ -42,6 +48,7 @@ export { GenerationWorkflow, FillAllWorkflow, GenerationSlotDO };
 const FSRS_CRON = "0 6 * * *";
 
 const EXPORT_QUEUE_NAME = "sugarplum-export";
+const CARD_REGEN_QUEUE_NAME = "sugarplum-card-regen";
 
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 
@@ -122,11 +129,20 @@ export { app };
 const worker = {
   fetch: app.fetch,
   async queue(
-    batch: MessageBatch<GenerateQueueMessage | ExportQueueMessage>,
+    batch: MessageBatch<
+      GenerateQueueMessage | ExportQueueMessage | CardRegenQueueMessage
+    >,
     env: Env,
   ): Promise<void> {
     if (batch.queue === EXPORT_QUEUE_NAME) {
       await handleExportQueue(batch as MessageBatch<ExportQueueMessage>, env);
+      return;
+    }
+    if (batch.queue === CARD_REGEN_QUEUE_NAME) {
+      await handleCardRegenQueue(
+        batch as MessageBatch<CardRegenQueueMessage>,
+        env,
+      );
       return;
     }
     await handleGenerateQueue(batch as MessageBatch<GenerateQueueMessage>, env);

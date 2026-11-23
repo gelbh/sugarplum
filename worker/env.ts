@@ -11,6 +11,8 @@ export interface Env {
   AI?: Ai;
   /** Optional until queue consumer ships; missing → D1 generation_jobs only. */
   GENERATE_QUEUE?: Queue;
+  /** Dedicated card-regen queue; missing → waitUntil(processCardRegenOp) inline. */
+  CARD_REGEN_QUEUE?: Queue;
   /** Generation Workflow binding (create / get / terminate by jobId). */
   GENERATION_WORKFLOW?: Workflow<
     import("./generation/workflowParams").GenerationWorkflowParams
