@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   collectDeckImageKeys,
-  hubDiyTypes,
   validateHubCreateCard,
 } from "../../src/deckHub/hubDiyCreate";
+import { hubDiyTypes } from "../../src/deckHub/hubDiyTypes";
 
 describe("hubDiyTypes", () => {
   it("keeps guest DIY to text types only", () => {

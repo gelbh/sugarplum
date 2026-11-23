@@ -16,17 +16,7 @@
   },
   {
     "file": "study/StudyCardActions.tsx",
-    "spec": "../deckHub/hubDiyCreate",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/StudyCardActions.tsx",
     "spec": "../draftReview/DraftCardEditor",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/SubjectKnowledgeBar.tsx",
-    "spec": "../materials/CompositionSpark",
     "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
   }
 ]
