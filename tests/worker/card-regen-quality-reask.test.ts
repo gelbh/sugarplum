@@ -28,7 +28,6 @@ const COMPOUND_MCQ = JSON.stringify({
   ],
 });
 
-/** Three short sentences: Layer-1 drops via sentenceCount. */
 const MULTI_SENTENCE_MCQ = JSON.stringify({
   cards: [
     {

@@ -62,7 +62,6 @@ export async function applyClaimAwareRegenToCard(
     path: "free" | "byo";
     provider: string;
     releaseQuota: () => Promise<void>;
-    /** Claim id to persist (null clears / leaves unlinked). */
     resolvedClaimId: string | null;
   },
 ): Promise<ApplyRegenResult> {

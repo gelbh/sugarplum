@@ -61,9 +61,7 @@ export function resolveRegenCorpus(args: {
 /**
  * Claim-aware single-card regen: stored claim or excerpt-first extract → typed write → Layer-1.
  * When `storedClaim` is set, skips extract (persist-claims D path).
- * Front-loads a baseline quality hint; reasks once only when Layer-1 fails with
- * named `layer1RejectReasons`. Throws ClaimAwareRegenError when no claim or
- * quality fails without a successful reask.
+ * Reasks once only when Layer-1 fails with named `layer1RejectReasons`.
  */
 export async function regenerateClaimAwareCard(args: {
   excerpt: string;

@@ -181,7 +181,6 @@ export function pickClaimForRegen(
   return claims[0] ?? null;
 }
 
-/** Exact excerpt ↔ source_span join; returns the full stored claim or null. */
 export function resolveStoredClaimByExcerpt(
   claims: StoredClaim[],
   excerpt: string,
