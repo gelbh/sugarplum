@@ -1,4 +1,4 @@
-import type { StudyPrefs } from "../study/policyQueue";
+import type { StudyPrefs } from "../study";
 
 export type StudyLoadPresetId = "light" | "steady" | "catchUp";
 

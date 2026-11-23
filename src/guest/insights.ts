@@ -13,11 +13,11 @@ import {
   type InsightsRangePreset,
 } from "../insights/buildSeries";
 import type { InsightsSummary } from "../insights/types";
-import { localDayKey } from "../study/loadBalance";
+import { localDayKey } from "../study/kernel";
 import {
   composeSubjectKnowledge,
   type CompositionScheduleInput,
-} from "../study/subjectKnowledge";
+} from "../study/kernel";
 import { ensureGuestStore, peekGuestStore } from "./store";
 
 type GuestStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;

@@ -1,8 +1,8 @@
-import type { SubjectKnowledge } from "../study/subjectKnowledge";
+import type { SubjectKnowledge } from "../study/kernel";
 import {
   composeSubjectKnowledge,
   type CompositionScheduleInput,
-} from "../study/subjectKnowledge";
+} from "../study/kernel";
 import { cardDueIso } from "./policyDue";
 import { ensureGuestStore, peekGuestStore } from "./store";
 

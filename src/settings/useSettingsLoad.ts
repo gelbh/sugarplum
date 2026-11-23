@@ -12,7 +12,7 @@ import {
   type StudyPrefs,
 } from "../api/client";
 import { isGuest } from "../guest/session";
-import type { EasyDay } from "../study/loadBalance";
+import type { EasyDay } from "../study";
 
 type SessionUser = {
   email: string;

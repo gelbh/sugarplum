@@ -12,7 +12,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import FruitMedal from "./FruitMedal";
 import { isUnlockView } from "./rememberUnlocks";
-import { useStudyChrome } from "../study/StudyChromeContext";
+import { useStudyChrome } from "../study";
 import type { UnlockView } from "./wire";
 
 export const ENTER_DELAY_MS = 16;

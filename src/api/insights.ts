@@ -6,7 +6,7 @@ import {
   type InsightsRangePreset,
 } from "../insights/buildSeries";
 import type { InsightsSummary } from "../insights/types";
-import { clientLocalDay } from "../study/localDay";
+import { clientLocalDay } from "../study/kernel";
 import { api } from "./core";
 
 export type GetInsightsSummaryOpts = {

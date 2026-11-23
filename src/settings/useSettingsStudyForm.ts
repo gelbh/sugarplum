@@ -5,7 +5,7 @@ import {
   putStudyPrefs,
   type StudyPrefs,
 } from "../api/client";
-import type { EasyDay } from "../study/loadBalance";
+import type { EasyDay } from "../study";
 
 type Args = {
   introBudgetInput: string;
