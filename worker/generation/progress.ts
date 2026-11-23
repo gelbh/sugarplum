@@ -56,6 +56,8 @@ export type JobProgressEmit = {
   setPresentStages: (stages: readonly ProgressStage[]) => void;
   /** Keep emit accumulator aligned after durable free-gen marker write. */
   noteFreeGenCharged: () => void;
+  /** Keep emit accumulator aligned after gap-fill reserves a second free slot. */
+  noteFreeGenSlots: (slots: number) => void;
 };
 
 function draftFrontPreview(d: CardDraft): string {
