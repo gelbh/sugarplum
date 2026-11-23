@@ -1,18 +1,8 @@
 [
   {
-    "file": "anatomy/viewer/AnatomyViewerGate.tsx",
-    "spec": "../../atlas/paths",
-    "reason": "Path helpers only; avoid eager full atlas barrel."
-  },
-  {
     "file": "api/cards.ts",
     "spec": "../draftReview/rejectReasons",
     "reason": "Single api consumer; avoid draftReview React barrel / extra kernel."
-  },
-  {
-    "file": "app/shell/shellBackHref.ts",
-    "spec": "../../atlas/paths",
-    "reason": "Path helpers only; avoid eager full atlas barrel on shell chrome."
   },
   {
     "file": "deckHub/AddMaterialWorkshop.tsx",
