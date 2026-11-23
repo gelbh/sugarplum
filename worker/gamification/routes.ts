@@ -178,6 +178,7 @@ function progressFor(
 
 export const gamificationRoutes = new Hono<AppEnv>();
 
+// view-as: allow
 gamificationRoutes.get("/achievements", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -236,6 +237,7 @@ gamificationRoutes.get("/achievements", async (c) => {
   return c.json({ items });
 });
 
+// view-as: allow
 gamificationRoutes.get("/gamification", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -247,18 +249,21 @@ gamificationRoutes.get("/gamification", async (c) => {
   );
 });
 
+// view-as: allow
 gamificationRoutes.get("/leaderboard/weekly", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
   return c.json(await buildLeaderboard(db, userId, "week"));
 });
 
+// view-as: allow
 gamificationRoutes.get("/leaderboard/all-time", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
   return c.json(await buildLeaderboard(db, userId, "all"));
 });
 
+// view-as: deny
 gamificationRoutes.patch("/gamification/settings", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);

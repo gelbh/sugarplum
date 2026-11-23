@@ -4,6 +4,7 @@ import type { Env } from "./env";
 import { authRoutes } from "./auth/routes";
 import { readSessionRecordFresh, type AuthVariables } from "./auth/session";
 import { isViewAsBlockedGetPath } from "./admin/impersonation";
+import { isViewAsMutateAllowedPath } from "./admin/viewAsRoutePolicy";
 import { throwViewAsReadOnly } from "./admin/viewAsReadOnly";
 import { deckRoutes, materialRoutes } from "./materials/routes";
 import { subjectRoutes } from "./subjects/routes";
@@ -64,9 +65,7 @@ app.use("/api/*", async (c, next) => {
     const path = c.req.path;
     if (mutating) {
       // Learner product is read-only; only Exit + logout may mutate.
-      const allowed =
-        path === "/api/auth/logout" || path === "/api/admin/impersonation/exit";
-      if (!allowed) {
+      if (!isViewAsMutateAllowedPath(path)) {
         throwViewAsReadOnly();
       }
     } else if (isViewAsBlockedGetPath(path)) {

@@ -51,6 +51,7 @@ async function deckCountForSubject(
 
 export const subjectRoutes = new Hono<AppEnv>();
 
+// view-as: allow
 subjectRoutes.get("/", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -71,6 +72,7 @@ subjectRoutes.get("/", async (c) => {
   return c.json(results ?? []);
 });
 
+// view-as: deny
 subjectRoutes.post("/", async (c) => {
   const userId = await requireUser(c);
   let body: { title?: unknown };
@@ -105,6 +107,7 @@ subjectRoutes.post("/", async (c) => {
   );
 });
 
+// view-as: allow
 subjectRoutes.get("/composition-summaries", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -142,6 +145,7 @@ subjectRoutes.get("/composition-summaries", async (c) => {
   return c.json(out);
 });
 
+// view-as: deny
 subjectRoutes.patch("/:id", async (c) => {
   const userId = await requireUser(c);
   const subjectId = c.req.param("id");
@@ -174,6 +178,7 @@ subjectRoutes.patch("/:id", async (c) => {
   });
 });
 
+// view-as: allow
 subjectRoutes.get("/:id/composition", async (c) => {
   const userId = await requireUser(c);
   const subjectId = c.req.param("id");
@@ -229,6 +234,7 @@ subjectRoutes.get("/:id/composition", async (c) => {
   return c.json(composeSubjectKnowledge(rows, now));
 });
 
+// view-as: deny
 subjectRoutes.delete("/:id", async (c) => {
   const userId = await requireUser(c);
   const subjectId = c.req.param("id");

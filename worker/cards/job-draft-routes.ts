@@ -12,6 +12,7 @@ type AppEnv = { Bindings: Env; Variables: AuthVariables };
 /** List draft cards for a generation job (owner only). */
 export const jobDraftRoutes = new Hono<AppEnv>();
 
+// view-as: allow
 jobDraftRoutes.get("/:id/drafts", async (c) => {
   const userId = await requireUser(c);
   const jobId = c.req.param("id");
@@ -43,6 +44,7 @@ jobDraftRoutes.get("/:id/drafts", async (c) => {
   return c.json((results ?? []).map(serializeCard));
 });
 
+// view-as: deny
 jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
   const userId = await requireUser(c);
   const jobId = c.req.param("id");
@@ -64,6 +66,7 @@ jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
 });
 
 /** Accept only drafts that still pass Layer-1 quality when mapped from storage. */
+// view-as: deny
 jobDraftRoutes.post("/:id/drafts/accept-safe", async (c) => {
   const userId = await requireUser(c);
   const jobId = c.req.param("id");

@@ -164,6 +164,7 @@ async function findOrCreateUnfiled(
 
 export const guestRoutes = new Hono<AppEnv>();
 
+// view-as: deny
 guestRoutes.post("/import", async (c) => {
   const userId = await requireUser(c);
 
