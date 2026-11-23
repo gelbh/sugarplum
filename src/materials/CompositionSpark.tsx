@@ -1,7 +1,14 @@
 import Box from "@mui/material/Box";
-import type { SubjectKnowledgeBuckets } from "../study/subjectKnowledge";
 
-export type CompositionSparkProps = SubjectKnowledgeBuckets & {
+/** Stage ladder counts; structural match to study subjectKnowledge buckets. */
+export type CompositionSparkBuckets = {
+  new: number;
+  learning: number;
+  young: number;
+  mature: number;
+};
+
+export type CompositionSparkProps = CompositionSparkBuckets & {
   total: number;
   height?: number;
   maxWidth?: number | string;
@@ -16,7 +23,7 @@ export const COMPOSITION_SEGMENT_COLORS = {
 } as const;
 
 const SEGMENTS: {
-  key: keyof SubjectKnowledgeBuckets;
+  key: keyof CompositionSparkBuckets;
   color: string;
 }[] = [
   { key: "mature", color: COMPOSITION_SEGMENT_COLORS.mature },

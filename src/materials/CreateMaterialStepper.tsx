@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Step from "@mui/material/Step";
@@ -37,12 +37,18 @@ import { CreateMaterialDoneStep } from "./CreateMaterialDoneStep";
 import { useCreateMaterialDeckStep } from "./useCreateMaterialDeckStep";
 import { useCreateMaterialPaste } from "./useCreateMaterialPaste";
 import { useCreateMaterialUpload } from "./useCreateMaterialUpload";
-import { FigureSuggestPanel } from "../deckHub/FigureSuggestPanel";
 import PdfCompressConsent from "./PdfCompressConsent";
 import PdfSplitConsent from "./PdfSplitConsent";
 import PptxSplitConsent from "./PptxSplitConsent";
 import { SelectEnumItem, renderSelectEnumValue } from "../shared/ui/SelectEnumItem";
 import { stepperSx } from "./stepperSx";
+
+export type CreateMaterialFigureSuggestArgs = {
+  pdfFile: File;
+  disabled: boolean;
+  crops: File[];
+  onCropsChange: (files: File[]) => void;
+};
 
 type Props = {
   decks: Deck[];
@@ -55,6 +61,8 @@ type Props = {
   onChanged?: () => void | Promise<void>;
   /** Guest: local paste into browser storage; uploads/AI need a signed-in account. */
   localOnly?: boolean;
+  /** Routes compose FigureSuggestPanel; materials stays peer-free. */
+  renderFigureSuggest: (args: CreateMaterialFigureSuggestArgs) => ReactNode;
 };
 
 export default function CreateMaterialStepper({
@@ -67,6 +75,7 @@ export default function CreateMaterialStepper({
   setActiveStep,
   onChanged,
   localOnly = false,
+  renderFigureSuggest,
 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -328,12 +337,12 @@ export default function CreateMaterialStepper({
                   resolveUploadContentType(upload.uploadFile) ===
                     "application/pdf" ? (
                     <Stack spacing={1.5}>
-                      <FigureSuggestPanel
-                        pdfFile={upload.uploadFile}
-                        disabled={busy || !deck.selectedDeckId}
-                        crops={upload.figureFiles}
-                        onCropsChange={upload.setFigureFiles}
-                      />
+                      {renderFigureSuggest({
+                        pdfFile: upload.uploadFile,
+                        disabled: busy || !deck.selectedDeckId,
+                        crops: upload.figureFiles,
+                        onCropsChange: upload.setFigureFiles,
+                      })}
                       <Typography variant="caption" sx={{
                         color: "text.secondary"
                       }}>

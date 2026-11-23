@@ -12,7 +12,7 @@ import { CreateMaterialStepper } from "../materials";
 import { OperateSection } from "../materials";
 import { ANKI_EXPORT_BUSY_LABEL } from "../export";
 import { isGuest } from "../guest/session";
-import { CoverPickerPanel } from "../deckHub";
+import { CoverPickerPanel, FigureSuggestPanel } from "../deckHub";
 import { LibraryCreateSubjectPanel } from "../library/LibraryCreateSubjectPanel";
 import { LibraryDialogs } from "../library/LibraryDialogs";
 import { LibraryShelf } from "../library/LibraryShelf";
@@ -421,6 +421,14 @@ export default function LibraryPage() {
                 activeStep={activeStep}
                 setActiveStep={setActiveStep}
                 localOnly={guest}
+                renderFigureSuggest={(args) => (
+                  <FigureSuggestPanel
+                    pdfFile={args.pdfFile}
+                    disabled={args.disabled}
+                    crops={args.crops}
+                    onCropsChange={args.onCropsChange}
+                  />
+                )}
                 onChanged={async () => {
                   await syncStepperFromJourney();
                   await refreshDraftJobs();
