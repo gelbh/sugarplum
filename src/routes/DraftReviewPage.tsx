@@ -73,6 +73,8 @@ export default function DraftReviewPage() {
   ]);
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const dirtyRef = useRef(false);
+  dirtyRef.current = dirty;
   const [confirmAll, setConfirmAll] = useState(false);
   const [confirmRejectDrafts, setConfirmRejectDrafts] = useState(false);
   const [regenConfirmOpen, setRegenConfirmOpen] = useState(false);
@@ -201,9 +203,9 @@ export default function DraftReviewPage() {
         }
         const enrichJustFinished =
           sawEnrichBanner && !showBanner && job.status === "needs_review";
-        // Skip draft reload while the user has unsaved edits.
-        if (!dirty && (showBanner || enrichJustFinished)) {
-          await load(jobId);
+        // Skip draft reload while the user has unsaved edits (incl. mid-flight).
+        if (!dirtyRef.current && (showBanner || enrichJustFinished)) {
+          await load(jobId, () => !dirtyRef.current);
         }
         if (
           enrichJustFinished ||
@@ -228,7 +230,7 @@ export default function DraftReviewPage() {
       cancelled = true;
       if (nextTimer) clearTimeout(nextTimer);
     };
-  }, [pollEnrichProgress, jobId, load, dirty]);
+  }, [pollEnrichProgress, jobId, load]);
 
   const current = drafts[0] ?? null;
 

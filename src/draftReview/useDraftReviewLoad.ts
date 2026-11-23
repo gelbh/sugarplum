@@ -55,12 +55,16 @@ export function useDraftReviewLoad({
   setClaimSpanGaps,
 }: Args) {
   const load = useCallback(
-    async (id: string) => {
+    async (id: string, shouldApply?: () => boolean) => {
       const [list, job, coverage] = await Promise.all([
         listJobDrafts(id),
         getJob(id),
         getJobClaimCoverage(id).catch(() => null),
       ]);
+      // Caller can abort apply after await (e.g. user edited mid-poll).
+      if (shouldApply && !shouldApply()) {
+        return list;
+      }
       setDrafts(list);
       setJobStatus(job.status);
       setClaimCoverage(coverage);
