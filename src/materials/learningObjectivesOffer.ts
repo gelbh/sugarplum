@@ -1,7 +1,8 @@
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-/** Shared free-path DIY occlusion opener copy (deckHub openDiyOcclusion). */
-export const DIY_OCCLUSION_FREE_PATH_NOTICE =
+// ponytail: keep in sync with deckHub/openDiyOcclusion DIY_OCCLUSION_FREE_PATH_NOTICE
+// (peer domains cannot share via import without recreating the allowlist cycle).
+const DIY_OCCLUSION_FREE_PATH_NOTICE =
   "Image ready. Free path opens an Occlusion card so you can add boxes or tap Suggest regions (or add a BYO API key for auto vision drafts).";
 
 export const FREE_PATH_IMAGE_HELPER =
