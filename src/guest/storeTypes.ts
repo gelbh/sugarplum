@@ -7,7 +7,7 @@ import type {
   Subject,
 } from "../api/client";
 import type { StudyPrefs } from "../study/kernel";
-import type { GuestFsrsOptimizeFields } from "../study/fsrs/guestFsrsOptimize";
+import type { GuestFsrsOptimizeFields } from "./guestFsrsOptimize";
 import type {
   GuestCardSchedule,
   GuestReviewLog,

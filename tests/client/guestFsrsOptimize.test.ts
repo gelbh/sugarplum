@@ -8,10 +8,12 @@ import {
   guestRevlogCsv,
   nextGuestFsrsPending,
   normalizeGuestFsrsOptimize,
-} from "../../src/study/fsrs/guestFsrsOptimize";
-import { FSRS_MIN_REVIEWS } from "../../src/study/fsrs/fsrsOptimizeConstants";
-import { DEFAULT_STUDY_PREFS } from "../../src/study/policyPrefs";
-import { schedulerForPrefs } from "../../src/study/fsrs/fsrsFactory";
+} from "../../src/guest/guestFsrsOptimize";
+import {
+  DEFAULT_STUDY_PREFS,
+  FSRS_MIN_REVIEWS,
+  schedulerForPrefs,
+} from "../../src/study/kernel";
 
 function log(
   partial: Partial<GuestReviewLog> & Pick<GuestReviewLog, "cardId" | "rating" | "at">,

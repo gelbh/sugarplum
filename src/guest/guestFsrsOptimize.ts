@@ -1,11 +1,13 @@
-import type { GuestReviewLog } from "../../guest/policyDue";
-import { isGuestLogTrainable } from "../../guest/policyDue";
-import { FSRS_MIN_REVIEWS } from "./fsrsOptimizeConstants";
-import { isOptimizeDue } from "./fsrsOptimizeDue";
-import type { FsrsOptimizeStatus } from "./fsrsOptimizeTypes";
-import type { FsrsPrefs } from "./fsrsFactory";
-import type { StudyPrefs } from "../policyQueue";
-import { validateFsrsW } from "./fsrsWeights";
+import type { GuestReviewLog } from "./policyDue";
+import { isGuestLogTrainable } from "./policyDue";
+import {
+  FSRS_MIN_REVIEWS,
+  isOptimizeDue,
+  validateFsrsW,
+  type FsrsOptimizeStatus,
+  type FsrsPrefs,
+  type StudyPrefs,
+} from "../study/kernel";
 
 export type GuestFsrsOptimizeFields = {
   fsrsW: number[] | null;
