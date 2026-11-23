@@ -43,6 +43,7 @@ function parseListStatus(raw: string | undefined): CorrectionStatus {
 
 export const atlasCorrectionAdminRoutes = new Hono<AppEnv>();
 
+// view-as: allow
 atlasCorrectionAdminRoutes.get("/", async (c) => {
   await requireAdmin(c);
   const status = parseListStatus(c.req.query("status"));
@@ -71,6 +72,7 @@ atlasCorrectionAdminRoutes.get("/", async (c) => {
   return c.json({ corrections });
 });
 
+// view-as: deny
 atlasCorrectionAdminRoutes.post("/:id", async (c) => {
   const admin = await requireAdmin(c);
   const id = c.req.param("id");

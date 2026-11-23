@@ -9,6 +9,7 @@ type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
 export const insightsRoutes = new Hono<AppEnv>();
 
+// view-as: allow
 insightsRoutes.get("/summary", async (c) => {
   const userId = await requireUser(c);
   const rawTz = Number(c.req.query("tzOffsetMinutes") ?? 0);

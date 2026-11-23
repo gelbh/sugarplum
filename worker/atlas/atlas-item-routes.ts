@@ -104,11 +104,13 @@ function scheduleFocusRefresh(
   }
 }
 
+// view-as: allow
 atlasItemRoutes.get("/", async (c) => {
   const { atlas } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   return c.json(atlasMeta(atlas));
 });
 
+// view-as: allow
 atlasItemRoutes.get("/entries", async (c) => {
   const { atlas, db, userId } = await requireOwnedAtlas(
     c,
@@ -133,6 +135,7 @@ atlasItemRoutes.get("/entries", async (c) => {
   return c.json({ entries: withNotes, focusRefreshPending });
 });
 
+// view-as: allow
 atlasItemRoutes.get("/deleted", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const rows = await loadEntryRows(db, atlas.id);
@@ -145,6 +148,7 @@ atlasItemRoutes.get("/deleted", async (c) => {
   return c.json({ entries });
 });
 
+// view-as: deny
 atlasItemRoutes.post("/make-cards", async (c) => {
   const { atlas, db, userId } = await requireOwnedAtlas(
     c,
@@ -233,6 +237,7 @@ atlasItemRoutes.post("/make-cards", async (c) => {
   );
 });
 
+// view-as: deny
 atlasItemRoutes.post("/entries", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   let body: {
@@ -320,6 +325,7 @@ function storedNamesChanged(before: StoredNames, after: StoredNames): boolean {
   );
 }
 
+// view-as: deny
 atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
@@ -460,6 +466,7 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
   return c.json(view);
 });
 
+// view-as: deny
 atlasItemRoutes.patch("/entries/:entryId/focus", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
@@ -507,6 +514,7 @@ atlasItemRoutes.patch("/entries/:entryId/focus", async (c) => {
   return c.json(view);
 });
 
+// view-as: deny
 atlasItemRoutes.put("/entries/:entryId/note", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
@@ -554,6 +562,7 @@ atlasItemRoutes.put("/entries/:entryId/note", async (c) => {
   return c.json(view);
 });
 
+// view-as: deny
 atlasItemRoutes.delete("/entries/:entryId/note", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
@@ -583,6 +592,7 @@ atlasItemRoutes.delete("/entries/:entryId/note", async (c) => {
   return c.json(view);
 });
 
+// view-as: deny
 atlasItemRoutes.post("/entries/:entryId/suggestion", async (c) => {
   const { atlas, db, userId } = await requireOwnedAtlas(
     c,
@@ -637,6 +647,7 @@ atlasItemRoutes.post("/entries/:entryId/suggestion", async (c) => {
   return c.json({ status: "open" as const, diff });
 });
 
+// view-as: deny
 atlasItemRoutes.post("/entries/:entryId/soft-delete", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
@@ -664,6 +675,7 @@ atlasItemRoutes.post("/entries/:entryId/soft-delete", async (c) => {
   return c.body(null, 204);
 });
 
+// view-as: deny
 atlasItemRoutes.post("/entries/:entryId/restore", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
@@ -700,6 +712,7 @@ atlasItemRoutes.post("/entries/:entryId/restore", async (c) => {
   return c.body(null, 204);
 });
 
+// view-as: deny
 atlasItemRoutes.post("/entries/:entryId/reset", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
@@ -720,6 +733,7 @@ atlasItemRoutes.post("/entries/:entryId/reset", async (c) => {
   return c.body(null, 204);
 });
 
+// view-as: deny
 atlasItemRoutes.delete("/entries/:entryId", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
@@ -744,6 +758,7 @@ atlasItemRoutes.delete("/entries/:entryId", async (c) => {
   return c.body(null, 204);
 });
 
+// view-as: deny
 atlasItemRoutes.post("/entries/:entryId/refs", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
@@ -811,6 +826,7 @@ atlasItemRoutes.post("/entries/:entryId/refs", async (c) => {
   );
 });
 
+// view-as: deny
 atlasItemRoutes.delete("/entries/:entryId/refs/:refId", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
@@ -830,6 +846,7 @@ atlasItemRoutes.delete("/entries/:entryId/refs/:refId", async (c) => {
   return c.body(null, 204);
 });
 
+// view-as: deny
 atlasItemRoutes.post("/entries/:entryId/images/upload-url", async (c) => {
   const { atlas, db, userId } = await requireOwnedAtlas(
     c,
@@ -891,6 +908,7 @@ atlasItemRoutes.post("/entries/:entryId/images/upload-url", async (c) => {
   return c.json({ imageId, uploadUrl, r2Key, entryId: row.id });
 });
 
+// view-as: deny
 atlasItemRoutes.post("/entries/:entryId/images", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
@@ -960,6 +978,7 @@ atlasItemRoutes.post("/entries/:entryId/images", async (c) => {
   );
 });
 
+// view-as: deny
 atlasItemRoutes.delete("/entries/:entryId/images/:imageId", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");

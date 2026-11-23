@@ -12,6 +12,7 @@ import {
 
 export const atlasRoutes = new Hono<AppEnv>();
 
+// view-as: allow
 atlasRoutes.get("/", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -24,6 +25,7 @@ atlasRoutes.get("/", async (c) => {
   return c.json({ atlases: (results ?? []).map(atlasMeta) });
 });
 
+// view-as: deny
 atlasRoutes.post("/", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);

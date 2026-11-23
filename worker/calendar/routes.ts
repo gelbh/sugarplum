@@ -287,6 +287,7 @@ async function loadClusters(
   }
 }
 
+// view-as: allow
 calendarRoutes.get("/", async (c) => {
   const userId = await requireUser(c);
   const connection = await loadConnection(getDb(c.env), userId);
@@ -307,6 +308,7 @@ calendarRoutes.get("/", async (c) => {
   });
 });
 
+// view-as: deny
 calendarRoutes.get("/connect", async (c) => {
   const userId = await requireUser(c);
   const { clientId } = requireGoogleCreds(c.env);
@@ -345,6 +347,7 @@ calendarRoutes.get("/connect", async (c) => {
   return c.redirect(url, 302);
 });
 
+// view-as: deny
 calendarRoutes.get("/callback", async (c) => {
   const appUrl = c.env.APP_URL;
   const err = c.req.query("error");
@@ -427,6 +430,7 @@ calendarRoutes.get("/callback", async (c) => {
   return settingsRedirect(appUrl, { calendar: "1" });
 });
 
+// view-as: deny
 calendarRoutes.delete("/", async (c) => {
   const userId = await requireUser(c);
   await deleteConnection(getDb(c.env), userId);
@@ -435,6 +439,7 @@ calendarRoutes.delete("/", async (c) => {
   return c.json({ ok: true });
 });
 
+// view-as: allow
 calendarRoutes.get("/suggestions", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -503,6 +508,7 @@ calendarRoutes.get("/suggestions", async (c) => {
   return c.json({ subjects: pending, decksBySubjectId });
 });
 
+// view-as: deny
 calendarRoutes.post("/links", async (c) => {
   const userId = await requireUser(c);
   let body: unknown;
@@ -538,6 +544,7 @@ calendarRoutes.post("/links", async (c) => {
   return c.json({ ok: true });
 });
 
+// view-as: deny
 calendarRoutes.post("/dismissals", async (c) => {
   const userId = await requireUser(c);
   let body: unknown;

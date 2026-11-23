@@ -23,6 +23,7 @@ export type { JourneyGenerationStatus };
 export const journeyRoutes = new Hono<AppEnv>();
 
 /** Job ids only for shell generation polling (no deck/card counts). */
+// view-as: allow
 journeyRoutes.get("/generation", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -30,6 +31,7 @@ journeyRoutes.get("/generation", async (c) => {
 });
 
 /** Summary status for owner: decks, jobs, accepted/due cards. */
+// view-as: allow
 journeyRoutes.get("/", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);

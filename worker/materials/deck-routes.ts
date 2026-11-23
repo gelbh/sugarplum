@@ -56,6 +56,7 @@ const DECK_UPLOAD_KINDS = new Set(["pdf", "pptx", "image"] as const);
 
 export const deckRoutes = new Hono<AppEnv>();
 
+// view-as: deny
 deckRoutes.post("/", async (c) => {
   const userId = await requireUser(c);
   let body: { title?: unknown; subjectId?: unknown };
@@ -98,6 +99,7 @@ deckRoutes.post("/", async (c) => {
   );
 });
 
+// view-as: allow
 deckRoutes.get("/", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
@@ -131,6 +133,7 @@ deckRoutes.get("/", async (c) => {
   return c.json(results ?? []);
 });
 
+// view-as: allow
 deckRoutes.get("/:id/materials", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
@@ -149,6 +152,7 @@ deckRoutes.get("/:id/materials", async (c) => {
   return c.json(results ?? []);
 });
 
+// view-as: allow
 deckRoutes.get("/:id/stats", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
@@ -190,6 +194,7 @@ deckRoutes.get("/:id/stats", async (c) => {
   });
 });
 
+// view-as: allow
 deckRoutes.get("/:id/claim-coverage", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
@@ -229,6 +234,7 @@ deckRoutes.get("/:id/claim-coverage", async (c) => {
   return c.json(buildClaimCoverage(results ?? []));
 });
 
+// view-as: allow
 deckRoutes.get("/:id/hygiene", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
@@ -281,6 +287,7 @@ deckRoutes.get("/:id/hygiene", async (c) => {
   return c.json({ cards, summary: { flagged: cards.length } });
 });
 
+// view-as: allow
 deckRoutes.get("/:id/composition", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
@@ -335,6 +342,7 @@ deckRoutes.get("/:id/composition", async (c) => {
   return c.json(composeSubjectKnowledge(rows, now));
 });
 
+// view-as: allow
 deckRoutes.get("/:id/cards", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
@@ -366,6 +374,7 @@ deckRoutes.get("/:id/cards", async (c) => {
   return c.json((results ?? []).map(serializeCard));
 });
 
+// view-as: deny
 deckRoutes.post("/:id/cards", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
@@ -567,6 +576,7 @@ deckRoutes.post("/:id/cards", async (c) => {
   );
 });
 
+// view-as: deny
 deckRoutes.patch("/:id", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
@@ -599,6 +609,7 @@ deckRoutes.patch("/:id", async (c) => {
   );
 });
 
+// view-as: deny
 deckRoutes.delete("/:id", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
@@ -661,6 +672,7 @@ deckRoutes.delete("/:id", async (c) => {
   return c.body(null, 204);
 });
 
+// view-as: deny
 deckRoutes.post("/:id/materials/paste", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
@@ -781,6 +793,7 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
   return c.json({ ...material, jobId }, 201);
 });
 
+// view-as: deny
 deckRoutes.post("/:id/topic-generate", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
@@ -870,6 +883,7 @@ deckRoutes.post("/:id/topic-generate", async (c) => {
   return c.json({ jobId }, 201);
 });
 
+// view-as: deny
 deckRoutes.post("/:id/materials/upload-url", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");

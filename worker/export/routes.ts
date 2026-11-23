@@ -131,6 +131,7 @@ async function insertJob(
     .run();
 }
 
+// view-as: deny
 exportRoutes.post("/", async (c) => {
   const userId = await requireUser(c);
   let body: unknown;
@@ -260,6 +261,7 @@ exportRoutes.post("/", async (c) => {
   throw new HTTPException(500, { message: "Export failed" });
 });
 
+// view-as: allow
 exportRoutes.get("/:id/download", async (c) => {
   const userId = await requireUser(c);
   const row = await ownedJob(getDb(c.env), c.req.param("id"), userId);
@@ -279,6 +281,7 @@ exportRoutes.get("/:id/download", async (c) => {
   });
 });
 
+// view-as: allow
 exportRoutes.get("/:id", async (c) => {
   const userId = await requireUser(c);
   const row = await ownedJob(getDb(c.env), c.req.param("id"), userId);

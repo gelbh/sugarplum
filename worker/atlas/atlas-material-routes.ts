@@ -92,6 +92,7 @@ async function requireOwnedAtlasMaterial(
 /** Nested under /api/atlas/:atlasId */
 export const atlasPackRoutes = new Hono<AppEnv>();
 
+// view-as: allow
 atlasPackRoutes.get("/materials", async (c) => {
   const atlasId = requireParam(c, "atlasId");
   const { db } = await requireOwnedAtlas(c, atlasId);
@@ -110,6 +111,7 @@ atlasPackRoutes.get("/materials", async (c) => {
   });
 });
 
+// view-as: deny
 atlasPackRoutes.post("/materials/paste", async (c) => {
   const atlasId = requireParam(c, "atlasId");
   const { userId, db } = await requireOwnedAtlas(c, atlasId);
@@ -176,6 +178,7 @@ atlasPackRoutes.post("/materials/paste", async (c) => {
   );
 });
 
+// view-as: deny
 atlasPackRoutes.post("/materials/upload-url", async (c) => {
   const atlasId = requireParam(c, "atlasId");
   const { userId, db } = await requireOwnedAtlas(c, atlasId);
@@ -245,6 +248,7 @@ atlasPackRoutes.post("/materials/upload-url", async (c) => {
 /** Flat routes under /api/atlas/materials/:id */
 export const atlasMaterialItemRoutes = new Hono<AppEnv>();
 
+// view-as: deny
 atlasMaterialItemRoutes.post("/:id/complete", async (c) => {
   const userId = await requireUser(c);
   const materialId = requireParam(c, "id");
@@ -395,6 +399,7 @@ atlasMaterialItemRoutes.post("/:id/complete", async (c) => {
   });
 });
 
+// view-as: deny
 atlasMaterialItemRoutes.post("/:id/promote", async (c) => {
   const userId = await requireUser(c);
   const materialId = requireParam(c, "id");
@@ -517,6 +522,7 @@ atlasMaterialItemRoutes.post("/:id/promote", async (c) => {
   );
 });
 
+// view-as: deny
 atlasMaterialItemRoutes.patch("/:id", async (c) => {
   const userId = await requireUser(c);
   const materialId = requireParam(c, "id");
@@ -547,6 +553,7 @@ atlasMaterialItemRoutes.patch("/:id", async (c) => {
   return c.json(materialJson({ ...material, source_role: sourceRole }));
 });
 
+// view-as: deny
 atlasMaterialItemRoutes.delete("/:id", async (c) => {
   const userId = await requireUser(c);
   const materialId = requireParam(c, "id");
