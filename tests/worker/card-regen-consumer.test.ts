@@ -68,7 +68,6 @@ describe("handleCardRegenQueue", () => {
     const env = createTestEnv();
     const ack = vi.fn();
     const retry = vi.fn();
-    // Missing op throws → proves we entered processCardRegenOp, not workflow create.
     await handleGenerateQueue(
       {
         queue: "sugarplum-generate",
