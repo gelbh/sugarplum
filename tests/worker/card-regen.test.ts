@@ -16,7 +16,10 @@ import {
   consumeFreeGenSlot,
   getFreeGenUsage,
 } from "../../worker/generation/quota";
-import { WORKERS_AI_MODEL } from "../../worker/generation/workers-ai";
+import {
+  WORKERS_AI_CLAIM_CARD_MODEL,
+  WORKERS_AI_MODEL,
+} from "../../worker/generation/workers-ai";
 import { createTestEnv } from "./test-env";
 
 function seedOwner(env: ReturnType<typeof createTestEnv>) {
@@ -150,7 +153,7 @@ function stubWorkersAiSequence(
 ) {
   let i = 0;
   const run = vi.fn(async (_model: string, _input: unknown) => {
-    expect(_model).toBe(WORKERS_AI_MODEL);
+    expect([WORKERS_AI_CLAIM_CARD_MODEL, WORKERS_AI_MODEL]).toContain(_model);
     return {
       choices: [
         {
@@ -258,7 +261,7 @@ describe("POST /api/cards/:id/regen", () => {
     env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
 
     const run = vi.fn(async (_model: string, input: unknown) => {
-      expect(_model).toBe(WORKERS_AI_MODEL);
+      expect(_model).toBe(WORKERS_AI_CLAIM_CARD_MODEL);
       const messages = (
         input as { messages?: Array<{ role: string; content: string }> }
       ).messages;
@@ -816,7 +819,8 @@ describe("POST /api/cards/:id/regen", () => {
 
     const { body, result } = await enqueueAndProcess(env);
     expect(result).toBe("failed");
-    expect(run).toHaveBeenCalledTimes(3);
+    // extract + specialist write/reask + glm fallback write/reask
+    expect(run).toHaveBeenCalledTimes(5);
     const getRes = await getRegenOp(env, body.op.id);
     expect(((await getRes.json()) as { error: string }).error).toMatch(
       /non-JSON/,

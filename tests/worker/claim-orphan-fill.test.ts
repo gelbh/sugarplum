@@ -6,7 +6,7 @@ import {
   runClaimOrphanFillPhase,
 } from "../../worker/generation/claim-orphan-fill";
 import { FREE_GEN_DAILY_CAP, consumeFreeGenSlot } from "../../worker/generation/quota";
-import { WORKERS_AI_MODEL } from "../../worker/generation/workers-ai";
+import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/workers-ai";
 import { createTestEnv } from "./test-env";
 
 function seedOwnerNeedsReview(env: ReturnType<typeof createTestEnv>) {
@@ -93,7 +93,7 @@ function stubWriteOnlyBySpan(
   bySpan: Record<string, string>,
 ) {
   const run = vi.fn(async (_model: string, input: unknown) => {
-    expect(_model).toBe(WORKERS_AI_MODEL);
+    expect(_model).toBe(WORKERS_AI_CLAIM_CARD_MODEL);
     const messages = (
       input as { messages?: Array<{ role: string; content: string }> }
     ).messages;

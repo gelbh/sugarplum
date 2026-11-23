@@ -25,9 +25,13 @@ import { CHUNK_CHAR_LIMIT } from "./pipeline";
 import { filterDraftsByQuality, layer1RejectReasons } from "./quality";
 import { consumeFreeGenSlot } from "./quota";
 import {
+  claimCardFallbackReason,
   createWorkersAiAdapter,
+  isClaimCardModelFallbackError,
+  WORKERS_AI_CLAIM_CARD_MODEL,
   WORKERS_AI_MODEL,
   WorkersAiCapacityError,
+  type ClaimCardFallbackReason,
 } from "./workers-ai";
 import { buildExtraUserSuffix } from "./feedback-hints";
 import {
@@ -94,19 +98,39 @@ export async function regenerateClaimAwareCard(args: {
   const struggleSuffix = buildExtraUserSuffix({
     studyStruggle: args.studyStruggle,
   });
-  const model =
-    (args.model && args.model.trim()) ||
-    (args.provider === "workers-ai" ? WORKERS_AI_MODEL : "default");
-  if (args.cache && !(args.model && args.model.trim()) && args.provider !== "workers-ai") {
+  const freeWorkersAi = args.provider === "workers-ai";
+  if (args.cache && !(args.model && args.model.trim()) && !freeWorkersAi) {
     throw new Error("model is required when caching claim→card drafts for BYO");
   }
 
+  /** Actual model id for the active write (cache key + Workers AI complete). */
+  let activeModel = freeWorkersAi
+    ? WORKERS_AI_CLAIM_CARD_MODEL
+    : (args.model && args.model.trim()) || "default";
+  let escalatedToGlm = false;
+  const specialistReasoning = (): "low" | undefined =>
+    freeWorkersAi && activeModel === WORKERS_AI_CLAIM_CARD_MODEL
+      ? "low"
+      : undefined;
+
   let usage: LlmTokenUsage | null = null;
   let completedCalls = 0;
-  const trackingLlm: LlmAdapter = {
-    complete: async (input) => {
+  const trackComplete = (
+    enrich: boolean,
+  ): LlmAdapter["complete"] => {
+    return async (input) => {
       try {
-        const result = await args.llm.complete(input);
+        const enriched =
+          freeWorkersAi && enrich
+            ? {
+                ...input,
+                model: activeModel,
+                ...(specialistReasoning()
+                  ? { reasoningEffort: specialistReasoning() }
+                  : {}),
+              }
+            : input;
+        const result = await args.llm.complete(enriched);
         completedCalls += 1;
         usage = addUsage(usage, result.usage);
         return result;
@@ -117,7 +141,10 @@ export async function regenerateClaimAwareCard(args: {
         }
         throw err;
       }
-    },
+    };
+  };
+  const trackingLlm: LlmAdapter = {
+    complete: trackComplete(true),
     generateDrafts: (input) => args.llm.generateDrafts(input),
   };
   const stageArgs = {
@@ -125,6 +152,17 @@ export async function regenerateClaimAwareCard(args: {
     apiKey: args.apiKey,
     provider: args.provider,
     extraUserSuffix: struggleSuffix,
+  };
+
+  const switchToGlmFallback = (reason: ClaimCardFallbackReason) => {
+    if (!freeWorkersAi || escalatedToGlm) return;
+    escalatedToGlm = true;
+    activeModel = WORKERS_AI_MODEL;
+    console.warn("claim-card model fallback", {
+      reason,
+      model: activeModel,
+      from: WORKERS_AI_CLAIM_CARD_MODEL,
+    });
   };
 
   let claim: StudyClaim | null = args.storedClaim ?? null;
@@ -138,7 +176,15 @@ export async function regenerateClaimAwareCard(args: {
         "No source text available for this card. Edit manually or regenerate from material with text.",
       );
     }
-    const claims = await extractClaimsForChunk(corpus, stageArgs);
+    // Extract stays on caller's llm defaults (glm for free Workers AI adapter).
+    const extractLlm: LlmAdapter = {
+      complete: trackComplete(false),
+      generateDrafts: (input) => args.llm.generateDrafts(input),
+    };
+    const claims = await extractClaimsForChunk(corpus, {
+      ...stageArgs,
+      llm: extractLlm,
+    });
     claim = pickClaimForRegen(claims, {
       excerpt: args.excerpt,
       previousFront: args.existingFront,
@@ -154,7 +200,7 @@ export async function regenerateClaimAwareCard(args: {
     claim,
     type: args.type,
     provider: args.provider,
-    model,
+    model: activeModel,
     extraUserSuffix,
   });
 
@@ -193,13 +239,31 @@ export async function regenerateClaimAwareCard(args: {
     return { status: "fail", draft: written.draft };
   };
 
+  const attemptWriteWithOptionalEscalate = async (
+    extraUserSuffix: string,
+  ): Promise<AttemptResult> => {
+    try {
+      return await attemptWrite(extraUserSuffix);
+    } catch (err) {
+      if (
+        freeWorkersAi &&
+        !escalatedToGlm &&
+        isClaimCardModelFallbackError(err)
+      ) {
+        switchToGlmFallback(claimCardFallbackReason(err));
+        return await attemptWrite(extraUserSuffix);
+      }
+      throw err;
+    }
+  };
+
   const baselineQualityHint =
     "Write a shorter single-fact card: avoid compound fronts, essay backs, and incomplete answers.";
   const firstSuffix = [struggleSuffix, baselineQualityHint]
     .filter(Boolean)
     .join("\n\n");
 
-  const first = await attemptWrite(firstSuffix);
+  const first = await attemptWriteWithOptionalEscalate(firstSuffix);
   if (first.status !== "fail") {
     return {
       draft: first.draft,
@@ -213,6 +277,10 @@ export async function regenerateClaimAwareCard(args: {
     throw new ClaimAwareRegenError(
       "Regenerated card failed quality gates. Edit manually or try again.",
     );
+  }
+  // Named Layer-1 reask on glm when free path still on specialist (2A).
+  if (freeWorkersAi && !escalatedToGlm) {
+    switchToGlmFallback("layer1");
   }
   const qualityHint = `Previous card failed quality gates (${reasons.join(", ")}). Write a shorter single-fact card.`;
   const qualitySuffix = [struggleSuffix, qualityHint]
@@ -336,11 +404,12 @@ export async function resolveRegenLlm(
 
   if (env.AI) {
     // Same free-path policy as job consumer: reserve a daily slot before AI.run.
+    // Claim→card specialist id for cache keying; extract uses adapter default glm.
     return {
       llm: createWorkersAiAdapter(env),
       apiKey: "",
       provider: "workers-ai",
-      model: WORKERS_AI_MODEL,
+      model: WORKERS_AI_CLAIM_CARD_MODEL,
       path: "free",
       releaseQuota: await consumeFreeGenSlot(env, userId),
     };
