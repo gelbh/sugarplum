@@ -5,7 +5,7 @@ import PdfCompressConsent from "../materials/PdfCompressConsent";
 import PdfSplitConsent from "../materials/PdfSplitConsent";
 import PptxSplitConsent from "../materials/PptxSplitConsent";
 import { CreateFlowNotice } from "../library/CreateFlowNotice";
-import { fileSizeCapMb } from "../materials/materialUploadLimits";
+import { fileSizeCapMb } from "../materials/kernel";
 import type { CardDraftView, CardType } from "../api/client";
 import type { DraftEditorChange } from "../draftReview/DraftCardEditor";
 import AddMaterialDiyPanel from "./AddMaterialDiyPanel";

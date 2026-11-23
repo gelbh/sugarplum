@@ -10,29 +10,14 @@
     "reason": "Route-level CSS side-effect; no barrel re-export for stylesheets."
   },
   {
-    "file": "atlas/hub/CoursePackPanel.tsx",
-    "spec": "../../materials/pdfScanOcr",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "atlas/hub/CoursePackPanel.tsx",
-    "spec": "../../materials/sourceRole",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
     "file": "atlas/hub/apiMaterials.ts",
     "spec": "../../materials/sourceRole",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
+    "reason": "Client atlas hub helper; sourceRole leaf avoids materials/kernel OCR/DOM (same module family as worker-imported focusScan)."
   },
   {
     "file": "atlas/hub/focusScan.ts",
     "spec": "../../materials/sourceRole",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "deckHub/AddMaterialUploadPanel.tsx",
-    "spec": "../materials/materialUploadLimits",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
+    "reason": "Worker atlas routes import this module; sourceRole leaf avoids materials/kernel OCR/DOM fan-in."
   },
   {
     "file": "deckHub/AddMaterialWorkshop.tsx",
@@ -51,17 +36,7 @@
   },
   {
     "file": "deckHub/AddMaterialWorkshop.tsx",
-    "spec": "../materials/materialUploadLimits",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "deckHub/AddMaterialWorkshop.tsx",
     "spec": "../draftReview/DraftCardEditor",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "deckHub/FigureSuggestPanel.tsx",
-    "spec": "../materials/figureGeometry",
     "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
   },
   {
@@ -70,33 +45,8 @@
     "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
   },
   {
-    "file": "deckHub/layoutOnnx.ts",
-    "spec": "../materials/figureGeometry",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "deckHub/pdfPageRender.ts",
-    "spec": "../materials/figureGeometry",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "deckHub/useAddMaterialWorkshop.ts",
-    "spec": "../materials/figureGeometry",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
     "file": "deckHub/useAddMaterialWorkshop.ts",
     "spec": "../materials/learningObjectivesOffer",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "deckHub/useAddMaterialWorkshop.ts",
-    "spec": "../materials/storedUploadNotice",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "deckHub/useAddMaterialWorkshop.ts",
-    "spec": "../materials/materialUploadLimits",
     "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
   },
   {

@@ -18,7 +18,7 @@ import {
   MAX_PAGES_TO_SCAN,
   clampBoxToPage,
   type PageBox,
-} from "../materials/figureGeometry";
+} from "../materials/kernel";
 import {
   ensureLayoutSession,
   detectFigureBoxesOnCanvas,
