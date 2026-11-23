@@ -87,11 +87,18 @@ export function formatEtaSubline(etaMs: number | null | undefined): string {
 /** Neutral wait copy: no queue-depth API, so do not claim another job is ahead. */
 const QUEUED_SUBLINE = "You'll start when a worker is free";
 
+/** Active stage with unknown ETA: honest wait, not "Calculating…". */
+const ACTIVE_WAIT_SUBLINE = "Still working…";
+
 export function formatProgressSubline(args: {
   stage?: string | null;
   etaMs?: number | null;
 }): string {
   if (args.stage === "queued") return QUEUED_SUBLINE;
+  if (args.etaMs == null) {
+    if (args.stage && args.stage !== "queued") return ACTIVE_WAIT_SUBLINE;
+    return "Calculating…";
+  }
   return formatEtaSubline(args.etaMs);
 }
 
