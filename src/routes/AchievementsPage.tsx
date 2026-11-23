@@ -3,11 +3,13 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import MedalCabinet from "../achievements/MedalCabinet";
 import OrchardOverview from "../achievements/OrchardOverview";
 import WeeklyBoard from "../achievements/WeeklyBoard";
+import { orchardOverviewSx } from "../achievements/orchardSurfaces";
 import { useAchievementsData } from "../achievements/useAchievementsData";
 import type { AchievementItem } from "../achievements/wire";
 import {
@@ -151,20 +153,54 @@ export default function AchievementsPage() {
       );
     case "guest":
       return (
-        <Container maxWidth="lg" sx={{ py: { xs: 4, md: 5 } }}>
-          <Stack spacing={2}>
-            <Typography variant="h3" component="h1" sx={insightsPageTitleSx}>
-              Orchard
-            </Typography>
-            <Alert severity="info">
-              Sign in to track streaks, XP, and fruits. Guest study stays
-              on this device only.
-            </Alert>
-            <Button variant="contained" href="/login">
-              Sign in
-            </Button>
-          </Stack>
-        </Container>
+        <GalleryLayout>
+          <Paper elevation={0} sx={orchardOverviewSx}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                maxWidth: 440,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: insightsBrandSerif,
+                  fontSize: { xs: "1.2rem", md: "1.35rem" },
+                  lineHeight: 1.25,
+                  letterSpacing: "0.01em",
+                  color: "text.primary",
+                }}
+              >
+                Sign in to grow your Orchard
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  mt: 1.25,
+                  color: "rgba(232, 216, 199, 0.72)",
+                  lineHeight: 1.55,
+                  maxWidth: "38ch",
+                }}
+              >
+                Streaks, XP, and fruit medals sync when you have an account.
+                Guest study stays on this device only.
+              </Typography>
+              <Button
+                variant="contained"
+                href="/login"
+                sx={{
+                  mt: 2.75,
+                  px: 2.75,
+                  minWidth: 148,
+                  alignSelf: "flex-start",
+                }}
+              >
+                Sign in
+              </Button>
+            </Box>
+          </Paper>
+        </GalleryLayout>
       );
     case "error":
       return (

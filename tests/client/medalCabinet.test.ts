@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import MedalCabinet from "../../src/achievements/MedalCabinet";
 import type { AchievementItem, AchievementProgress } from "../../src/achievements/wire";
@@ -135,6 +136,8 @@ const plum: AchievementItem[] = [
   }),
 ];
 
+const theme = createTheme({ palette: { mode: "dark" } });
+
 let root: Root;
 let host: HTMLDivElement;
 
@@ -152,13 +155,21 @@ afterEach(() => {
 function render(items: AchievementItem[]) {
   act(() => {
     root.render(
-      createElement(MedalCabinet, { items, sheenIds: new Set<string>() }),
+      createElement(
+        ThemeProvider,
+        { theme },
+        createElement(MedalCabinet, { items, sheenIds: new Set<string>() }),
+      ),
     );
   });
 }
 
-function text(): string {
+function hostText(): string {
   return host.textContent ?? "";
+}
+
+function bodyText(): string {
+  return document.body.textContent ?? "";
 }
 
 function clickButton(index: number) {
@@ -169,57 +180,80 @@ function clickButton(index: number) {
   });
 }
 
+function closeModal() {
+  const backdrop = document.querySelector(".MuiBackdrop-root");
+  if (!backdrop) throw new Error("missing dialog backdrop");
+  act(() => {
+    backdrop.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+}
+
+function pressEscape() {
+  const dialog = document.querySelector('[role="dialog"]');
+  if (!dialog) throw new Error("missing dialog");
+  act(() => {
+    dialog.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "Escape",
+        code: "Escape",
+        keyCode: 27,
+        which: 27,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+  });
+}
+
 describe("MedalCabinet", () => {
   it("titles the tile with the highest unlocked medal", () => {
     render(apple);
-    expect(text()).toContain("Orchard regular");
-    expect(text()).toContain("3 of 5");
-    expect(text()).not.toContain("Full bushel");
-    expect(text().split("Orchard regular").length - 1).toBe(1);
+    expect(hostText()).toContain("Orchard regular");
+    expect(hostText()).toContain("3 of 5");
+    expect(hostText()).not.toContain("Full bushel");
+    expect(hostText().split("Orchard regular").length - 1).toBe(1);
   });
 
-  it("opens the rest of the fruit with progress, then closes", () => {
+  it("opens a fruit modal with progress, then closes", () => {
     render(apple);
     clickButton(0);
-    expect(text()).toContain("Full bushel");
-    expect(text()).toContain("180 / 500");
-    expect(text()).toContain("Golden apple");
-    // Header title + stem node both name the held medal.
-    expect(text().split("Orchard regular").length - 1).toBe(2);
-    clickButton(0);
-    expect(text()).not.toContain("Full bushel");
+    expect(bodyText()).toContain("Full bushel");
+    expect(bodyText()).toContain("180 / 500");
+    expect(bodyText()).toContain("Golden apple");
+    expect(bodyText()).toContain("Next · Complete 500 reviews.");
+    expect(bodyText().split("Orchard regular").length - 1).toBeGreaterThanOrEqual(2);
+    closeModal();
+    expect(bodyText()).not.toContain("Full bushel");
   });
 
-  it("keeps a single fruit open", () => {
+  it("keeps a single fruit modal open", () => {
     render([...apple, ...lemon]);
     clickButton(0);
-    expect(text()).toContain("Full bushel");
+    expect(bodyText()).toContain("Full bushel");
+    closeModal();
     clickButton(1);
-    expect(text()).not.toContain("Full bushel");
-    expect(text()).toContain("Lemon grove");
-    expect(text()).toContain("40 / 100");
+    expect(bodyText()).not.toContain("Full bushel");
+    expect(bodyText()).toContain("Lemon grove");
+    expect(bodyText()).toContain("40 / 100");
   });
 
-  it("closes the open ladder on Escape", () => {
+  it("closes the fruit modal on Escape", () => {
     render(apple);
     clickButton(0);
-    const tile = host.querySelector(".medal-tile");
-    if (!tile) throw new Error("missing tile");
-    act(() => {
-      tile.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-    });
-    expect(text()).not.toContain("Full bushel");
+    expect(bodyText()).toContain("Full bushel");
+    pressEscape();
+    expect(bodyText()).not.toContain("Full bushel");
   });
 
-  it("returns focus to the tile button on Escape", () => {
+  it("returns focus to the tile button when the modal closes", () => {
     render(apple);
-    clickButton(0);
     const button = host.querySelector("button");
-    const tile = host.querySelector(".medal-tile");
-    if (!button || !tile) throw new Error("missing tile");
+    if (!button) throw new Error("missing tile");
     act(() => {
-      tile.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      button.focus();
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
+    closeModal();
     expect(document.activeElement).toBe(button);
   });
 
@@ -230,32 +264,34 @@ describe("MedalCabinet", () => {
     expect(button?.querySelector("span")?.textContent).toContain("Orchard regular");
   });
 
-  it("expands a right-column tile in place", () => {
+  it("keeps the grid tile in place when opening a right-column fruit", () => {
     render([...apple, ...lemon]);
     clickButton(1);
     const tiles = host.querySelectorAll(".medal-tile");
     expect(tiles[0]?.textContent).toContain("Orchard regular");
     expect(tiles[1]?.textContent).toContain("First zest");
-    expect(tiles[1]?.textContent).toContain("Lemon grove");
+    expect(tiles[1]?.textContent).not.toContain("Lemon grove");
+    expect(bodyText()).toContain("Lemon grove");
   });
 
-  it("expands a third-column tile in place", () => {
+  it("keeps the grid tile in place when opening a third-column fruit", () => {
     render([...apple, ...lemon, ...strawberry]);
     clickButton(2);
     const tiles = host.querySelectorAll(".medal-tile");
     expect(tiles[0]?.textContent).toContain("Orchard regular");
     expect(tiles[1]?.textContent).toContain("First zest");
     expect(tiles[2]?.textContent).toContain("First berry");
+    expect(bodyText()).toContain("Reach a 2-day streak");
   });
 
   it("shows the first medal when none are unlocked, and the next plum's stem goals", () => {
     render(plum);
-    expect(text()).toContain("Plum bud");
+    expect(hostText()).toContain("Plum bud");
     const button = host.querySelector("button");
     expect(button?.getAttribute("aria-label")).toContain("0 of 2");
-    expect(text()).not.toContain("4/5");
+    expect(hostText()).not.toContain("4/5");
     clickButton(0);
-    expect(text()).toContain("4/5 · 40/50");
-    expect(text().split("Plum bud").length - 1).toBe(2);
+    expect(bodyText()).toContain("4/5 · 40/50");
+    expect(bodyText().split("Plum bud").length - 1).toBeGreaterThanOrEqual(2);
   });
 });

@@ -551,7 +551,7 @@ export default function StudyPage() {
                   onToday={leaveStudy}
                   onAchievements={() => {
                     exitZen();
-                    navigate("/achievements");
+                    navigate("/orchard");
                   }}
                   scopeBack={
                     scopeBack
