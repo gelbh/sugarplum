@@ -1,4 +1,4 @@
-import type { SubjectKnowledgeBucketsAggregate } from "../study/subjectKnowledge";
+import type { SubjectKnowledgeBucketsAggregate } from "../study/kernel";
 
 export type InsightsGradeCounts = {
   again: number;

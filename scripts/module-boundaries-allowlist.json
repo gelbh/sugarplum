@@ -45,26 +45,6 @@
     "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
   },
   {
-    "file": "insights/buildMetrics.ts",
-    "spec": "../study/loadBalance",
-    "reason": "Worker insights path; leaf import avoids fat study/kernel fan-in."
-  },
-  {
-    "file": "insights/buildMetrics.ts",
-    "spec": "../study/subjectKnowledge",
-    "reason": "Worker insights path; leaf import avoids fat study/kernel fan-in."
-  },
-  {
-    "file": "insights/buildSeries.ts",
-    "spec": "../study/loadBalance",
-    "reason": "Worker insights path; leaf import avoids fat study/kernel fan-in."
-  },
-  {
-    "file": "insights/types.ts",
-    "spec": "../study/subjectKnowledge",
-    "reason": "Worker insights path; leaf import avoids fat study/kernel fan-in."
-  },
-  {
     "file": "routes/AtlasPage.tsx",
     "spec": "../atlas/hub/atlasMotion.css",
     "reason": "Route-level CSS side-effect; no barrel re-export for stylesheets."

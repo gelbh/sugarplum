@@ -1,6 +1,6 @@
 import { State } from "ts-fsrs";
-import { localDayKey } from "../study/loadBalance";
-import { MATURE_INTERVAL_DAYS } from "../study/subjectKnowledge";
+import { localDayKey } from "../study/kernel";
+import { MATURE_INTERVAL_DAYS } from "../study/kernel";
 import { insightDayKeys } from "./buildSeries";
 import type {
   InsightsConsistency,
