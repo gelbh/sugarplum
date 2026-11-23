@@ -22,7 +22,6 @@ import {
 import { materialDisplayName } from "./materialActions";
 import { partitionSplitSiblings } from "./splitSiblingGroups";
 import type { SourceRole } from "./sourceRole";
-import EmptyNext from "../deckHub/EmptyNext";
 import MaterialRow from "./MaterialRow";
 import { shouldAutoFocusText } from "../shared/lib/autoFocusText";
 
@@ -199,11 +198,32 @@ export default function MaterialsList({
   if (materials.length === 0) {
     if (onAddMaterial) {
       return (
-        <EmptyNext
-          title="No materials yet"
-          body="Add notes or a file to generate cards."
-          primary={{ label: "Add material", onClick: onAddMaterial }}
-        />
+        <Stack
+          spacing={1}
+          sx={{
+            alignItems: "center",
+            textAlign: "center",
+            py: 4,
+            px: 2,
+          }}
+        >
+          <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+            No materials yet
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: "text.secondary", maxWidth: 420 }}
+          >
+            Add notes or a file to generate cards.
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={onAddMaterial}
+            sx={{ mt: 1, minHeight: 48 }}
+          >
+            Add material
+          </Button>
+        </Stack>
       );
     }
     return (

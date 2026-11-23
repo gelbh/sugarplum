@@ -7,7 +7,7 @@ import {
   renderPageToCanvas,
   type EmbedPdfDocument,
   type EmbedPdfPageLayout,
-} from "../study/notes/embedPdfEngine";
+} from "./embedPdfEngine";
 
 /** Match the worker sidecar cap. Upload text-layer scan stays at 120 pages. */
 export const OCR_EMPTY_PAGE_LIMIT = 8;

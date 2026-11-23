@@ -56,6 +56,7 @@ export {
   type SplitPartName,
 } from "./splitPartFilename";
 export {
+  DIY_OCCLUSION_FREE_PATH_NOTICE,
   FREE_PATH_IMAGE_HELPER,
   CREATE_FREE_PATH_IMAGE_NOTICE,
   isImageUploadContentType,

@@ -12,6 +12,18 @@ export {
   type SourceRole,
 } from "./sourceRole";
 export {
+  getEmbedPdfEngine,
+  openPdfDocument,
+  listPdfPages,
+  renderPageToCanvas,
+  renderPageToCanvasAtScale,
+  pageLayoutForNumber,
+  pagePlainText,
+  copyPdfBytes,
+  type EmbedPdfDocument,
+  type EmbedPdfPageLayout,
+} from "./embedPdfEngine";
+export {
   OCR_EMPTY_PAGE_LIMIT,
   OCR_TEXT_LAYER_SCAN_LIMIT,
   ocrEmptyPdfPages,

@@ -1,13 +1,28 @@
 [
   {
-    "file": "routes/AtlasPage.tsx",
-    "spec": "../atlas/hub/atlasMotion.css",
-    "reason": "Route-level CSS side-effect; no barrel re-export for stylesheets."
+    "file": "anatomy/viewer/AnatomyViewerGate.tsx",
+    "spec": "../../atlas/paths",
+    "reason": "Path helpers only; avoid eager full atlas barrel."
   },
   {
-    "file": "routes/DeckHubPage.tsx",
-    "spec": "../deckHub/deckHubMotion.css",
-    "reason": "Route-level CSS side-effect; no barrel re-export for stylesheets."
+    "file": "api/auth.ts",
+    "spec": "../study/dueCache",
+    "reason": "dueCache type-imports api/client; cannot live on study/kernel (worker graph)."
+  },
+  {
+    "file": "api/cards.ts",
+    "spec": "../draftReview/rejectReasons",
+    "reason": "Single api consumer; avoid draftReview React barrel / extra kernel."
+  },
+  {
+    "file": "api/cards.ts",
+    "spec": "../study/dueCache",
+    "reason": "dueCache type-imports api/client; cannot live on study/kernel (worker graph)."
+  },
+  {
+    "file": "app/shell/shellBackHref.ts",
+    "spec": "../../atlas/paths",
+    "reason": "Path helpers only; avoid eager full atlas barrel on shell chrome."
   },
   {
     "file": "atlas/hub/apiMaterials.ts",
@@ -18,6 +33,11 @@
     "file": "atlas/hub/focusScan.ts",
     "spec": "../../materials/sourceRole",
     "reason": "Worker atlas routes import this module; sourceRole leaf avoids materials/kernel OCR/DOM fan-in."
+  },
+  {
+    "file": "deckHub/AddMaterialWorkshop.tsx",
+    "spec": "../draftReview/DraftCardEditor",
+    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
   },
   {
     "file": "deckHub/AddMaterialWorkshop.tsx",
@@ -35,13 +55,8 @@
     "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
   },
   {
-    "file": "deckHub/AddMaterialWorkshop.tsx",
-    "spec": "../draftReview/DraftCardEditor",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "deckHub/FigureSuggestPanel.tsx",
-    "spec": "../study/notes/embedPdfEngine",
+    "file": "deckHub/openDiyOcclusion.ts",
+    "spec": "../materials/learningObjectivesOffer",
     "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
   },
   {
@@ -65,104 +80,9 @@
     "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
   },
   {
-    "file": "materials/CompositionSpark.tsx",
-    "spec": "../study/subjectKnowledge",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "materials/CreateMaterialStepper.tsx",
-    "spec": "../deckHub/FigureSuggestPanel",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "materials/MaterialsList.tsx",
-    "spec": "../deckHub/EmptyNext",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "materials/compressPdfUnderLimit.ts",
-    "spec": "../study/notes/embedPdfEngine",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "materials/learningObjectivesOffer.ts",
-    "spec": "../deckHub/openDiyOcclusion",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "materials/pdfScanOcr.ts",
-    "spec": "../study/notes/embedPdfEngine",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/CardFace.tsx",
-    "spec": "../deckHub/occlusionLayout",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/ReviewCard.tsx",
-    "spec": "../draftReview/draftCardModel",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/ReviewCard.tsx",
-    "spec": "../draftReview/rejectReasons",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/StudyCardActions.tsx",
-    "spec": "../draftReview/cardPatchBody",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/StudyCardActions.tsx",
-    "spec": "../draftReview/DraftCardEditor",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/StudyCardActions.tsx",
-    "spec": "../deckHub/hubDiyCreate",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/SubjectKnowledgeBar.tsx",
-    "spec": "../materials/CompositionSpark",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/reviewCardFaces.tsx",
-    "spec": "../draftReview/draftCardModel",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/reviewCardFaces.tsx",
-    "spec": "../draftReview/OcclusionRegionEditor",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/reviewCardMcq.tsx",
-    "spec": "../draftReview/draftCardModel",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/reviewCardMcq.tsx",
-    "spec": "../draftReview/mcqDraftEdit",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/studyCardPresentation.ts",
-    "spec": "../draftReview/draftCardModel",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "app/shell/shellBackHref.ts",
-    "spec": "../../atlas/paths",
-    "reason": "Path helpers only; avoid eager full atlas barrel on shell chrome."
-  },
-  {
-    "file": "anatomy/viewer/AnatomyViewerGate.tsx",
-    "spec": "../../atlas/paths",
-    "reason": "Path helpers only; avoid eager full atlas barrel."
+    "file": "guest/endGuestLocal.ts",
+    "spec": "../study/dueCache",
+    "reason": "dueCache type-imports api/client; cannot live on study/kernel (worker graph)."
   },
   {
     "file": "guest/enrichScheduledDays.ts",
@@ -190,46 +110,6 @@
     "reason": "Leaf import breaks circular barrel graph (guestFsrs* imports guest)."
   },
   {
-    "file": "api/auth.ts",
-    "spec": "../study/dueCache",
-    "reason": "dueCache type-imports api/client; cannot live on study/kernel (worker graph)."
-  },
-  {
-    "file": "api/cards.ts",
-    "spec": "../study/dueCache",
-    "reason": "dueCache type-imports api/client; cannot live on study/kernel (worker graph)."
-  },
-  {
-    "file": "guest/endGuestLocal.ts",
-    "spec": "../study/dueCache",
-    "reason": "dueCache type-imports api/client; cannot live on study/kernel (worker graph)."
-  },
-  {
-    "file": "insights/GradeMixChart.tsx",
-    "spec": "../study/gradeColors",
-    "reason": "gradeColors type-imports api/client; cannot live on study/kernel (worker graph)."
-  },
-  {
-    "file": "insights/GradeMixChart.tsx",
-    "spec": "../study/gradeLabels",
-    "reason": "gradeLabels type-imports api/client; cannot live on study/kernel (worker graph)."
-  },
-  {
-    "file": "insights/GradeMixByMaturityChart.tsx",
-    "spec": "../study/gradeColors",
-    "reason": "gradeColors type-imports api/client; cannot live on study/kernel (worker graph)."
-  },
-  {
-    "file": "insights/GradeMixByMaturityChart.tsx",
-    "spec": "../study/gradeLabels",
-    "reason": "gradeLabels type-imports api/client; cannot live on study/kernel (worker graph)."
-  },
-  {
-    "file": "api/cards.ts",
-    "spec": "../draftReview/rejectReasons",
-    "reason": "Single api consumer; avoid draftReview React barrel / extra kernel."
-  },
-  {
     "file": "insights/buildMetrics.ts",
     "spec": "../study/loadBalance",
     "reason": "Worker insights path; leaf import avoids fat study/kernel fan-in."
@@ -245,8 +125,98 @@
     "reason": "Worker insights path; leaf import avoids fat study/kernel fan-in."
   },
   {
+    "file": "insights/GradeMixByMaturityChart.tsx",
+    "spec": "../study/gradeColors",
+    "reason": "gradeColors type-imports api/client; cannot live on study/kernel (worker graph)."
+  },
+  {
+    "file": "insights/GradeMixByMaturityChart.tsx",
+    "spec": "../study/gradeLabels",
+    "reason": "gradeLabels type-imports api/client; cannot live on study/kernel (worker graph)."
+  },
+  {
+    "file": "insights/GradeMixChart.tsx",
+    "spec": "../study/gradeColors",
+    "reason": "gradeColors type-imports api/client; cannot live on study/kernel (worker graph)."
+  },
+  {
+    "file": "insights/GradeMixChart.tsx",
+    "spec": "../study/gradeLabels",
+    "reason": "gradeLabels type-imports api/client; cannot live on study/kernel (worker graph)."
+  },
+  {
     "file": "insights/types.ts",
     "spec": "../study/subjectKnowledge",
     "reason": "Worker insights path; leaf import avoids fat study/kernel fan-in."
+  },
+  {
+    "file": "routes/AtlasPage.tsx",
+    "spec": "../atlas/hub/atlasMotion.css",
+    "reason": "Route-level CSS side-effect; no barrel re-export for stylesheets."
+  },
+  {
+    "file": "routes/DeckHubPage.tsx",
+    "spec": "../deckHub/deckHubMotion.css",
+    "reason": "Route-level CSS side-effect; no barrel re-export for stylesheets."
+  },
+  {
+    "file": "study/CardFace.tsx",
+    "spec": "../deckHub/occlusionLayout",
+    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
+  },
+  {
+    "file": "study/ReviewCard.tsx",
+    "spec": "../draftReview/draftCardModel",
+    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
+  },
+  {
+    "file": "study/ReviewCard.tsx",
+    "spec": "../draftReview/rejectReasons",
+    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
+  },
+  {
+    "file": "study/reviewCardFaces.tsx",
+    "spec": "../draftReview/draftCardModel",
+    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
+  },
+  {
+    "file": "study/reviewCardFaces.tsx",
+    "spec": "../draftReview/OcclusionRegionEditor",
+    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
+  },
+  {
+    "file": "study/reviewCardMcq.tsx",
+    "spec": "../draftReview/draftCardModel",
+    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
+  },
+  {
+    "file": "study/reviewCardMcq.tsx",
+    "spec": "../draftReview/mcqDraftEdit",
+    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
+  },
+  {
+    "file": "study/StudyCardActions.tsx",
+    "spec": "../deckHub/hubDiyCreate",
+    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
+  },
+  {
+    "file": "study/StudyCardActions.tsx",
+    "spec": "../draftReview/cardPatchBody",
+    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
+  },
+  {
+    "file": "study/StudyCardActions.tsx",
+    "spec": "../draftReview/DraftCardEditor",
+    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
+  },
+  {
+    "file": "study/studyCardPresentation.ts",
+    "spec": "../draftReview/draftCardModel",
+    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
+  },
+  {
+    "file": "study/SubjectKnowledgeBar.tsx",
+    "spec": "../materials/CompositionSpark",
+    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
   }
 ]

@@ -1,6 +1,8 @@
-import { DIY_OCCLUSION_FREE_PATH_NOTICE } from "../deckHub/openDiyOcclusion";
-
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+/** Shared free-path DIY occlusion opener copy (deckHub openDiyOcclusion). */
+export const DIY_OCCLUSION_FREE_PATH_NOTICE =
+  "Image ready. Free path opens an Occlusion card so you can add boxes or tap Suggest regions (or add a BYO API key for auto vision drafts).";
 
 export const FREE_PATH_IMAGE_HELPER =
   "Free path opens an Occlusion card (add boxes or Suggest regions). Add a BYO API key under Settings for auto vision drafts; Learning objectives apply on that path.";

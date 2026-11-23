@@ -18,18 +18,16 @@ import {
   MAX_PAGES_TO_SCAN,
   clampBoxToPage,
   type PageBox,
-} from "../materials/kernel";
-import {
-  ensureLayoutSession,
-  detectFigureBoxesOnCanvas,
-} from "./layoutOnnx";
-import {
   listPdfPages,
   openPdfDocument,
   renderPageToCanvas,
   type EmbedPdfDocument,
   type EmbedPdfPageLayout,
-} from "../study/notes/embedPdfEngine";
+} from "../materials/kernel";
+import {
+  ensureLayoutSession,
+  detectFigureBoxesOnCanvas,
+} from "./layoutOnnx";
 import { cropCanvasToPngFile } from "./pdfPageRender";
 
 export type FigureSuggestPanelProps = {
