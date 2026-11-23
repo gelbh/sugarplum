@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { getFreeGenUsage } from "../../worker/generation/quota";
-import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/workers-ai";
+import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/claim-card-fallback";
 import { createTestEnv } from "./test-env";
 
 const VALID_QA = JSON.stringify({

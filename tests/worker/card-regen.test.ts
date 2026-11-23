@@ -16,10 +16,8 @@ import {
   consumeFreeGenSlot,
   getFreeGenUsage,
 } from "../../worker/generation/quota";
-import {
-  WORKERS_AI_CLAIM_CARD_MODEL,
-  WORKERS_AI_MODEL,
-} from "../../worker/generation/workers-ai";
+import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/claim-card-fallback";
+import { WORKERS_AI_MODEL } from "../../worker/generation/workers-ai";
 import { createTestEnv } from "./test-env";
 
 function seedOwner(env: ReturnType<typeof createTestEnv>) {

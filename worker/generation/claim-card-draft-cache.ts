@@ -4,7 +4,10 @@ import {
 } from "../cache/kvJson";
 import { sha256Hex } from "../materials/content-hash";
 import type { StudyClaim } from "./claims";
-import type { TypedRegenCardType, TypedRegenDraft } from "./claim-stages";
+import type {
+  TypedRegenCardType,
+  TypedRegenDraft,
+} from "./claim-card-write";
 import type { CardDraft } from "./schema";
 import { filterDraftsByQuality } from "./quality";
 
