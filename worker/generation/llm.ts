@@ -100,8 +100,8 @@ export type CompleteInput = {
   /** Constrains Workers AI / OpenAI response_format. Default cards (critique/write). */
   jsonShape?: CompleteJsonShape;
   /**
-   * Workers AI + AI Gateway only. Claim→card write opts into response cache;
-   * other paths leave this unset (adapter default skipCache: true).
+   * Workers AI + AI Gateway only. Unset keeps adapter default skipCache: true.
+   * Claim→card write leaves this unset (KV owns draft hits; Gateway can sticky-cache failures).
    */
   gatewayCache?: CompleteGatewayCache;
 };

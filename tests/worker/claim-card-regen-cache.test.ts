@@ -124,7 +124,6 @@ describe("regenerateClaimAwareCard draft cache", () => {
     expect(first.draft.front).toBe("Which organelle produces ATP?");
     expect(complete).toHaveBeenCalledTimes(2);
 
-    // Baseline suffix alone must miss (failed draft was never stored).
     const { llm: llmBaseline, complete: completeBaseline } = mockRegenLlm([
       COMPOUND_MCQ,
       VALID_MCQ,
@@ -134,7 +133,6 @@ describe("regenerateClaimAwareCard draft cache", () => {
       llm: llmBaseline,
       cache: env.CACHE,
     });
-    // First write still runs (baseline miss), then reask key hits → no second LLM.
     expect(again.draft.front).toBe("Which organelle produces ATP?");
     expect(completeBaseline).toHaveBeenCalledTimes(1);
   });
