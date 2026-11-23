@@ -2,8 +2,13 @@ import { describe, it, expect, vi } from "vitest";
 import { regenerateClaimAwareCard } from "../../worker/generation/card-regen";
 import type { LlmAdapter } from "../../worker/generation/llm";
 import type { StudyClaim } from "../../worker/generation/claims";
-import { WORKERS_AI_MODEL } from "../../worker/generation/workers-ai";
+import {
+  WORKERS_AI_CLAIM_CARD_MODEL,
+  WORKERS_AI_MODEL,
+  WorkersAiCapacityError,
+} from "../../worker/generation/workers-ai";
 import { createTestEnv } from "./test-env";
+import type { CompleteInput } from "../../worker/generation/llm";
 
 const VALID_MCQ = JSON.stringify({
   cards: [
@@ -42,7 +47,7 @@ function mockRegenLlm(replies: string[]): {
   complete: ReturnType<typeof vi.fn>;
 } {
   let i = 0;
-  const complete = vi.fn(async (_input: { user: string }) => {
+  const complete = vi.fn(async (_input: CompleteInput) => {
     const text = replies[Math.min(i++, replies.length - 1)]!;
     return { text, usage: null };
   });
@@ -62,7 +67,7 @@ const regenBase = {
   storedClaim: STORED_CLAIM,
   apiKey: "",
   provider: "workers-ai",
-  model: WORKERS_AI_MODEL,
+  model: WORKERS_AI_CLAIM_CARD_MODEL,
 };
 
 describe("regenerateClaimAwareCard draft cache", () => {
@@ -123,6 +128,10 @@ describe("regenerateClaimAwareCard draft cache", () => {
     });
     expect(first.draft.front).toBe("Which organelle produces ATP?");
     expect(complete).toHaveBeenCalledTimes(2);
+    expect(complete.mock.calls[0]![0].model).toBe(WORKERS_AI_CLAIM_CARD_MODEL);
+    expect(complete.mock.calls[0]![0].reasoningEffort).toBe("low");
+    expect(complete.mock.calls[1]![0].model).toBe(WORKERS_AI_MODEL);
+    expect(complete.mock.calls[1]![0].reasoningEffort).toBeUndefined();
 
     const { llm: llmBaseline, complete: completeBaseline } = mockRegenLlm([
       COMPOUND_MCQ,
@@ -134,6 +143,101 @@ describe("regenerateClaimAwareCard draft cache", () => {
       cache: env.CACHE,
     });
     expect(again.draft.front).toBe("Which organelle produces ATP?");
+    // Specialist firstSuffix miss; glm qualitySuffix hits prior cache.
     expect(completeBaseline).toHaveBeenCalledTimes(1);
+  });
+
+  it("pins specialist model + reasoning low on a clean free-path write", async () => {
+    const { llm, complete } = mockRegenLlm([VALID_MCQ]);
+    await regenerateClaimAwareCard({
+      ...regenBase,
+      llm,
+    });
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(complete.mock.calls[0]![0].model).toBe(WORKERS_AI_CLAIM_CARD_MODEL);
+    expect(complete.mock.calls[0]![0].reasoningEffort).toBe("low");
+  });
+
+  it("escalates to glm once on capacity from the specialist", async () => {
+    let n = 0;
+    const complete = vi.fn(async (input: CompleteInput) => {
+      n += 1;
+      if (n === 1) {
+        expect(input.model).toBe(WORKERS_AI_CLAIM_CARD_MODEL);
+        throw new WorkersAiCapacityError("Workers AI is temporarily at capacity.");
+      }
+      expect(input.model).toBe(WORKERS_AI_MODEL);
+      expect(input.reasoningEffort).toBeUndefined();
+      return { text: VALID_MCQ, usage: null };
+    });
+    const llm: LlmAdapter = {
+      complete,
+      generateDrafts: async () => [],
+    };
+    const out = await regenerateClaimAwareCard({
+      ...regenBase,
+      llm,
+    });
+    expect(out.draft.front).toBe("Which organelle produces ATP?");
+    expect(complete).toHaveBeenCalledTimes(2);
+  });
+
+  it("escalates remapped capacity after a prior successful complete", async () => {
+    let n = 0;
+    const complete = vi.fn(async (input: CompleteInput) => {
+      n += 1;
+      if (n === 1) {
+        expect(input.model).toBe(WORKERS_AI_CLAIM_CARD_MODEL);
+        // Force in-write reask then remapped capacity on the second hop.
+        return { text: "not-json", usage: null };
+      }
+      if (n === 2) {
+        expect(input.model).toBe(WORKERS_AI_CLAIM_CARD_MODEL);
+        throw new WorkersAiCapacityError(
+          "Workers AI is temporarily at capacity. Add your own OpenAI, Anthropic, Google, or Z.ai (free Flash) API key in Settings for BYO generation, or retry after UTC midnight.",
+        );
+      }
+      expect(input.model).toBe(WORKERS_AI_MODEL);
+      return { text: VALID_MCQ, usage: null };
+    });
+    const out = await regenerateClaimAwareCard({
+      ...regenBase,
+      llm: { complete, generateDrafts: async () => [] },
+    });
+    expect(out.draft.front).toBe("Which organelle produces ATP?");
+    expect(complete).toHaveBeenCalledTimes(3);
+  });
+
+  it("partitions cache by actual write model (specialist vs glm)", async () => {
+    const env = createTestEnv();
+    const complete = vi.fn(async (input: CompleteInput) => {
+      if (input.model === WORKERS_AI_CLAIM_CARD_MODEL) {
+        throw new WorkersAiCapacityError("capacity");
+      }
+      expect(input.model).toBe(WORKERS_AI_MODEL);
+      return { text: VALID_MCQ, usage: null };
+    });
+    const first = await regenerateClaimAwareCard({
+      ...regenBase,
+      llm: { complete, generateDrafts: async () => [] },
+      cache: env.CACHE,
+    });
+    expect(first.servedFromCache).toBe(false);
+    expect(complete).toHaveBeenCalledTimes(2);
+
+    const complete2 = vi.fn(async (input: CompleteInput) => {
+      if (input.model === WORKERS_AI_CLAIM_CARD_MODEL) {
+        throw new WorkersAiCapacityError("capacity");
+      }
+      return { text: VALID_MCQ, usage: null };
+    });
+    const second = await regenerateClaimAwareCard({
+      ...regenBase,
+      llm: { complete: complete2, generateDrafts: async () => [] },
+      cache: env.CACHE,
+    });
+    // Specialist miss → capacity → glm firstSuffix hits prior glm cache entry.
+    expect(second.servedFromCache).toBe(true);
+    expect(complete2).toHaveBeenCalledTimes(1);
   });
 });

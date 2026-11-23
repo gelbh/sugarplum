@@ -9,8 +9,11 @@ import {
 } from "../../worker/generation/cards-json-schema";
 import { isTruncationParseError } from "../../worker/generation/llm-json";
 import {
+  WORKERS_AI_CLAIM_CARD_MODEL,
   WORKERS_AI_MODEL,
   createWorkersAiAdapter,
+  isClaimCardModelFallbackError,
+  isWorkersAiDeprecatedModelError,
 } from "../../worker/generation/workers-ai";
 import { createTestEnv } from "./test-env";
 
@@ -108,6 +111,76 @@ describe("Workers AI adapter", () => {
     expect(drafts).toHaveLength(3);
     expect(drafts[0]?.type).toBe("qa");
     expect(drafts[2]?.type).toBe("cloze");
+  });
+
+  it("complete uses claim-card model and reasoning low when requested", async () => {
+    const run = vi.fn(
+      async (
+        model: string,
+        inputs: {
+          reasoning_effort?: string;
+          reasoning?: { effort?: string };
+        },
+      ) => {
+        expect(model).toBe(WORKERS_AI_CLAIM_CARD_MODEL);
+        expect(inputs.reasoning_effort).toBe("low");
+        expect(inputs.reasoning).toEqual({ effort: "low" });
+        return chatCompletionResult('{"cards":[]}');
+      },
+    );
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+    await adapter.complete({
+      system: "sys",
+      user: "usr",
+      apiKey: "",
+      provider: "workers-ai",
+      model: WORKERS_AI_CLAIM_CARD_MODEL,
+      reasoningEffort: "low",
+    });
+    expect(run).toHaveBeenCalledOnce();
+  });
+
+  it("complete defaults to WORKERS_AI_MODEL without reasoningEffort", async () => {
+    const run = vi.fn(async (model: string, inputs: Record<string, unknown>) => {
+      expect(model).toBe(WORKERS_AI_MODEL);
+      expect(inputs.reasoning_effort).toBeUndefined();
+      expect(inputs.reasoning).toBeUndefined();
+      return chatCompletionResult('{"cards":[]}');
+    });
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+    await adapter.complete({
+      system: "sys",
+      user: "usr",
+      apiKey: "",
+      provider: "workers-ai",
+    });
+    expect(run).toHaveBeenCalledOnce();
+  });
+
+  it("detects deprecated model and claim-card fallback errors", () => {
+    expect(
+      isWorkersAiDeprecatedModelError({ status: 410, message: "gone" }),
+    ).toBe(true);
+    expect(
+      isWorkersAiDeprecatedModelError({ code: 5028, message: "deprecated" }),
+    ).toBe(true);
+    expect(
+      isClaimCardModelFallbackError(
+        new Error("LLM did not return a qa card"),
+      ),
+    ).toBe(true);
+    expect(
+      isClaimCardModelFallbackError(
+        new Error("Workers AI is temporarily at capacity. Add your own key."),
+      ),
+    ).toBe(true);
+    expect(
+      isClaimCardModelFallbackError(new Error("invalid auth parse token")),
+    ).toBe(false);
   });
 
   it("complete honors gatewayCache when set (default remains skipCache true)", async () => {
