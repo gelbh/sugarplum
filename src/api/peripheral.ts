@@ -1,7 +1,6 @@
 import { isGuest } from "../guest/session";
 import { guestJourney } from "../guest/store";
-import { api, ApiError, guestUnsupported } from "./core";
-import type { ApiErrorBody } from "./core";
+import { api, guestUnsupported, throwApiErrorFromResponse } from "./core";
 import type {
   AdminOverview,
   AdminUserDetail,
@@ -87,8 +86,7 @@ export type AdminListUsersOpts = {
 };
 
 export function adminListUsers(opts: AdminListUsersOpts | string = {}) {
-  const normalized =
-    typeof opts === "string" ? { q: opts } : (opts ?? {});
+  const normalized = typeof opts === "string" ? { q: opts } : (opts ?? {});
   const params = new URLSearchParams();
   if (normalized.q?.trim()) params.set("q", normalized.q.trim());
   if (normalized.limit != null) params.set("limit", String(normalized.limit));
@@ -157,14 +155,7 @@ export async function adminExportUser(id: string) {
     credentials: "include",
   });
   if (!res.ok) {
-    let message = res.statusText || "Export failed";
-    try {
-      const data = (await res.json()) as ApiErrorBody;
-      message = data.message ?? data.error ?? message;
-    } catch {
-      /* ignore non-JSON error bodies */
-    }
-    throw new ApiError(res.status, message);
+    await throwApiErrorFromResponse(res, "Export failed");
   }
   const blob = await res.blob();
   const filename =
@@ -305,14 +296,7 @@ export async function downloadExport(id: string, fallbackFilename?: string) {
     credentials: "include",
   });
   if (!res.ok) {
-    let message = res.statusText || "Download failed";
-    try {
-      const data = (await res.json()) as ApiErrorBody;
-      message = data.message ?? data.error ?? message;
-    } catch {
-      /* ignore non-JSON error bodies */
-    }
-    throw new ApiError(res.status, message);
+    await throwApiErrorFromResponse(res, "Download failed");
   }
   const blob = await res.blob();
   const filename =

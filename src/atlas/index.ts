@@ -35,6 +35,7 @@ export {
 } from "./hub/apiSource";
 export {
   VIEW_AS_ATLAS_EMPTY,
+  VIEW_AS_READ_ONLY_CODE,
   atlasOpenErrorMessage,
 } from "./hub/atlasOpenCopy";
 export { entryTitles } from "./entry/entryTitles";

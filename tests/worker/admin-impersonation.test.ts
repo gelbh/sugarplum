@@ -427,6 +427,7 @@ describe("admin view-as impersonation", () => {
     expect(wipe.status).toBe(403);
     expect(await wipe.json()).toMatchObject({
       message: "Read-only while viewing as user",
+      code: "VIEW_AS_READ_ONLY",
     });
   });
 

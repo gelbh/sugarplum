@@ -1,5 +1,12 @@
 /** Compatibility barrel — prefer domain imports in new code. */
-export { ApiError, api, guestUnsupported, type ApiErrorBody } from "./core";
+export {
+  ApiError,
+  VIEW_AS_READ_ONLY_CODE,
+  api,
+  guestUnsupported,
+  throwApiErrorFromResponse,
+  type ApiErrorBody,
+} from "./core";
 export {
   GAMIFICATION_CHANGED_EVENT,
   notifyGamificationChanged,

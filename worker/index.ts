@@ -4,6 +4,7 @@ import type { Env } from "./env";
 import { authRoutes } from "./auth/routes";
 import { readSessionRecordFresh, type AuthVariables } from "./auth/session";
 import { isViewAsBlockedGetPath } from "./admin/impersonation";
+import { throwViewAsReadOnly } from "./admin/viewAsReadOnly";
 import { deckRoutes, materialRoutes } from "./materials/routes";
 import { subjectRoutes } from "./subjects/routes";
 import { atlasRoutes } from "./atlas/routes";
@@ -66,14 +67,10 @@ app.use("/api/*", async (c, next) => {
       const allowed =
         path === "/api/auth/logout" || path === "/api/admin/impersonation/exit";
       if (!allowed) {
-        throw new HTTPException(403, {
-          message: "Read-only while viewing as user",
-        });
+        throwViewAsReadOnly();
       }
     } else if (isViewAsBlockedGetPath(path)) {
-      throw new HTTPException(403, {
-        message: "Read-only while viewing as user",
-      });
+      throwViewAsReadOnly();
     }
   }
   await next();
@@ -81,6 +78,7 @@ app.use("/api/*", async (c, next) => {
 
 app.onError((err, c) => {
   if (err instanceof HTTPException) {
+    if (err.res) return err.getResponse();
     return c.json({ message: err.message }, err.status);
   }
   console.error(err);
