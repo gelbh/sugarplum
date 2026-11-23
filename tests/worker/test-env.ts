@@ -4357,6 +4357,49 @@ export function createTestEnv(opts?: {
           return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (
           normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = NULL, finished_at = ?, coverage_json = COALESCE(?, coverage_json) WHERE id = ? AND status = ?",
+          )
+        ) {
+          const [status, finished_at, coverage_json, id, requiredStatus] =
+            bound as [string, string, string | null, string, string];
+          const row = generationJobs.get(id);
+          if (!row || row.status !== requiredStatus) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          generationJobs.set(id, {
+            ...row,
+            status,
+            error: null,
+            finished_at,
+            coverage_json:
+              coverage_json != null ? coverage_json : row.coverage_json,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET error = NULL, coverage_json = ?, finished_at = ? WHERE id = ?",
+          )
+        ) {
+          const [coverage_json, finished_at, id] = bound as [
+            string | null,
+            string,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, {
+              ...row,
+              error: null,
+              coverage_json,
+              finished_at,
+            });
+          }
+          return {
+            success: true,
+            meta: { changes: row ? 1 : 0 },
+          } as D1Result;
+        } else if (
+          normalized.startsWith(
             "UPDATE generation_jobs SET status = ?, error = NULL, finished_at = ?",
           )
         ) {

@@ -852,7 +852,8 @@ describe("processGenerateJob free path", () => {
       percent: number;
     };
     expect(final.stage).toBe("persist");
-    expect(final.percent).toBe(100);
+    // enrich remains in the catalog until Task 3 emits it to completion.
+    expect(final.percent).toBeLessThan(100);
 
     // Silence unused import if CHUNK used only for doc — ensure text actually chunks
     expect(`${block}\n\n${block}`.length).toBeGreaterThan(CHUNK_CHAR_LIMIT);

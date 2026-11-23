@@ -60,7 +60,7 @@ function spyLlm(base: LlmAdapter = mockLlmAdapter()): LlmAdapter & {
 }
 
 describe("generation workflow step helpers", () => {
-  it("pass1 persists drafts + sidecar without finalizing; afterPersist reaches needs_review", async () => {
+  it("pass1 soft-completes to needs_review before afterPersist", async () => {
     const env = createTestEnv();
     seedOwner(env);
     const msg = await seedPasteJob(
@@ -74,13 +74,12 @@ describe("generation workflow step helpers", () => {
     expect(env.getCards().length).toBeGreaterThan(0);
     expect(
       env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
-    ).toBe("running");
+    ).toBe("needs_review");
     expect(env.getR2Keys()).toContain(extractSidecarKey(msg.jobId));
     const sidecar = await getExtractSidecar(env, msg.jobId);
     expect(sidecar?.drafts.length).toBeGreaterThan(0);
 
-    const after = await runAfterPersistPhase(env, msg, { llm });
-    expect(after).toBe("done");
+    await runAfterPersistPhase(env, msg, { llm });
     expect(
       env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
     ).toBe("needs_review");
@@ -115,7 +114,7 @@ describe("generation workflow step helpers", () => {
     await runPass1Phase(env, { ...msg, autoFollowup: true }, { llm });
     expect(
       env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
-    ).toBe("running");
+    ).toBe("needs_review");
     const pass1Cards = env.getCards().length;
     expect(pass1Cards).toBeGreaterThan(0);
 
@@ -143,7 +142,7 @@ describe("generation workflow step helpers", () => {
     await runPass1Phase(env, msg, { llm });
     expect(
       env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
-    ).toBe("running");
+    ).toBe("needs_review");
     await env.MATERIALS.delete(extractSidecarKey(msg.jobId));
 
     const after = await runAfterPersistPhase(env, msg, { llm });

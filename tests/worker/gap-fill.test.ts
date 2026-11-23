@@ -257,7 +257,8 @@ describe("processGenerateJob gap-fill", () => {
       free_gen_slots?: number;
     };
     expect(progress.stage).toBe("persist");
-    expect(progress.percent).toBe(100);
+    // enrich remains in the catalog until Task 3 emits it to completion.
+    expect(progress.percent).toBeLessThan(100);
     expect(progress.free_gen_slots).toBe(1);
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
   });

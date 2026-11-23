@@ -124,11 +124,12 @@ async function finalizeAfterPersist(
   }
 
   const finishedAt = new Date().toISOString();
+  // Soft-complete already set needs_review; refresh coverage only.
   await db
     .prepare(
-      "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = ?, finished_at = ? WHERE id = ?",
+      "UPDATE generation_jobs SET error = NULL, coverage_json = ?, finished_at = ? WHERE id = ?",
     )
-    .bind("needs_review", coverageJson, finishedAt, args.jobId)
+    .bind(coverageJson, finishedAt, args.jobId)
     .run();
   await afterRunningJobTerminal(env, args.jobId);
   await recordStageDurationsBestEffort(env, args.jobId);
@@ -153,7 +154,10 @@ export async function runAfterPersistPhase(
       progress_json: string | null;
       created_at: string;
     }>();
-  if (!statusRow || statusRow.status !== "running") {
+  if (
+    !statusRow ||
+    (statusRow.status !== "running" && statusRow.status !== "needs_review")
+  ) {
     return "done";
   }
 

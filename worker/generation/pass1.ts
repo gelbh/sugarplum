@@ -67,6 +67,7 @@ import {
 import type { StoredClaim } from "./claims";
 import { putExtractSidecar } from "./extractSidecar";
 import { afterRunningJobTerminal } from "./jobTerminal";
+import { softCompleteGenerationJob } from "./softComplete";
 import { filterDraftsByQuality } from "./quality";
 import { harvestRuleDrafts } from "./rules";
 import { type CardDraft } from "./schema";
@@ -956,10 +957,11 @@ export async function runPass1Phase(
         drafts,
       });
     } catch (err) {
-      // Drafts are already in D1; leave running so afterPersist / soft-complete
-      // can recover without marking the job failed.
+      // Drafts are already in D1; soft-complete still opens review; afterPersist
+      // recovers when the sidecar is missing but cards exist.
       console.error("extract sidecar write failed after persist", jobId, err);
     }
+    await softCompleteGenerationJob(env, jobId, null);
     return "done";
   } catch (err) {
     // Leave last progress_json; only mark status failed.
