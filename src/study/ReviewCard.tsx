@@ -20,13 +20,13 @@ import {
   TYPE_LABELS,
   typeSelectModel,
   type DraftEditorChange,
-} from "../draftReview/draftCardModel";
+} from "../draftReview/kernel";
 import { SelectEnumItem, renderSelectEnumValue } from "../shared/ui/SelectEnumItem";
 import {
   REJECT_REASONS,
   REJECT_REASON_LABELS,
   type RejectReason,
-} from "../draftReview/rejectReasons";
+} from "../draftReview/kernel";
 import { type ReviewSwipeDecision } from "./cardGestures";
 import { gradeColorVars } from "./gradeColors";
 import { StudyCardPlate } from "./CardFace";
