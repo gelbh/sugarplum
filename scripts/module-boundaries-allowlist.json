@@ -1,12 +1,1 @@
-[
-  {
-    "file": "routes/AtlasPage.tsx",
-    "spec": "../atlas/hub/atlasMotion.css",
-    "reason": "Route-level CSS side-effect; no barrel re-export for stylesheets."
-  },
-  {
-    "file": "routes/DeckHubPage.tsx",
-    "spec": "../deckHub/deckHubMotion.css",
-    "reason": "Route-level CSS side-effect; no barrel re-export for stylesheets."
-  }
-]
+[]
