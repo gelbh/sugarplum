@@ -286,7 +286,7 @@ describe("generation pipeline (paste + mock LLM)", () => {
       percent: number;
       label: string;
     };
-    expect(storedProgress.stage).toBe("persist");
+    expect(storedProgress.stage).toBe("enrich");
     expect(storedProgress.percent).toBe(100);
     expect(storedProgress.label).toBeTruthy();
 
@@ -319,7 +319,7 @@ describe("generation pipeline (paste + mock LLM)", () => {
     expect(poll.status).toBe("needs_review");
     expect(poll.error).toBeNull();
     expect(poll.progress).not.toBeNull();
-    expect(poll.progress!.stage).toBe("persist");
+    expect(poll.progress!.stage).toBe("enrich");
     expect(poll.progress!.percent).toBe(100);
   });
 
