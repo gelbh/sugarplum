@@ -242,6 +242,28 @@ export async function readEtaPriors(
   return { stages };
 }
 
+/** Ops: compare job wall clock to sum of rollup p50 for stages in the sample. */
+export function etaAccuracySnapshot(args: {
+  startedAt?: string | null;
+  finishedAt?: string | null;
+  sampleStages: readonly string[];
+  stageP50: Partial<Record<string, number>>;
+}): { wallMs: number; p50SumMs: number } | null {
+  const startedMs = parseIsoMs(args.startedAt);
+  const finishedMs = parseIsoMs(args.finishedAt);
+  if (startedMs == null || finishedMs == null || finishedMs <= startedMs) {
+    return null;
+  }
+  let p50SumMs = 0;
+  for (const stage of args.sampleStages) {
+    const p50 = args.stageP50[stage];
+    if (typeof p50 === "number" && Number.isFinite(p50)) {
+      p50SumMs += p50;
+    }
+  }
+  return { wallMs: finishedMs - startedMs, p50SumMs };
+}
+
 /** Best-effort: merge durations after successful terminal only. */
 export async function recordStageDurationsBestEffort(
   env: Env,
@@ -281,6 +303,23 @@ export async function recordStageDurationsBestEffort(
     });
     if (Object.keys(sample).length === 0) return;
     await mergeStageDurationRollup(env.CACHE, sample);
+
+    const rollup = parseRollup(await env.CACHE.get(STAGE_DURATION_KV_KEY));
+    const stageP50: Partial<Record<string, number>> = {};
+    for (const [stage, entry] of Object.entries(rollup?.stages ?? {})) {
+      if (entry && typeof entry.p50_ms === "number") {
+        stageP50[stage] = entry.p50_ms;
+      }
+    }
+    const accuracy = etaAccuracySnapshot({
+      startedAt: progress.started_at,
+      finishedAt: row.finished_at,
+      sampleStages: Object.keys(sample),
+      stageP50,
+    });
+    if (accuracy) {
+      console.info("eta accuracy", { jobId, ...accuracy });
+    }
   } catch (err) {
     console.error("stage duration rollup failed", jobId, err);
   }

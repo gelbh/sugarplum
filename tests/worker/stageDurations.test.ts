@@ -4,6 +4,7 @@ import {
   STAGE_WEIGHT_OVERLAY_MIN_N,
   computeDurationShareWeights,
   deriveStageDurationsMs,
+  etaAccuracySnapshot,
   mergeStageDurationRollup,
   percentileMs,
   readEtaPriors,
@@ -271,5 +272,29 @@ describe("weight overlay on merge / read", () => {
       }),
     );
     expect(await readStageWeightOverlay(kv)).toBeNull();
+  });
+});
+
+describe("etaAccuracySnapshot", () => {
+  it("compares wall clock to sum of stage p50 priors", () => {
+    expect(
+      etaAccuracySnapshot({
+        startedAt: "2026-11-23T12:00:00.000Z",
+        finishedAt: "2026-11-23T12:10:00.000Z",
+        sampleStages: ["extract", "persist"],
+        stageP50: { extract: 120_000, persist: 60_000 },
+      }),
+    ).toEqual({ wallMs: 600_000, p50SumMs: 180_000 });
+  });
+
+  it("returns null without a usable wall clock", () => {
+    expect(
+      etaAccuracySnapshot({
+        startedAt: null,
+        finishedAt: "2026-11-23T12:10:00.000Z",
+        sampleStages: ["extract"],
+        stageP50: { extract: 10_000 },
+      }),
+    ).toBeNull();
   });
 });
