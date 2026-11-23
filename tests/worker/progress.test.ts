@@ -83,6 +83,19 @@ describe("effectiveWeights overlay", () => {
       catalog,
     );
   });
+
+  it("falls back to catalog when overlay omits a present non-queued stage", () => {
+    const withFigures = [
+      "queued",
+      "extract",
+      "figures",
+      "persist",
+    ] as const;
+    const catalog = effectiveWeights(withFigures);
+    expect(
+      effectiveWeights(withFigures, { extract: 0.25, persist: 0.75 }),
+    ).toEqual(catalog);
+  });
 });
 
 describe("computePercent", () => {

@@ -15,7 +15,6 @@ export const STAGE_DURATION_MAX_MS = 7_200_000;
 export const STAGE_PRIOR_MIN_N = 3;
 /** Gate before writing duration-share STAGE_WEIGHTS overlay. */
 export const STAGE_WEIGHT_OVERLAY_MIN_N = 5;
-export const STAGE_WEIGHT_SUM_TOLERANCE = 0.01;
 /** Isolate-local TTL so progress emit does not hit KV every tick. */
 export const STAGE_WEIGHT_OVERLAY_CACHE_TTL_MS = 30_000;
 

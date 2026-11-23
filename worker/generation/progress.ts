@@ -370,10 +370,22 @@ export function normalizeWeightOverlay(
   return out;
 }
 
+function overlayCoversPresent(
+  overlay: Partial<Record<ProgressStage, number>>,
+  presentStages: readonly ProgressStage[],
+): boolean {
+  for (const stage of presentStages) {
+    if (stage === "queued") continue;
+    if (typeof overlay[stage] !== "number") return false;
+  }
+  return true;
+}
+
 /**
  * Effective weights for stages present in this run.
  * Skipped weights roll into generate when present, else into persist.
- * Prefers a valid duration-share overlay when provided; else catalog STAGE_WEIGHTS.
+ * Prefers a valid duration-share overlay when it covers every non-queued
+ * present stage; else catalog STAGE_WEIGHTS.
  */
 export function effectiveWeights(
   presentStages: readonly ProgressStage[],
@@ -381,9 +393,11 @@ export function effectiveWeights(
 ): Record<ProgressStage, number> {
   const present = new Set(presentStages);
   const normalized = normalizeWeightOverlay(overlay);
-  const weights: Record<ProgressStage, number> = normalized
+  const useOverlay =
+    normalized != null && overlayCoversPresent(normalized, presentStages);
+  const weights: Record<ProgressStage, number> = useOverlay
     ? (Object.fromEntries(
-        STAGE_ORDER.map((s) => [s, normalized[s] ?? 0]),
+        STAGE_ORDER.map((s) => [s, normalized![s] ?? 0]),
       ) as Record<ProgressStage, number>)
     : { ...STAGE_WEIGHTS };
 
