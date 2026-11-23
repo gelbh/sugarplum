@@ -1,5 +1,5 @@
 import { api } from "../../api/client";
-import type { SourceRole } from "../../materials/sourceRole";
+import type { SourceRole } from "../../materials/kernel";
 
 export type AtlasPackMaterial = {
   id: string;

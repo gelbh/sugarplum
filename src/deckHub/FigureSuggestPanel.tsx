@@ -23,7 +23,7 @@ import {
   renderPageToCanvas,
   type EmbedPdfDocument,
   type EmbedPdfPageLayout,
-} from "../materials/kernel";
+} from "../materials/clientKernel";
 import {
   ensureLayoutSession,
   detectFigureBoxesOnCanvas,

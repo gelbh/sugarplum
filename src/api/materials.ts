@@ -8,7 +8,7 @@ import {
   ocrEmptyPdfPages,
   ocrEmptyPdfPagesInWindow,
   type PageText,
-} from "../materials/kernel";
+} from "../materials/clientKernel";
 import { api, ApiError, guestUnsupported } from "./core";
 import type {
   CompleteMaterialResponse,
