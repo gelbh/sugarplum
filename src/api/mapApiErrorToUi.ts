@@ -1,7 +1,8 @@
 /**
  * UI-only API error presentation hints (copy + placement).
  * Not part of problemWire; do not import from Worker.
- * Default registry starts empty; atlasOpenCopy stays surface-local until generalized.
+ * Default registry starts empty until a non-atlas surface needs an override.
+ * Atlas empty-atlas copy stays a surface override (403 + VIEW_AS), not a registry row.
  */
 
 export type ApiErrorPlacement = "inline" | "toast";
