@@ -61,7 +61,7 @@ import { useDeckHubLoad } from "../deckHub";
 import { useDeckHubMaterialDelete } from "../deckHub";
 import { useDeckHubWorkshopNav } from "../deckHub";
 import { useStudyReadySheet } from "../deckHub";
-import "../deckHub/deckHubMotion.css";
+import "../deckHub/motion";
 import {
   asRegenType,
   cardHasRegenSource,

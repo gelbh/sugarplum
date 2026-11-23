@@ -4,11 +4,13 @@
  * - Cross-domain imports must use domain index barrels only.
  * - shared/ must not import any feature domain.
  * - Composition tops (routes/, app/, and every other non-domain src top) must
- *   use barrels (or domain/kernel) unless allowlisted.
+ *   use barrels (or domain/kernel / domain/motion) unless allowlisted.
  * - domain/kernel.ts is an extra public entry when the index barrel pulls
  *   React or guest cycles (today: study, materials).
  * - domain/clientKernel.ts is the DOM/OCR public entry (materials); not for
  *   CF worker graphs.
+ * - domain/motion.ts is the stylesheet public entry (side-effect import of
+ *   domain view-transition CSS); keeps CSS off index/kernel.
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, extname, normalize } from "node:path";
@@ -115,7 +117,7 @@ function domainOfFile(fileAbs) {
  */
 function isBarrelTarget(resolvedAbs) {
   const rel = srcRelative(resolvedAbs);
-  return /^[^/]+\/(index|kernel|clientKernel)\.tsx?$/.test(rel);
+  return /^[^/]+\/(index|kernel|clientKernel|motion)\.tsx?$/.test(rel);
 }
 
 /**

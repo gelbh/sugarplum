@@ -29,7 +29,7 @@ import {
   resetEntryFields,
   useShowHiddenPref,
 } from "../atlas";
-import "../atlas/hub/atlasMotion.css";
+import "../atlas/motion";
 import { Cabinet } from "../atlas";
 import { CompareView } from "../atlas";
 import { CoursePackPanel } from "../atlas";
