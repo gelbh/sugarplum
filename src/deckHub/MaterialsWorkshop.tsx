@@ -7,21 +7,17 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
-import InputAdornment from "@mui/material/InputAdornment";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import ClearRoundedIcon from "@mui/icons-material/ClearRounded";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
 import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
 import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import SlideshowOutlinedIcon from "@mui/icons-material/SlideshowOutlined";
 import TextSnippetOutlinedIcon from "@mui/icons-material/TextSnippetOutlined";
 import ViewListOutlinedIcon from "@mui/icons-material/ViewListOutlined";
@@ -29,9 +25,12 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import type { MaterialListItem } from "../api/client";
 import { downloadMaterialUrl, mediaUrl } from "../api/client";
 import EmptyNext from "./EmptyNext";
+import WorkshopSearchField from "./WorkshopSearchField";
 import {
   materialMatchesWorkshopQuery,
   normalizeWorkshopQuery,
+  workshopMaterialKindLabel,
+  workshopMaterialTitle,
 } from "./workshopSearch";
 import {
   PILL_BTN,
@@ -39,24 +38,6 @@ import {
   createWorkshopViewPref,
   type WorkshopViewMode,
 } from "./workshopChrome";
-
-const SEARCH_FIELD_SX = {
-  minWidth: 160,
-  maxWidth: 260,
-  flex: "1 1 160px",
-  "& .MuiOutlinedInput-root": {
-    color: "rgba(232, 216, 199, 0.88)",
-    bgcolor: "rgba(18, 7, 15, 0.35)",
-    borderRadius: 2,
-    "& fieldset": { borderColor: "rgba(232, 216, 199, 0.16)" },
-    "&:hover fieldset": { borderColor: "rgba(232, 216, 199, 0.28)" },
-    "&.Mui-focused fieldset": { borderColor: "rgba(209, 163, 226, 0.55)" },
-  },
-  "& .MuiInputBase-input::placeholder": {
-    color: "rgba(232, 216, 199, 0.42)",
-    opacity: 1,
-  },
-} as const;
 
 const { readViewMode, writeViewMode } = createWorkshopViewPref(
   "sugarplum.materialsWorkshop.view",
@@ -71,15 +52,6 @@ const SURFACE = {
   bgcolor: "rgba(18, 7, 15, 0.28)",
 } as const;
 
-function kindLabel(kind: string): string {
-  if (kind === "pdf") return "PDF";
-  if (kind === "pptx") return "PPTX";
-  if (kind === "image") return "Image";
-  if (kind === "text" || kind === "paste") return "Text";
-  if (kind === "topic") return "Topic";
-  return kind;
-}
-
 function formatCreatedAt(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
@@ -88,10 +60,6 @@ function formatCreatedAt(iso: string): string {
     day: "numeric",
     year: "numeric",
   });
-}
-
-function materialTitle(material: MaterialListItem): string {
-  return material.filename?.trim() || `${kindLabel(material.kind)} material`;
 }
 
 function canOpenFile(material: MaterialListItem): boolean {
@@ -166,7 +134,9 @@ export default function MaterialsWorkshop({
   const [query, setQuery] = useState("");
   const [preview, setPreview] = useState<MaterialListItem | null>(null);
   const busy = busyId !== null;
-  const visible = materials.filter((m) => materialMatchesWorkshopQuery(m, query));
+  const visible = materials.filter((m) =>
+    materialMatchesWorkshopQuery(m, query),
+  );
   const searching = normalizeWorkshopQuery(query) !== "";
   const countLabel =
     materials.length === 0
@@ -192,11 +162,17 @@ export default function MaterialsWorkshop({
           alignItems: "center",
           justifyContent: "space-between",
           flexWrap: "wrap",
-          gap: 1.25
-        }}>
-        <Stack direction="row" spacing={1.25} useFlexGap sx={{
-          alignItems: "center"
-        }}>
+          gap: 1.25,
+        }}
+      >
+        <Stack
+          direction="row"
+          spacing={1.25}
+          useFlexGap
+          sx={{
+            alignItems: "center",
+          }}
+        >
           <Button
             variant="contained"
             size="small"
@@ -222,48 +198,12 @@ export default function MaterialsWorkshop({
             {countLabel}
           </Typography>
           {materials.length > 0 ? (
-            <TextField
-              type="search"
-              size="small"
-              placeholder="Search files…"
+            <WorkshopSearchField
               value={query}
-              onChange={(ev) => setQuery(ev.target.value)}
-              sx={SEARCH_FIELD_SX}
-              slotProps={{
-                htmlInput: {
-                  "aria-label": "Search files",
-                  "aria-controls": "materials-workshop-results",
-                },
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchRoundedIcon
-                        fontSize="small"
-                        sx={{ color: "rgba(232, 216, 199, 0.42)" }}
-                      />
-                    </InputAdornment>
-                  ),
-                  endAdornment: searching ? (
-                    <InputAdornment position="end">
-                      <IconButton
-                        size="small"
-                        aria-label="Clear search"
-                        onClick={() => setQuery("")}
-                        edge="end"
-                        sx={{
-                          color: "rgba(232, 216, 199, 0.55)",
-                          "&:hover": {
-                            color: "primary.light",
-                            bgcolor: "rgba(91, 44, 111, 0.28)",
-                          },
-                        }}
-                      >
-                        <ClearRoundedIcon fontSize="small" />
-                      </IconButton>
-                    </InputAdornment>
-                  ) : undefined,
-                },
-              }}
+              onChange={setQuery}
+              placeholder="Search files…"
+              ariaLabel="Search files"
+              ariaControls="materials-workshop-results"
             />
           ) : null}
         </Stack>
@@ -301,9 +241,12 @@ export default function MaterialsWorkshop({
       {materials.length === 0 ? (
         guest ? (
           <Box sx={{ ...SURFACE, px: 2.25, py: 2.5 }}>
-            <Typography variant="body2" sx={{
-              color: "text.secondary"
-            }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               Sign in to upload and browse study files for this deck.
             </Typography>
           </Box>
@@ -341,7 +284,7 @@ export default function MaterialsWorkshop({
           }}
         >
           {visible.map((material) => {
-            const title = materialTitle(material);
+            const title = workshopMaterialTitle(material);
             const rowBusy = busyId === material.id;
             const openable = canOpenFile(material);
             return (
@@ -396,7 +339,7 @@ export default function MaterialsWorkshop({
                     variant="caption"
                     sx={{ color: "rgba(232, 216, 199, 0.55)" }}
                   >
-                    {kindLabel(material.kind)}
+                    {workshopMaterialKindLabel(material.kind)}
                     {material.page_count != null
                       ? ` · ${material.page_count}p`
                       : ""}
@@ -410,8 +353,9 @@ export default function MaterialsWorkshop({
                     px: 0.5,
                     pb: 0.5,
                     opacity: { xs: 1, sm: 0.55 },
-                    transition: "opacity 140ms ease"
-                  }}>
+                    transition: "opacity 140ms ease",
+                  }}
+                >
                   <FileActions
                     material={material}
                     title={title}
@@ -434,9 +378,9 @@ export default function MaterialsWorkshop({
           sx={{ m: 0, p: 0, listStyle: "none" }}
         >
           {visible.map((material) => {
-            const title = materialTitle(material);
+            const title = workshopMaterialTitle(material);
             const metaParts = [
-              kindLabel(material.kind),
+              workshopMaterialKindLabel(material.kind),
               material.page_count != null
                 ? `${material.page_count} page${material.page_count === 1 ? "" : "s"}`
                 : null,
@@ -511,8 +455,9 @@ export default function MaterialsWorkshop({
                     useFlexGap
                     sx={{
                       flexWrap: "wrap",
-                      mt: 0.55
-                    }}>
+                      mt: 0.55,
+                    }}
+                  >
                     <Box
                       component="span"
                       sx={{
@@ -530,7 +475,7 @@ export default function MaterialsWorkshop({
                         color: "rgba(232, 216, 199, 0.62)",
                       }}
                     >
-                      {kindLabel(material.kind)}
+                      {workshopMaterialKindLabel(material.kind)}
                     </Box>
                     {metaParts.slice(1).map((part) => (
                       <Typography
@@ -737,7 +682,7 @@ function MaterialPreviewDialog({
   }, [material, guest]);
 
   const open = material !== null;
-  const title = material ? materialTitle(material) : "File";
+  const title = material ? workshopMaterialTitle(material) : "File";
 
   return (
     <Dialog
@@ -754,7 +699,7 @@ function MaterialPreviewDialog({
             border: "1px solid rgba(232, 216, 199, 0.14)",
             minHeight: material?.kind === "pdf" ? "70vh" : undefined,
           },
-        }
+        },
       }}
     >
       <DialogTitle
@@ -833,9 +778,12 @@ function MaterialPreviewDialog({
           </Box>
         ) : material ? (
           <Stack spacing={1.25} sx={{ py: 2 }}>
-            <Typography variant="body2" sx={{
-              color: "text.secondary"
-            }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               {material.kind === "pptx"
                 ? "PowerPoint files open via download. Preview is not available in the browser."
                 : "This file cannot be previewed here."}

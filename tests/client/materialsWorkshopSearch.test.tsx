@@ -9,8 +9,9 @@ import MaterialsWorkshop from "../../src/deckHub/MaterialsWorkshop";
 import type { MaterialListItem } from "../../src/api/client";
 import { theme } from "../../src/theme";
 
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
-  true;
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const roots: Root[] = [];
 

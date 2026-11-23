@@ -38,9 +38,7 @@ import {
 import { CoverPickerDialog } from "../deckHub";
 import { useShellBackOverride } from "../app/shell/ShellBackOverride";
 import { CardsWorkshop } from "../deckHub";
-import { ClaimCoverageFilmstrip,
-  type ClaimJumpTarget,
-} from "../deckHub";
+import { ClaimCoverageFilmstrip, type ClaimJumpTarget } from "../deckHub";
 import { DeckHygienePanel } from "../deckHub";
 import { createDeckHubWorkshopOpeners } from "../deckHub";
 import { DeckHubTitleHeader } from "../deckHub";
@@ -537,9 +535,13 @@ export default function DeckHubPage({ deckId }: Props) {
       }}
     >
       {!ready ? (
-        <Typography sx={{
-          color: "text.secondary"
-        }}>Loading deck…</Typography>
+        <Typography
+          sx={{
+            color: "text.secondary",
+          }}
+        >
+          Loading deck…
+        </Typography>
       ) : (
         <Stack
           spacing={creatingFlashcards || workshopOpen ? 0 : 2}
@@ -678,15 +680,14 @@ export default function DeckHubPage({ deckId }: Props) {
                       draftJobs.length > 0
                         ? `${draftJobs.length} draft job${draftJobs.length === 1 ? "" : "s"}`
                         : null,
-                      claimCoverage != null &&
-                      claimCoverage.summary.total > 0
+                      claimCoverage != null && claimCoverage.summary.total > 0
                         ? `${claimCoverage.summary.linked}/${claimCoverage.summary.total} claims`
                         : null,
                     ]
                       .filter(Boolean)
                       .join(" · ")}
                     spark={
-                      composition != null && composition.total > 0 ||
+                      (composition != null && composition.total > 0) ||
                       (claimCoverage != null &&
                         claimCoverage.summary.total > 0) ? (
                         <Stack spacing={0} sx={{ alignItems: "flex-start" }}>
@@ -797,7 +798,7 @@ export default function DeckHubPage({ deckId }: Props) {
               overflow: "hidden",
               bgcolor: "background.paper",
             },
-          }
+          },
         }}
       >
         <DialogEyebrow label="Drafts" />
@@ -820,14 +821,18 @@ export default function DeckHubPage({ deckId }: Props) {
                   spacing={0.25}
                   sx={{
                     alignItems: "flex-start",
-                    minWidth: 0
-                  }}>
+                    minWidth: 0,
+                  }}
+                >
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {job.filename?.trim() || job.deck_title || "Draft job"}
                   </Typography>
-                  <Typography variant="caption" sx={{
-                    color: "text.secondary"
-                  }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
                     {job.draft_count} draft
                     {job.draft_count === 1 ? "" : "s"} ·{" "}
                     {new Date(job.created_at).toLocaleString()}
@@ -854,7 +859,7 @@ export default function DeckHubPage({ deckId }: Props) {
               overflow: "hidden",
               bgcolor: "background.paper",
             },
-          }
+          },
         }}
       >
         <Box component="form" onSubmit={onRenameSubmit} noValidate>
@@ -887,8 +892,9 @@ export default function DeckHubPage({ deckId }: Props) {
               sx={{
                 color: "text.secondary",
                 mt: 1,
-                maxWidth: "36ch"
-              }}>
+                maxWidth: "36ch",
+              }}
+            >
               Shown on the hub header and in your Library.
             </Typography>
           </Box>
@@ -910,8 +916,9 @@ export default function DeckHubPage({ deckId }: Props) {
               helperText={`${renameValue.trim().length}/80`}
               slotProps={{
                 htmlInput: { maxLength: 80, "aria-label": "Deck name" },
-                formHelperText: { sx: { textAlign: "right", mx: 0 } }
-              }} />
+                formHelperText: { sx: { textAlign: "right", mx: 0 } },
+              }}
+            />
           </DialogContent>
           <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
             <Button
@@ -945,7 +952,7 @@ export default function DeckHubPage({ deckId }: Props) {
               overflow: "hidden",
               bgcolor: "background.paper",
             },
-          }
+          },
         }}
       >
         <Box
@@ -1020,7 +1027,7 @@ export default function DeckHubPage({ deckId }: Props) {
         fullWidth
         maxWidth="sm"
         slotProps={{
-          paper: { sx: DIALOG_PAPER_SX }
+          paper: { sx: DIALOG_PAPER_SX },
         }}
       >
         <Box
@@ -1074,9 +1081,14 @@ export default function DeckHubPage({ deckId }: Props) {
             justifyContent: "space-between",
           }}
         >
-          <Stack direction="row" spacing={1} useFlexGap sx={{
-            flexWrap: "wrap"
-          }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            useFlexGap
+            sx={{
+              flexWrap: "wrap",
+            }}
+          >
             <Button
               disabled={editDialogBusy || !editCard}
               startIcon={<DriveFileMoveOutlinedIcon sx={{ fontSize: 18 }} />}
@@ -1105,9 +1117,13 @@ export default function DeckHubPage({ deckId }: Props) {
               Reset schedule
             </Button>
           </Stack>
-          <Stack direction="row" spacing={1} sx={{
-            alignItems: "center"
-          }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              alignItems: "center",
+            }}
+          >
             <Button
               onClick={() => setEditCard(null)}
               disabled={editDialogBusy}
@@ -1232,7 +1248,7 @@ export default function DeckHubPage({ deckId }: Props) {
         fullWidth
         maxWidth="xs"
         slotProps={{
-          paper: { sx: DIALOG_PAPER_SX }
+          paper: { sx: DIALOG_PAPER_SX },
         }}
       >
         <Box
@@ -1283,7 +1299,7 @@ export default function DeckHubPage({ deckId }: Props) {
         fullWidth
         maxWidth="xs"
         slotProps={{
-          paper: { sx: DIALOG_PAPER_SX }
+          paper: { sx: DIALOG_PAPER_SX },
         }}
       >
         <Box

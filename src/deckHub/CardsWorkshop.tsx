@@ -4,30 +4,28 @@ import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
-import InputAdornment from "@mui/material/InputAdornment";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
-import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
-import ClearRoundedIcon from "@mui/icons-material/ClearRounded";
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import ViewListOutlinedIcon from "@mui/icons-material/ViewListOutlined";
 import EmptyNext from "./EmptyNext";
 import type { CardDraftView } from "../api/client";
 import { cardFrontPreview } from "../draftReview";
 import DiyCardPreview from "./DiyCardPreview";
+import WorkshopSearchField from "./WorkshopSearchField";
 import {
   cardMatchesWorkshopQuery,
   normalizeWorkshopQuery,
+  workshopCardTypeLabel,
 } from "./workshopSearch";
 import {
   PILL_BTN,
@@ -36,38 +34,11 @@ import {
   type WorkshopViewMode,
 } from "./workshopChrome";
 
-const SEARCH_FIELD_SX = {
-  minWidth: 160,
-  maxWidth: 260,
-  flex: "1 1 160px",
-  "& .MuiOutlinedInput-root": {
-    color: "rgba(232, 216, 199, 0.88)",
-    bgcolor: "rgba(18, 7, 15, 0.35)",
-    borderRadius: 2,
-    "& fieldset": { borderColor: "rgba(232, 216, 199, 0.16)" },
-    "&:hover fieldset": { borderColor: "rgba(232, 216, 199, 0.28)" },
-    "&.Mui-focused fieldset": { borderColor: "rgba(209, 163, 226, 0.55)" },
-  },
-  "& .MuiInputBase-input::placeholder": {
-    color: "rgba(232, 216, 199, 0.42)",
-    opacity: 1,
-  },
-} as const;
-
 const { readViewMode, writeViewMode } = createWorkshopViewPref(
   "sugarplum.cardsWorkshop.view",
 );
 
 type ViewMode = WorkshopViewMode;
-
-function cardTypeLabel(type: CardDraftView["type"]): string {
-  if (type === "cloze") return "Cloze";
-  if (type === "mcq") return "MCQ";
-  if (type === "occlusion") return "Occlusion";
-  if (type === "image_label") return "Image label";
-  if (type === "diagram") return "Diagram";
-  return "Q&A";
-}
 
 const TOOL_LINK = {
   minWidth: 0,
@@ -186,11 +157,17 @@ export default function CardsWorkshop({
           alignItems: "center",
           justifyContent: "space-between",
           flexWrap: "wrap",
-          gap: 1.25
-        }}>
-        <Stack direction="row" spacing={1.25} useFlexGap sx={{
-          alignItems: "center"
-        }}>
+          gap: 1.25,
+        }}
+      >
+        <Stack
+          direction="row"
+          spacing={1.25}
+          useFlexGap
+          sx={{
+            alignItems: "center",
+          }}
+        >
           <Button
             variant="contained"
             size="small"
@@ -215,54 +192,23 @@ export default function CardsWorkshop({
             {cardCountLabel}
           </Typography>
           {cards.length > 0 ? (
-            <TextField
-              type="search"
-              size="small"
-              placeholder="Search cards…"
+            <WorkshopSearchField
               value={query}
-              onChange={(ev) => setQuery(ev.target.value)}
-              sx={SEARCH_FIELD_SX}
-              slotProps={{
-                htmlInput: {
-                  "aria-label": "Search cards",
-                  "aria-controls": "cards-workshop-results",
-                },
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchRoundedIcon
-                        fontSize="small"
-                        sx={{ color: "rgba(232, 216, 199, 0.42)" }}
-                      />
-                    </InputAdornment>
-                  ),
-                  endAdornment: searching ? (
-                    <InputAdornment position="end">
-                      <IconButton
-                        size="small"
-                        aria-label="Clear search"
-                        onClick={() => setQuery("")}
-                        edge="end"
-                        sx={{
-                          color: "rgba(232, 216, 199, 0.55)",
-                          "&:hover": {
-                            color: "primary.light",
-                            bgcolor: "rgba(91, 44, 111, 0.28)",
-                          },
-                        }}
-                      >
-                        <ClearRoundedIcon fontSize="small" />
-                      </IconButton>
-                    </InputAdornment>
-                  ) : undefined,
-                },
-              }}
+              onChange={setQuery}
+              placeholder="Search cards…"
+              ariaLabel="Search cards"
+              ariaControls="cards-workshop-results"
             />
           ) : null}
         </Stack>
-        <Stack direction="row" spacing={1} useFlexGap sx={{
-          alignItems: "center"
-        }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          useFlexGap
+          sx={{
+            alignItems: "center",
+          }}
+        >
           {cards.length > 0 ? (
             <ToggleButtonGroup
               size="small"
@@ -331,9 +277,12 @@ export default function CardsWorkshop({
               py: 2.5,
             }}
           >
-            <Typography variant="body2" sx={{
-              color: "text.secondary"
-            }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               No archived cards in this deck.
             </Typography>
           </Box>
@@ -369,8 +318,9 @@ export default function CardsWorkshop({
               bgcolor:
                 selectedCount > 0
                   ? "rgba(91, 44, 111, 0.28)"
-                  : "rgba(18, 7, 15, 0.35)"
-            }}>
+                  : "rgba(18, 7, 15, 0.35)",
+            }}
+          >
             <FormControlLabel
               control={
                 <Checkbox
@@ -382,7 +332,7 @@ export default function CardsWorkshop({
                   onChange={() => onSelectAll(visible)}
                   sx={SELECT_CHECKBOX_SX}
                   slotProps={{
-                    input: { "aria-label": "Select all cards" }
+                    input: { "aria-label": "Select all cards" },
                   }}
                 />
               }
@@ -555,7 +505,7 @@ export default function CardsWorkshop({
                       slotProps={{
                         input: {
                           "aria-label": `Select ${cardFrontPreview(card)}`,
-                        }
+                        },
                       }}
                     />
                     <Box
@@ -593,8 +543,9 @@ export default function CardsWorkshop({
                         py: 0.75,
                         borderTop: "1px solid",
                         borderColor: "rgba(232, 216, 199, 0.1)",
-                        bgcolor: "rgba(18, 7, 15, 0.22)"
-                      }}>
+                        bgcolor: "rgba(18, 7, 15, 0.22)",
+                      }}
+                    >
                       <Box
                         component="span"
                         sx={{
@@ -612,7 +563,7 @@ export default function CardsWorkshop({
                           color: "rgba(232, 216, 199, 0.82)",
                         }}
                       >
-                        {cardTypeLabel(card.type)}
+                        {workshopCardTypeLabel(card.type)}
                       </Box>
                       <Stack
                         className="sp-card-tile-actions"
@@ -695,7 +646,7 @@ export default function CardsWorkshop({
                       slotProps={{
                         input: {
                           "aria-label": `Select ${cardFrontPreview(card)}`,
-                        }
+                        },
                       }}
                     />
                     <Box sx={{ flex: 1, minWidth: 0, py: 0.25 }}>
@@ -728,7 +679,7 @@ export default function CardsWorkshop({
                           color: "rgba(232, 216, 199, 0.62)",
                         }}
                       >
-                        {cardTypeLabel(card.type)}
+                        {workshopCardTypeLabel(card.type)}
                       </Box>
                     </Box>
                     <Stack

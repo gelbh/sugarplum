@@ -6,7 +6,10 @@ import {
   normalizeWorkshopQuery,
 } from "../../src/deckHub/workshopSearch";
 
-function card(partial: Partial<CardDraftView> & Pick<CardDraftView, "id" | "front" | "type">): CardDraftView {
+function card(
+  partial: Partial<CardDraftView> &
+    Pick<CardDraftView, "id" | "front" | "type">,
+): CardDraftView {
   return {
     deck_id: "d1",
     job_id: null,
@@ -39,14 +42,23 @@ describe("workshopSearch", () => {
   });
 
   it("empty query matches every card and material", () => {
-    expect(cardMatchesWorkshopQuery(card({ id: "1", front: "Hepatic", type: "qa" }), "")).toBe(
-      true,
-    );
-    expect(materialMatchesWorkshopQuery(material({ id: "1", kind: "pdf" }), "   ")).toBe(true);
+    expect(
+      cardMatchesWorkshopQuery(
+        card({ id: "1", front: "Hepatic", type: "qa" }),
+        "",
+      ),
+    ).toBe(true);
+    expect(
+      materialMatchesWorkshopQuery(material({ id: "1", kind: "pdf" }), "   "),
+    ).toBe(true);
   });
 
   it("matches card front preview case-insensitively", () => {
-    const c = card({ id: "1", front: "Fasciola hepatica life cycle", type: "qa" });
+    const c = card({
+      id: "1",
+      front: "Fasciola hepatica life cycle",
+      type: "qa",
+    });
     expect(cardMatchesWorkshopQuery(c, "HEPatica")).toBe(true);
     expect(cardMatchesWorkshopQuery(c, "missing")).toBe(false);
   });

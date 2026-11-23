@@ -5,7 +5,7 @@ export function normalizeWorkshopQuery(q: string): string {
   return q.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-function workshopCardTypeLabel(type: CardDraftView["type"]): string {
+export function workshopCardTypeLabel(type: CardDraftView["type"]): string {
   if (type === "cloze") return "Cloze";
   if (type === "mcq") return "MCQ";
   if (type === "occlusion") return "Occlusion";
@@ -14,7 +14,7 @@ function workshopCardTypeLabel(type: CardDraftView["type"]): string {
   return "Q&A";
 }
 
-function workshopMaterialKindLabel(kind: string): string {
+export function workshopMaterialKindLabel(kind: string): string {
   if (kind === "pdf") return "PDF";
   if (kind === "pptx") return "PPTX";
   if (kind === "image") return "Image";
@@ -23,11 +23,17 @@ function workshopMaterialKindLabel(kind: string): string {
   return kind;
 }
 
-function materialTitle(material: MaterialListItem): string {
-  return material.filename?.trim() || `${workshopMaterialKindLabel(material.kind)} material`;
+export function workshopMaterialTitle(material: MaterialListItem): string {
+  return (
+    material.filename?.trim() ||
+    `${workshopMaterialKindLabel(material.kind)} material`
+  );
 }
 
-export function cardMatchesWorkshopQuery(card: CardDraftView, q: string): boolean {
+export function cardMatchesWorkshopQuery(
+  card: CardDraftView,
+  q: string,
+): boolean {
   const needle = normalizeWorkshopQuery(q);
   if (needle === "") return true;
   const hay = normalizeWorkshopQuery(
@@ -43,7 +49,7 @@ export function materialMatchesWorkshopQuery(
   const needle = normalizeWorkshopQuery(q);
   if (needle === "") return true;
   const hay = normalizeWorkshopQuery(
-    `${materialTitle(material)} ${workshopMaterialKindLabel(material.kind)}`,
+    `${workshopMaterialTitle(material)} ${workshopMaterialKindLabel(material.kind)}`,
   );
   return hay.includes(needle);
 }

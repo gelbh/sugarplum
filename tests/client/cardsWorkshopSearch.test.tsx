@@ -9,8 +9,9 @@ import CardsWorkshop from "../../src/deckHub/CardsWorkshop";
 import type { CardDraftView } from "../../src/api/client";
 import { theme } from "../../src/theme";
 
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
-  true;
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const roots: Root[] = [];
 
@@ -86,10 +87,7 @@ async function renderWorkshop(cards: CardDraftView[]) {
 
 describe("CardsWorkshop search", () => {
   it("shows search when cards exist and does not autofocus", async () => {
-    await renderWorkshop([
-      card("1", "Alpha worm"),
-      card("2", "Beta fluke"),
-    ]);
+    await renderWorkshop([card("1", "Alpha worm"), card("2", "Beta fluke")]);
 
     const input = document.querySelector(
       'input[aria-label="Search cards"]',
