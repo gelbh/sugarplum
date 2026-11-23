@@ -14,7 +14,7 @@ export const STAGE_WEIGHTS = {
 
 export type ProgressStage = keyof typeof STAGE_WEIGHTS;
 
-const STAGE_ORDER: ProgressStage[] = [
+export const STAGE_ORDER: ProgressStage[] = [
   "queued",
   "extract",
   "figures",
@@ -93,6 +93,8 @@ export type ProgressPatch = {
   free_gen_charged?: boolean;
   /** How many free-gen slots this job has reserved. Pass 1 is 1, gap-fill is 2. */
   free_gen_slots?: number;
+  /** Catalog stages for this run (ETA + honest percent). */
+  present_stages?: ProgressStage[];
 };
 
 /** Queue redelivery may reclaim `running` jobs with no progress newer than this. */
@@ -465,6 +467,9 @@ export function toProgressJson(patch: ProgressPatch): string {
   }
   if (patch.free_gen_slots !== undefined) {
     body.free_gen_slots = patch.free_gen_slots;
+  }
+  if (patch.present_stages !== undefined) {
+    body.present_stages = patch.present_stages;
   }
   return JSON.stringify(body);
 }
