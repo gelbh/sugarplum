@@ -416,14 +416,15 @@ export function createDraftReviewRegen(ctx: DraftReviewRegenCtx) {
 
   async function onCancelFillAll() {
     if (!jobId || !fillAllBusy) return;
-    fillAllSession += 1;
     try {
       await cancelFillAllOrphans(jobId);
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "Could not cancel fill-all",
       );
+      return;
     }
+    fillAllSession += 1;
     setFillAllBusy(false);
     setCardRegenBusy(false);
     fillAllBaselineOrphan = null;

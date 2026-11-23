@@ -481,9 +481,32 @@ describe("layer1RejectReasons", () => {
   it("still keeps short real glossary pairs after Ixodes gates", () => {
     const mito = qa("mitochondria", "powerhouse of the cell");
     const paris = qa("Capital of France", "Paris");
+    const peru = qa("Capital of Peru", "Lima");
+    const ards = qa(
+      "Acute Respiratory Distress Syndrome",
+      "Severe inflammation of the lungs",
+    );
     expect(layer1RejectReasons(mito)).toEqual([]);
     expect(layer1RejectReasons(paris)).toEqual([]);
-    expect(filterDraftsByQuality([mito, paris])).toEqual([mito, paris]);
+    expect(layer1RejectReasons(peru)).toEqual([]);
+    expect(layer1RejectReasons(ards)).toEqual([]);
+    expect(filterDraftsByQuality([mito, paris, peru, ards])).toEqual([
+      mito,
+      paris,
+      peru,
+      ards,
+    ]);
+  });
+
+  it("keeps Vitamin A and By imaging on questions", () => {
+    const vitamin = qa("Which vitamin supports vision?", "Vitamin A");
+    const imaging = qa("How is tuberculosis diagnosed?", "By imaging");
+    expect(layer1RejectReasons(vitamin)).toEqual([]);
+    expect(layer1RejectReasons(imaging)).toEqual([]);
+    expect(filterDraftsByQuality([vitamin, imaging])).toEqual([
+      vitamin,
+      imaging,
+    ]);
   });
 
   it("returns empty for a Layer-1-passing card", () => {
