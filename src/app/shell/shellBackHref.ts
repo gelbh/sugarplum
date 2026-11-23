@@ -1,4 +1,4 @@
-import { atlasHref, matchAtlasPath } from "../../atlas/paths";
+import { atlasHref, matchAtlasPath } from "../../atlas/kernel";
 
 /** Non-atlas nested shell parents (library drill-down, admin, drafts). */
 export function genericShellBackHref(pathname: string): string | null {
