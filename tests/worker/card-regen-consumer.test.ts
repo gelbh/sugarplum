@@ -55,7 +55,9 @@ describe("handleCardRegenQueue", () => {
       `"retry_delay": ${CARD_REGEN_QUEUE_RETRY_DELAY_SEC}`,
     );
     const consumer = wrangler.match(
-      /\{\s*"queue": "sugarplum-card-regen",\s*"max_batch_size": 1,[\s\S]*?"retry_delay": 60,\s*\}/,
+      new RegExp(
+        `\\{\\s*"queue": "sugarplum-card-regen",[\\s\\S]*?"retry_delay": ${CARD_REGEN_QUEUE_RETRY_DELAY_SEC}\\s*,?\\s*\\}`,
+      ),
     )?.[0];
     expect(consumer).toBeTruthy();
     expect(consumer).not.toMatch(/"max_concurrency"/);

@@ -60,9 +60,18 @@ function isLegacyCardRegenBody(
   );
 }
 
+function safeErrorType(err: unknown): string {
+  return err instanceof Error ? err.name : typeof err;
+}
+
+/** Consumer may still see in-flight cardRegen after cutover; producer stays material-only. */
+export type GenerateConsumerMessage =
+  | GenerateQueueMessage
+  | CardRegenQueueMessage;
+
 /** Cloudflare Queues consumer: create Workflow + ack; sweep stale orphans. */
 export async function handleGenerateQueue(
-  batch: MessageBatch<GenerateQueueMessage>,
+  batch: MessageBatch<GenerateConsumerMessage>,
   env: Env,
 ): Promise<void> {
   for (const msg of batch.messages) {
@@ -76,11 +85,10 @@ export async function handleGenerateQueue(
       await startGenerationWorkflow(env, msg.body);
       msg.ack();
     } catch (err) {
-      const raw = msg.body as unknown;
-      const label = isLegacyCardRegenBody(raw)
-        ? `legacy card regen ${raw.opId}`
-        : `generation workflow create failed ${(msg.body as MaterialGenerateQueueMessage).jobId}`;
-      console.error(label, err);
+      const label = isLegacyCardRegenBody(msg.body)
+        ? `legacy card regen ${msg.body.opId}`
+        : `generation workflow create failed ${msg.body.jobId}`;
+      console.error(label, safeErrorType(err));
       msg.retry({ delaySeconds: GENERATE_QUEUE_RETRY_DELAY_SEC });
     }
   }
@@ -97,7 +105,7 @@ export async function handleCardRegenQueue(
       await processCardRegenOp(env, msg.body);
       msg.ack();
     } catch (err) {
-      console.error(`card regen ${msg.body.opId}`, err);
+      console.error(`card regen ${msg.body.opId}`, safeErrorType(err));
       msg.retry({ delaySeconds: CARD_REGEN_QUEUE_RETRY_DELAY_SEC });
     }
   }
