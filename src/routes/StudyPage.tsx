@@ -47,6 +47,7 @@ import {
   gradedTotal,
   sessionSurface,
 } from "../study";
+import { hubDiyTypes } from "../deckHub";
 import { useLearningRequeue } from "../study";
 import { usePendingGradeSync } from "../study";
 import { useStudyImmersion } from "../study";
@@ -569,6 +570,7 @@ export default function StudyPage() {
                 gradeBusy={busy}
                 offlineCopy={offlineCopy}
                 userId={userId}
+                allowedTypes={hubDiyTypes(isGuest())}
                 onDialogOpen={onCardDialogOpen}
                 onSaved={(updated) => {
                   replaceQueuedCard(updated);

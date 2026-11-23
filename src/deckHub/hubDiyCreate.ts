@@ -1,14 +1,7 @@
 import type { CardDraftView, CardType, HubCreateCardBody } from "../api/client";
 import { hasSingleClozeBlank } from "../study";
 import { backAnswer, isOcclusionFront } from "../draftReview";
-
-const GUEST_HUB_DIY_TYPES: CardType[] = ["qa", "cloze", "mcq"];
-const ACCOUNT_IMAGE_DIY_TYPES: CardType[] = ["occlusion", "image_label"];
-
-export function hubDiyTypes(guest: boolean): CardType[] {
-  if (guest) return GUEST_HUB_DIY_TYPES;
-  return [...GUEST_HUB_DIY_TYPES, ...ACCOUNT_IMAGE_DIY_TYPES];
-}
+export { hubDiyTypes } from "./hubDiyTypes";
 
 /** Unique material keys already used on this deck (from cards). */
 export function collectDeckImageKeys(cards: CardDraftView[]): string[] {

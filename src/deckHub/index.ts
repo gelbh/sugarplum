@@ -10,8 +10,8 @@ export {
   FigureSuggestPanel,
   type FigureSuggestPanelProps,
 } from "./FigureSuggestPanel";
+export { hubDiyTypes } from "./hubDiyTypes";
 export {
-  hubDiyTypes,
   collectDeckImageKeys,
   validateHubCreateCard,
   type HubCreateValidation,

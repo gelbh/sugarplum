@@ -38,6 +38,10 @@ import {
   type SubjectKnowledge,
 } from "../api/client";
 import { SubjectKnowledgeBar } from "../study";
+import {
+  CompositionSpark,
+  COMPOSITION_SEGMENT_COLORS,
+} from "../materials";
 import { ANKI_EXPORT_BUSY_LABEL } from "../export";
 import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";
@@ -417,7 +421,21 @@ export default function SubjectPage({ subjectId }: Props) {
                     </Stack>
                     {knowledge ? (
                       <Box sx={{ mt: 1.5 }}>
-                        <SubjectKnowledgeBar knowledge={knowledge} />
+                        <SubjectKnowledgeBar
+                          knowledge={knowledge}
+                          segmentColors={COMPOSITION_SEGMENT_COLORS}
+                          spark={
+                            <CompositionSpark
+                              new={knowledge.new}
+                              learning={knowledge.learning}
+                              young={knowledge.young}
+                              mature={knowledge.mature}
+                              total={knowledge.total}
+                              height={6}
+                              maxWidth="100%"
+                            />
+                          }
+                        />
                       </Box>
                     ) : null}
                   </Box>

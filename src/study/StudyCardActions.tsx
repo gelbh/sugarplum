@@ -20,13 +20,13 @@ import {
   patchCard,
   regenCard,
   type CardDraftView,
+  type CardType,
 } from "../api/client";
 import { cardPatchBody } from "../draftReview/kernel";
 import DraftCardEditor, {
   type DraftEditorChange,
 } from "../draftReview/DraftCardEditor";
 import { isGuest } from "../guest/session";
-import { hubDiyTypes } from "../deckHub/hubDiyCreate";
 import { dropPendingGrade } from "./pendingGrades";
 
 const DIALOG_PAPER_SX = {
@@ -68,6 +68,8 @@ type StudyCardActionsProps = {
   gradeBusy: boolean;
   offlineCopy: boolean;
   userId: string | null;
+  /** Routes supply hub DIY allowed types (study stays deckHub-free). */
+  allowedTypes: CardType[];
   onDialogOpen: (open: boolean) => void;
   onSaved: (card: CardDraftView) => void;
   onRegenerated: (card: CardDraftView) => void;
@@ -80,6 +82,7 @@ export function StudyCardActions({
   gradeBusy,
   offlineCopy,
   userId,
+  allowedTypes,
   onDialogOpen,
   onSaved,
   onRegenerated,
@@ -258,7 +261,7 @@ export function StudyCardActions({
               card={editCard}
               disabled={editDialogBusy}
               onChange={onEditChange}
-              allowedTypes={hubDiyTypes(isGuest())}
+              allowedTypes={allowedTypes}
               regenAction={
                 isGuest()
                   ? undefined

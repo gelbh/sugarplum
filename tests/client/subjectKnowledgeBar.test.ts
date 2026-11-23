@@ -6,6 +6,10 @@ import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, it } from "vitest";
 import SubjectKnowledgeBar from "../../src/study/SubjectKnowledgeBar";
 import type { SubjectKnowledge } from "../../src/study/subjectKnowledge";
+import {
+  CompositionSpark,
+  COMPOSITION_SEGMENT_COLORS,
+} from "../../src/materials";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -29,7 +33,21 @@ function renderBar(knowledge: SubjectKnowledge): HTMLDivElement {
   document.body.append(host);
   const root: Root = createRoot(host);
   act(() => {
-    root.render(createElement(SubjectKnowledgeBar, { knowledge }));
+    root.render(
+      createElement(SubjectKnowledgeBar, {
+        knowledge,
+        segmentColors: COMPOSITION_SEGMENT_COLORS,
+        spark: createElement(CompositionSpark, {
+          new: knowledge.new,
+          learning: knowledge.learning,
+          young: knowledge.young,
+          mature: knowledge.mature,
+          total: knowledge.total,
+          height: 6,
+          maxWidth: "100%",
+        }),
+      }),
+    );
   });
   return host;
 }

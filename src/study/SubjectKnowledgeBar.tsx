@@ -1,13 +1,22 @@
+import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { SubjectKnowledge } from "../api/client";
-import CompositionSpark, {
-  COMPOSITION_SEGMENT_COLORS,
-} from "../materials/CompositionSpark";
+
+type SegmentColors = {
+  mature: string;
+  young: string;
+  learning: string;
+  new: string;
+};
 
 type Props = {
   knowledge: SubjectKnowledge;
+  /** Routes compose CompositionSpark from materials. */
+  spark: ReactNode;
+  /** Legend swatches; usually COMPOSITION_SEGMENT_COLORS from materials. */
+  segmentColors: SegmentColors;
 };
 
 function formatEtkCards(etk: number): string {
@@ -15,22 +24,11 @@ function formatEtkCards(etk: number): string {
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
 }
 
-const LEGEND: {
-  key: keyof Pick<SubjectKnowledge, "mature" | "young" | "learning" | "new">;
-  label: string;
-  color: string;
-}[] = [
-  { key: "mature", label: "Mature", color: COMPOSITION_SEGMENT_COLORS.mature },
-  { key: "young", label: "Young", color: COMPOSITION_SEGMENT_COLORS.young },
-  {
-    key: "learning",
-    label: "Learning",
-    color: COMPOSITION_SEGMENT_COLORS.learning,
-  },
-  { key: "new", label: "New", color: COMPOSITION_SEGMENT_COLORS.new },
-];
-
-export default function SubjectKnowledgeBar({ knowledge }: Props) {
+export default function SubjectKnowledgeBar({
+  knowledge,
+  spark,
+  segmentColors,
+}: Props) {
   if (knowledge.total === 0) {
     return (
       <Typography variant="body2" sx={{
@@ -45,17 +43,20 @@ export default function SubjectKnowledgeBar({ knowledge }: Props) {
       ? Math.round(100 * knowledge.avgRetrievability)
       : null;
 
+  const legend: {
+    key: keyof Pick<SubjectKnowledge, "mature" | "young" | "learning" | "new">;
+    label: string;
+    color: string;
+  }[] = [
+    { key: "mature", label: "Mature", color: segmentColors.mature },
+    { key: "young", label: "Young", color: segmentColors.young },
+    { key: "learning", label: "Learning", color: segmentColors.learning },
+    { key: "new", label: "New", color: segmentColors.new },
+  ];
+
   return (
     <Stack spacing={1} sx={{ maxWidth: 360 }}>
-      <CompositionSpark
-        new={knowledge.new}
-        learning={knowledge.learning}
-        young={knowledge.young}
-        mature={knowledge.mature}
-        total={knowledge.total}
-        height={6}
-        maxWidth="100%"
-      />
+      {spark}
       <Stack
         direction="row"
         useFlexGap
@@ -64,7 +65,7 @@ export default function SubjectKnowledgeBar({ knowledge }: Props) {
           gap: 1.25,
           rowGap: 0.5
         }}>
-        {LEGEND.map(({ key, label, color }) => {
+        {legend.map(({ key, label, color }) => {
           const count = knowledge[key];
           if (count <= 0) return null;
           return (
