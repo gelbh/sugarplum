@@ -1,4 +1,4 @@
-import { type PageBox, filterFigureBoxes } from "../materials/kernel";
+import { type PageBox, filterFigureBoxes } from "../materials/clientKernel";
 
 export type LayoutLoadResult =
   | { ok: true }

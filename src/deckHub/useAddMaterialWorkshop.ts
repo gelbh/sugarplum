@@ -26,7 +26,6 @@ import {
   uploadSubmitLabel,
 } from "../materials/learningObjectivesOffer";
 import {
-  MAX_CLIENT_FIGURES,
   MAX_FILE_BYTES,
   MAX_IMAGE_BYTES,
   MAX_SPLIT_SOURCE_BYTES,
@@ -35,6 +34,7 @@ import {
   splitSourceTooLargeMessage,
   storedUploadNotice,
 } from "../materials/kernel";
+import { MAX_CLIENT_FIGURES } from "../materials/clientKernel";
 import { runConsentedPdfCompressUpload } from "../materials/runConsentedPdfCompressUpload";
 import { runConsentedPdfSplitUpload } from "../materials/runConsentedPdfSplitUpload";
 import { runConsentedPptxSplitUpload } from "../materials/runConsentedPptxSplitUpload";

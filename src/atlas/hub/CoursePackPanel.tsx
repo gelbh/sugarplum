@@ -13,12 +13,12 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { ApiError, PPTX_MIME, resolveUploadContentType } from "../../api/client";
 import {
-  ocrEmptyPdfPages,
   SOURCE_ROLE_LABELS,
   SOURCE_ROLES,
   suggestSourceRole,
   type SourceRole,
 } from "../../materials/kernel";
+import { ocrEmptyPdfPages } from "../../materials/clientKernel";
 import {
   completeAtlasMaterial,
   deleteAtlasMaterial,

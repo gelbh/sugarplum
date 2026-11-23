@@ -51,7 +51,7 @@ export {
   pagePlainText,
   type EmbedPdfDocument,
   type EmbedPdfPageLayout,
-} from "../materials/kernel";
+} from "../materials/clientKernel";
 export { FlipCardPlate, StudyCardPlate } from "./CardFace";
 export { CardFaceMcqBody } from "./cardFaceMcq";
 export {

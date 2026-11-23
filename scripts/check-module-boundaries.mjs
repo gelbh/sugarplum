@@ -7,6 +7,8 @@
  *   use barrels (or domain/kernel) unless allowlisted.
  * - domain/kernel.ts is an extra public entry when the index barrel pulls
  *   React or guest cycles (today: study, materials).
+ * - domain/clientKernel.ts is the DOM/OCR public entry (materials); not for
+ *   CF worker graphs.
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, extname, normalize } from "node:path";
@@ -113,7 +115,7 @@ function domainOfFile(fileAbs) {
  */
 function isBarrelTarget(resolvedAbs) {
   const rel = srcRelative(resolvedAbs);
-  return /^[^/]+\/(index|kernel)\.tsx?$/.test(rel);
+  return /^[^/]+\/(index|kernel|clientKernel)\.tsx?$/.test(rel);
 }
 
 /**
