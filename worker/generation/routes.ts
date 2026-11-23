@@ -25,6 +25,7 @@ import {
   fillAllInstanceId,
   getFillAllWorkflowStatus,
   startFillAllWorkflow,
+  terminateFillAllWorkflow,
 } from "./fillAllLifecycle";
 import { readEtaPriors } from "./stageDurations";
 
@@ -407,6 +408,36 @@ jobRoutes.get("/:id/claims/fill-orphans", async (c) => {
     throw new HTTPException(404, { message: "Job not found" });
   }
 
+  return c.json(await getFillAllWorkflowStatus(c.env, jobId));
+});
+
+/** Cancel a hung or in-flight Fill-all Workflow. */
+// view-as: deny
+jobRoutes.delete("/:id/claims/fill-orphans", async (c) => {
+  const userId = await requireUser(c);
+  const jobId = c.req.param("id");
+
+  const owned = await getDb(c.env)
+    .prepare(
+      `SELECT j.id
+       FROM generation_jobs j
+       INNER JOIN materials m ON m.id = j.material_id
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE j.id = ? AND d.user_id = ?`,
+    )
+    .bind(jobId, userId)
+    .first<{ id: string }>();
+  if (!owned) {
+    throw new HTTPException(404, { message: "Job not found" });
+  }
+
+  if (!c.env.FILL_ALL_WORKFLOW) {
+    throw new HTTPException(503, {
+      message: "Fill-all workflow is not configured",
+    });
+  }
+
+  await terminateFillAllWorkflow(c.env, jobId);
   return c.json(await getFillAllWorkflowStatus(c.env, jobId));
 });
 

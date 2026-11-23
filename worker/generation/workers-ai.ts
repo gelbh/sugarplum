@@ -51,6 +51,40 @@ const TIMEOUT_BACKOFF_MS = [2000, 5000] as const;
 export const WORKERS_AI_TIMEOUT_ERROR =
   "Workers AI timed out. Try again, or add a BYO API key in Settings.";
 
+/**
+ * Local deadline per `env.AI.run`. Cloudflare sometimes hangs without throwing
+ * 3046; without this race the 3046 retry loop never advances.
+ */
+export const WORKERS_AI_RUN_TIMEOUT_MS = 90_000;
+
+function workersAiLocalTimeoutError(): Error {
+  const err = new Error("3046: Request timeout");
+  (err as Error & { code: number }).code = 3046;
+  return err;
+}
+
+/** Reject with a 3046-shaped error if `run` does not settle in time. */
+function raceAiRunWithLocalTimeout(
+  run: () => Promise<unknown>,
+): Promise<unknown> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return new Promise((resolve, reject) => {
+    timer = setTimeout(() => {
+      reject(workersAiLocalTimeoutError());
+    }, WORKERS_AI_RUN_TIMEOUT_MS);
+    run().then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
 function isWorkersAiCapacityError(err: unknown): boolean {
   const status =
     err && typeof err === "object" && "status" in err
@@ -246,7 +280,11 @@ export function createWorkersAiAdapter(
 
       for (let attempt = 0; ; attempt++) {
         try {
-          return await env.AI!.run(model, inputs, gateway);
+          // Binding has no AbortSignal; race so hung remote calls still enter
+          // the 3046 retry path instead of stalling the workflow forever.
+          return await raceAiRunWithLocalTimeout(() =>
+            env.AI!.run(model, inputs, gateway),
+          );
         } catch (err) {
           if (withJsonMode && isJsonModeUnmetError(err)) return null;
           if (

@@ -14,6 +14,7 @@ import {
 } from "../../worker/generation/claim-card-fallback";
 import {
   WORKERS_AI_MODEL,
+  WORKERS_AI_RUN_TIMEOUT_MS,
   createWorkersAiAdapter,
   isWorkersAiDeprecatedModelError,
 } from "../../worker/generation/workers-ai";
@@ -655,5 +656,42 @@ describe("Workers AI 3046 request-timeout retry", () => {
     await assertion;
     expect(run).toHaveBeenCalledTimes(3);
     expect(at.map((t) => t - at[0]!)).toEqual([0, 2000, 7000]);
+  });
+
+  it("treats a hung AI.run as 3046 after the local deadline then retries", async () => {
+    let calls = 0;
+    const run = vi.fn(() => {
+      calls += 1;
+      if (calls === 1) return new Promise(() => {});
+      return Promise.resolve(chatCompletionResult('{"ok":true}'));
+    });
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+
+    const result = complete(adapter);
+    await vi.advanceTimersByTimeAsync(WORKERS_AI_RUN_TIMEOUT_MS);
+    await vi.advanceTimersByTimeAsync(2000);
+    await expect(result).resolves.toMatchObject({ text: '{"ok":true}' });
+    expect(run).toHaveBeenCalledTimes(2);
+  });
+
+  it("exhausts retries when AI.run hangs past every local deadline", async () => {
+    const run = vi.fn(() => new Promise(() => {}));
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+
+    const result = complete(adapter);
+    const assertion = expect(result).rejects.toThrow(
+      /Workers AI timed out.*BYO API key in Settings/i,
+    );
+    await vi.advanceTimersByTimeAsync(
+      3 * WORKERS_AI_RUN_TIMEOUT_MS + 2000 + 5000,
+    );
+    await assertion;
+    expect(run).toHaveBeenCalledTimes(3);
   });
 });

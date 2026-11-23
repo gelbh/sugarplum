@@ -157,3 +157,23 @@ export async function getFillAllWorkflowStatus(
     throw err;
   }
 }
+
+/** Best-effort terminate so a hung Fill-all releases Draft review locks. */
+export async function terminateFillAllWorkflow(
+  env: Env,
+  jobId: string,
+): Promise<void> {
+  const workflow = env.FILL_ALL_WORKFLOW;
+  if (!workflow) return;
+  const id = fillAllInstanceId(jobId);
+  try {
+    const instance = await workflow.get(id);
+    try {
+      await instance.terminate();
+    } catch {
+      // ignore (already finished / not terminable)
+    }
+  } catch (err) {
+    if (!isNotFoundError(err)) throw err;
+  }
+}
