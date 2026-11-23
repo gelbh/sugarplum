@@ -7,6 +7,7 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import {
   FILL_ALL_REQUEST_CAP,
+  FILL_ALL_SOFT_FAIL_BUDGET,
   fillOrphanClaims,
   type FillOrphanClaimsResult,
 } from "./claim-orphan-fill";
@@ -21,11 +22,15 @@ export const FILL_ALL_MAX_CHUNKS = 256;
 
 export type FillChunkResult = FillOrphanClaimsResult;
 
+type FillChunkFn = (args: {
+  softFailCounts: Record<string, number>;
+}) => Promise<FillChunkResult>;
+
 /**
  * Pure chunk loop for tests + Workflow. Each fillChunk is one durable step.
  */
 export async function executeFillAllChunks(args: {
-  fillChunk: () => Promise<FillChunkResult>;
+  fillChunk: FillChunkFn;
   maxChunks?: number;
   cap?: number;
 }): Promise<FillAllRunOutput> {
@@ -35,17 +40,24 @@ export async function executeFillAllChunks(args: {
   let filled = 0;
   let skipped = 0;
   let remaining = 0;
+  let softFailCounts: Record<string, number> = {};
   let stopReason: FillAllStopReason = "complete";
 
   for (let n = 0; n < maxChunks; n += 1) {
-    const chunk = await args.fillChunk();
+    const chunk = await args.fillChunk({ softFailCounts });
     attempted += chunk.attempted;
     filled += chunk.filled;
     skipped += chunk.skipped;
     remaining = chunk.remaining;
+    softFailCounts = chunk.softFailCounts ?? softFailCounts;
 
     if (chunk.inconclusive) {
       stopReason = "error";
+      break;
+    }
+
+    if (chunk.softFailBudgetExhausted) {
+      stopReason = "soft_fail_budget";
       break;
     }
 
@@ -106,7 +118,7 @@ export class FillAllWorkflow extends WorkflowEntrypoint<
     return executeFillAllChunks({
       cap: FILL_ALL_REQUEST_CAP,
       maxChunks: FILL_ALL_MAX_CHUNKS,
-      fillChunk: async () => {
+      fillChunk: async ({ softFailCounts }) => {
         const n = chunkIndex;
         chunkIndex += 1;
         return step.do(`fill-chunk-${n}`, async () => {
@@ -116,6 +128,8 @@ export class FillAllWorkflow extends WorkflowEntrypoint<
             jobId,
             cap: FILL_ALL_REQUEST_CAP,
             type,
+            softFailBudget: FILL_ALL_SOFT_FAIL_BUDGET,
+            softFailCounts,
           });
           // Persist summary only (avoid Workflow step state bloat from cards[]).
           return {
@@ -125,6 +139,8 @@ export class FillAllWorkflow extends WorkflowEntrypoint<
             remaining: result.remaining,
             cards: [],
             inconclusive: result.inconclusive,
+            softFailBudgetExhausted: result.softFailBudgetExhausted,
+            softFailCounts: result.softFailCounts,
           };
         });
       },

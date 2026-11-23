@@ -164,4 +164,38 @@ describe("executeFillAllChunks", () => {
     expect(result.stopReason).toBe("capacity");
     expect(result.filled).toBe(4);
   });
+
+  it("stops with soft_fail_budget and carries counts across chunks", async () => {
+    const seen: Record<string, number>[] = [];
+    const result = await executeFillAllChunks({
+      cap: FILL_ALL_REQUEST_CAP,
+      fillChunk: async ({ softFailCounts }) => {
+        seen.push({ ...softFailCounts });
+        if (Object.keys(softFailCounts).length === 0) {
+          return {
+            // Full chunk so the loop continues (attempted === cap).
+            attempted: FILL_ALL_REQUEST_CAP,
+            filled: 0,
+            skipped: FILL_ALL_REQUEST_CAP,
+            remaining: 2,
+            cards: [],
+            softFailCounts: { "cl-a": 1, "cl-b": 1 },
+          };
+        }
+        return {
+          attempted: 0,
+          filled: 0,
+          skipped: 2,
+          remaining: 2,
+          cards: [],
+          softFailBudgetExhausted: true,
+          softFailCounts,
+        };
+      },
+    });
+    expect(seen).toHaveLength(2);
+    expect(seen[1]).toEqual({ "cl-a": 1, "cl-b": 1 });
+    expect(result.stopReason).toBe("soft_fail_budget");
+    expect(result.remaining).toBe(2);
+  });
 });
