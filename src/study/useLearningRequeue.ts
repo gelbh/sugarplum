@@ -43,6 +43,7 @@ export type UseLearningRequeue = {
   ) => void;
   advanceAfterGrade: () => void;
   flushDueLearning: () => void;
+  clearPendingLearning: () => void;
 };
 
 /**
@@ -147,11 +148,16 @@ export function useLearningRequeue(
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [flushDueLearning]);
 
+  const clearPendingLearning = useCallback(() => {
+    commitPendingLearning([]);
+  }, [commitPendingLearning]);
+
   return {
     pendingLearning,
     nextLearningDue: earliestPendingDueAt(pendingLearning),
     parkShortTermFollowUp,
     advanceAfterGrade,
     flushDueLearning,
+    clearPendingLearning,
   };
 }
