@@ -71,20 +71,18 @@ describe("problemWire", () => {
     );
   });
 
-  it("parseApiErrorBody accepts flat message + code", () => {
+  it("parseApiErrorBody keeps code from flat body but ignores message for text", () => {
     const parsed = parseApiErrorBody({
       message: "Read-only while viewing as user",
       code: VIEW_AS_READ_ONLY_CODE,
     });
     expect(parsed?.code).toBe(VIEW_AS_READ_ONLY_CODE);
-    expect(messageFromApiErrorBody(parsed!, "fb")).toBe(
-      "Read-only while viewing as user",
-    );
+    expect(messageFromApiErrorBody(parsed!, "fb")).toBe("fb");
   });
 
-  it("parseApiErrorBody accepts flat error field", () => {
+  it("parseApiErrorBody ignores flat error field for message text", () => {
     const parsed = parseApiErrorBody({ error: "legacy boom" });
-    expect(messageFromApiErrorBody(parsed!, "fb")).toBe("legacy boom");
+    expect(messageFromApiErrorBody(parsed!, "fb")).toBe("fb");
   });
 
   it("parseApiErrorBody keeps unknown code strings", () => {

@@ -5,15 +5,20 @@ import {
   throwApiErrorFromResponse,
 } from "../../src/api/core";
 
-function jsonResponse(status: number, body: unknown): Response {
+function jsonResponse(
+  status: number,
+  body: unknown,
+  statusText = "",
+): Response {
   return new Response(JSON.stringify(body), {
     status,
+    statusText,
     headers: { "Content-Type": "application/json" },
   });
 }
 
 describe("throwApiErrorFromResponse", () => {
-  it("parses flat message + code", async () => {
+  it("ignores flat message for ApiError.message but keeps code", async () => {
     const res = jsonResponse(403, {
       message: "Read-only while viewing as user",
       code: VIEW_AS_READ_ONLY_CODE,
@@ -21,7 +26,7 @@ describe("throwApiErrorFromResponse", () => {
     await expect(throwApiErrorFromResponse(res, "fallback")).rejects.toMatchObject({
       name: "ApiError",
       status: 403,
-      message: "Read-only while viewing as user",
+      message: "fallback",
       code: VIEW_AS_READ_ONLY_CODE,
     });
   });
@@ -55,11 +60,11 @@ describe("throwApiErrorFromResponse", () => {
     });
   });
 
-  it("parses legacy flat error field", async () => {
+  it("ignores legacy flat error field for message", async () => {
     const res = jsonResponse(500, { error: "legacy boom" });
     await expect(throwApiErrorFromResponse(res, "fallback")).rejects.toMatchObject({
       status: 500,
-      message: "legacy boom",
+      message: "fallback",
     });
   });
 
@@ -74,4 +79,3 @@ describe("throwApiErrorFromResponse", () => {
     }
   });
 });
-

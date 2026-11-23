@@ -25,8 +25,9 @@ export function guestUnsupported(action: string): never {
 }
 
 /**
- * Primary API error wire is RFC 9457 problem+json. Dual-read still accepts
- * legacy flat `{ message, code? }` / `{ error }` for older responses.
+ * Primary API error wire is RFC 9457 problem+json (`detail` / `title`).
+ * Flat `message` / `error` are not used for ApiError.message; extension
+ * `code` is still read when present.
  */
 export async function throwApiErrorFromResponse(
   res: Response,
