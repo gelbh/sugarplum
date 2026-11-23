@@ -51,7 +51,7 @@ import { friendlyJobError } from "../draftReview";
 import { ClaimCoveragePanel } from "../draftReview";
 import { useDraftReviewLoad } from "../draftReview";
 import EnrichmentBanner from "../draftReview/EnrichmentBanner";
-import { shouldShowEnrichmentBanner } from "../draftReview/enrichmentBanner";
+import { shouldShowEnrichmentBanner } from "../draftReview/enrichmentBannerVisibility";
 
 const ENRICH_POLL_MS = 1_500;
 

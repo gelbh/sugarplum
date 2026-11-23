@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { shouldShowEnrichmentBanner } from "../../src/draftReview/enrichmentBanner";
+import { shouldShowEnrichmentBanner } from "../../src/draftReview/enrichmentBannerVisibility";
 
 describe("shouldShowEnrichmentBanner", () => {
   it("shows banner only for needs_review + enrich", () => {
