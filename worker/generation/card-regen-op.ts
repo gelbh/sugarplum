@@ -376,6 +376,8 @@ export async function processCardRegenOp(
         llm: llmBundle.llm,
         apiKey: llmBundle.apiKey,
         provider: llmBundle.provider,
+        model: llmBundle.model,
+        cache: env.CACHE,
       });
     } catch (err) {
       if (err instanceof ClaimAwareRegenError) {
@@ -389,6 +391,11 @@ export async function processCardRegenOp(
       const message =
         err instanceof Error ? err.message : "Card regeneration failed";
       return markOpFailed(db, msg.opId, message);
+    }
+
+    // KV hit: no LLM spend; refund the free-gen reservation.
+    if (generated.servedFromCache) {
+      await llmBundle.releaseQuota().catch((e) => console.error(e));
     }
 
     const applied = await applyClaimAwareRegenToCard(env, {

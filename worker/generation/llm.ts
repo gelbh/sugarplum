@@ -87,6 +87,11 @@ export type GenerateDraftsInput = {
   extraUserSuffix?: string;
 };
 
+export type CompleteGatewayCache = {
+  skipCache?: boolean;
+  cacheTtl?: number;
+};
+
 export type CompleteInput = {
   system: string;
   user: string;
@@ -94,6 +99,11 @@ export type CompleteInput = {
   provider: string;
   /** Constrains Workers AI / OpenAI response_format. Default cards (critique/write). */
   jsonShape?: CompleteJsonShape;
+  /**
+   * Workers AI + AI Gateway only. Claim→card write opts into response cache;
+   * other paths leave this unset (adapter default skipCache: true).
+   */
+  gatewayCache?: CompleteGatewayCache;
 };
 
 /** Best-effort token counts from a provider response (nulls when silent). */

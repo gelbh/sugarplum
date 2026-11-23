@@ -110,6 +110,38 @@ describe("Workers AI adapter", () => {
     expect(drafts[2]?.type).toBe("cloze");
   });
 
+  it("complete honors gatewayCache when set (default remains skipCache true)", async () => {
+    const run = vi.fn(
+      async (
+        _model: string,
+        _inputs: unknown,
+        options?: {
+          gateway?: { id?: string; skipCache?: boolean; cacheTtl?: number };
+        },
+      ) => {
+        expect(options).toEqual({
+          gateway: {
+            id: "sugarplum",
+            skipCache: false,
+            cacheTtl: 3600,
+          },
+        });
+        return chatCompletionResult('{"cards":[]}');
+      },
+    );
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+    await adapter.complete({
+      system: "sys",
+      user: "usr",
+      apiKey: "",
+      provider: "workers-ai",
+      gatewayCache: { skipCache: false, cacheTtl: 3600 },
+    });
+    expect(run).toHaveBeenCalledOnce();
+  });
+
   it("salvages complete cards when finish_reason is length", async () => {
     const completeCard = {
       type: "qa",
