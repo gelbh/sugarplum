@@ -1,13 +1,9 @@
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
-import PdfCompressConsent from "../materials/PdfCompressConsent";
-import PdfSplitConsent from "../materials/PdfSplitConsent";
-import PptxSplitConsent from "../materials/PptxSplitConsent";
 import { CreateFlowNotice } from "../library/CreateFlowNotice";
-import { fileSizeCapMb } from "../materials/kernel";
 import type { CardDraftView, CardType } from "../api/client";
-import type { DraftEditorChange } from "../draftReview/DraftCardEditor";
+import type { DraftEditorChange } from "../draftReview/kernel";
 import AddMaterialDiyPanel from "./AddMaterialDiyPanel";
 import AddMaterialMethodChooser, {
   METHOD_META,
@@ -61,25 +57,14 @@ type Props = {
   onAccountPaste: (e?: FormEvent) => void;
   uploadFile: File | null;
   onUploadFileChange: (file: File | null) => void;
-  figureFiles: File[];
   onFigureFilesChange: (files: File[]) => void;
   onUploadFile: (e?: FormEvent) => void;
   offerLearningObjectives: boolean;
   submitLabel: "Continue" | "Start generation";
   submitDisabled?: boolean;
   freePathImageHelper: string | null;
-  pdfSplitOpen: boolean;
-  pdfSplitProgress: string | null;
-  onPdfSplitConfirm: () => void;
-  onPdfSplitCancel: () => void;
-  pptxSplitOpen: boolean;
-  pptxSplitProgress: string | null;
-  onPptxSplitConfirm: () => void;
-  onPptxSplitCancel: () => void;
-  pdfCompressOpen: boolean;
-  pdfCompressProgress: string | null;
-  onPdfCompressConfirm: () => void;
-  onPdfCompressCancel: () => void;
+  /** Routes compose materials consent dialogs (peer leaf). */
+  renderUploadConsents: () => ReactNode;
   createCard: CardDraftView;
   createBusy: boolean;
   createImageBusy: boolean;
@@ -119,25 +104,13 @@ export default function AddMaterialWorkshop({
   onAccountPaste,
   uploadFile,
   onUploadFileChange,
-  figureFiles,
   onFigureFilesChange,
   onUploadFile,
   offerLearningObjectives,
   submitLabel,
   submitDisabled = false,
   freePathImageHelper,
-  pdfSplitOpen,
-  pdfSplitProgress,
-  onPdfSplitConfirm,
-  onPdfSplitCancel,
-  pptxSplitOpen,
-  pptxSplitProgress,
-  onPptxSplitConfirm,
-  onPptxSplitCancel,
-  pdfCompressOpen,
-  pdfCompressProgress,
-  onPdfCompressConfirm,
-  onPdfCompressCancel,
+  renderUploadConsents,
   createCard,
   createBusy,
   createImageBusy,
@@ -189,36 +162,7 @@ export default function AddMaterialWorkshop({
     </>
   );
 
-  const consents = (
-    <>
-      <PdfSplitConsent
-        open={pdfSplitOpen}
-        fileName={uploadFile?.name ?? "PDF"}
-        figuresWillSkip={figureFiles.length > 0}
-        progressLabel={pdfSplitProgress}
-        busy={materialBusy}
-        onConfirm={onPdfSplitConfirm}
-        onCancel={onPdfSplitCancel}
-      />
-      <PptxSplitConsent
-        open={pptxSplitOpen}
-        fileName={uploadFile?.name ?? "PPTX"}
-        maxMb={fileSizeCapMb()}
-        progressLabel={pptxSplitProgress}
-        busy={materialBusy}
-        onConfirm={onPptxSplitConfirm}
-        onCancel={onPptxSplitCancel}
-      />
-      <PdfCompressConsent
-        open={pdfCompressOpen}
-        fileName={uploadFile?.name ?? "PDF"}
-        progressLabel={pdfCompressProgress}
-        busy={materialBusy}
-        onConfirm={onPdfCompressConfirm}
-        onCancel={onPdfCompressCancel}
-      />
-    </>
-  );
+  const consents = renderUploadConsents();
 
   if (activeTab === null) {
     return (

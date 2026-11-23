@@ -19,7 +19,22 @@ import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import DialogEyebrow from "../shared/ui/DialogEyebrow";
 import { AddMaterialWorkshop } from "../deckHub";
-import { CompositionSpark } from "../materials";
+import {
+  CompositionSpark,
+  PdfCompressConsent,
+  PdfSplitConsent,
+  PptxSplitConsent,
+  diyOcclusionNotice,
+  freePathImageHelperText,
+  isImageUploadContentType,
+  shouldOfferLearningObjectives,
+  uploadSubmitDisabled,
+  uploadSubmitLabel,
+  runConsentedPdfCompressUpload,
+  runConsentedPdfSplitUpload,
+  runConsentedPptxSplitUpload,
+  fileSizeCapMb,
+} from "../materials";
 import { CoverPickerDialog } from "../deckHub";
 import { useShellBackOverride } from "../app/shell/ShellBackOverride";
 import { CardsWorkshop } from "../deckHub";
@@ -300,6 +315,19 @@ export default function DeckHubPage({ deckId }: Props) {
     refreshMaterials,
     setWorkshopStack,
     prepareOcclusionFromImageKey: create.prepareOcclusionFromImageKey,
+    learningObjectives: {
+      diyOcclusionNotice,
+      freePathImageHelperText,
+      isImageUploadContentType,
+      shouldOfferLearningObjectives,
+      uploadSubmitDisabled,
+      uploadSubmitLabel,
+    },
+    consentedUploads: {
+      runConsentedPdfCompressUpload: runConsentedPdfCompressUpload as never,
+      runConsentedPdfSplitUpload: runConsentedPdfSplitUpload as never,
+      runConsentedPptxSplitUpload: runConsentedPptxSplitUpload as never,
+    },
   });
 
   const study = useStudyReadySheet();
@@ -411,31 +439,48 @@ export default function DeckHubPage({ deckId }: Props) {
       onAccountPaste={material.onAccountPaste}
       uploadFile={material.uploadFile}
       onUploadFileChange={material.setUploadFile}
-      figureFiles={material.figureFiles}
       onFigureFilesChange={material.setFigureFiles}
       onUploadFile={material.onUploadFile}
       offerLearningObjectives={material.offerLearningObjectives}
       submitLabel={material.submitLabel}
       submitDisabled={material.submitDisabled}
       freePathImageHelper={material.freePathImageHelper}
-      pdfSplitOpen={material.pdfSplitOpen}
-      pdfSplitProgress={material.pdfSplitProgress}
-      onPdfSplitConfirm={() => {
-        void material.onPdfSplitConfirm();
-      }}
-      onPdfSplitCancel={material.onPdfSplitCancel}
-      pptxSplitOpen={material.pptxSplitOpen}
-      pptxSplitProgress={material.pptxSplitProgress}
-      onPptxSplitConfirm={() => {
-        void material.onPptxSplitConfirm();
-      }}
-      onPptxSplitCancel={material.onPptxSplitCancel}
-      pdfCompressOpen={material.pdfCompressOpen}
-      pdfCompressProgress={material.pdfCompressProgress}
-      onPdfCompressConfirm={() => {
-        void material.onPdfCompressConfirm();
-      }}
-      onPdfCompressCancel={material.onPdfCompressCancel}
+      renderUploadConsents={() => (
+        <>
+          <PdfSplitConsent
+            open={material.pdfSplitOpen}
+            fileName={material.uploadFile?.name ?? "PDF"}
+            figuresWillSkip={material.figureFiles.length > 0}
+            progressLabel={material.pdfSplitProgress}
+            busy={material.materialBusy}
+            onConfirm={() => {
+              void material.onPdfSplitConfirm();
+            }}
+            onCancel={material.onPdfSplitCancel}
+          />
+          <PptxSplitConsent
+            open={material.pptxSplitOpen}
+            fileName={material.uploadFile?.name ?? "PPTX"}
+            maxMb={fileSizeCapMb()}
+            progressLabel={material.pptxSplitProgress}
+            busy={material.materialBusy}
+            onConfirm={() => {
+              void material.onPptxSplitConfirm();
+            }}
+            onCancel={material.onPptxSplitCancel}
+          />
+          <PdfCompressConsent
+            open={material.pdfCompressOpen}
+            fileName={material.uploadFile?.name ?? "PDF"}
+            progressLabel={material.pdfCompressProgress}
+            busy={material.materialBusy}
+            onConfirm={() => {
+              void material.onPdfCompressConfirm();
+            }}
+            onCancel={material.onPdfCompressCancel}
+          />
+        </>
+      )}
       createCard={create.createCard}
       createBusy={create.createBusy}
       createImageBusy={create.createImageBusy}

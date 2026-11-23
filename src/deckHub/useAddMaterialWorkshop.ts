@@ -18,14 +18,6 @@ import {
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
 import {
-  diyOcclusionNotice,
-  freePathImageHelperText,
-  isImageUploadContentType,
-  shouldOfferLearningObjectives,
-  uploadSubmitDisabled,
-  uploadSubmitLabel,
-} from "../materials/learningObjectivesOffer";
-import {
   MAX_FILE_BYTES,
   MAX_IMAGE_BYTES,
   MAX_SPLIT_SOURCE_BYTES,
@@ -35,11 +27,12 @@ import {
   storedUploadNotice,
 } from "../materials/kernel";
 import { MAX_CLIENT_FIGURES } from "../materials/clientKernel";
-import { runConsentedPdfCompressUpload } from "../materials/runConsentedPdfCompressUpload";
-import { runConsentedPdfSplitUpload } from "../materials/runConsentedPdfSplitUpload";
-import { runConsentedPptxSplitUpload } from "../materials/runConsentedPptxSplitUpload";
 import type { WorkshopFrame } from "./workshopStack";
 import { openDiyOcclusionFromImageKey } from "./openDiyOcclusion";
+import type {
+  AddMaterialLearningObjectives,
+  AddMaterialConsentedUploads,
+} from "./addMaterialWorkshopDeps";
 
 const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const ALLOWED_UPLOAD_MIMES = new Set([
@@ -62,6 +55,10 @@ type Args = {
   refreshMaterials: () => Promise<void>;
   setWorkshopStack: Dispatch<SetStateAction<WorkshopFrame[]>>;
   prepareOcclusionFromImageKey?: (imageKey: string) => void;
+  /** Routes inject materials LO helpers (peer leaf; not materials/kernel). */
+  learningObjectives: AddMaterialLearningObjectives;
+  /** Routes inject consented upload runners from materials. */
+  consentedUploads: AddMaterialConsentedUploads;
 };
 
 export function useAddMaterialWorkshop({
@@ -71,7 +68,23 @@ export function useAddMaterialWorkshop({
   refreshMaterials,
   setWorkshopStack,
   prepareOcclusionFromImageKey,
+  learningObjectives,
+  consentedUploads,
 }: Args) {
+  const {
+    diyOcclusionNotice,
+    freePathImageHelperText,
+    isImageUploadContentType,
+    shouldOfferLearningObjectives,
+    uploadSubmitDisabled,
+    uploadSubmitLabel,
+  } = learningObjectives;
+  const {
+    runConsentedPdfCompressUpload,
+    runConsentedPdfSplitUpload,
+    runConsentedPptxSplitUpload,
+  } = consentedUploads;
+
   const [materialTab, setMaterialTab] = useState<MaterialTab>("upload");
   const [pasteText, setPasteText] = useState("");
   const [pasteFilename, setPasteFilename] = useState("");

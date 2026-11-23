@@ -1,6 +1,6 @@
-import { DIY_OCCLUSION_FREE_PATH_NOTICE } from "../materials/learningObjectivesOffer";
-
-export { DIY_OCCLUSION_FREE_PATH_NOTICE };
+/** Shared free-path DIY occlusion opener copy (also mirrored in materials LO helpers). */
+export const DIY_OCCLUSION_FREE_PATH_NOTICE =
+  "Image ready. Free path opens an Occlusion card so you can add boxes or tap Suggest regions (or add a BYO API key for auto vision drafts).";
 
 export function openDiyOcclusionFromImageKey(args: {
   imageKey: string;
