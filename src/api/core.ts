@@ -28,6 +28,10 @@ export function guestUnsupported(action: string): never {
   throw new ApiError(403, `Guest mode is local-only. Sign in to ${action}.`);
 }
 
+/**
+ * Primary API error wire is RFC 9457 problem+json. Dual-read still accepts
+ * legacy flat `{ message, code? }` / `{ error }` for older responses.
+ */
 export async function throwApiErrorFromResponse(
   res: Response,
   fallbackMessage: string,
