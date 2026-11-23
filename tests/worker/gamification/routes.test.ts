@@ -122,8 +122,8 @@ describe("gamification read APIs", () => {
     expect(plum!.progress).toEqual({
       kind: "composite",
       parts: [
-        { key: "streak_best", current: 0, target: 30 },
-        { key: "reviews", current: 0, target: 200 },
+        { key: "streak_best", current: 0, target: 60 },
+        { key: "reviews", current: 0, target: 2000 },
       ],
     });
   });
@@ -225,7 +225,7 @@ describe("gamification read APIs", () => {
       last_review: NOW,
     });
 
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 50; i++) {
       const day = String(1 + (i % 28)).padStart(2, "0");
       env.seedReviewLog({
         id: `rl-bf-${i}`,
@@ -369,7 +369,7 @@ describe("gamification read APIs", () => {
       last_review: NOW,
     });
 
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 14; i++) {
       const day = String(i + 1).padStart(2, "0");
       env.seedReviewLog({
         id: `rl-st-${i}`,
@@ -405,8 +405,8 @@ describe("gamification read APIs", () => {
     expect(g.status).toBe(200);
     const gam = (await g.json()) as GamificationBody;
     expect(gam.streakCurrent).toBe(0);
-    expect(gam.streakBest).toBe(7);
-    expect(gam.streakDay).toBe("2025-01-07");
+    expect(gam.streakBest).toBe(14);
+    expect(gam.streakDay).toBe("2025-01-14");
   });
 
   it("GET /api/gamification returns defaults after ensure", async () => {

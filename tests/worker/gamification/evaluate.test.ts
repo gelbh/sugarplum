@@ -270,6 +270,76 @@ function testDef(
   };
 }
 
+describe("harder fruit ladder durability", () => {
+  it("keeps an unlocked medal after its threshold rises", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    for (let i = 0; i < 30; i++) seedReview(env, `rl-keep-${i}`, "c1");
+    await env.DB.prepare(
+      `INSERT OR IGNORE INTO achievement_completions
+         (user_id, achievement_id, completed_at, trigger_event_id, backdated)
+       VALUES (?, ?, ?, ?, ?)`,
+    )
+      .bind("u1", "reviews_25", NOW, "rl-keep-0", 0)
+      .run();
+
+    await evaluateAfterReview(env.DB, "u1", {
+      reviewLogId: "rl-keep-29",
+      reviewedAt: new Date(NOW),
+    });
+
+    expect(
+      env
+        .getAchievementCompletions()
+        .some((c) => c.achievement_id === "reviews_25"),
+    ).toBe(true);
+    expect(
+      env
+        .getAchievementCompletions()
+        .some((c) => c.achievement_id === "reviews_100"),
+    ).toBe(false);
+  });
+
+  it("requires the new threshold for incomplete medals", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    for (let i = 0; i < 40; i++) seedReview(env, `rl-mid-${i}`, "c1");
+
+    await evaluateAfterReview(env.DB, "u1", {
+      reviewLogId: "rl-mid-39",
+      reviewedAt: new Date(NOW),
+    });
+
+    expect(
+      env
+        .getAchievementCompletions()
+        .some((c) => c.achievement_id === "reviews_25"),
+    ).toBe(false);
+    const mid = await env.DB.prepare(
+      `SELECT achievement_id, current_value, threshold
+       FROM achievement_progress WHERE user_id = ?`,
+    )
+      .bind("u1")
+      .all<{
+        achievement_id: string;
+        current_value: number;
+        threshold: number;
+      }>();
+    const reviews25 = mid.results.find((r) => r.achievement_id === "reviews_25");
+    expect(reviews25?.current_value).toBe(40);
+    expect(reviews25?.threshold).toBe(50);
+
+    for (let i = 40; i < 50; i++) seedReview(env, `rl-mid-${i}`, "c1");
+    const unlocks = await evaluateAfterReview(env.DB, "u1", {
+      reviewLogId: "rl-mid-49",
+      reviewedAt: new Date(NOW),
+    });
+    expect(unlocks.unlocks.map((u) => u.id)).toContain("reviews_25");
+  });
+});
+
 describe("evaluateAchievements write discipline", () => {
   it("skips completed defs and writes only changed progress", async () => {
     const env = createTestEnv();
