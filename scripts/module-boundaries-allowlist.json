@@ -1,10 +1,5 @@
 [
   {
-    "file": "api/cards.ts",
-    "spec": "../draftReview/rejectReasons",
-    "reason": "Single api consumer; avoid draftReview React barrel / extra kernel."
-  },
-  {
     "file": "deckHub/AddMaterialWorkshop.tsx",
     "spec": "../draftReview/DraftCardEditor",
     "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
@@ -80,38 +75,8 @@
     "reason": "Route-level CSS side-effect; no barrel re-export for stylesheets."
   },
   {
-    "file": "study/CardFace.tsx",
-    "spec": "../deckHub/occlusionLayout",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/ReviewCard.tsx",
-    "spec": "../draftReview/draftCardModel",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/ReviewCard.tsx",
-    "spec": "../draftReview/rejectReasons",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/reviewCardFaces.tsx",
-    "spec": "../draftReview/draftCardModel",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
     "file": "study/reviewCardFaces.tsx",
     "spec": "../draftReview/OcclusionRegionEditor",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/reviewCardMcq.tsx",
-    "spec": "../draftReview/draftCardModel",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/reviewCardMcq.tsx",
-    "spec": "../draftReview/mcqDraftEdit",
     "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
   },
   {
@@ -121,17 +86,7 @@
   },
   {
     "file": "study/StudyCardActions.tsx",
-    "spec": "../draftReview/cardPatchBody",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/StudyCardActions.tsx",
     "spec": "../draftReview/DraftCardEditor",
-    "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
-  },
-  {
-    "file": "study/studyCardPresentation.ts",
-    "spec": "../draftReview/draftCardModel",
     "reason": "Leaf import breaks circular barrel graph (materials/deckHub/study)."
   },
   {
