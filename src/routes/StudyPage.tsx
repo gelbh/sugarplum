@@ -48,8 +48,7 @@ import {
   gradedTotal,
   sessionSurface,
 } from "../study";
-import { getIntroBonus } from "../study/introBonus";
-import { clientLocalDay } from "../study/localDay";
+import { getIntroBonus, clientLocalDay } from "../study";
 import { hubDiyTypes } from "../deckHub";
 import { DraftCardEditor } from "../draftReview";
 import { useLearningRequeue } from "../study";

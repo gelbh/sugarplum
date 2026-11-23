@@ -77,6 +77,8 @@ export { default as LearningSoftWait } from "./LearningSoftWait";
 export { default as StudyFreshEmpty } from "./StudyFreshEmpty";
 export { default as SessionComplete } from "./SessionComplete";
 export { default as SessionQuietEnd } from "./SessionQuietEnd";
+export { getIntroBonus } from "./introBonus";
+export { clientLocalDay } from "./localDay";
 export { StudyCardActions } from "./StudyCardActions";
 export { useLearningRequeue } from "./useLearningRequeue";
 export { usePendingGradeSync } from "./usePendingGradeSync";
