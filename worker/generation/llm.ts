@@ -87,6 +87,11 @@ export type GenerateDraftsInput = {
   extraUserSuffix?: string;
 };
 
+export type CompleteGatewayCache = {
+  skipCache?: boolean;
+  cacheTtl?: number;
+};
+
 export type CompleteInput = {
   system: string;
   user: string;
@@ -94,6 +99,11 @@ export type CompleteInput = {
   provider: string;
   /** Constrains Workers AI / OpenAI response_format. Default cards (critique/write). */
   jsonShape?: CompleteJsonShape;
+  /**
+   * Workers AI + AI Gateway only. Unset keeps adapter default skipCache: true.
+   * Claim→card write leaves this unset (KV owns draft hits; Gateway can sticky-cache failures).
+   */
+  gatewayCache?: CompleteGatewayCache;
 };
 
 /** Best-effort token counts from a provider response (nulls when silent). */

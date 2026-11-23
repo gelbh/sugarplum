@@ -220,6 +220,8 @@ function parseTypedClaimCard(
 
 /**
  * Write exactly one card of the requested type from a single claim (sync regen).
+ * Does not opt into AI Gateway response cache: sticky truncated/Layer-1-failing
+ * completions would burn latency for the TTL; KV draft cache owns claim→card hits.
  */
 export async function writeOneCardFromClaim(
   claim: StudyClaim,

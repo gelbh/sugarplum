@@ -9,6 +9,10 @@ import {
   writeOneCardFromClaim,
   type TypedRegenDraft,
 } from "./claim-stages";
+import {
+  readClaimCardDraft,
+  writeClaimCardDraft,
+} from "./claim-card-draft-cache";
 import { pickClaimForRegen, type StudyClaim } from "./claims";
 import {
   BYO_PROVIDERS_PHRASE,
@@ -20,7 +24,11 @@ import {
 import { CHUNK_CHAR_LIMIT } from "./pipeline";
 import { filterDraftsByQuality, layer1RejectReasons } from "./quality";
 import { consumeFreeGenSlot } from "./quota";
-import { createWorkersAiAdapter, WorkersAiCapacityError } from "./workers-ai";
+import {
+  createWorkersAiAdapter,
+  WORKERS_AI_MODEL,
+  WorkersAiCapacityError,
+} from "./workers-ai";
 import { buildExtraUserSuffix } from "./feedback-hints";
 import {
   parseProvenanceJson,
@@ -73,10 +81,25 @@ export async function regenerateClaimAwareCard(args: {
   llm: LlmAdapter;
   apiKey: string;
   provider: string;
-}): Promise<{ draft: TypedRegenDraft; usage: LlmTokenUsage | null }> {
+  /** Model id for draft-cache keying (required when `cache` is set). */
+  model?: string | null;
+  /** When set, exact-match Layer-1-passing drafts are read/written here. */
+  cache?: KVNamespace;
+}): Promise<{
+  draft: TypedRegenDraft;
+  usage: LlmTokenUsage | null;
+  /** True when draft came from KV (callers should refund free-gen quota). */
+  servedFromCache: boolean;
+}> {
   const struggleSuffix = buildExtraUserSuffix({
     studyStruggle: args.studyStruggle,
   });
+  const model =
+    (args.model && args.model.trim()) ||
+    (args.provider === "workers-ai" ? WORKERS_AI_MODEL : "default");
+  if (args.cache && !(args.model && args.model.trim()) && args.provider !== "workers-ai") {
+    throw new Error("model is required when caching claim→card drafts for BYO");
+  }
 
   let usage: LlmTokenUsage | null = null;
   let completedCalls = 0;
@@ -127,48 +150,87 @@ export async function regenerateClaimAwareCard(args: {
     );
   }
 
+  const cacheKeyInput = (extraUserSuffix: string) => ({
+    claim,
+    type: args.type,
+    provider: args.provider,
+    model,
+    extraUserSuffix,
+  });
+
+  type AttemptResult =
+    | { status: "hit" | "ok"; draft: TypedRegenDraft }
+    | { status: "fail"; draft: TypedRegenDraft };
+
+  const attemptWrite = async (
+    extraUserSuffix: string,
+  ): Promise<AttemptResult> => {
+    if (args.cache) {
+      const hit = await readClaimCardDraft(
+        args.cache,
+        cacheKeyInput(extraUserSuffix),
+      );
+      if (hit) return { status: "hit", draft: hit };
+    }
+    const written = await writeOneCardFromClaim(claim, args.type, {
+      ...stageArgs,
+      extraUserSuffix,
+    });
+    const ok =
+      filterDraftsByQuality([written.draft as CardDraft]).length === 1
+        ? written.draft
+        : null;
+    if (ok) {
+      if (args.cache) {
+        await writeClaimCardDraft(
+          args.cache,
+          cacheKeyInput(extraUserSuffix),
+          ok,
+        );
+      }
+      return { status: "ok", draft: ok };
+    }
+    return { status: "fail", draft: written.draft };
+  };
+
   const baselineQualityHint =
     "Write a shorter single-fact card: avoid compound fronts, essay backs, and incomplete answers.";
   const firstSuffix = [struggleSuffix, baselineQualityHint]
     .filter(Boolean)
     .join("\n\n");
-  let written = await writeOneCardFromClaim(claim, args.type, {
-    ...stageArgs,
-    extraUserSuffix: firstSuffix,
-  });
-  let ok =
-    filterDraftsByQuality([written.draft as CardDraft]).length === 1
-      ? written.draft
-      : null;
 
-  if (!ok) {
-    const reasons = layer1RejectReasons(written.draft as CardDraft);
-    if (reasons.length === 0) {
-      throw new ClaimAwareRegenError(
-        "Regenerated card failed quality gates. Edit manually or try again.",
-      );
-    }
-    const qualityHint = `Previous card failed quality gates (${reasons.join(", ")}). Write a shorter single-fact card.`;
-    const qualitySuffix = [struggleSuffix, qualityHint]
-      .filter(Boolean)
-      .join("\n\n");
-    written = await writeOneCardFromClaim(claim, args.type, {
-      ...stageArgs,
-      extraUserSuffix: qualitySuffix,
-    });
-    ok =
-      filterDraftsByQuality([written.draft as CardDraft]).length === 1
-        ? written.draft
-        : null;
+  const first = await attemptWrite(firstSuffix);
+  if (first.status !== "fail") {
+    return {
+      draft: first.draft,
+      usage,
+      servedFromCache: first.status === "hit",
+    };
   }
 
-  if (!ok) {
+  const reasons = layer1RejectReasons(first.draft as CardDraft);
+  if (reasons.length === 0) {
+    throw new ClaimAwareRegenError(
+      "Regenerated card failed quality gates. Edit manually or try again.",
+    );
+  }
+  const qualityHint = `Previous card failed quality gates (${reasons.join(", ")}). Write a shorter single-fact card.`;
+  const qualitySuffix = [struggleSuffix, qualityHint]
+    .filter(Boolean)
+    .join("\n\n");
+
+  const second = await attemptWrite(qualitySuffix);
+  if (second.status === "fail") {
     throw new ClaimAwareRegenError(
       "Regenerated card failed quality gates. Edit manually or try again.",
     );
   }
 
-  return { draft: ok, usage };
+  return {
+    draft: second.draft,
+    usage,
+    servedFromCache: second.status === "hit",
+  };
 }
 
 type MaterialLite = {
@@ -241,6 +303,7 @@ export async function resolveRegenLlm(
   llm: LlmAdapter;
   apiKey: string;
   provider: string;
+  model: string;
   path: "free" | "byo";
   releaseQuota: () => Promise<void>;
 }> {
@@ -259,10 +322,13 @@ export async function resolveRegenLlm(
     }
     const apiKey = await decryptSecret(secret.ciphertext, wrapKey);
     const provider = parseLlmProvider(secret.provider);
+    const model =
+      (secret.model && secret.model.trim()) || `${provider}:default`;
     return {
       llm: createLlmAdapter(provider, { model: secret.model }),
       apiKey,
       provider,
+      model,
       path: "byo",
       releaseQuota: async () => {},
     };
@@ -274,6 +340,7 @@ export async function resolveRegenLlm(
       llm: createWorkersAiAdapter(env),
       apiKey: "",
       provider: "workers-ai",
+      model: WORKERS_AI_MODEL,
       path: "free",
       releaseQuota: await consumeFreeGenSlot(env, userId),
     };
