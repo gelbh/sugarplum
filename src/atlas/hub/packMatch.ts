@@ -1,6 +1,7 @@
 import {
-  collapseSeparators,
-  entryNameForms,
+  entryExactForms,
+  genusInitialForms,
+  normalizeMatchText,
   searchable,
   type NameMatchEntry,
 } from "./nameMatch";
@@ -28,10 +29,18 @@ type NameParts = { genus: string; epithet: string | null; sppEntry: boolean };
 
 /** One entry's normalized match targets, built once per scan. */
 export type PackTargets = {
-  forms: string[];
+  /** Canonical / common / aliases (high when substring-hit). */
+  exactForms: string[];
+  /** Genus-initial forms; high only when unambiguous or document-scoped. */
+  initialForms: string[];
   parts: NameParts | null;
   /** Atlas genera; rule 2 stops at any of them except the entry's own. */
   stopGenera: ReadonlySet<string>;
+  /**
+   * `${initial}|${epithet}` → distinct genus count in the atlas.
+   * Missing key means unique (count 1) for callers that omit the index.
+   */
+  abbrevCounts: ReadonlyMap<string, number>;
 };
 
 /** Rule 5 never allows more than this many edits. */
@@ -99,7 +108,7 @@ export function tokenMatches(token: string, target: string): boolean {
 }
 
 function scan(text: string): Scanned {
-  const hay = searchable(collapseSeparators(text));
+  const hay = normalizeMatchText(text);
   const tokens: Token[] = [];
   const byText = new Map<string, number[]>();
   const byLength = new Map<number, string[]>();
@@ -198,6 +207,29 @@ export function atlasGenera(entries: readonly NameMatchEntry[]): Set<string> {
   return out;
 }
 
+/** Count distinct genera per `${initial}|${epithet}` for high-confidence abbrevs. */
+export function atlasAbbrevIndex(
+  entries: readonly NameMatchEntry[],
+): Map<string, number> {
+  const generaByKey = new Map<string, Set<string>>();
+  for (const e of entries) {
+    const parts = nameParts(e.canonicalName);
+    if (!parts?.epithet) continue;
+    const initial = parts.genus[0];
+    if (!initial) continue;
+    const key = `${initial}|${parts.epithet}`;
+    let set = generaByKey.get(key);
+    if (!set) {
+      set = new Set();
+      generaByKey.set(key, set);
+    }
+    set.add(parts.genus);
+  }
+  const out = new Map<string, number>();
+  for (const [key, set] of generaByKey) out.set(key, set.size);
+  return out;
+}
+
 function nameParts(canonicalName: string): NameParts | null {
   const [, second = ""] = searchable(canonicalName).split(" ");
   const genus = genusOf(canonicalName);
@@ -215,17 +247,29 @@ function isPluralMarker(hay: string, t: Token): boolean {
   );
 }
 
-/** Rules 2 to 5 on one normalized text. */
+function hitsExact(scanned: Scanned, target: string): ReadonlySet<number> {
+  return new Set(scanned.byText.get(target) ?? []);
+}
+
+/**
+ * Rules 2 to 5 on one normalized text.
+ * `exactOnly` skips rule-5 fuzzy (medium); otherwise allows fuzzy (low).
+ */
 function lenientMention(
   scanned: Scanned,
   parts: NameParts,
   stopGenera: ReadonlySet<string>,
+  exactOnly: boolean,
 ): boolean {
-  const genusAt = hitsFor(scanned, parts.genus);
+  const genusAt = exactOnly
+    ? hitsExact(scanned, parts.genus)
+    : hitsFor(scanned, parts.genus);
   if (genusAt.size === 0) return false;
   if (parts.sppEntry) return true;
   const epithetAt = parts.epithet
-    ? hitsFor(scanned, parts.epithet)
+    ? exactOnly
+      ? hitsExact(scanned, parts.epithet)
+      : hitsFor(scanned, parts.epithet)
     : new Set<number>();
   const { hay, tokens } = scanned;
   for (const i of genusAt) {
@@ -243,48 +287,96 @@ function lenientMention(
   return false;
 }
 
-/** Rule 1: the same substring test as textMentionsEntry, on cached text. */
-function strictMention(scanned: Scanned, forms: readonly string[]): boolean {
+/** Substring test on cached normalized text. */
+function formMention(scanned: Scanned, forms: readonly string[]): boolean {
   return forms.some((f) => scanned.hay.includes(f));
+}
+
+function initialHigh(scanned: Scanned, targets: PackTargets): boolean {
+  const { initialForms, parts, abbrevCounts } = targets;
+  if (initialForms.length === 0 || parts?.epithet == null) return false;
+  if (!formMention(scanned, initialForms)) return false;
+  const key = `${parts.genus[0]}|${parts.epithet}`;
+  const count = abbrevCounts.get(key) ?? 1;
+  if (count <= 1) return true;
+  // Document-scoped: full genus token in this material disambiguates.
+  return hitsExact(scanned, parts.genus).size > 0;
 }
 
 export function packTargets(
   entry: NameMatchEntry,
   genera: ReadonlySet<string> = new Set(),
+  abbrevCounts: ReadonlyMap<string, number> = new Map(),
 ): PackTargets {
   return {
-    forms: entryNameForms(entry).map((f) => searchable(collapseSeparators(f))),
+    exactForms: entryExactForms(entry),
+    initialForms: genusInitialForms(entry.canonicalName).map(normalizeMatchText),
     parts: nameParts(entry.canonicalName),
     stopGenera: genera,
+    abbrevCounts,
   };
 }
 
 /**
- * `strict` is rule 1 alone (what tiers use); `lenient` adds rules 2 to 5
- * (what pack hiding uses). Both read the same cached normalized text.
+ * Confidence ladder: `high` feeds Key/Frequent; `medium`/`low` feed pack only.
+ * `strict` aliases `high`; `lenient` is any pack hit.
  */
-export type PackMaterialMatch = { strict: boolean; lenient: boolean };
+export type PackMaterialMatch = {
+  high: boolean;
+  medium: boolean;
+  low: boolean;
+  strict: boolean;
+  lenient: boolean;
+};
 
 export function matchMaterialForPack(
   targets: PackTargets,
   material: FocusMaterial,
 ): PackMaterialMatch {
-  const { forms, parts, stopGenera } = targets;
+  const { exactForms, parts, stopGenera } = targets;
   const texts = material.pages.map(scanPage);
   if (material.filename) {
     texts.unshift(scanFilename(material, material.filename));
   }
-  if (texts.some((t) => strictMention(t, forms))) {
-    return { strict: true, lenient: true };
+  const high =
+    texts.some((t) => formMention(t, exactForms)) ||
+    texts.some((t) => initialHigh(t, targets));
+  if (high) {
+    return { high: true, medium: false, low: false, strict: true, lenient: true };
   }
-  const lenient = parts !== null && texts.some((t) => lenientMention(t, parts, stopGenera));
-  return { strict: false, lenient };
+  if (parts === null) {
+    return {
+      high: false,
+      medium: false,
+      low: false,
+      strict: false,
+      lenient: false,
+    };
+  }
+  const medium = texts.some((t) =>
+    lenientMention(t, parts, stopGenera, true),
+  );
+  if (medium) {
+    return {
+      high: false,
+      medium: true,
+      low: false,
+      strict: false,
+      lenient: true,
+    };
+  }
+  const low = texts.some((t) => lenientMention(t, parts, stopGenera, false));
+  return { high: false, medium: false, low, strict: false, lenient: low };
 }
 
 export function materialMentionsForPack(
   entry: NameMatchEntry,
   material: FocusMaterial,
   genera?: ReadonlySet<string>,
+  abbrevCounts?: ReadonlyMap<string, number>,
 ): boolean {
-  return matchMaterialForPack(packTargets(entry, genera), material).lenient;
+  return matchMaterialForPack(
+    packTargets(entry, genera, abbrevCounts),
+    material,
+  ).lenient;
 }

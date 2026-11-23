@@ -4,8 +4,20 @@ import {
   ALIAS_MAX_ITEMS,
   cleanAliasList,
   entryNameForms,
+  normalizeMatchText,
   textMentionsEntry,
 } from "../../src/atlas/hub/nameMatch";
+
+describe("normalizeMatchText glued genus initials", () => {
+  it("inserts a space after a single-letter genus period", () => {
+    expect(normalizeMatchText("Key parasite: F.hepatica today")).toBe(
+      "key parasite: f. hepatica today",
+    );
+    expect(normalizeMatchText("notes_F.hepatica.pdf")).toBe(
+      "notes f. hepatica.pdf",
+    );
+  });
+});
 
 describe("nameMatch separator normalization", () => {
   it("matches hyphenated and underscored forms against spaced haystacks", () => {

@@ -443,5 +443,27 @@
     "shouldNotMatch": [
       "fasciola-gigantica"
     ]
+  },
+  {
+    "id": "abbrev-glued-f-hepatica",
+    "text": "Key parasite: F.hepatica in sheep and cattle.",
+    "shouldMatch": [
+      "fasciola-hepatica"
+    ],
+    "shouldNotMatch": [
+      "fasciola-gigantica",
+      "dicrocoelium-dendriticum"
+    ]
+  },
+  {
+    "id": "abbrev-f-canis-no-atlas-f-genus",
+    "text": "F. canis eggs persist in soil for years.",
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      "toxocara-canis",
+      "ctenocephalides-canis",
+      "demodex-canis",
+      "toxascaris-leonina"
+    ]
   }
 ]

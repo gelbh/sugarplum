@@ -8,8 +8,8 @@ import { PARASITE_DATASET_VERSION } from "../../../worker/atlas/datasets/parasit
 const d = `d${PARASITE_DATASET_VERSION}`;
 
 describe("focusPackFingerprint", () => {
-  it("uses v4 and includes dataset version, id, content marker, and source_role", () => {
-    expect(FOCUS_PACK_FINGERPRINT_VERSION).toBe("v4");
+  it("uses v5 and includes dataset version, id, content marker, and source_role", () => {
+    expect(FOCUS_PACK_FINGERPRINT_VERSION).toBe("v5");
     const fp = focusPackFingerprint([
       {
         id: "m2",
@@ -22,7 +22,7 @@ describe("focusPackFingerprint", () => {
         source_role: "tutorial",
       },
     ]);
-    expect(fp).toBe(`v4:${d}:m1:aaa:tutorial|m2:bbb:practical`);
+    expect(fp).toBe(`v5:${d}:m1:aaa:tutorial|m2:bbb:practical`);
   });
 
   it("uses nochash sentinel when content_hash is null", () => {
@@ -30,7 +30,7 @@ describe("focusPackFingerprint", () => {
       focusPackFingerprint([
         { id: "m1", content_hash: null, source_role: "lecture" },
       ]),
-    ).toBe(`v4:${d}:m1:nochash:lecture`);
+    ).toBe(`v5:${d}:m1:nochash:lecture`);
   });
 
   it("changes when only source_role changes", () => {
@@ -42,8 +42,8 @@ describe("focusPackFingerprint", () => {
     const a = focusPackFingerprint([base]);
     const b = focusPackFingerprint([{ ...base, source_role: "tutorial" }]);
     expect(a).not.toBe(b);
-    expect(a).toBe(`v4:${d}:m1:abc:lecture`);
-    expect(b).toBe(`v4:${d}:m1:abc:tutorial`);
+    expect(a).toBe(`v5:${d}:m1:abc:lecture`);
+    expect(b).toBe(`v5:${d}:m1:abc:tutorial`);
   });
 
   it("changes when only the dataset version changes", () => {
