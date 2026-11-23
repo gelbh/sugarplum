@@ -30,6 +30,7 @@ import {
 import {
   PILL_BTN,
   ROW_ACTION,
+  WORKSHOP_SURFACE,
   createWorkshopViewPref,
   type WorkshopViewMode,
 } from "./workshopChrome";
@@ -429,10 +430,7 @@ export default function CardsWorkshop({
             <Box
               id="cards-workshop-results"
               sx={{
-                borderRadius: 2,
-                border: "1px solid",
-                borderColor: "rgba(232, 216, 199, 0.14)",
-                bgcolor: "rgba(18, 7, 15, 0.28)",
+                ...WORKSHOP_SURFACE,
                 px: 2.25,
                 py: 2.5,
               }}

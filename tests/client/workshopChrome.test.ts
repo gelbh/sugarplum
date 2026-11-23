@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   PILL_BTN,
   ROW_ACTION,
+  WORKSHOP_SURFACE,
   createWorkshopViewPref,
 } from "../../src/deckHub/workshopChrome";
 
@@ -22,6 +23,9 @@ describe("workshopChrome", () => {
       color: "primary.light",
       bgcolor: "rgba(91, 44, 111, 0.28)",
     });
+
+    expect(WORKSHOP_SURFACE.borderRadius).toBe(2);
+    expect(WORKSHOP_SURFACE.borderColor).toBe("rgba(232, 216, 199, 0.12)");
   });
 
   it("round-trips view mode per storage key", () => {

@@ -35,6 +35,7 @@ import {
 import {
   PILL_BTN,
   ROW_ACTION,
+  WORKSHOP_SURFACE,
   createWorkshopViewPref,
   type WorkshopViewMode,
 } from "./workshopChrome";
@@ -44,13 +45,6 @@ const { readViewMode, writeViewMode } = createWorkshopViewPref(
 );
 
 type ViewMode = WorkshopViewMode;
-
-const SURFACE = {
-  borderRadius: 2,
-  border: "1px solid",
-  borderColor: "rgba(232, 216, 199, 0.12)",
-  bgcolor: "rgba(18, 7, 15, 0.28)",
-} as const;
 
 function formatCreatedAt(iso: string): string {
   const d = new Date(iso);
@@ -240,7 +234,7 @@ export default function MaterialsWorkshop({
 
       {materials.length === 0 ? (
         guest ? (
-          <Box sx={{ ...SURFACE, px: 2.25, py: 2.5 }}>
+          <Box sx={{ ...WORKSHOP_SURFACE, px: 2.25, py: 2.5 }}>
             <Typography
               variant="body2"
               sx={{
@@ -261,7 +255,7 @@ export default function MaterialsWorkshop({
         <Box
           id="materials-workshop-results"
           sx={{
-            ...SURFACE,
+            ...WORKSHOP_SURFACE,
             px: 2.25,
             py: 2.5,
           }}
@@ -292,7 +286,7 @@ export default function MaterialsWorkshop({
                 component="li"
                 key={material.id}
                 sx={{
-                  ...SURFACE,
+                  ...WORKSHOP_SURFACE,
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
@@ -400,7 +394,7 @@ export default function MaterialsWorkshop({
                   gap: 1,
                   px: 1.25,
                   py: 0.85,
-                  ...SURFACE,
+                  ...WORKSHOP_SURFACE,
                   transition:
                     "background-color 140ms ease, border-color 140ms ease",
                   "&:hover": {
