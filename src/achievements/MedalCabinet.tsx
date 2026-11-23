@@ -1,13 +1,10 @@
-import {
-  useRef,
-  useState,
-  type Dispatch,
-  type KeyboardEvent,
-  type SetStateAction,
-} from "react";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 import Box from "@mui/material/Box";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
+import DialogEyebrow from "../shared/ui/DialogEyebrow";
 import { FRUIT_ORDER, type FruitType } from "./catalog";
 import FruitMedal from "./FruitMedal";
 import type { AchievementItem, AchievementProgress } from "./wire";
@@ -115,17 +112,19 @@ function FruitStem({
         "&::before": {
           content: '""',
           position: "absolute",
-          left: 11,
-          top: 10,
-          bottom: 10,
-          width: 1,
+          // px: MUI sx maps width:1 → 100%.
+          left: "11px",
+          top: "10px",
+          bottom: "10px",
+          width: "1px",
           bgcolor: "rgba(196, 165, 116, 0.35)",
         },
       }}
     >
       {items.map((item, index) => {
         const done = item.completedAt != null;
-        const focus = index === focusIndex || (focusIndex < 0 && index === items.length - 1);
+        const focus =
+          index === focusIndex || (focusIndex < 0 && index === items.length - 1);
         const snippet = !done ? progressSnippet(item.progress) : null;
         return (
           <Box
@@ -135,9 +134,9 @@ function FruitStem({
               position: "relative",
               display: "grid",
               gridTemplateColumns: "24px 1fr",
-              columnGap: 0.85,
+              columnGap: 1,
               alignItems: "start",
-              py: 0.55,
+              py: 0.7,
               opacity: done ? 0.72 : focus ? 1 : 0.45,
             }}
           >
@@ -174,15 +173,15 @@ function FruitStem({
                 />
               )}
             </Box>
-            <Box sx={{ minWidth: 0, pt: focus ? 0.15 : 0.35 }}>
+            <Box sx={{ minWidth: 0, pt: focus ? 0.1 : 0.3 }}>
               <Typography
                 sx={{
                   fontFamily: focus
                     ? '"Alice", "Georgia", "Times New Roman", serif'
                     : "inherit",
-                  fontSize: focus ? "0.82rem" : "0.72rem",
+                  fontSize: focus ? "0.95rem" : "0.82rem",
                   fontWeight: focus ? 400 : 500,
-                  lineHeight: 1.2,
+                  lineHeight: 1.25,
                   color: done
                     ? "rgba(232, 216, 199, 0.7)"
                     : focus
@@ -194,14 +193,25 @@ function FruitStem({
               >
                 {item.def.title}
               </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  mt: 0.2,
+                  color: "text.secondary",
+                  fontSize: "0.78rem",
+                  lineHeight: 1.35,
+                }}
+              >
+                {item.def.description}
+              </Typography>
               {snippet ? (
                 <Typography
                   variant="caption"
                   sx={{
                     display: "block",
-                    mt: 0.15,
+                    mt: 0.35,
                     color: "secondary.main",
-                    fontSize: "0.68rem",
+                    fontSize: "0.72rem",
                     fontVariantNumeric: "tabular-nums",
                   }}
                 >
@@ -218,46 +228,36 @@ function FruitStem({
 
 function MedalTile({
   items,
-  open,
-  onToggle,
+  selected,
+  onOpen,
   sheenIds,
 }: {
   items: AchievementItem[];
-  open: boolean;
-  onToggle: () => void;
+  selected: boolean;
+  onOpen: () => void;
   sheenIds: ReadonlySet<string>;
 }) {
   const held = heldMedal(items);
   const unlocked = items.filter((item) => item.completedAt != null).length;
-  const panelId = `medal-ladder-${held.def.fruitType}`;
   const buttonRef = useRef<HTMLButtonElement>(null);
-
-  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key !== "Escape" || !open) return;
-    onToggle();
-    buttonRef.current?.focus();
-  }
-
   const heldUnlocked = held.completedAt != null;
+  const dialogId = `medal-ladder-${held.def.fruitType}`;
 
   return (
     <Box
       className="medal-tile"
-      onKeyDown={onKeyDown}
       sx={(theme) => ({
-        // Expand in-column; full-row span made ladders wider than the content.
         border: "1px solid",
-        borderColor: open
-          ? "primary.main"
+        borderColor: selected
+          ? "secondary.main"
           : heldUnlocked
             ? "rgba(196, 165, 116, 0.42)"
             : "rgba(232, 216, 199, 0.1)",
         borderRadius: 1.5,
         minWidth: 0,
-        minHeight: open ? undefined : 118,
+        minHeight: 118,
         position: "relative",
         overflow: "hidden",
-        alignSelf: open ? "start" : undefined,
         transition:
           "border-color 180ms cubic-bezier(0.16, 1, 0.3, 1), background-color 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1)",
         ...theme.applyStyles("dark", {
@@ -269,11 +269,9 @@ function MedalTile({
             : "none",
         }),
         "&:hover": {
-          borderColor: open
-            ? "primary.main"
-            : heldUnlocked
-              ? "secondary.main"
-              : "rgba(232, 216, 199, 0.2)",
+          borderColor: heldUnlocked
+            ? "secondary.main"
+            : "rgba(232, 216, 199, 0.2)",
           ...theme.applyStyles("dark", {
             bgcolor: heldUnlocked
               ? "rgba(196, 165, 116, 0.11)"
@@ -289,24 +287,25 @@ function MedalTile({
         component="button"
         type="button"
         ref={buttonRef}
-        aria-expanded={open}
-        aria-controls={open ? panelId : undefined}
+        aria-haspopup="dialog"
+        aria-expanded={selected}
+        aria-controls={selected ? dialogId : undefined}
         aria-label={`${held.def.title}, ${unlocked} of ${items.length}. ${held.def.description}`}
-        onClick={onToggle}
+        onClick={onOpen}
         sx={{
           width: "100%",
-          height: open ? "auto" : "100%",
+          height: "100%",
           display: "flex",
           flexDirection: "column",
-          alignItems: "flex-start",
-          gap: 0.25,
+          alignItems: "center",
+          gap: 0.35,
           p: 1,
           m: 0,
           border: 0,
           bgcolor: "transparent",
           color: "inherit",
           font: "inherit",
-          textAlign: "left",
+          textAlign: "center",
           cursor: "pointer",
           "&:focus-visible": {
             outline: "2px solid",
@@ -315,145 +314,178 @@ function MedalTile({
           },
         }}
       >
-        {open ? (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            py: 0.35,
+            minHeight: 52,
+          }}
+        >
           <Box
             sx={{
-              width: "100%",
+              position: "relative",
               display: "flex",
               alignItems: "center",
-              gap: 0.75,
+              justifyContent: "center",
+              width: 52,
+              height: 52,
+              borderRadius: "50%",
+              background: heldUnlocked
+                ? "radial-gradient(circle at 50% 50%, rgba(196, 165, 116, 0.2) 0%, transparent 68%)"
+                : "transparent",
             }}
           >
             <FruitMedal
               fruitType={held.def.fruitType}
               traits={held.traits}
-              size={28}
+              size={40}
               locked={held.completedAt == null}
               sheenOnce={sheenIds.has(held.def.id)}
             />
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography
-                component="span"
-                sx={{
-                  display: "block",
-                  fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
-                  fontSize: "0.82rem",
-                  lineHeight: 1.2,
-                  color: heldUnlocked ? "text.primary" : "text.secondary",
-                }}
-              >
-                {held.def.title}
-              </Typography>
-              <ProgressMark
-                unlocked={unlocked}
-                total={items.length}
-                heldUnlocked={heldUnlocked}
-              />
-            </Box>
-            <ExpandMoreIcon
-              fontSize="small"
-              sx={{
-                color: "text.secondary",
-                opacity: 0.7,
-                transform: "rotate(180deg)",
-              }}
-            />
           </Box>
-        ) : (
-          <>
-            <Box
+        </Box>
+        <Typography
+          component="span"
+          variant="subtitle2"
+          sx={{
+            width: "100%",
+            fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
+            fontWeight: 400,
+            letterSpacing: "0.02em",
+            fontSize: "0.82rem",
+            lineHeight: 1.25,
+            minHeight: "2.5em",
+            textAlign: "center",
+            color: heldUnlocked ? "text.primary" : "text.secondary",
+          }}
+        >
+          {held.def.title}
+        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: 18,
+            mt: "auto",
+          }}
+        >
+          <ProgressMark
+            unlocked={unlocked}
+            total={items.length}
+            heldUnlocked={heldUnlocked}
+          />
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+function FruitLadderDialog({
+  open,
+  onClose,
+  items,
+  sheenIds,
+}: {
+  open: boolean;
+  onClose: () => void;
+  items: AchievementItem[];
+  sheenIds: ReadonlySet<string>;
+}) {
+  if (items.length === 0) return null;
+  const held = heldMedal(items);
+  const unlocked = items.filter((item) => item.completedAt != null).length;
+  const focus =
+    items.find((item) => item.completedAt == null) ?? items[items.length - 1]!;
+  const allDone = unlocked === items.length;
+  const focusLine = allDone
+    ? `Done · ${focus.def.description}`
+    : `Next · ${focus.def.description}`;
+  const dialogId = `medal-ladder-${held.def.fruitType}`;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      transitionDuration={0}
+      aria-labelledby={`${dialogId}-title`}
+      slotProps={{
+        paper: {
+          sx: (theme) => ({
+            borderRadius: 2,
+            overflow: "hidden",
+            border: "1px solid",
+            borderColor: "rgba(196, 165, 116, 0.28)",
+            ...theme.applyStyles("dark", {
+              bgcolor: "#1e0d1b",
+              backgroundImage:
+                "linear-gradient(180deg, rgba(196, 165, 116, 0.06) 0%, transparent 42%)",
+            }),
+          }),
+        },
+      }}
+    >
+      <Box
+        sx={{
+          px: 3,
+          pt: 2.5,
+          pb: 1.5,
+          borderBottom: "1px solid",
+          borderColor: "rgba(232, 216, 199, 0.1)",
+        }}
+      >
+        <DialogEyebrow label="Fruit" />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <FruitMedal
+            fruitType={held.def.fruitType}
+            traits={held.traits}
+            size={48}
+            locked={held.completedAt == null}
+            sheenOnce={sheenIds.has(held.def.id)}
+          />
+          <Box sx={{ minWidth: 0 }}>
+            <DialogTitle
+              id={`${dialogId}-title`}
               sx={{
-                width: "100%",
-                display: "flex",
-                justifyContent: "center",
-                py: 0.35,
-                minHeight: 52,
-                alignItems: "center",
-              }}
-            >
-              <Box
-                sx={{
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 52,
-                  height: 52,
-                  borderRadius: "50%",
-                  background: heldUnlocked
-                    ? "radial-gradient(circle at 50% 50%, rgba(196, 165, 116, 0.2) 0%, transparent 68%)"
-                    : "transparent",
-                }}
-              >
-                <FruitMedal
-                  fruitType={held.def.fruitType}
-                  traits={held.traits}
-                  size={40}
-                  locked={held.completedAt == null}
-                  sheenOnce={sheenIds.has(held.def.id)}
-                />
-              </Box>
-            </Box>
-            <Typography
-              component="span"
-              variant="subtitle2"
-              sx={{
+                p: 0,
                 fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
                 fontWeight: 400,
                 letterSpacing: "0.02em",
-                fontSize: "0.82rem",
-                lineHeight: 1.2,
-                minHeight: "2.4em",
-                color: heldUnlocked ? "text.primary" : "text.secondary",
+                lineHeight: 1.15,
+                fontSize: "1.6rem",
               }}
             >
               {held.def.title}
+            </DialogTitle>
+            <Typography
+              variant="body2"
+              sx={{ color: "secondary.main", mt: 0.35 }}
+            >
+              {unlocked} of {items.length} collected
             </Typography>
-            <Box
+            <Typography
+              variant="body2"
               sx={{
-                display: "flex",
-                width: "100%",
-                alignItems: "center",
-                justifyContent: "space-between",
-                minHeight: 18,
-                mt: "auto",
+                color: "text.secondary",
+                mt: 0.55,
+                lineHeight: 1.35,
+                maxWidth: "36ch",
               }}
             >
-              <ProgressMark
-                unlocked={unlocked}
-                total={items.length}
-                heldUnlocked={heldUnlocked}
-              />
-              <ExpandMoreIcon
-                fontSize="small"
-                sx={{
-                  color: "text.secondary",
-                  opacity: 0.7,
-                  transition: "transform 180ms cubic-bezier(0.16, 1, 0.3, 1)",
-                  "@media (prefers-reduced-motion: reduce)": {
-                    transition: "none",
-                  },
-                }}
-              />
-            </Box>
-          </>
-        )}
-      </Box>
-      {open ? (
-        <Box
-          id={panelId}
-          sx={{
-            px: 1.1,
-            pb: 1.15,
-            pt: 0.25,
-            borderTop: "1px solid",
-            borderColor: "rgba(232, 216, 199, 0.1)",
-          }}
-        >
-          <FruitStem items={items} sheenIds={sheenIds} />
+              {focusLine}
+            </Typography>
+          </Box>
         </Box>
-      ) : null}
-    </Box>
+      </Box>
+      <DialogContent sx={{ px: 3, pt: 2, pb: 2.5 }}>
+        <FruitStem items={items} sheenIds={sheenIds} />
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -471,10 +503,8 @@ function tileFor(
     <MedalTile
       key={fruit}
       items={list}
-      open={openFruit === fruit}
-      onToggle={() =>
-        setOpenFruit((current) => (current === fruit ? null : fruit))
-      }
+      selected={openFruit === fruit}
+      onOpen={() => setOpenFruit(fruit)}
       sheenIds={sheenIds}
     />
   );
@@ -494,9 +524,9 @@ export default function MedalCabinet({
   );
   const cols = CABINET_COLUMNS;
   const rem = fruits.length % cols;
-  // Closed grid: paired rows + one centered orphan when count is odd.
   const head = rem > 0 ? fruits.slice(0, -rem) : fruits;
   const tail = rem > 0 ? fruits.slice(-rem) : [];
+  const openItems = openFruit ? (grouped.get(openFruit) ?? []) : [];
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: CABINET_GAP }}>
@@ -518,7 +548,7 @@ export default function MedalCabinet({
             display: "flex",
             justifyContent: "center",
             gap: CABINET_GAP,
-            "& > *": {
+            "& > .medal-tile": {
               flex: "0 0 auto",
               width: `calc((100% - 2 * ${theme.spacing(1)}) / ${cols})`,
             },
@@ -529,6 +559,12 @@ export default function MedalCabinet({
           )}
         </Box>
       ) : null}
+      <FruitLadderDialog
+        open={openFruit != null && openItems.length > 0}
+        onClose={() => setOpenFruit(null)}
+        items={openItems}
+        sheenIds={sheenIds}
+      />
     </Box>
   );
 }

@@ -95,10 +95,10 @@ const LEARNER_NAV: NavItem[] = [
   },
   {
     id: "achievements",
-    label: "Fruits",
-    href: "/achievements",
+    label: "Orchard",
+    href: "/orchard",
     icon: <MilitaryTechIcon fontSize="small" />,
-    match: (path) => path === "/achievements",
+    match: (path) => path === "/orchard" || path === "/achievements",
   },
   {
     id: "settings",

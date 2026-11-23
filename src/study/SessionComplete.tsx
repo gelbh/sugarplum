@@ -185,7 +185,7 @@ export default function SessionComplete(props: SessionCompleteProps) {
         </Button>
         {props.showAchievements ? (
           <Link
-            href="/achievements"
+            href="/orchard"
             underline="hover"
             onClick={(ev) => {
               ev.preventDefault();
@@ -193,7 +193,7 @@ export default function SessionComplete(props: SessionCompleteProps) {
             }}
             sx={props.zen ? { color: "var(--sp-ivory)" } : undefined}
           >
-            Achievements
+            Orchard
           </Link>
         ) : null}
         {props.scopeBack ? (

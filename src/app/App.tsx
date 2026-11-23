@@ -153,7 +153,11 @@ function matchPage(path: string, search: string): ReactNode {
   }
 
   if (path === "/settings") return shell(<SettingsPage />);
-  if (path === "/achievements") return shell(<AchievementsPage />);
+  if (path === "/achievements") {
+    navigateReplace("/orchard");
+    return null;
+  }
+  if (path === "/orchard") return shell(<AchievementsPage />);
   // Remount when search changes so scoped study does not freeze the old filter.
   if (path === "/study") {
     return shell(<StudyPage key={search || "global"} />);

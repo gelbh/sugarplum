@@ -248,7 +248,7 @@ export default function SettingsPage() {
       },
       {
         id: "achievements",
-        label: "Achievements",
+        label: "Orchard",
         summary: gamification
           ? `L${gamification.level}`
           : guest
@@ -488,7 +488,7 @@ export default function SettingsPage() {
             component="h2"
             sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
           >
-            Achievements
+            Orchard
           </Typography>
           {guest ? (
             <Stack spacing={1.5}>
@@ -499,9 +499,9 @@ export default function SettingsPage() {
               </Typography>
               <Button
                 variant="outlined"
-                onClick={() => navigate("/achievements")}
+                onClick={() => navigate("/orchard")}
               >
-                View achievements
+                View Orchard
               </Button>
             </Stack>
           ) : (
@@ -515,9 +515,9 @@ export default function SettingsPage() {
               </Typography>
               <Button
                 variant="outlined"
-                onClick={() => navigate("/achievements")}
+                onClick={() => navigate("/orchard")}
               >
-                Open achievement gallery
+                Open Orchard
               </Button>
               <Box component="form" onSubmit={onSubmitAchievements} noValidate>
                 <Stack spacing={2}>
