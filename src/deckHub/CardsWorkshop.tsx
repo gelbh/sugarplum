@@ -4,17 +4,21 @@ import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
+import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
+import ClearRoundedIcon from "@mui/icons-material/ClearRounded";
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import ViewListOutlinedIcon from "@mui/icons-material/ViewListOutlined";
 import EmptyNext from "./EmptyNext";
@@ -22,11 +26,33 @@ import type { CardDraftView } from "../api/client";
 import { cardFrontPreview } from "../draftReview";
 import DiyCardPreview from "./DiyCardPreview";
 import {
+  cardMatchesWorkshopQuery,
+  normalizeWorkshopQuery,
+} from "./workshopSearch";
+import {
   PILL_BTN,
   ROW_ACTION,
   createWorkshopViewPref,
   type WorkshopViewMode,
 } from "./workshopChrome";
+
+const SEARCH_FIELD_SX = {
+  minWidth: 160,
+  maxWidth: 260,
+  flex: "1 1 160px",
+  "& .MuiOutlinedInput-root": {
+    color: "rgba(232, 216, 199, 0.88)",
+    bgcolor: "rgba(18, 7, 15, 0.35)",
+    borderRadius: 2,
+    "& fieldset": { borderColor: "rgba(232, 216, 199, 0.16)" },
+    "&:hover fieldset": { borderColor: "rgba(232, 216, 199, 0.28)" },
+    "&.Mui-focused fieldset": { borderColor: "rgba(209, 163, 226, 0.55)" },
+  },
+  "& .MuiInputBase-input::placeholder": {
+    color: "rgba(232, 216, 199, 0.42)",
+    opacity: 1,
+  },
+} as const;
 
 const { readViewMode, writeViewMode } = createWorkshopViewPref(
   "sugarplum.cardsWorkshop.view",
@@ -91,7 +117,7 @@ type Props = {
   onShowArchivedChange: (checked: boolean) => void;
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
-  onSelectAll: () => void;
+  onSelectAll: (cards: CardDraftView[]) => void;
   onClearSelection: () => void;
   archiveBusyId: string | null;
   batchBusy: boolean;
@@ -125,19 +151,25 @@ export default function CardsWorkshop({
   onCreateCard,
 }: Props) {
   const [view, setView] = useState<ViewMode>(() => readViewMode());
+  const [query, setQuery] = useState("");
   const busy = archiveBusyId !== null || batchBusy;
   const selectedCount = selectedIds.size;
+  const visible = cards.filter((c) => cardMatchesWorkshopQuery(c, query));
+  const searching = normalizeWorkshopQuery(query) !== "";
   const allSelected =
-    cards.length > 0 && cards.every((card) => selectedIds.has(card.id));
-  const someSelected = selectedCount > 0 && !allSelected;
+    visible.length > 0 && visible.every((card) => selectedIds.has(card.id));
+  const someSelected =
+    visible.some((card) => selectedIds.has(card.id)) && !allSelected;
   const cardCountLabel =
     cards.length === 0
       ? showArchived
         ? "No archived cards"
         : "No cards yet"
-      : cards.length === 1
-        ? "1 card"
-        : `${cards.length} cards`;
+      : searching
+        ? `${visible.length} of ${cards.length} cards`
+        : cards.length === 1
+          ? "1 card"
+          : `${cards.length} cards`;
 
   function onViewChange(_: unknown, next: ViewMode | null) {
     if (!next) return;
@@ -182,6 +214,51 @@ export default function CardsWorkshop({
           >
             {cardCountLabel}
           </Typography>
+          {cards.length > 0 ? (
+            <TextField
+              type="search"
+              size="small"
+              placeholder="Search cards…"
+              value={query}
+              onChange={(ev) => setQuery(ev.target.value)}
+              sx={SEARCH_FIELD_SX}
+              slotProps={{
+                htmlInput: {
+                  "aria-label": "Search cards",
+                  "aria-controls": "cards-workshop-results",
+                },
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchRoundedIcon
+                        fontSize="small"
+                        sx={{ color: "rgba(232, 216, 199, 0.42)" }}
+                      />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searching ? (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        aria-label="Clear search"
+                        onClick={() => setQuery("")}
+                        edge="end"
+                        sx={{
+                          color: "rgba(232, 216, 199, 0.55)",
+                          "&:hover": {
+                            color: "primary.light",
+                            bgcolor: "rgba(91, 44, 111, 0.28)",
+                          },
+                        }}
+                      >
+                        <ClearRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : undefined,
+                },
+              }}
+            />
+          ) : null}
         </Stack>
         <Stack direction="row" spacing={1} useFlexGap sx={{
           alignItems: "center"
@@ -301,8 +378,8 @@ export default function CardsWorkshop({
                   disableRipple
                   checked={allSelected}
                   indeterminate={someSelected}
-                  disabled={busy || cards.length === 0}
-                  onChange={() => onSelectAll()}
+                  disabled={busy || visible.length === 0}
+                  onChange={() => onSelectAll(visible)}
                   sx={SELECT_CHECKBOX_SX}
                   slotProps={{
                     input: { "aria-label": "Select all cards" }
@@ -398,8 +475,25 @@ export default function CardsWorkshop({
             ) : null}
           </Stack>
 
-          {view === "icons" ? (
+          {searching && visible.length === 0 ? (
             <Box
+              id="cards-workshop-results"
+              sx={{
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "rgba(232, 216, 199, 0.14)",
+                bgcolor: "rgba(18, 7, 15, 0.28)",
+                px: 2.25,
+                py: 2.5,
+              }}
+            >
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                {`No cards match "${query.trim()}"`}
+              </Typography>
+            </Box>
+          ) : view === "icons" ? (
+            <Box
+              id="cards-workshop-results"
               component="ul"
               sx={{
                 m: 0,
@@ -410,7 +504,7 @@ export default function CardsWorkshop({
                 gap: 1.5,
               }}
             >
-              {cards.map((card) => {
+              {visible.map((card) => {
                 const checked = selectedIds.has(card.id);
                 return (
                   <Box
@@ -551,11 +645,12 @@ export default function CardsWorkshop({
             </Box>
           ) : (
             <Stack
+              id="cards-workshop-results"
               component="ul"
               spacing={0.75}
               sx={{ m: 0, p: 0, listStyle: "none" }}
             >
-              {cards.map((card) => {
+              {visible.map((card) => {
                 const checked = selectedIds.has(card.id);
                 return (
                   <Box

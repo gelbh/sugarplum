@@ -607,7 +607,7 @@ export default function DeckHubPage({ deckId }: Props) {
                     onShowArchivedChange={onShowArchivedChange}
                     selectedIds={selectedCardIds}
                     onToggleSelect={onToggleSelect}
-                    onSelectAll={() => onSelectAll(cards)}
+                    onSelectAll={onSelectAll}
                     onClearSelection={clearSelection}
                     archiveBusyId={archiveBusyId}
                     batchBusy={batchBusy}
