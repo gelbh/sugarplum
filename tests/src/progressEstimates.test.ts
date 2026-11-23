@@ -216,6 +216,42 @@ describe("effectiveClientWeights parity", () => {
       catalog,
     );
   });
+
+  it("combineEtaMs defaults apply priors.weights without stageWeight override", () => {
+    const present = ["extract", "persist"];
+    const overlay = { extract: 0.25, persist: 0.75 };
+    const withOverlay = combineEtaMs({
+      percent: 10,
+      stage: "extract",
+      presentStages: present,
+      ewma: null,
+      priors: { stages: {}, weights: overlay },
+      current: 1,
+      total: 2,
+    });
+    const catalog = combineEtaMs({
+      percent: 10,
+      stage: "extract",
+      presentStages: present,
+      ewma: null,
+      priors: { stages: {} },
+      current: 1,
+      total: 2,
+    });
+    // Mid-stage: overlay extract share 0.25 vs catalog 0.08 → different current left.
+    expect(withOverlay).toBe(
+      0.25 * 0.5 * ETA_SEED_TOTAL_MS + 0.75 * ETA_SEED_TOTAL_MS,
+    );
+    expect(catalog).toBe(
+      0.08 * 0.5 * ETA_SEED_TOTAL_MS +
+        remainingPriorMs({
+          stage: "extract",
+          presentStages: present,
+          priors: { stages: {} },
+        }),
+    );
+    expect(withOverlay).not.toBe(catalog);
+  });
 });
 
 describe("formatEta coarsening", () => {

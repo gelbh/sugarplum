@@ -138,6 +138,8 @@ export type EwmaRateState = {
 
 export type EtaPriors = {
   stages: Partial<Record<string, { p50_ms: number; n: number }>>;
+  /** Duration-share overlay from poll; omit when corrupt/missing. */
+  weights?: Partial<Record<string, number>>;
 };
 
 /**
@@ -225,7 +227,8 @@ export function remainingPriorMs(args: {
   const order = args.stageOrder ?? PROGRESS_STAGE_ORDER;
   const weightFn =
     args.stageWeight ??
-    ((s: string) => defaultStageWeight(s, args.presentStages));
+    ((s: string) =>
+      defaultStageWeight(s, args.presentStages, args.priors?.weights));
   const stage = args.stage ?? "";
   const present = new Set(
     args.presentStages.filter((s) => s && s !== "queued"),
@@ -264,7 +267,8 @@ export function combineEtaMs(args: {
 
   const weightFn =
     args.stageWeight ??
-    ((s: string) => defaultStageWeight(s, args.presentStages));
+    ((s: string) =>
+      defaultStageWeight(s, args.presentStages, args.priors?.weights));
   const total = args.total ?? 0;
   const current = args.current ?? 0;
   const within =
