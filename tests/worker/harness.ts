@@ -245,7 +245,7 @@ export type ExportJobRow = {
 
 export type { AchievementDefSeed };
 
-type Bindings = Env;
+export type Bindings = Env;
 
 type WorkflowBinding = NonNullable<Env["GENERATION_WORKFLOW"]>;
 type WorkflowInstanceRow = { status: string; output?: unknown; params?: unknown };
@@ -393,6 +393,15 @@ export async function getR2(
 export async function getR2Keys(env: Bindings): Promise<string[]> {
   const listed = await env.MATERIALS.list();
   return listed.objects.map((o) => o.key);
+}
+
+export async function getSchedules(env: Bindings): Promise<ScheduleRow[]> {
+  const { results } = await env.DB.prepare(
+    `SELECT card_id, due, stability, difficulty, elapsed_days, scheduled_days,
+            learning_steps, reps, lapses, state, last_review, stability_fast
+     FROM card_schedules`,
+  ).all<ScheduleRow>();
+  return results ?? [];
 }
 
 export async function clearCache(env: Bindings): Promise<void> {
