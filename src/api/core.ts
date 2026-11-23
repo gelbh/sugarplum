@@ -1,16 +1,12 @@
-export type ApiErrorBody = {
-  error?: string;
-  message?: string;
-  code?: string;
-  /** RFC 9457 problem+json members (optional; dual-read with flat). */
-  type?: string;
-  title?: string;
-  status?: number;
-  detail?: string;
-};
+import {
+  VIEW_AS_READ_ONLY_CODE,
+  messageFromApiErrorBody,
+  parseApiErrorBody,
+  type ApiErrorBody,
+} from "./problemWire";
 
-/** Must match worker/admin/viewAsReadOnly.ts VIEW_AS_READ_ONLY_CODE. */
-export const VIEW_AS_READ_ONLY_CODE = "VIEW_AS_READ_ONLY";
+export type { ApiErrorBody };
+export { VIEW_AS_READ_ONLY_CODE };
 
 export class ApiError extends Error {
   readonly status: number;
@@ -39,10 +35,12 @@ export async function throwApiErrorFromResponse(
   let message = res.statusText || fallbackMessage;
   let code: string | undefined;
   try {
-    const data = (await res.json()) as ApiErrorBody;
-    message =
-      data.detail ?? data.title ?? data.message ?? data.error ?? message;
-    code = data.code;
+    const raw: unknown = await res.json();
+    const data = parseApiErrorBody(raw);
+    if (data) {
+      message = messageFromApiErrorBody(data, message);
+      code = data.code;
+    }
   } catch {
     /* ignore non-JSON error bodies */
   }

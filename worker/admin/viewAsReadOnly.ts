@@ -1,10 +1,14 @@
 import { HTTPException } from "hono/http-exception";
+import {
+  VIEW_AS_READ_ONLY_CODE,
+  problemTypeUri,
+} from "../../src/api/problemWire";
 import { problemJsonResponse } from "../http/problemJson";
 
-export const VIEW_AS_READ_ONLY_CODE = "VIEW_AS_READ_ONLY";
+export { VIEW_AS_READ_ONLY_CODE };
+
 export const VIEW_AS_READ_ONLY_MESSAGE = "Read-only while viewing as user";
-export const VIEW_AS_READ_ONLY_TYPE =
-  "https://sugarplum.gelbhart.dev/problems/view-as-read-only";
+export const VIEW_AS_READ_ONLY_TYPE = problemTypeUri("view-as-read-only");
 
 export function throwViewAsReadOnly(): never {
   throw new HTTPException(403, {
