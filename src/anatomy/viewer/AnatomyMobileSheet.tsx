@@ -9,7 +9,8 @@ import Typography from "@mui/material/Typography";
 import AnatomyClipBar from "./AnatomyClipBar";
 import InfoPanel from "../structure/InfoPanel";
 import StructurePanel from "../structure/StructurePanel";
-import TestYourself, { type AnatomyStudyMode } from "../quiz/TestYourself";
+import type { AnatomyStudyMode } from "../anatomyStudyMode";
+import TestYourself from "../quiz/TestYourself";
 import type { AnatomyClip, AnatomyRegion, AnatomyStructure } from "../types";
 import type { StructureUiAction, StructureUiState } from "../structure/structureState";
 

@@ -9,8 +9,9 @@ import Typography from "@mui/material/Typography";
 import { gradeAnswer } from "./gradeAnswer";
 import { buildMcqOptions, pickMcqDistractors } from "./mcqDistractors";
 import type { AnatomyStructure } from "../types";
+import type { AnatomyStudyMode } from "../anatomyStudyMode";
 
-export type AnatomyStudyMode = "explore" | "type" | "mcq";
+export type { AnatomyStudyMode };
 
 const MCQ_DISTRACTOR_COUNT = 3;
 

@@ -12,7 +12,7 @@ import {
   parseAnatomySceneManifest,
 } from "./parseScene";
 import type { StructureUiAction } from "../structure/structureState";
-import type { AnatomyStudyMode } from "../quiz/TestYourself";
+import type { AnatomyStudyMode } from "../anatomyStudyMode";
 import type { AnatomySceneManifest } from "../types";
 
 type Args = {
