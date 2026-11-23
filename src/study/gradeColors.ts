@@ -1,4 +1,4 @@
-import type { StudyRating } from "../api/client";
+import type { StudyRating } from "./studyRating";
 
 export type GradeColorVars = {
   border: string;
