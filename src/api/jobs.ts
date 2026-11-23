@@ -1,6 +1,11 @@
 import { isGuest } from "../guest/session";
 import type { UnlockView } from "../achievements/wire";
-import { api, ApiError, guestUnsupported, type ApiErrorBody } from "./core";
+import {
+  api,
+  ApiError,
+  guestUnsupported,
+  throwApiErrorFromResponse,
+} from "./core";
 import { notifyGamificationChanged } from "./events";
 import { sanitizeTopicHints } from "./materials";
 import type {
@@ -56,13 +61,7 @@ export type FillAllKickoff =
 
 export type FillAllRunStatus = {
   runId: string;
-  status:
-    | "idle"
-    | "queued"
-    | "running"
-    | "complete"
-    | "errored"
-    | "terminated";
+  status: "idle" | "queued" | "running" | "complete" | "errored" | "terminated";
   output: {
     attempted: number;
     filled: number;
@@ -87,14 +86,7 @@ export async function generateCardsFromOrphanClaims(
     credentials: "include",
   });
   if (!res.ok) {
-    let message = res.statusText || "Request failed";
-    try {
-      const data = (await res.json()) as ApiErrorBody;
-      message = data.message ?? data.error ?? message;
-    } catch {
-      /* ignore */
-    }
-    throw new ApiError(res.status, message);
+    await throwApiErrorFromResponse(res, "Request failed");
   }
   const json = (await res.json()) as Record<string, unknown>;
   if (res.status === 202 && typeof json.runId === "string") {
@@ -173,10 +165,7 @@ export async function waitForCardRegenOp(
 }
 
 /** Rebuild one card as qa/cloze/mcq; siblings and FSRS schedule stay. Account-only. */
-export async function regenCard(
-  cardId: string,
-  body: { type: RegenCardType },
-) {
+export async function regenCard(cardId: string, body: { type: RegenCardType }) {
   if (isGuest()) guestUnsupported("regenerate a single card");
   const started = await api<{
     op: { id: string; status: string; cardId: string };

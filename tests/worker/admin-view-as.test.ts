@@ -144,6 +144,7 @@ describe("admin view-as library", () => {
     expect(patch.status).toBe(403);
     expect(await patch.json()).toMatchObject({
       message: "Read-only while viewing as user",
+      code: "VIEW_AS_READ_ONLY",
     });
 
     const reset = await app.request(

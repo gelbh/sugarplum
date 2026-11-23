@@ -13,6 +13,7 @@ import { getDb } from "../db/client";
 import { requireAdmin } from "./requireAdmin";
 import { refuseAllowlistedTarget } from "./wipe";
 import type { AdminUserRow } from "./types";
+import { throwViewAsReadOnly } from "./viewAsReadOnly";
 
 type AdminContext = Context<{ Bindings: Env; Variables: AuthVariables }>;
 
@@ -97,16 +98,12 @@ export async function assertNotImpersonating(c: AdminContext): Promise<void> {
 /** 403 for view-as (prefer `viewingAs` after requireUser; else fresh KV). */
 export async function rejectIfViewingAs(c: AdminContext): Promise<void> {
   if (c.get("viewingAs")) {
-    throw new HTTPException(403, {
-      message: "Read-only while viewing as user",
-    });
+    throwViewAsReadOnly();
   }
   const { readSessionRecordFresh } = await import("../auth/session");
   const session = await readSessionRecordFresh(c);
   if (session?.record.impersonation) {
-    throw new HTTPException(403, {
-      message: "Read-only while viewing as user",
-    });
+    throwViewAsReadOnly();
   }
 }
 
