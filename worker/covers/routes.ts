@@ -17,6 +17,7 @@ import {
   type StoredCover,
 } from "./model";
 import { fetchCoverPhoto, searchCoverPhotos, trackDownload } from "./unsplash";
+import { problemJsonResponse } from "../http/problemJson";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -74,8 +75,13 @@ function unsplashKey(env: Env): string | null {
   return key || null;
 }
 
-function coverSearchNotConfigured(c: Context<AppEnv>): Response {
-  return c.json({ error: "Cover search is not configured" }, 503);
+function coverSearchNotConfigured(): Response {
+  return problemJsonResponse({
+    status: 503,
+    slug: "cover-search-not-configured",
+    title: "Cover search is not configured",
+    detail: "Cover search is not configured",
+  });
 }
 
 function coverMediaPath(r2Key: string): string {
@@ -253,7 +259,7 @@ coverRoutes.get("/", async (c) => {
 coverRoutes.get("/search", async (c) => {
   await requireUser(c);
   const accessKey = unsplashKey(c.env);
-  if (!accessKey) return coverSearchNotConfigured(c);
+  if (!accessKey) return coverSearchNotConfigured();
   const q = (c.req.query("q") ?? "").trim();
   if (!q) throw new HTTPException(400, { message: "Title required" });
   const pageRaw = Number(c.req.query("page") ?? "1");
@@ -409,7 +415,7 @@ coverRoutes.put("/", async (c) => {
   if (!photoId) throw new HTTPException(400, { message: "Photo required" });
 
   const accessKey = unsplashKey(c.env);
-  if (!accessKey) return coverSearchNotConfigured(c);
+  if (!accessKey) return coverSearchNotConfigured();
 
   const mapped = await fetchCoverPhoto(accessKey, photoId, globalThis.fetch);
   let chosen: CoverPhoto;

@@ -329,8 +329,14 @@ describe("cover routes", () => {
       env,
     );
     expect(res.status).toBe(503);
-    expect(await res.json()).toEqual({
-      error: "Cover search is not configured",
+    expect(res.headers.get("content-type") ?? "").toMatch(
+      /application\/problem\+json/,
+    );
+    expect(await res.json()).toMatchObject({
+      type: "https://sugarplum.gelbhart.dev/problems/cover-search-not-configured",
+      title: "Cover search is not configured",
+      detail: "Cover search is not configured",
+      status: 503,
     });
   });
 

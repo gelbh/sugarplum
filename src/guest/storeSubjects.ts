@@ -1,10 +1,5 @@
 import type { Deck, Subject } from "../api/client";
-import {
-  nowIso,
-  readStore,
-  withDeckCounts,
-  writeStore,
-} from "./storePersist";
+import { nowIso, readStore, withDeckCounts, writeStore } from "./storePersist";
 import type { Store } from "./storeTypes";
 
 export function guestListSubjects(storage?: Store): Subject[] {
@@ -41,7 +36,8 @@ export function guestPatchSubject(
 
 /**
  * Delete subject. Throws Error("Subject still has decks") when any decks remain
- * (API equivalent: 409 `{ error, deck_count }`). Attaches `deck_count` on the error.
+ * (API equivalent: 409 problem+json with `deck_count` extension). Attaches
+ * `deck_count` on the error.
  */
 export function guestDeleteSubject(id: string, storage?: Store): void {
   const store = readStore(storage);
