@@ -25,7 +25,7 @@ import {
   backAnswer,
   isOcclusionFront,
   type DraftEditorChange,
-} from "../draftReview/draftCardModel";
+} from "../draftReview/kernel";
 import { FaceOverline, FlipCardPlate, StudyCardPlate } from "./CardFace";
 import ClozePrompt from "./ClozePrompt";
 import OcclusionRegionEditor from "../draftReview/OcclusionRegionEditor";

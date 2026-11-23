@@ -176,9 +176,23 @@ describe("subject CRUD", () => {
     );
 
     expect(res.status).toBe(409);
-    const body = (await res.json()) as { error: string; deck_count: number };
-    expect(body.deck_count).toBe(1);
-    expect(body.error).toBeTruthy();
+    expect(res.headers.get("content-type") ?? "").toMatch(
+      /application\/problem\+json/,
+    );
+    const body = (await res.json()) as {
+      type: string;
+      title: string;
+      detail: string;
+      status: number;
+      deck_count: number;
+    };
+    expect(body).toMatchObject({
+      type: "https://sugarplum.gelbhart.dev/problems/subject-has-decks",
+      title: "Subject still has decks",
+      detail: "Subject still has decks",
+      status: 409,
+      deck_count: 1,
+    });
   });
 
   it("lists only the current user's subjects", async () => {
@@ -421,7 +435,11 @@ describe("GET /api/subjects/:id/composition", () => {
 describe("GET /api/subjects/composition-summaries", () => {
   it("401 when unauthenticated", async () => {
     const env = createTestEnv();
-    const res = await app.request("/api/subjects/composition-summaries", {}, env);
+    const res = await app.request(
+      "/api/subjects/composition-summaries",
+      {},
+      env,
+    );
     expect(res.status).toBe(401);
   });
 
