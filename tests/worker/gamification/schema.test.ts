@@ -1,8 +1,15 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
+import { fileURLToPath } from "node:url";
 import { describe, it, expect } from "vitest";
 import { FRUIT_ORDER } from "../../../src/achievements/catalog";
 import { XP } from "../../../worker/gamification/constants";
 import { TRIGGER_KINDS } from "../../../worker/gamification/evaluate";
 import { ACHIEVEMENT_DEF_SEEDS } from "../gamification-seeds";
+
+const MIGRATIONS_DIR = fileURLToPath(
+  new URL("../../../migrations/", import.meta.url),
+);
 
 describe("achievement_defs after all migrations", () => {
   it("uses only known fruits, rarities, and trigger kinds", () => {
@@ -129,5 +136,35 @@ describe("achievement_defs after all migrations", () => {
       (d) => d.fruit_type === "kiwi",
     ).sort((a, b) => a.sort_order - b.sort_order);
     expect(kiwi.map((d) => d.threshold)).toEqual([2, 3, 4, 5, 6]);
+  });
+
+  it("retune migration syncs stale achievement_progress thresholds", () => {
+    const db = new DatabaseSync(":memory:");
+    try {
+      const files = readdirSync(MIGRATIONS_DIR)
+        .filter((f) => f.endsWith(".sql"))
+        .sort();
+      for (const file of files) {
+        if (file === "0044_harder_fruit_ladders.sql") {
+          db.exec(
+            `INSERT INTO users (id, email, password_hash, oauth_subject, created_at)
+             VALUES ('u-stale', 'stale@test.com', NULL, NULL, '2026-01-01T00:00:00.000Z');
+             INSERT INTO achievement_progress
+               (user_id, achievement_id, current_value, threshold)
+             VALUES ('u-stale', 'reviews_25', 10, 25);`,
+          );
+        }
+        db.exec(readFileSync(`${MIGRATIONS_DIR}${file}`, "utf8"));
+      }
+      const row = db
+        .prepare(
+          `SELECT threshold FROM achievement_progress
+           WHERE user_id = 'u-stale' AND achievement_id = 'reviews_25'`,
+        )
+        .get() as { threshold: number };
+      expect(row.threshold).toBe(50);
+    } finally {
+      db.close();
+    }
   });
 });

@@ -62,3 +62,22 @@ UPDATE achievement_defs SET
   params_json = '{"streak_best_min":60,"reviews_min":2000}',
   description = 'Best streak 60+ and 2,000 lifetime reviews.'
 WHERE id = 'plum_scholar';
+
+-- Gallery prefers progress.threshold over def.threshold; sync incomplete rows now.
+UPDATE achievement_progress
+SET threshold = (
+  SELECT d.threshold
+  FROM achievement_defs d
+  WHERE d.id = achievement_progress.achievement_id
+)
+WHERE achievement_id IN (
+  'reviews_25', 'reviews_100', 'reviews_500', 'reviews_2000',
+  'accepts_25', 'accepts_100', 'accepts_300', 'accepts_1000',
+  'study_days_3', 'study_days_14', 'study_days_50', 'study_days_150',
+  'library_3', 'library_5', 'library_10', 'library_20',
+  'clear_due_3', 'clear_due_10', 'clear_due_30', 'clear_due_100',
+  'long_reviews_10', 'long_reviews_50', 'long_reviews_150', 'long_reviews_400',
+  'mature_10', 'mature_50', 'mature_200', 'mature_500',
+  'streak_5', 'streak_7', 'streak_21', 'streak_60',
+  'level_5', 'level_10', 'level_15', 'level_20'
+);
