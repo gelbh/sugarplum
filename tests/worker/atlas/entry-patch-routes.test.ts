@@ -661,16 +661,22 @@ describe("PATCH /entries/:entryId aliases", () => {
       aliases: Array.from({ length: 21 }, (_, i) => `alias ${i}`),
     });
     expect(tooMany.status).toBe(400);
-    expect(((await tooMany.json()) as { message: string }).message).toMatch(
+    const tooManyBody = (await tooMany.json()) as {
+      message?: string;
+      detail?: string;
+    };
+    expect(tooManyBody.detail ?? tooManyBody.message).toMatch(
       /At most 20 aliases/,
     );
     const tooLong = await patchEntry(env, atlasId, "demodex-canis", {
       aliases: ["a".repeat(81)],
     });
     expect(tooLong.status).toBe(400);
-    expect(((await tooLong.json()) as { message: string }).message).toMatch(
-      /80 characters/,
-    );
+    const tooLongBody = (await tooLong.json()) as {
+      message?: string;
+      detail?: string;
+    };
+    expect(tooLongBody.detail ?? tooLongBody.message).toMatch(/80 characters/);
     const notList = await patchEntry(env, atlasId, "demodex-canis", {
       aliases: "follicular mite",
     });
@@ -754,9 +760,8 @@ describe("PATCH /entries/:entryId canonicalName", () => {
       canonicalName: "Fasciola gigantica",
     });
     expect(res.status).toBe(400);
-    expect(((await res.json()) as { message: string }).message).toBe(
-      BUILT_IN_MESSAGE,
-    );
+    const denied = (await res.json()) as { message?: string; detail?: string };
+    expect(denied.detail ?? denied.message).toBe(BUILT_IN_MESSAGE);
     const view = (await listEntries(env, atlasId)).find(
       (e) => e.id === "fasciola-hepatica",
     );
@@ -775,9 +780,8 @@ describe("PATCH /entries/:entryId canonicalName", () => {
       canonicalName: "Fasciola gigantica",
     });
     expect(res.status).toBe(400);
-    expect(((await res.json()) as { message: string }).message).toBe(
-      BUILT_IN_MESSAGE,
-    );
+    const denied = (await res.json()) as { message?: string; detail?: string };
+    expect(denied.detail ?? denied.message).toBe(BUILT_IN_MESSAGE);
   });
 
   it("renames a learner entry with normalization", async () => {
@@ -825,12 +829,20 @@ describe("PATCH /entries/:entryId canonicalName", () => {
     const added = await createLearnerEntry(env, atlasId, "Madeupius fictus");
     const res = await patchEntry(env, atlasId, added.id, { canonicalName: "" });
     expect(res.status).toBe(400);
-    expect(((await res.json()) as { message: string }).message).toMatch(
+    const emptyBody = (await res.json()) as {
+      message?: string;
+      detail?: string;
+    };
+    expect(emptyBody.detail ?? emptyBody.message).toMatch(
       /canonicalName required/,
     );
     const notString = await patchEntry(env, atlasId, added.id, { canonicalName: 5 });
     expect(notString.status).toBe(400);
-    expect(((await notString.json()) as { message: string }).message).toMatch(
+    const notStringBody = (await notString.json()) as {
+      message?: string;
+      detail?: string;
+    };
+    expect(notStringBody.detail ?? notStringBody.message).toMatch(
       /canonicalName must be a string/,
     );
   });

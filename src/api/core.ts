@@ -2,6 +2,11 @@ export type ApiErrorBody = {
   error?: string;
   message?: string;
   code?: string;
+  /** RFC 9457 problem+json members (optional; dual-read with flat). */
+  type?: string;
+  title?: string;
+  status?: number;
+  detail?: string;
 };
 
 /** Must match worker/admin/viewAsReadOnly.ts VIEW_AS_READ_ONLY_CODE. */
@@ -31,7 +36,8 @@ export async function throwApiErrorFromResponse(
   let code: string | undefined;
   try {
     const data = (await res.json()) as ApiErrorBody;
-    message = data.message ?? data.error ?? message;
+    message =
+      data.detail ?? data.title ?? data.message ?? data.error ?? message;
     code = data.code;
   } catch {
     /* ignore non-JSON error bodies */

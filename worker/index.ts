@@ -6,6 +6,7 @@ import { readSessionRecordFresh, type AuthVariables } from "./auth/session";
 import { isViewAsBlockedGetPath } from "./admin/impersonation";
 import { isViewAsMutateAllowedPath } from "./admin/viewAsRoutePolicy";
 import { throwViewAsReadOnly } from "./admin/viewAsReadOnly";
+import { problemJsonResponse } from "./http/problemJson";
 import { deckRoutes, materialRoutes } from "./materials/routes";
 import { subjectRoutes } from "./subjects/routes";
 import { atlasRoutes } from "./atlas/routes";
@@ -75,14 +76,26 @@ app.use("/api/*", async (c, next) => {
   await next();
 });
 
-app.onError((err, c) => {
+app.onError((err, _c) => {
   if (err instanceof HTTPException) {
     if (err.res) return err.getResponse();
-    return c.json({ message: err.message }, err.status);
+    return problemJsonResponse({
+      status: err.status,
+      title: err.message,
+      detail: err.message,
+      slug: "http-exception",
+    });
   }
   console.error(err);
-  return c.json({ message: "Internal Server Error" }, 500);
+  return problemJsonResponse({
+    status: 500,
+    title: "Internal Server Error",
+    detail: "Internal Server Error",
+    slug: "internal-server-error",
+  });
 });
+
+
 
 app.route("/api/auth", authRoutes);
 app.route("/api/calendar", calendarRoutes);

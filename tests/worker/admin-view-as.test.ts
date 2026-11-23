@@ -142,10 +142,17 @@ describe("admin view-as library", () => {
       env,
     );
     expect(patch.status).toBe(403);
+    expect(patch.headers.get("content-type")).toMatch(
+      /application\/problem\+json/i,
+    );
     expect(await patch.json()).toMatchObject({
-      message: "Read-only while viewing as user",
+      type: "https://sugarplum.gelbhart.dev/problems/view-as-read-only",
+      title: "Read-only while viewing as user",
+      status: 403,
+      detail: "Read-only while viewing as user",
       code: "VIEW_AS_READ_ONLY",
     });
+
 
     const reset = await app.request(
       "/api/cards/card-a/reset-schedule",
