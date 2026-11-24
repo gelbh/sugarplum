@@ -559,6 +559,40 @@ describe("GET /api/admin/users (allowlisted)", () => {
     const body = (await res.json()) as { users: unknown[] };
     expect(body.users).toHaveLength(50);
   });
+
+  it("chunks metrics queries when limit exceeds 12", async () => {
+    let metricsPrepares = 0;
+    const base = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    const env: Bindings = {
+      ...base,
+      DB: new Proxy(base.DB, {
+        get(target, prop, _receiver) {
+          if (prop === "prepare") {
+            return (query: string) => {
+              if (query.includes("sugarplum:admin-list-metrics")) {
+                metricsPrepares += 1;
+              }
+              return target.prepare(query);
+            };
+          }
+          const value = Reflect.get(target, prop, target);
+          return typeof value === "function"
+            ? (value as (...args: unknown[]) => unknown).bind(target)
+            : value;
+        },
+      }),
+    };
+    await seedManyListUsers(env, 13);
+    const res = await app.request(
+      "/api/admin/users?limit=13",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { users: unknown[] };
+    expect(body.users).toHaveLength(13);
+    expect(metricsPrepares).toBe(2);
+  });
 });
 
 describe("GET /api/admin/users/:id", () => {
