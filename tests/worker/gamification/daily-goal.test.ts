@@ -1,29 +1,44 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getUserGamification,
+  getXpLedger,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedReviewLog,
+  seedUser,
+  seedUserGamification,
+} from "../harness";
+import { afterEach, describe, it, expect } from "vitest";
 import {
   afterReviewMaybeCompleteDailyGoal,
   getDailyGoalProgress,
 } from "../../../worker/gamification/dailyGoal";
 import { XP } from "../../../worker/gamification/constants";
-import { createTestEnv } from "../test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const DAY = "2026-01-10";
 
-function seedReviewer(env: ReturnType<typeof createTestEnv>, reviews: number) {
-  env.seedUser({
+async function seedReviewer(env: Bindings, reviews: number) {
+  await seedUser(env, {
     id: "u-goal",
     email: "goal@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-goal",
     user_id: "u-goal",
     title: "Goal",
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedUserGamification({
+  await seedUserGamification(env, {
     user_id: "u-goal",
     streak_current: 1,
     streak_best: 1,
@@ -42,7 +57,7 @@ function seedReviewer(env: ReturnType<typeof createTestEnv>, reviews: number) {
   });
   for (let i = 0; i < reviews; i++) {
     const cardId = `card-goal-${i}`;
-    env.seedCard({
+    await seedCard(env, {
       id: cardId,
       deck_id: "deck-goal",
       job_id: null,
@@ -55,7 +70,7 @@ function seedReviewer(env: ReturnType<typeof createTestEnv>, reviews: number) {
       created_at: `${DAY}T00:00:00.000Z`,
       updated_at: `${DAY}T00:00:00.000Z`,
     });
-    env.seedReviewLog({
+    await seedReviewLog(env, {
       id: `rl-goal-${i}`,
       card_id: cardId,
       rating: 3,
@@ -69,8 +84,8 @@ function seedReviewer(env: ReturnType<typeof createTestEnv>, reviews: number) {
 
 describe("daily goal", () => {
   it("does not award below the goal", async () => {
-    const env = createTestEnv();
-    seedReviewer(env, 1);
+    const env = cfEnv;
+    await seedReviewer(env, 1);
     const progress = await getDailyGoalProgress(env.DB, "u-goal", DAY);
     expect(progress.current).toBe(1);
     expect(progress.goal).toBe(5);
@@ -82,14 +97,14 @@ describe("daily goal", () => {
       DAY,
     );
     expect(result.awarded).toBe(false);
-    expect(env.getXpLedger().filter((r) => r.reason === "daily_goal")).toHaveLength(
+    expect((await getXpLedger(env)).filter((r) => r.reason === "daily_goal")).toHaveLength(
       0,
     );
   });
 
   it("awards once at the goal and is idempotent", async () => {
-    const env = createTestEnv();
-    seedReviewer(env, 5);
+    const env = cfEnv;
+    await seedReviewer(env, 5);
 
     const first = await afterReviewMaybeCompleteDailyGoal(
       env.DB,
@@ -97,10 +112,10 @@ describe("daily goal", () => {
       DAY,
     );
     expect(first.awarded).toBe(true);
-    const ledger = env.getXpLedger().filter((r) => r.reason === "daily_goal");
+    const ledger = (await getXpLedger(env)).filter((r) => r.reason === "daily_goal");
     expect(ledger).toHaveLength(1);
     expect(ledger[0]?.amount).toBe(XP.dailyGoalComplete);
-    expect(env.getUserGamification("u-goal")?.daily_goal_day).toBe(DAY);
+    expect((await getUserGamification(env, "u-goal"))?.daily_goal_day).toBe(DAY);
 
     const second = await afterReviewMaybeCompleteDailyGoal(
       env.DB,
@@ -108,18 +123,18 @@ describe("daily goal", () => {
       DAY,
     );
     expect(second.awarded).toBe(false);
-    expect(env.getXpLedger().filter((r) => r.reason === "daily_goal")).toHaveLength(
+    expect((await getXpLedger(env)).filter((r) => r.reason === "daily_goal")).toHaveLength(
       1,
     );
   });
 
   it("first review leaves goal incomplete when N > 1", async () => {
-    const env = createTestEnv();
-    seedReviewer(env, 1);
+    const env = cfEnv;
+    await seedReviewer(env, 1);
     const progress = await getDailyGoalProgress(env.DB, "u-goal", DAY);
     expect(progress.met).toBe(false);
     expect(progress.current).toBe(1);
     // Streak day can already be met independently of the goal.
-    expect(env.getUserGamification("u-goal")?.streak_day).toBe(DAY);
+    expect((await getUserGamification(env, "u-goal"))?.streak_day).toBe(DAY);
   });
 });

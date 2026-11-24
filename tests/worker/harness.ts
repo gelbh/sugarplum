@@ -1317,15 +1317,22 @@ export function installAdminOverviewPrepareCounter(env: Bindings): Bindings {
   const db = env.DB;
   return {
     ...env,
-    DB: {
-      ...db,
-      prepare(query: string) {
-        if (query.includes("sugarplum:admin-overview")) {
-          adminOverviewPrepareCount += 1;
+    DB: new Proxy(db, {
+      get(target, prop, _receiver) {
+        if (prop === "prepare") {
+          return (query: string) => {
+            if (query.includes("sugarplum:admin-overview")) {
+              adminOverviewPrepareCount += 1;
+            }
+            return target.prepare(query);
+          };
         }
-        return db.prepare(query);
+        const value = Reflect.get(target, prop, target);
+        return typeof value === "function"
+          ? (value as (...args: unknown[]) => unknown).bind(target)
+          : value;
       },
-    } as D1Database,
+    }),
   };
 }
 
@@ -1342,20 +1349,31 @@ export function installProgressWriteRecorder(env: Bindings): Bindings {
   const db = env.DB;
   return {
     ...env,
-    DB: {
-      ...db,
-      prepare(query: string) {
-        const stmt = db.prepare(query);
-        if (query.includes("INSERT INTO achievement_progress")) {
-          const originalBind = stmt.bind.bind(stmt);
-          stmt.bind = (...args: unknown[]) => {
-            // UPSERT_PROGRESS binds: user_id, achievement_id, current_value, threshold
-            if (typeof args[1] === "string") progressWrites.push(args[1]);
-            return originalBind(...args);
+    DB: new Proxy(db, {
+      get(target, prop, _receiver) {
+        if (prop === "prepare") {
+          return (query: string) => {
+            const stmt = target.prepare(query);
+            if (query.includes("INSERT INTO achievement_progress")) {
+              const originalBind = stmt.bind.bind(stmt);
+              (stmt as { bind: typeof stmt.bind }).bind = (
+                ...args: unknown[]
+              ) => {
+                // UPSERT_PROGRESS binds: user_id, achievement_id, current_value, threshold
+                if (typeof args[1] === "string") progressWrites.push(args[1]);
+                return originalBind(
+                  ...(args as Parameters<typeof stmt.bind>),
+                );
+              };
+            }
+            return stmt;
           };
         }
-        return stmt;
+        const value = Reflect.get(target, prop, target);
+        return typeof value === "function"
+          ? (value as (...args: unknown[]) => unknown).bind(target)
+          : value;
       },
-    } as D1Database,
+    }),
   };
 }

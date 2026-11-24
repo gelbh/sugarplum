@@ -1,7 +1,16 @@
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedSession,
+  seedSubject,
+  seedUser,
+  withTestBindings,
+} from "../harness";
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   ADMIN_LIST_CORRECTIONS_SQL,
   computeCorrectionDiff,
@@ -18,8 +27,12 @@ import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites/in
 import type { ParasiteFields } from "../../../worker/atlas/templates/parasite";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
-import { createTestEnv } from "../test-env";
 import type { AtlasEntryView } from "../../../src/atlas/types";
+
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const MIGRATIONS_DIR = fileURLToPath(
   new URL("../../../migrations/", import.meta.url),
@@ -27,6 +40,13 @@ const MIGRATIONS_DIR = fileURLToPath(
 
 const T0 = "2026-11-20T00:00:00.000Z";
 const T1 = "2026-11-20T00:01:00.000Z";
+
+let sqliteAvailable = true;
+try {
+  new DatabaseSync(":memory:");
+} catch {
+  sqliteAvailable = false;
+}
 
 function freshDb(): DatabaseSync {
   const db = new DatabaseSync(":memory:");
@@ -76,7 +96,7 @@ function rows(db: DatabaseSync) {
   ).map((r) => ({ ...r }));
 }
 
-describe("0043 atlas_correction_suggestions (real SQLite)", () => {
+describe.skipIf(!sqliteAvailable)("0043 atlas_correction_suggestions (real SQLite)", () => {
   it("keeps one open row per user and parasite; a repeat upsert updates it", () => {
     const db = freshDb();
     upsert(db, "s1", '{"a":1}', "first", T0);
@@ -346,18 +366,18 @@ describe("parseSuggestionBody", () => {
   });
 });
 
-type Env = ReturnType<typeof createTestEnv>;
+type Env = Bindings;
 
-function seedStudent(env: Env) {
-  env.seedUser({
+async function seedStudent(env: Env) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
-  env.seedSubject({
+  await seedSession(env, "sess-a", "user-a");
+  await seedSubject(env, {
     id: "sub-1",
     user_id: "user-a",
     title: "Parasitology",
@@ -421,8 +441,8 @@ async function listEntries(env: Env, atlasId: string): Promise<AtlasEntryView[]>
 }
 
 async function studentSetup() {
-  const env = createTestEnv({ adminEmails: "ops@example.com" });
-  seedStudent(env);
+  const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+  await seedStudent(env);
   const atlasId = await createAtlas(env);
   return { env, atlasId };
 }
@@ -559,15 +579,15 @@ describe("POST /api/atlas/:atlasId/entries/:entryId/suggestion", () => {
   });
 });
 
-function seedAdmin(env: Env) {
-  env.seedUser({
+async function seedAdmin(env: Env) {
+  await seedUser(env, {
     id: "admin-u",
     email: "ops@example.com",
     password_hash: null,
     oauth_subject: "google-admin",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-admin", "admin-u");
+  await seedSession(env, "sess-admin", "admin-u");
 }
 
 function adminList(env: Env, query = "?status=open", session = "sess-admin") {
@@ -605,14 +625,14 @@ async function openRows(env: Env): Promise<AdminRow[]> {
 describe("admin atlas corrections", () => {
   it("rejects non-admins on both routes", async () => {
     const { env } = await studentSetup();
-    seedAdmin(env);
+    await seedAdmin(env);
     expect((await adminList(env, "?status=open", "sess-a")).status).toBe(403);
     expect((await adminResolve(env, "x", "accepted", "sess-a")).status).toBe(403);
   });
 
   it("lists open suggestions with parasite, diff, note, link and email", async () => {
     const { env, atlasId } = await studentSetup();
-    seedAdmin(env);
+    await seedAdmin(env);
     await editAndSuggest(
       env,
       atlasId,
@@ -634,7 +654,7 @@ describe("admin atlas corrections", () => {
 
   it("accepts once, then 409; the student sees Accepted for review", async () => {
     const { env, atlasId } = await studentSetup();
-    seedAdmin(env);
+    await seedAdmin(env);
     await editAndSuggest(env, atlasId, { fields: { significance: "New" } });
     const [row] = await openRows(env);
 
@@ -654,7 +674,7 @@ describe("admin atlas corrections", () => {
 
   it("lists a row with a malformed diff as an empty diff", async () => {
     const { env, atlasId } = await studentSetup();
-    seedAdmin(env);
+    await seedAdmin(env);
     await env.DB.prepare(UPSERT_OPEN_SUGGESTION_SQL)
       .bind("bad-1", "user-a", atlasId, "psoroptes-ovis", 9, "not json", null, null, T0)
       .run();
@@ -664,7 +684,7 @@ describe("admin atlas corrections", () => {
 
   it("opens a fresh row after a resolved one", async () => {
     const { env, atlasId } = await studentSetup();
-    seedAdmin(env);
+    await seedAdmin(env);
     await editAndSuggest(env, atlasId, { fields: { significance: "New" } });
     const [first] = await openRows(env);
     await adminResolve(env, first.id, "rejected");

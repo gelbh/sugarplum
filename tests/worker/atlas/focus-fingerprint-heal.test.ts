@@ -1,22 +1,34 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getAtlasMaterials,
+  resetTestDb,
+  seedSession,
+  seedSubject,
+  seedUser,
+} from "../harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { listEntriesWithFocus } from "../../../worker/atlas/focus";
 import { focusPackFingerprint } from "../../../worker/atlas/atlas-materials";
 import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites/index";
 import { overlayAtlas } from "../../../worker/atlas/merge";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
-import { createTestEnv } from "../test-env";
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
-  env.seedSubject({
+  await seedSession(env, "sess-a", "user-a");
+  await seedSubject(env, {
     id: "sub-1",
     user_id: "user-a",
     title: "Parasitology",
@@ -32,7 +44,7 @@ function authHeaders(json = false): HeadersInit {
 }
 
 async function createAtlas(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
 ): Promise<string> {
   const created = await app.request(
     "/api/atlas",
@@ -46,8 +58,8 @@ async function createAtlas(
 
 describe("focus pack fingerprint role heal", () => {
   it("heals Key on GET when fingerprint is stale after source_role change", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlasId = await createAtlas(env);
 
     const paste = await app.request(
@@ -65,7 +77,7 @@ describe("focus pack fingerprint role heal", () => {
     );
     expect(paste.status).toBe(201);
     const pasted = (await paste.json()) as { id: string };
-    const row = env.getAtlasMaterials().find((m) => m.id === pasted.id);
+    const row = (await getAtlasMaterials(env)).find((m) => m.id === pasted.id);
     expect(row).toBeTruthy();
 
     const merged = overlayAtlas(loadParasiteDataset().entries, []);

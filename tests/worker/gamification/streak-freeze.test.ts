@@ -1,4 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  getUserGamification,
+  resetTestDb,
+  seedUser,
+  seedUserGamification,
+} from "../harness";
+import { afterEach, describe, it, expect } from "vitest";
 import {
   applyStreakExpiry,
   maybeEarnStreakFreeze,
@@ -7,7 +14,10 @@ import {
   utcPreviousDay,
 } from "../../../worker/gamification/streak";
 import { STREAK_FREEZE } from "../../../worker/gamification/constants";
-import { createTestEnv } from "../test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("streak freeze", () => {
   it("wouldExpireStreak is false for today and yesterday", () => {
@@ -27,8 +37,8 @@ describe("streak freeze", () => {
   });
 
   it("reconcile consumes one freeze for a single missed day", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u-freeze",
       email: "f@example.com",
       password_hash: null,
@@ -36,7 +46,7 @@ describe("streak freeze", () => {
       created_at: "2026-01-01T00:00:00.000Z",
     });
     // Today 01-10; yesterday 01-09; last study 01-08 → one missed day.
-    env.seedUserGamification({
+    await seedUserGamification(env, {
       user_id: "u-freeze",
       streak_current: 7,
       streak_best: 7,
@@ -61,22 +71,22 @@ describe("streak freeze", () => {
     );
     expect(result.consumedFreeze).toBe(true);
     expect(result.consumedCount).toBe(1);
-    const row = env.getUserGamification("u-freeze");
+    const row = await getUserGamification(env, "u-freeze");
     expect(row?.streak_current).toBe(7);
     expect(row?.streak_day).toBe("2026-01-09");
     expect(row?.streak_freezes).toBe(0);
   });
 
   it("reconcile zeros when freezes cannot cover a multi-day gap", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u-gap",
       email: "gap@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedUserGamification({
+    await seedUserGamification(env, {
       user_id: "u-gap",
       streak_current: 7,
       streak_best: 7,
@@ -100,20 +110,20 @@ describe("streak freeze", () => {
       "2026-01-10",
     );
     expect(result.consumedFreeze).toBe(false);
-    expect(env.getUserGamification("u-gap")?.streak_current).toBe(0);
-    expect(env.getUserGamification("u-gap")?.streak_freezes).toBe(1);
+    expect((await getUserGamification(env, "u-gap"))?.streak_current).toBe(0);
+    expect((await getUserGamification(env, "u-gap"))?.streak_freezes).toBe(1);
   });
 
   it("reconcile zeros streak when no freezes", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u-gone",
       email: "g@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedUserGamification({
+    await seedUserGamification(env, {
       user_id: "u-gone",
       streak_current: 4,
       streak_best: 4,
@@ -137,19 +147,19 @@ describe("streak freeze", () => {
       "2026-01-10",
     );
     expect(result.consumedFreeze).toBe(false);
-    expect(env.getUserGamification("u-gone")?.streak_current).toBe(0);
+    expect((await getUserGamification(env, "u-gone"))?.streak_current).toBe(0);
   });
 
   it("maybeEarnStreakFreeze awards at multiples up to cap", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u-earn",
       email: "e@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedUserGamification({
+    await seedUserGamification(env, {
       user_id: "u-earn",
       streak_current: 6,
       streak_best: 6,
@@ -169,15 +179,15 @@ describe("streak freeze", () => {
 
     const earned = await maybeEarnStreakFreeze(env.DB, "u-earn", 6, 7);
     expect(earned.earned).toBe(true);
-    expect(env.getUserGamification("u-earn")?.streak_freezes).toBe(1);
+    expect((await getUserGamification(env, "u-earn"))?.streak_freezes).toBe(1);
 
-    env.seedUserGamification({
-      ...env.getUserGamification("u-earn")!,
+    await seedUserGamification(env, {
+      ...(await getUserGamification(env, "u-earn"))!,
       streak_freezes: STREAK_FREEZE.maxStored,
     });
     const capped = await maybeEarnStreakFreeze(env.DB, "u-earn", 13, 14);
     expect(capped.earned).toBe(false);
-    expect(env.getUserGamification("u-earn")?.streak_freezes).toBe(
+    expect((await getUserGamification(env, "u-earn"))?.streak_freezes).toBe(
       STREAK_FREEZE.maxStored,
     );
   });

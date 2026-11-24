@@ -1,20 +1,34 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedAtlasMaterial,
+  seedDeck,
+  seedSession,
+  seedSubject,
+  seedUser,
+} from "../harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
-import { createTestEnv } from "../test-env";
 import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites/index";
 import type { AtlasEntryView } from "../../../src/atlas/types";
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
-  env.seedSubject({
+  await seedSession(env, "sess-a", "user-a");
+  await seedSubject(env, {
     id: "sub-1",
     user_id: "user-a",
     title: "Parasitology",
@@ -29,7 +43,7 @@ function authHeaders(json = false): HeadersInit {
   };
 }
 
-async function createAtlas(env: ReturnType<typeof createTestEnv>) {
+async function createAtlas(env: Bindings) {
   const res = await app.request(
     "/api/atlas",
     { method: "POST", headers: authHeaders() },
@@ -46,13 +60,7 @@ async function createAtlas(env: ReturnType<typeof createTestEnv>) {
 
 describe("atlas user-owned routes", () => {
   it("returns 401 for unauthenticated create", async () => {
-    const env = createTestEnv();
-    env.seedSubject({
-      id: "sub-1",
-      user_id: "user-a",
-      title: "Parasitology",
-      created_at: "2026-01-01T00:00:00.000Z",
-    });
+    const env = cfEnv;
     const res = await app.request(
       "/api/atlas",
       { method: "POST" },
@@ -62,17 +70,17 @@ describe("atlas user-owned routes", () => {
   });
 
   it("returns 404 for non-owner atlas access", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
-    env.seedUser({
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-b", "user-b");
+    await seedSession(env, "sess-b", "user-b");
 
     const res = await app.request(
       `/api/atlas/${atlasId}`,
@@ -85,8 +93,8 @@ describe("atlas user-owned routes", () => {
   });
 
   it("creates an empty atlas and lists merged dataset entries", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const created = await createAtlas(env);
     const atlasId = created.id;
@@ -132,8 +140,8 @@ describe("atlas user-owned routes", () => {
   });
 
   it("returns 404 for entries when atlas is missing", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlasId = "missing-atlas";
     const res = await app.request(
       `/api/atlas/${atlasId}/entries`,
@@ -144,8 +152,8 @@ describe("atlas user-owned routes", () => {
   });
 
   it("persists an edit over a dataset entry", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
 
     const patch = await app.request(
@@ -180,8 +188,8 @@ describe("atlas user-owned routes", () => {
   });
 
   it("soft-deletes, restores pristine dataset id, and resets overlay edits", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
 
     const soft = await app.request(
@@ -283,8 +291,8 @@ describe("atlas user-owned routes", () => {
   });
 
   it("PATCHing lifecycleStages preserves sibling hosts", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
     const dataset = loadParasiteDataset().entries.find(
       (e) => e.key === "fasciola-hepatica",
@@ -320,8 +328,8 @@ describe("atlas user-owned routes", () => {
   });
 
   it("refuses permanent delete of a soft-deleted dataset overlay", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
 
     const soft = await app.request(
@@ -383,8 +391,8 @@ describe("atlas user-owned routes", () => {
   });
 
   it("requires group when adding a learner entry", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
 
     const missing = await app.request(
@@ -428,8 +436,8 @@ describe("atlas user-owned routes", () => {
   });
 
   it("adds a learner entry and permanently deletes it from trash", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
 
     const create = await app.request(
@@ -476,8 +484,8 @@ describe("atlas user-owned routes", () => {
   });
 
   it("returns null focus tiers when the subject has no materials", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
 
     const list = await app.request(
@@ -494,8 +502,8 @@ describe("atlas user-owned routes", () => {
   });
 
   it("exposes Key tier after an atlas pack tutorial material is added", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
 
     const paste = await app.request(
@@ -528,8 +536,8 @@ describe("atlas user-owned routes", () => {
   });
 
   it("lets a focus override pin win and clear restore the scan", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
 
     const paste = await app.request(
@@ -576,10 +584,10 @@ describe("atlas user-owned routes", () => {
   });
 
   it("rescans when pack source_role is patched", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
-    env.seedAtlasMaterial({
+    await seedAtlasMaterial(env, {
       id: "mat-1",
       atlas_id: atlasId,
       kind: "pdf",
@@ -626,8 +634,8 @@ describe("atlas user-owned routes", () => {
   });
 
   it("stores a learner ref and concats it with dataset refs", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
     const dataset = loadParasiteDataset();
     const base = dataset.entries.find((e) => e.key === "fasciola-hepatica")!;
@@ -667,9 +675,9 @@ describe("atlas user-owned routes", () => {
   });
 
   it("enqueues Make cards jobs with atlas provenance for an entry", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedDeck({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedDeck(env, {
       id: "deck-1",
       user_id: "user-a",
       title: "Parasitology deck",
