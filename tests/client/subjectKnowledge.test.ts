@@ -5,7 +5,7 @@ import {
   aggregateSubjectKnowledge,
   classifyKnowledgeBucket,
   composeSubjectKnowledge,
-} from "../../src/study/session/subjectKnowledge";
+} from "../../src/study/queue/subjectKnowledge";
 
 describe("classifyKnowledgeBucket", () => {
   it("missing schedule → new", () => {

@@ -5,7 +5,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, it } from "vitest";
 import SubjectKnowledgeBar from "../../src/study/session/SubjectKnowledgeBar";
-import type { SubjectKnowledge } from "../../src/study/session/subjectKnowledge";
+import type { SubjectKnowledge } from "../../src/study/queue/subjectKnowledge";
 import {
   CompositionSpark,
   COMPOSITION_SEGMENT_COLORS,

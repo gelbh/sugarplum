@@ -36,7 +36,7 @@ import {
   cardFromScheduleRow,
   retrievability,
 } from "../../src/study/fsrs/retrievability";
-import { aggregateSubjectRecall } from "../../src/study/session/subjectRecall";
+import { aggregateSubjectRecall } from "../../src/study/queue/subjectRecall";
 
 const COMPOSITION_NOW = new Date("2026-11-01T12:00:00.000Z");
 

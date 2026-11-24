@@ -1,4 +1,4 @@
-import type { CardDraftView } from "../faces/cardDraftView";
+import type { CardDraftView } from "../cardDraftView";
 
 const STORAGE_KEY = "sugarplum.dueCache.v1";
 

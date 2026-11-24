@@ -16,7 +16,7 @@ import {
   cardFromScheduleRow,
   retrievability,
 } from "../../src/study/fsrs/retrievability";
-import { aggregateSubjectRecall } from "../../src/study/session/subjectRecall";
+import { aggregateSubjectRecall } from "../../src/study/queue/subjectRecall";
 
 afterEach(async () => {
   await resetTestDb(cfEnv);

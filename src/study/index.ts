@@ -119,7 +119,7 @@ export {
   composeSubjectKnowledge,
   type SubjectKnowledgeBuckets,
   type SubjectKnowledge,
-} from "./session/subjectKnowledge";
+} from "./queue/subjectKnowledge";
 export {
   dueCacheKey,
   dueScopeFromSearch,

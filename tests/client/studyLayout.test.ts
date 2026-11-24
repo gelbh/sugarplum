@@ -7,16 +7,18 @@ const root = resolve(process.cwd(), "src/study");
 const expected = [
   "queue/dueCache.ts",
   "queue/policyQueue.ts",
+  "queue/subjectKnowledge.ts",
+  "queue/subjectRecall.ts",
   "grading/pendingGrades.ts",
   "grading/GradeButtons.tsx",
   "session/StudyChromeContext.tsx",
-  "session/subjectKnowledge.ts",
   "faces/CardFace.tsx",
   "faces/clozeFormat.ts",
   "gestures/cardGestures.ts",
   "media/studyMediaCache.ts",
   "media/warmDueMedia.ts",
   "fsrs/retrievability.ts",
+  "cardDraftView.ts",
   "localDay.ts",
   "regenSource.ts",
   "scopeLibraryBack.ts",
@@ -32,6 +34,8 @@ const mustNotExistAtRoot = [
   "studyMediaCache.ts",
   "retrievability.ts",
   "StudyChromeContext.tsx",
+  "subjectKnowledge.ts",
+  "subjectRecall.ts",
 ];
 
 describe("src/study subdomain layout", () => {

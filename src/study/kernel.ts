@@ -9,7 +9,7 @@ export type {
   CardType,
   CardDraftView,
   OcclusionFrontView,
-} from "./faces/cardDraftView";
+} from "./cardDraftView";
 export {
   clearDueCache,
   saveDueCache,
@@ -38,7 +38,7 @@ export {
   type SubjectKnowledgeBucketsAggregate,
   type SubjectKnowledge,
   type CompositionScheduleInput,
-} from "./session/subjectKnowledge";
+} from "./queue/subjectKnowledge";
 export {
   clientLocalDay,
   serverUtcDay,
