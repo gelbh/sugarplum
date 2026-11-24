@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -126,12 +126,13 @@ export default function MaterialsWorkshop({
 }: Props) {
   const [view, setView] = useState<ViewMode>(() => readViewMode());
   const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
   const [preview, setPreview] = useState<MaterialListItem | null>(null);
   const busy = busyId !== null;
   const visible = materials.filter((m) =>
-    materialMatchesWorkshopQuery(m, query),
+    materialMatchesWorkshopQuery(m, deferredQuery),
   );
-  const searching = normalizeWorkshopQuery(query) !== "";
+  const searching = normalizeWorkshopQuery(deferredQuery) !== "";
   const countLabel =
     materials.length === 0
       ? "No files yet"
@@ -261,7 +262,7 @@ export default function MaterialsWorkshop({
           }}
         >
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {`No files match "${query.trim()}"`}
+            {`No files match "${deferredQuery.trim()}"`}
           </Typography>
         </Box>
       ) : view === "icons" ? (

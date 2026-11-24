@@ -18,6 +18,7 @@
     "db:seed:local": "node scripts/seed-local-dev.mjs",
     "db:seed:local:insights": "node scripts/seed-local-insights.mjs",
     "db:seed:local:orchard": "node scripts/seed-local-orchard.mjs",
+    "db:seed:local:hygiene": "node scripts/seed-local-hygiene.mjs",
     "generate:problem-html": "node scripts/generate-problem-html.mjs",
     "check:problem-html": "node scripts/generate-problem-html.mjs --check"
   },

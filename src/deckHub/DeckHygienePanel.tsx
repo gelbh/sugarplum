@@ -9,6 +9,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import AutorenewRoundedIcon from "@mui/icons-material/AutorenewRounded";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import {
   ApiError,
   archiveCard,
@@ -16,8 +17,10 @@ import {
   getDeckHygiene,
   regenCard,
   waitForCardRegenOp,
+  type CardDraftView,
   type DeckHygieneCard,
 } from "../api/client";
+import CardPreviewDialog from "./CardPreviewDialog";
 import { useHygieneRegenAll } from "./HygieneRegenAllControls";
 import { PILL_BTN, ROW_ACTION } from "./workshopChrome";
 
@@ -42,11 +45,19 @@ function reasonLabel(reason: string): string {
 
 type Props = {
   deckId: string;
+  resolveCard: (id: string) => CardDraftView | null;
+  onEdit: (card: CardDraftView) => void;
   onChanged?: () => void;
 };
 
-export default function DeckHygienePanel({ deckId, onChanged }: Props) {
+export default function DeckHygienePanel({
+  deckId,
+  resolveCard,
+  onEdit,
+  onChanged,
+}: Props) {
   const [cards, setCards] = useState<DeckHygieneCard[]>([]);
+  const [previewCard, setPreviewCard] = useState<CardDraftView | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -228,6 +239,11 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
           const regenType = asRegenType(card.type);
           const regenerating =
             busyId === card.id || card.regen_op != null;
+          const resolved = resolveCard(card.id);
+          function openPreview() {
+            const full = resolveCard(card.id);
+            if (full) setPreviewCard(full);
+          }
           return (
             <Stack
               key={card.id}
@@ -252,11 +268,16 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
                   flex: 1
                 }}>
                 <Box
-                  aria-hidden
+                  component="button"
+                  type="button"
+                  aria-label={`Preview ${card.front_preview || "card"}`}
+                  disabled={resolved == null}
+                  onClick={openPreview}
                   sx={{
                     flexShrink: 0,
                     width: 42,
                     height: 58,
+                    m: 0,
                     borderRadius: 1,
                     bgcolor: "var(--sp-card-face)",
                     border: "1px solid",
@@ -265,6 +286,16 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
                     py: 0.45,
                     overflow: "hidden",
                     display: { xs: "none", sm: "block" },
+                    cursor: resolved ? "pointer" : "default",
+                    textAlign: "left",
+                    opacity: resolved ? 1 : 0.55,
+                    "&:hover": resolved
+                      ? { borderColor: "rgba(209, 163, 226, 0.55)" }
+                      : undefined,
+                    "&:focus-visible": {
+                      outline: "2px solid rgba(209, 163, 226, 0.75)",
+                      outlineOffset: 2,
+                    },
                   }}
                 >
                   <Typography
@@ -297,13 +328,33 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
                 </Box>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Typography
+                    component="button"
+                    type="button"
                     variant="body2"
                     noWrap
                     title={card.front_preview}
+                    disabled={resolved == null}
+                    onClick={openPreview}
                     sx={{
+                      display: "block",
+                      width: "100%",
+                      p: 0,
+                      m: 0,
+                      border: 0,
+                      bgcolor: "transparent",
+                      cursor: resolved ? "pointer" : "default",
+                      textAlign: "left",
                       fontWeight: 500,
                       color: "rgba(245, 245, 245, 0.92)",
                       lineHeight: 1.35,
+                      opacity: resolved ? 1 : 0.7,
+                      "&:hover": resolved
+                        ? { color: "primary.light" }
+                        : undefined,
+                      "&:focus-visible": {
+                        outline: "2px solid rgba(209, 163, 226, 0.75)",
+                        outlineOffset: 2,
+                      },
                     }}
                   >
                     {card.front_preview || "(no front)"}
@@ -347,6 +398,21 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
                   flexShrink: 0,
                   alignItems: "center"
                 }}>
+                <Tooltip title="Edit card">
+                  <span>
+                    <IconButton
+                      size="small"
+                      aria-label="Edit card"
+                      disabled={busy || regenerating || resolved == null}
+                      onClick={() => {
+                        if (resolved) onEdit(resolved);
+                      }}
+                      sx={ROW_ACTION}
+                    >
+                      <EditOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
                 <Button
                   size="small"
                   variant="outlined"
@@ -451,6 +517,12 @@ export default function DeckHygienePanel({ deckId, onChanged }: Props) {
         </Button>
       ) : null}
       {regenAll.dialog}
+      <CardPreviewDialog
+        card={previewCard}
+        busy={busy}
+        onClose={() => setPreviewCard(null)}
+        onEdit={onEdit}
+      />
     </Box>
   );
 }

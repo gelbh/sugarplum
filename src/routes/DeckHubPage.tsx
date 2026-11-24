@@ -223,6 +223,7 @@ export default function DeckHubPage({ deckId }: Props) {
     clearSelection,
     onToggleSelect,
     onSelectAll,
+    pruneSelection,
     onArchiveCard,
     onRestoreCard,
     onBatchArchive,
@@ -598,6 +599,10 @@ export default function DeckHubPage({ deckId }: Props) {
                   {!isGuest() ? (
                     <DeckHygienePanel
                       deckId={deckId}
+                      resolveCard={(id) =>
+                        cards.find((card) => card.id === id) ?? null
+                      }
+                      onEdit={openEdit}
                       onChanged={() => {
                         void refreshCards();
                       }}
@@ -611,6 +616,7 @@ export default function DeckHubPage({ deckId }: Props) {
                     onToggleSelect={onToggleSelect}
                     onSelectAll={onSelectAll}
                     onClearSelection={clearSelection}
+                    onPruneSelection={pruneSelection}
                     archiveBusyId={archiveBusyId}
                     batchBusy={batchBusy}
                     onBatchArchive={() => {

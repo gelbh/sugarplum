@@ -53,3 +53,18 @@ export function materialMatchesWorkshopQuery(
   );
   return hay.includes(needle);
 }
+
+export function pruneIdsToVisible(
+  selected: Set<string>,
+  visibleIds: Iterable<string>,
+): Set<string> {
+  if (selected.size === 0) return selected;
+  const visible = visibleIds instanceof Set ? visibleIds : new Set(visibleIds);
+  let changed = false;
+  const next = new Set<string>();
+  for (const id of selected) {
+    if (visible.has(id)) next.add(id);
+    else changed = true;
+  }
+  return changed ? next : selected;
+}

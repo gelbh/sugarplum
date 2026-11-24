@@ -71,6 +71,22 @@ async function renderWorkshop(materials: MaterialListItem[]) {
   });
 }
 
+async function setSearchValue(value: string) {
+  const input = document.querySelector(
+    'input[aria-label="Search files"]',
+  ) as HTMLInputElement | null;
+  expect(input).toBeTruthy();
+  await act(async () => {
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    )?.set;
+    setter?.call(input!, value);
+    input!.dispatchEvent(new Event("input", { bubbles: true }));
+    input!.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+}
+
 describe("MaterialsWorkshop search", () => {
   it("shows search when materials exist and does not autofocus", async () => {
     await renderWorkshop([
@@ -90,5 +106,17 @@ describe("MaterialsWorkshop search", () => {
 
     const input = document.querySelector('input[aria-label="Search files"]');
     expect(input).toBeNull();
+  });
+
+  it("filters materials by query", async () => {
+    await renderWorkshop([
+      material("1", "Lecture-03.pdf"),
+      material("2", "Notes.txt", "text"),
+    ]);
+
+    await setSearchValue("lecture");
+
+    expect(document.body.textContent).toMatch(/Lecture-03\.pdf/);
+    expect(document.body.textContent).not.toMatch(/Notes\.txt/);
   });
 });
