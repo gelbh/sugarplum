@@ -5,9 +5,9 @@ import {
   getSchedules,
   resetTestDb,
   seedCard,
-  seedDeck,
   seedSchedule,
   seedSession,
+  seedSessionOwner,
   seedUser,
 } from "./harness";
 import { afterEach, describe, it, expect } from "vitest";
@@ -19,24 +19,6 @@ afterEach(async () => {
 });
 
 const PAST_DUE = "2020-01-01T00:00:00.000Z";
-
-async function seedOwner(env: Bindings) {
-  await seedUser(env, {
-    id: "user-a",
-    email: "a@example.com",
-    password_hash: null,
-    oauth_subject: null,
-    created_at: "2026-01-01T00:00:00.000Z",
-  });
-  await seedDeck(env, {
-    id: "deck-a",
-    user_id: "user-a",
-    title: "Bio",
-    subject_hint: null,
-    created_at: "2026-01-01T00:00:00.000Z",
-  });
-  await seedSession(env, "sess-a", "user-a");
-}
 
 async function seedCardFixture(
   env: Bindings,
@@ -90,7 +72,7 @@ async function postRestore(
 describe("POST /api/cards/:id/archive", () => {
   it("sets status to archived for accepted card", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "card-1", status: "accepted" });
 
     const res = await postArchive(env, "card-1");
@@ -104,7 +86,7 @@ describe("POST /api/cards/:id/archive", () => {
 
   it("leaves card_schedules unchanged", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "card-1", status: "accepted" });
     await seedSchedule(env, {
       card_id: "card-1",
@@ -131,7 +113,7 @@ describe("POST /api/cards/:id/archive", () => {
 
   it("returns 400 for draft card", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "card-draft", status: "draft" });
 
     const res = await postArchive(env, "card-draft");
@@ -143,7 +125,7 @@ describe("POST /api/cards/:id/archive", () => {
 
   it("returns 400 when already archived", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "card-arch", status: "archived" });
 
     const res = await postArchive(env, "card-arch");
@@ -152,7 +134,7 @@ describe("POST /api/cards/:id/archive", () => {
 
   it("returns 404 for another user's card", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "card-1", status: "accepted" });
     await seedUser(env, {
       id: "user-b",
@@ -171,7 +153,7 @@ describe("POST /api/cards/:id/archive", () => {
 describe("POST /api/cards/:id/restore", () => {
   it("sets status to accepted for archived card", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "card-1", status: "archived" });
 
     const res = await postRestore(env, "card-1");
@@ -185,7 +167,7 @@ describe("POST /api/cards/:id/restore", () => {
 
   it("returns 400 for accepted card", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "card-1", status: "accepted" });
 
     const res = await postRestore(env, "card-1");
@@ -194,7 +176,7 @@ describe("POST /api/cards/:id/restore", () => {
 
   it("returns 400 for draft card", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "card-draft", status: "draft" });
 
     const res = await postRestore(env, "card-draft");
@@ -205,7 +187,7 @@ describe("POST /api/cards/:id/restore", () => {
 describe("archived cards and study due", () => {
   it("omits archived cards from GET /api/study/due", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "card-due", status: "accepted" });
     await seedCardFixture(env, { id: "card-arch", status: "archived" });
     for (const id of ["card-due", "card-arch"]) {
@@ -236,7 +218,7 @@ describe("archived cards and study due", () => {
 
   it("restore then due includes card again", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "card-1", status: "archived" });
     await seedSchedule(env, {
       card_id: "card-1",
@@ -268,7 +250,7 @@ describe("archived cards and study due", () => {
 describe("GET /api/decks/:id/cards archived filter", () => {
   it("lists only accepted by default and excludes archived", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "c-acc", status: "accepted" });
     await seedCardFixture(env, { id: "c-arch", status: "archived" });
 
@@ -284,7 +266,7 @@ describe("GET /api/decks/:id/cards archived filter", () => {
 
   it("lists archived when status=archived", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "c-acc", status: "accepted" });
     await seedCardFixture(env, { id: "c-arch", status: "archived" });
 
