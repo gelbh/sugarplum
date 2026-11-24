@@ -6,7 +6,7 @@ import {
 import {
   cardFromScheduleRow,
   emptyFsrsCard,
-} from "../../src/study/retrievability";
+} from "../../src/study/fsrs/retrievability";
 import { State } from "ts-fsrs";
 
 describe("replayMemoryFromLogs", () => {

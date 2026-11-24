@@ -4,7 +4,7 @@ import {
   type RescheduleSummary,
   type ReviewLogReplayRow,
 } from "../../src/study/fsrs/fsrsReplay";
-import { scheduleColumnsFromCard } from "../../src/study/retrievability";
+import { scheduleColumnsFromCard } from "../../src/study/fsrs/retrievability";
 import { prepareFullScheduleUpdate } from "./scheduleWrite";
 
 export {

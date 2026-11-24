@@ -1,4 +1,4 @@
-import { buildDueHistogramFromDues } from "../../src/study/dueHistogram";
+import { buildDueHistogramFromDues } from "../../src/study/queue/dueHistogram";
 import { resolveLocalDayStartIso } from "../../src/study/localDay";
 
 export { buildDueHistogramFromDues };

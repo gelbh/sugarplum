@@ -29,7 +29,7 @@ import {
   saveFsrsWeights,
 } from "../../worker/study/fsrsOptimize";
 import { applyDeferrals } from "../../worker/study/dueQueue";
-import { emptyFsrsCard } from "../../src/study/retrievability";
+import { emptyFsrsCard } from "../../src/study/fsrs/retrievability";
 import { schedulerForPrefs } from "../../src/study/fsrs/fsrsFactory";
 
 afterEach(async () => {

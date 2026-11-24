@@ -6,7 +6,7 @@ import {
   gradeMailboxEl,
   prefersReducedMotion,
   studyCardFlightSource,
-} from "../../src/study/flyCardToGrade";
+} from "../../src/study/grading/flyCardToGrade";
 
 function stubMotion(reduce: boolean) {
   vi.stubGlobal(

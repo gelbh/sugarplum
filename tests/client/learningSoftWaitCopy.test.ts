@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   learningSoftWaitFollowUpCopy,
   learningSoftWaitReadyDueCopy,
-} from "../../src/study/learningSoftWaitCopy";
+} from "../../src/study/session/learningSoftWaitCopy";
 
 describe("learningSoftWaitFollowUpCopy", () => {
   it("clarifies session short-term park for plural pending", () => {

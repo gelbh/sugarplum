@@ -8,7 +8,7 @@ import {
 import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { clampStudyPrefs } from "../../src/study/policyPrefs";
+import { clampStudyPrefs } from "../../src/study/queue/policyPrefs";
 
 afterEach(async () => {
   await resetTestDb(cfEnv);

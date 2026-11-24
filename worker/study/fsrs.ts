@@ -3,12 +3,12 @@ import {
   schedulerForPrefs,
   type FsrsPrefs,
 } from "../../src/study/fsrs/fsrsFactory";
-import { DEFAULT_STUDY_PREFS } from "../../src/study/policyPrefs";
+import { DEFAULT_STUDY_PREFS } from "../../src/study/queue/policyPrefs";
 import { normalizeSchedulerCard } from "../../src/study/fsrs/fsrsReplay";
 import {
   emptyFsrsCard,
   type FsrsSchedulerCard,
-} from "../../src/study/retrievability";
+} from "../../src/study/fsrs/retrievability";
 
 export type { FsrsSchedulerCard as Card, Grade };
 export { Rating };
@@ -88,4 +88,4 @@ export {
   retrievability,
   scheduleColumnsFromCard,
   type ScheduleRowLike,
-} from "../../src/study/retrievability";
+} from "../../src/study/fsrs/retrievability";

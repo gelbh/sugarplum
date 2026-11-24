@@ -1,7 +1,7 @@
 import { replayMemoryFromLogs } from "../../src/study/fsrs/fsrsCutover";
 import type { FsrsPrefs } from "../../src/study/fsrs/fsrsFactory";
 import type { ReviewLogReplayRow } from "../../src/study/fsrs/fsrsReplay";
-import type { ScheduleRowLike } from "../../src/study/retrievability";
+import type { ScheduleRowLike } from "../../src/study/fsrs/retrievability";
 import { prepareCutoverMemoryUpdate } from "./scheduleWrite";
 
 const D1_BATCH_SIZE = 50;

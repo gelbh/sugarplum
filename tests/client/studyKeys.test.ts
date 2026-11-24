@@ -7,7 +7,7 @@ import {
   plainShortcutKey,
   resolveStudyKey,
   reviewArrowDecision,
-} from "../../src/study/studyKeys";
+} from "../../src/study/session/studyKeys";
 
 describe("resolveStudyKey", () => {
   it("Space reveals the question face and hides the answer face", () => {

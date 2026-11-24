@@ -5,9 +5,9 @@ import {
   DEFAULT_EASY_DAYS,
   type EasyDay,
   type LoadBalanceContext,
-} from "../../src/study/loadBalance";
-import type { FsrsSchedulerCard } from "../../src/study/retrievability";
-import { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "../../src/study/policyPrefs";
+} from "../../src/study/queue/loadBalance";
+import type { FsrsSchedulerCard } from "../../src/study/fsrs/retrievability";
+import { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "../../src/study/queue/policyPrefs";
 
 function reviewCard(overrides: Partial<FsrsSchedulerCard> = {}): FsrsSchedulerCard {
   const now = overrides.lastReviewAt ?? new Date("2026-11-10T12:00:00.000Z");

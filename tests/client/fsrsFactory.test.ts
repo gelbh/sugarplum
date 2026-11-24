@@ -4,7 +4,7 @@ import {
   clearSchedulerCache,
   schedulerForPrefs,
 } from "../../src/study/fsrs/fsrsFactory";
-import { cardFromScheduleRow } from "../../src/study/retrievability";
+import { cardFromScheduleRow } from "../../src/study/fsrs/retrievability";
 import { State } from "ts-fsrs";
 
 describe("schedulerForPrefs", () => {

@@ -2,7 +2,7 @@ import react from "@vitejs/plugin-react";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
-import { STUDY_MEDIA_CACHE } from "./src/study/studyMediaCache";
+import { STUDY_MEDIA_CACHE } from "./src/study/media/studyMediaCache";
 import { patchSqlJsForWorkers } from "./vite/patchSqlJsPlugin";
 
 export default defineConfig({

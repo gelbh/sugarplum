@@ -10,7 +10,7 @@ import {
   useUnlockToasts,
   VISIBLE_MS,
 } from "../../src/achievements/UnlockToastProvider";
-import { StudyChromeProvider } from "../../src/study/StudyChromeContext";
+import { StudyChromeProvider } from "../../src/study/session/StudyChromeContext";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }

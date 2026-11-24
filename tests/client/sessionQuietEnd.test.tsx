@@ -5,7 +5,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import SessionQuietEnd from "../../src/study/SessionQuietEnd";
+import SessionQuietEnd from "../../src/study/session/SessionQuietEnd";
 import { theme } from "../../src/theme";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =

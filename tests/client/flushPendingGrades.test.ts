@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../src/api/client";
-import { flushPendingGrades } from "../../src/study/flushPendingGrades";
-import type { PendingGrade } from "../../src/study/pendingGrades";
+import { flushPendingGrades } from "../../src/study/grading/flushPendingGrades";
+import type { PendingGrade } from "../../src/study/grading/pendingGrades";
 
 function grade(
   cardId: string,

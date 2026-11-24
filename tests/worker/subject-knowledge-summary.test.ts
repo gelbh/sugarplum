@@ -13,7 +13,7 @@ import { afterEach, describe, it, expect } from "vitest";
 import { State } from "ts-fsrs";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { composeSubjectKnowledge } from "../../src/study/subjectKnowledge";
+import { composeSubjectKnowledge } from "../../src/study/queue/subjectKnowledge";
 import {
   recomputeSubjectKnowledgeSummary,
   compositionJsonFromSummary,

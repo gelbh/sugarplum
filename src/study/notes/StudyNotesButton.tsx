@@ -1,7 +1,7 @@
 import Button from "@mui/material/Button";
 import type { MouseEvent } from "react";
-import KeyChip from "../KeyChip";
-import { FACE_SANS } from "../studyFaceSx";
+import KeyChip from "../session/KeyChip";
+import { FACE_SANS } from "../faces/studyFaceSx";
 
 export function StudyNotesButton({ onOpenNotes }: { onOpenNotes: () => void }) {
   return (
