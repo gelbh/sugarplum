@@ -4,6 +4,7 @@ import {
   cardMatchesWorkshopQuery,
   materialMatchesWorkshopQuery,
   normalizeWorkshopQuery,
+  pruneIdsToVisible,
 } from "../../src/deckHub/workshopSearch";
 
 function card(
@@ -78,5 +79,30 @@ describe("workshopSearch", () => {
   it("uses kind fallback title when filename missing", () => {
     const m = material({ id: "1", kind: "paste", filename: null });
     expect(materialMatchesWorkshopQuery(m, "text")).toBe(true);
+  });
+
+  describe("pruneIdsToVisible", () => {
+    it("drops ids that are not visible", () => {
+      const selected = new Set(["a", "b", "c"]);
+      const next = pruneIdsToVisible(selected, ["a", "c"]);
+      expect([...next].sort()).toEqual(["a", "c"]);
+    });
+
+    it("keeps still-visible ids", () => {
+      const selected = new Set(["a", "b"]);
+      const next = pruneIdsToVisible(selected, ["a", "b", "c"]);
+      expect([...next].sort()).toEqual(["a", "b"]);
+    });
+
+    it("returns the same Set reference when unchanged", () => {
+      const selected = new Set(["a", "b"]);
+      const next = pruneIdsToVisible(selected, ["a", "b", "c"]);
+      expect(next).toBe(selected);
+    });
+
+    it("returns the same empty Set when selected is empty", () => {
+      const selected = new Set<string>();
+      expect(pruneIdsToVisible(selected, ["a"])).toBe(selected);
+    });
   });
 });

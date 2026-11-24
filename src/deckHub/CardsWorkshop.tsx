@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useDeferredValue } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
@@ -20,6 +20,7 @@ import ViewListOutlinedIcon from "@mui/icons-material/ViewListOutlined";
 import EmptyNext from "./EmptyNext";
 import type { CardDraftView } from "../api/client";
 import { cardFrontPreview } from "../draftReview";
+import CardPreviewDialog from "./CardPreviewDialog";
 import DiyCardPreview from "./DiyCardPreview";
 import WorkshopSearchField from "./WorkshopSearchField";
 import {
@@ -91,6 +92,7 @@ type Props = {
   onToggleSelect: (id: string) => void;
   onSelectAll: (cards: CardDraftView[]) => void;
   onClearSelection: () => void;
+  onPruneSelection: (visibleIds: Iterable<string>) => void;
   archiveBusyId: string | null;
   batchBusy: boolean;
   onBatchArchive: () => void;
@@ -111,6 +113,7 @@ export default function CardsWorkshop({
   onToggleSelect,
   onSelectAll,
   onClearSelection,
+  onPruneSelection,
   archiveBusyId,
   batchBusy,
   onBatchArchive,
@@ -124,10 +127,24 @@ export default function CardsWorkshop({
 }: Props) {
   const [view, setView] = useState<ViewMode>(() => readViewMode());
   const [query, setQuery] = useState("");
+  const [previewCard, setPreviewCard] = useState<CardDraftView | null>(null);
+  const deferredQuery = useDeferredValue(query);
   const busy = archiveBusyId !== null || batchBusy;
   const selectedCount = selectedIds.size;
-  const visible = cards.filter((c) => cardMatchesWorkshopQuery(c, query));
-  const searching = normalizeWorkshopQuery(query) !== "";
+  const visible = cards.filter((c) =>
+    cardMatchesWorkshopQuery(c, deferredQuery),
+  );
+  const searching = normalizeWorkshopQuery(deferredQuery) !== "";
+
+  function handleQueryChange(next: string) {
+    setQuery(next);
+    onPruneSelection(
+      cards
+        .filter((card) => cardMatchesWorkshopQuery(card, next))
+        .map((card) => card.id),
+    );
+  }
+
   const allSelected =
     visible.length > 0 && visible.every((card) => selectedIds.has(card.id));
   const someSelected =
@@ -195,7 +212,7 @@ export default function CardsWorkshop({
           {cards.length > 0 ? (
             <WorkshopSearchField
               value={query}
-              onChange={setQuery}
+              onChange={handleQueryChange}
               placeholder="Search cards…"
               ariaLabel="Search cards"
               ariaControls="cards-workshop-results"
@@ -247,7 +264,10 @@ export default function CardsWorkshop({
               <Switch
                 size="small"
                 checked={showArchived}
-                onChange={(_ev, checked) => onShowArchivedChange(checked)}
+                onChange={(_ev, checked) => {
+                  setQuery("");
+                  onShowArchivedChange(checked);
+                }}
                 disabled={busy}
               />
             }
@@ -436,7 +456,7 @@ export default function CardsWorkshop({
               }}
             >
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                {`No cards match "${query.trim()}"`}
+                {`No cards match "${deferredQuery.trim()}"`}
               </Typography>
             </Box>
           ) : view === "icons" ? (
@@ -517,8 +537,18 @@ export default function CardsWorkshop({
                       }}
                     >
                       <Box
+                        component="button"
+                        type="button"
+                        aria-label={`Preview ${cardFrontPreview(card)}`}
+                        onClick={() => setPreviewCard(card)}
                         sx={{
+                          display: "block",
                           width: "100%",
+                          p: 0,
+                          m: 0,
+                          border: 0,
+                          bgcolor: "transparent",
+                          cursor: "pointer",
                           aspectRatio: "var(--sp-card-aspect)",
                           minHeight: 0,
                           overflow: "hidden",
@@ -526,6 +556,15 @@ export default function CardsWorkshop({
                           // Isolate 3D flip paint so rotateY stays inside the slot.
                           isolation: "isolate",
                           contain: "paint",
+                          transition: "box-shadow 140ms ease, outline-color 140ms ease",
+                          outline: "2px solid transparent",
+                          outlineOffset: 2,
+                          "&:hover": {
+                            outlineColor: "rgba(209, 163, 226, 0.45)",
+                          },
+                          "&:focus-visible": {
+                            outlineColor: "rgba(209, 163, 226, 0.75)",
+                          },
                         }}
                       >
                         <DiyCardPreview card={card} variant="tile" />
@@ -647,14 +686,40 @@ export default function CardsWorkshop({
                         },
                       }}
                     />
-                    <Box sx={{ flex: 1, minWidth: 0, py: 0.25 }}>
+                    <Box
+                      component="button"
+                      type="button"
+                      aria-label={`Preview ${cardFrontPreview(card)}`}
+                      onClick={() => setPreviewCard(card)}
+                      sx={{
+                        flex: 1,
+                        minWidth: 0,
+                        py: 0.25,
+                        px: 0,
+                        m: 0,
+                        border: 0,
+                        bgcolor: "transparent",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        borderRadius: 1,
+                        "&:hover .sp-card-row-title": {
+                          color: "primary.light",
+                        },
+                        "&:focus-visible": {
+                          outline: "2px solid rgba(209, 163, 226, 0.75)",
+                          outlineOffset: 2,
+                        },
+                      }}
+                    >
                       <Typography
+                        className="sp-card-row-title"
                         variant="body2"
                         noWrap
                         sx={{
                           fontWeight: 500,
                           color: "rgba(245, 245, 245, 0.92)",
                           lineHeight: 1.35,
+                          transition: "color 140ms ease",
                         }}
                       >
                         {cardFrontPreview(card)}
@@ -707,6 +772,12 @@ export default function CardsWorkshop({
           )}
         </>
       )}
+      <CardPreviewDialog
+        card={previewCard}
+        busy={busy}
+        onClose={() => setPreviewCard(null)}
+        onEdit={onEdit}
+      />
     </Stack>
   );
 }

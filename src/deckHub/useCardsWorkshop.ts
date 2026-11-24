@@ -1,10 +1,16 @@
-import { useState, type Dispatch, type SetStateAction } from "react";
+import {
+  useCallback,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import {
   ApiError,
   archiveCard,
   restoreCard,
   type CardDraftView,
 } from "../api/client";
+import { pruneIdsToVisible } from "./workshopSearch";
 
 type Args = {
   setCards: Dispatch<SetStateAction<CardDraftView[]>>;
@@ -53,6 +59,10 @@ export function useCardsWorkshop({
       return new Set(ids);
     });
   }
+
+  const pruneSelection = useCallback((visibleIds: Iterable<string>) => {
+    setSelectedCardIds((prev) => pruneIdsToVisible(prev, visibleIds));
+  }, []);
 
   function onShowArchivedChange(checked: boolean) {
     setShowArchived(checked);
@@ -158,6 +168,7 @@ export function useCardsWorkshop({
     clearSelection,
     onToggleSelect,
     onSelectAll,
+    pruneSelection,
     onArchiveCard,
     onRestoreCard,
     onBatchArchive,
