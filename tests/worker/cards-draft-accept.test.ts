@@ -7,7 +7,6 @@ import {
   seedCard,
   seedCardsReviewOwner,
   seedDeck,
-  seedMaterial,
   seedNeedsReviewJob,
   seedSchedule,
   seedSession,
@@ -142,29 +141,13 @@ describe("draft review / accept gate", () => {
   it("accept-safe accepts only quality survivors and leaves junk as draft", async () => {
     const env = cfEnv;
     await seedCardsReviewOwner(env);
-    await seedMaterial(env, {
-      id: "mat-safe",
-      deck_id: "deck-a",
-      kind: "paste",
-      r2_key: null,
-      filename: null,
-      page_count: null,
-      status: "ready",
-      created_at: "2026-01-01T00:00:00.000Z",
+    await seedNeedsReviewJob(env, {
+      jobId: "job-safe",
+      materialId: "mat-safe",
+      deckId: "deck-a",
+      cards: [],
+      finishedAt: "2026-01-01T00:01:00.000Z",
     });
-    await env.DB.prepare(
-      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    )
-      .bind(
-        "job-safe",
-        "mat-safe",
-        "needs_review",
-        null,
-        null,
-        "2026-01-01T00:00:00.000Z",
-        "2026-01-01T00:01:00.000Z",
-      )
-      .run();
 
     await seedCard(env, {
       id: "safe-1",
@@ -301,54 +284,15 @@ describe("draft review / accept gate", () => {
   it("accept-all accepts every draft for the job and schedules them", async () => {
     const env = cfEnv;
     await seedCardsReviewOwner(env);
-    await seedMaterial(env, {
-      id: "mat-1",
-      deck_id: "deck-a",
-      kind: "paste",
-      r2_key: null,
-      filename: null,
-      page_count: null,
-      status: "ready",
-      created_at: "2026-01-01T00:00:00.000Z",
+    await seedNeedsReviewJob(env, {
+      jobId: "job-bulk",
+      materialId: "mat-1",
+      deckId: "deck-a",
+      cards: [{ id: "d1" }, { id: "d2" }],
+      finishedAt: "2026-01-01T00:01:00.000Z",
     });
-    await env.DB.prepare(
-      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    )
-      .bind(
-        "job-bulk",
-        "mat-1",
-        "needs_review",
-        null,
-        null,
-        "2026-01-01T00:00:00.000Z",
-        "2026-01-01T00:01:00.000Z",
-      )
-      .run();
 
-    for (const id of ["d1", "d2"]) {
-      await seedCard(env, {
-        id,
-        deck_id: "deck-a",
-        job_id: "job-bulk",
-        type: "qa",
-        front_json: JSON.stringify(`${id}?`),
-        back_json: JSON.stringify("A"),
-        media_r2_keys_json: null,
-        provenance_json: JSON.stringify({ pages: [1], excerpt: id }),
-        status: "draft",
-        created_at: "2026-01-01T00:00:00.000Z",
-        updated_at: "2026-01-01T00:00:00.000Z",
-      });
-    }
-
-    const res = await app.request(
-      "/api/jobs/job-bulk/drafts/accept-all",
-      {
-        method: "POST",
-        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
-      },
-      env,
-    );
+    const res = await postAcceptAll(env, "job-bulk");
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       accepted: number;
@@ -521,29 +465,12 @@ describe("draft review / accept gate", () => {
   it("accept-all CAS miss does not insert a schedule or 500", async () => {
     const env = cfEnv;
     await seedCardsReviewOwner(env);
-    await seedMaterial(env, {
-      id: "mat-1",
-      deck_id: "deck-a",
-      kind: "paste",
-      r2_key: null,
-      filename: null,
-      page_count: null,
-      status: "ready",
-      created_at: "2026-01-01T00:00:00.000Z",
+    await seedNeedsReviewJob(env, {
+      jobId: "job-cas",
+      materialId: "mat-1",
+      deckId: "deck-a",
+      cards: [],
     });
-    await env.DB.prepare(
-      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    )
-      .bind(
-        "job-cas",
-        "mat-1",
-        "needs_review",
-        null,
-        null,
-        "2026-01-01T00:00:00.000Z",
-        null,
-      )
-      .run();
 
     await seedCard(env, {
       id: "d-cas",
@@ -575,14 +502,7 @@ describe("draft review / accept gate", () => {
     // After drafts are listed, flip d-cas so UPDATE CAS misses (concurrent accept).
     const envWithFlip = withDraftListCasFlip(env, "d-cas");
 
-    const res = await app.request(
-      "/api/jobs/job-cas/drafts/accept-all",
-      {
-        method: "POST",
-        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
-      },
-      envWithFlip,
-    );
+    const res = await postAcceptAll(envWithFlip, "job-cas");
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       accepted: number;
@@ -602,29 +522,12 @@ describe("draft review / accept gate", () => {
   it("accept-all counts schedule races as failed without 500", async () => {
     const env = cfEnv;
     await seedCardsReviewOwner(env);
-    await seedMaterial(env, {
-      id: "mat-1",
-      deck_id: "deck-a",
-      kind: "paste",
-      r2_key: null,
-      filename: null,
-      page_count: null,
-      status: "ready",
-      created_at: "2026-01-01T00:00:00.000Z",
+    await seedNeedsReviewJob(env, {
+      jobId: "job-race",
+      materialId: "mat-1",
+      deckId: "deck-a",
+      cards: [],
     });
-    await env.DB.prepare(
-      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    )
-      .bind(
-        "job-race",
-        "mat-1",
-        "needs_review",
-        null,
-        null,
-        "2026-01-01T00:00:00.000Z",
-        null,
-      )
-      .run();
 
     await seedCard(env, {
       id: "d-race",
@@ -667,14 +570,7 @@ describe("draft review / accept gate", () => {
       updated_at: "2026-01-01T00:00:01.000Z",
     });
 
-    const res = await app.request(
-      "/api/jobs/job-race/drafts/accept-all",
-      {
-        method: "POST",
-        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
-      },
-      env,
-    );
+    const res = await postAcceptAll(env, "job-race");
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       accepted: number;
@@ -700,29 +596,12 @@ describe("draft review / accept gate", () => {
       created_at: "2026-01-01T00:00:00.000Z",
     });
     await seedSession(env, "sess-b", "user-b");
-    await seedMaterial(env, {
-      id: "mat-1",
-      deck_id: "deck-a",
-      kind: "paste",
-      r2_key: null,
-      filename: null,
-      page_count: null,
-      status: "ready",
-      created_at: "2026-01-01T00:00:00.000Z",
+    await seedNeedsReviewJob(env, {
+      jobId: "job-bulk",
+      materialId: "mat-1",
+      deckId: "deck-a",
+      cards: [],
     });
-    await env.DB.prepare(
-      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    )
-      .bind(
-        "job-bulk",
-        "mat-1",
-        "needs_review",
-        null,
-        null,
-        "2026-01-01T00:00:00.000Z",
-        null,
-      )
-      .run();
 
     const res = await app.request(
       "/api/jobs/job-bulk/drafts/accept-all",

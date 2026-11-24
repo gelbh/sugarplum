@@ -50,6 +50,7 @@ export async function seedNeedsReviewJob(
     materialId: string;
     deckId: string;
     cards: { id: string; status?: "draft" | "accepted" }[];
+    finishedAt?: string | null;
   },
 ): Promise<void> {
   await seedMaterial(env, {
@@ -62,19 +63,16 @@ export async function seedNeedsReviewJob(
     status: "ready",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  await env.DB.prepare(
-    "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-  )
-    .bind(
-      opts.jobId,
-      opts.materialId,
-      "needs_review",
-      null,
-      null,
-      "2026-01-01T00:00:00.000Z",
-      null,
-    )
-    .run();
+  await seedGenerationJob(env, {
+    id: opts.jobId,
+    material_id: opts.materialId,
+    status: "needs_review",
+    error: null,
+    coverage_json: null,
+    progress_json: null,
+    created_at: "2026-01-01T00:00:00.000Z",
+    finished_at: opts.finishedAt ?? null,
+  });
   for (const card of opts.cards) {
     await seedCard(env, {
       id: card.id,

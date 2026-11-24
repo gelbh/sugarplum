@@ -5,6 +5,7 @@ import {
   seedCard,
   seedCardsReviewOwner,
   seedMaterial,
+  seedNeedsReviewJob,
 } from "./harness";
 import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
@@ -177,29 +178,12 @@ describe("PATCH /api/cards draft fields", () => {
   it("lists mcq drafts with back and options", async () => {
     const env = cfEnv;
     await seedCardsReviewOwner(env);
-    await seedMaterial(env, {
-      id: "mat-mcq",
-      deck_id: "deck-a",
-      kind: "paste",
-      r2_key: null,
-      filename: null,
-      page_count: null,
-      status: "ready",
-      created_at: "2026-01-01T00:00:00.000Z",
+    await seedNeedsReviewJob(env, {
+      jobId: "job-mcq",
+      materialId: "mat-mcq",
+      deckId: "deck-a",
+      cards: [],
     });
-    await env.DB.prepare(
-      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    )
-      .bind(
-        "job-mcq",
-        "mat-mcq",
-        "needs_review",
-        null,
-        null,
-        "2026-01-01T00:00:00.000Z",
-        null,
-      )
-      .run();
     const options = ["Adenosine triphosphate", "Adenosine diphosphate", "RNA"];
     await seedCard(env, {
       id: "card-mcq",
