@@ -42,7 +42,7 @@ export async function seedCardsReviewOwner(env: Bindings): Promise<void> {
   });
 }
 
-export async function seedNeedsReviewJob(
+export async function seedCardsReviewDraftJob(
   env: Bindings,
   opts: {
     jobId: string;

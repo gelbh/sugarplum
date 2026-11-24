@@ -2,17 +2,16 @@ import { env as cfEnv } from "cloudflare:workers";
 import {
   getCards,
   getSchedules,
-  postAcceptAll,
   resetTestDb,
   seedCard,
+  seedCardsReviewDraftJob,
   seedCardsReviewOwner,
   seedDeck,
-  seedNeedsReviewJob,
   seedSchedule,
   seedSession,
   seedUser,
-  withDraftListCasFlip,
 } from "./harness";
+import { postAcceptAll, withDraftListCasFlip } from "./harness/cards";
 import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
@@ -141,7 +140,7 @@ describe("draft review / accept gate", () => {
   it("accept-safe accepts only quality survivors and leaves junk as draft", async () => {
     const env = cfEnv;
     await seedCardsReviewOwner(env);
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-safe",
       materialId: "mat-safe",
       deckId: "deck-a",
@@ -206,13 +205,13 @@ describe("draft review / accept gate", () => {
   it("accept-safe does not reject drafts on other owned needs_review jobs", async () => {
     const env = cfEnv;
     await seedCardsReviewOwner(env);
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-safe-a",
       materialId: "mat-safe-a",
       deckId: "deck-a",
       cards: [],
     });
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-safe-b",
       materialId: "mat-safe-b",
       deckId: "deck-a",
@@ -284,7 +283,7 @@ describe("draft review / accept gate", () => {
   it("accept-all accepts every draft for the job and schedules them", async () => {
     const env = cfEnv;
     await seedCardsReviewOwner(env);
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-bulk",
       materialId: "mat-1",
       deckId: "deck-a",
@@ -312,13 +311,13 @@ describe("draft review / accept gate", () => {
   it("accept-all rejects draft cards on other owned needs_review jobs", async () => {
     const env = cfEnv;
     await seedCardsReviewOwner(env);
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-a",
       materialId: "mat-a",
       deckId: "deck-a",
       cards: [{ id: "a1" }, { id: "a2" }],
     });
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-b",
       materialId: "mat-b",
       deckId: "deck-a",
@@ -351,13 +350,13 @@ describe("draft review / accept gate", () => {
   it("accept-all with failures leaves sibling drafts untouched", async () => {
     const env = cfEnv;
     await seedCardsReviewOwner(env);
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-fail",
       materialId: "mat-a",
       deckId: "deck-a",
       cards: [{ id: "d-cas" }, { id: "d-ok" }],
     });
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-sib",
       materialId: "mat-b",
       deckId: "deck-a",
@@ -383,13 +382,13 @@ describe("draft review / accept gate", () => {
   it("accept-all with zero drafts does not reject siblings", async () => {
     const env = cfEnv;
     await seedCardsReviewOwner(env);
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-empty",
       materialId: "mat-empty",
       deckId: "deck-a",
       cards: [],
     });
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-sib",
       materialId: "mat-sib",
       deckId: "deck-a",
@@ -431,13 +430,13 @@ describe("draft review / accept gate", () => {
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-mine",
       materialId: "mat-a",
       deckId: "deck-a",
       cards: [{ id: "mine-draft" }],
     });
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-other",
       materialId: "mat-other",
       deckId: "deck-b",
@@ -465,7 +464,7 @@ describe("draft review / accept gate", () => {
   it("accept-all CAS miss does not insert a schedule or 500", async () => {
     const env = cfEnv;
     await seedCardsReviewOwner(env);
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-cas",
       materialId: "mat-1",
       deckId: "deck-a",
@@ -522,7 +521,7 @@ describe("draft review / accept gate", () => {
   it("accept-all counts schedule races as failed without 500", async () => {
     const env = cfEnv;
     await seedCardsReviewOwner(env);
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-race",
       materialId: "mat-1",
       deckId: "deck-a",
@@ -596,7 +595,7 @@ describe("draft review / accept gate", () => {
       created_at: "2026-01-01T00:00:00.000Z",
     });
     await seedSession(env, "sess-b", "user-b");
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-bulk",
       materialId: "mat-1",
       deckId: "deck-a",

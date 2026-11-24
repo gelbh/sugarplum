@@ -15,5 +15,5 @@ export * from "./harness/recorders";
 export * from "./harness/seed";
 export * from "./harness/inspect";
 export * from "./harness/reset";
-export * from "./harness/cards";
+export { seedCardsReviewOwner, seedCardsReviewDraftJob } from "./harness/cards";
 export * from "./harness/admin";

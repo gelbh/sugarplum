@@ -5,7 +5,7 @@ import {
   seedCard,
   seedCardsReviewOwner,
   seedMaterial,
-  seedNeedsReviewJob,
+  seedCardsReviewDraftJob,
 } from "./harness";
 import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
@@ -178,7 +178,7 @@ describe("PATCH /api/cards draft fields", () => {
   it("lists mcq drafts with back and options", async () => {
     const env = cfEnv;
     await seedCardsReviewOwner(env);
-    await seedNeedsReviewJob(env, {
+    await seedCardsReviewDraftJob(env, {
       jobId: "job-mcq",
       materialId: "mat-mcq",
       deckId: "deck-a",
