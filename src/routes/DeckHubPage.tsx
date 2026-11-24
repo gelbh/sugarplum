@@ -15,6 +15,8 @@ import {
 } from "../materials";
 import {
   DeckHubCreateView,
+  deckHubCreateCardUi,
+  deckHubCreateMaterialUi,
   DeckHubDialogs,
   DeckHubHubView,
   DeckHubWorkshopView,
@@ -296,9 +298,9 @@ export default function DeckHubPage({ deckId }: Props) {
               tab={nav.topWorkshop?.tab ?? null}
               onTabChange={material.onTabChange}
               onCancel={nav.onWorkshopBack}
-              material={material}
-              create={create}
               deckImageKeys={deckImageKeys}
+              materialUi={deckHubCreateMaterialUi(material)}
+              createUi={deckHubCreateCardUi(create)}
             />
           ) : nav.workshopOpen ? (
             <DeckHubWorkshopView

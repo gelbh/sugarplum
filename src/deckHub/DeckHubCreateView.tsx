@@ -1,3 +1,4 @@
+import type { FormEvent, RefObject } from "react";
 import Box from "@mui/material/Box";
 import {
   PdfCompressConsent,
@@ -5,21 +6,74 @@ import {
   PptxSplitConsent,
   fileSizeCapMb,
 } from "../materials";
+import type { CardDraftView, CardType } from "../api/client";
+import type { DraftEditorChange } from "../draftReview/kernel";
 import AddMaterialWorkshop, {
   type AddMaterialTab,
 } from "./AddMaterialWorkshop";
-import type { CreateCardController } from "./useCreateCardController";
-import type { useAddMaterialWorkshop } from "./useAddMaterialWorkshop";
 
-type MaterialBinder = ReturnType<typeof useAddMaterialWorkshop>;
+export type DeckHubCreateMaterialUi = {
+  materialError: string | null;
+  materialNotice: string | null;
+  resetMaterialMessages: () => void;
+  materialBusy: boolean;
+  readingScan: boolean;
+  pasteText: string;
+  setPasteText: (value: string) => void;
+  pasteFilename: string;
+  setPasteFilename: (value: string) => void;
+  alsoCover: string;
+  setAlsoCover: (value: string) => void;
+  onGuestPaste: (e?: FormEvent) => void;
+  onAccountPaste: (e?: FormEvent) => void;
+  uploadFile: File | null;
+  setUploadFile: (file: File | null) => void;
+  setFigureFiles: (files: File[]) => void;
+  figureFiles: File[];
+  onUploadFile: (e?: FormEvent) => void;
+  offerLearningObjectives: boolean;
+  submitLabel: "Continue" | "Start generation";
+  submitDisabled?: boolean;
+  freePathImageHelper: string | null;
+  pdfSplitOpen: boolean;
+  pdfSplitProgress: string | null;
+  onPdfSplitConfirm: () => void | Promise<void>;
+  onPdfSplitCancel: () => void;
+  pptxSplitOpen: boolean;
+  pptxSplitProgress: string | null;
+  onPptxSplitConfirm: () => void | Promise<void>;
+  onPptxSplitCancel: () => void;
+  pdfCompressOpen: boolean;
+  pdfCompressProgress: string | null;
+  onPdfCompressConfirm: () => void | Promise<void>;
+  onPdfCompressCancel: () => void;
+};
+
+export type DeckHubCreateCardUi = {
+  createCard: CardDraftView;
+  createBusy: boolean;
+  createImageBusy: boolean;
+  createError: string | null;
+  createNotice: string | null;
+  createSessionHasCard: boolean;
+  createNeedsImage: boolean;
+  createImageKey: string;
+  createImageInputRef: RefObject<HTMLInputElement | null>;
+  onCreateChange: (next: DraftEditorChange) => void;
+  onCreateCard: (e?: FormEvent) => void;
+  onCreateImageUpload: (file: File) => void;
+  applyCreateImageKey: (key: string) => void;
+  clearCreateNotice: () => void;
+  hubDiyAllowedTypes: CardType[];
+};
 
 export type DeckHubCreateViewProps = {
   guest: boolean;
   tab: AddMaterialTab | null;
   onTabChange: (tab: AddMaterialTab | null) => void;
   onCancel: () => void;
-  material: MaterialBinder;
-  create: CreateCardController;
+  materialUi: DeckHubCreateMaterialUi;
+  createUi: DeckHubCreateCardUi;
   deckImageKeys: string[];
 };
 
@@ -28,8 +82,8 @@ export default function DeckHubCreateView({
   tab,
   onTabChange,
   onCancel,
-  material,
-  create,
+  materialUi,
+  createUi,
   deckImageKeys,
 }: DeckHubCreateViewProps) {
   return (
@@ -55,79 +109,79 @@ export default function DeckHubCreateView({
         tab={tab}
         onTabChange={onTabChange}
         onCancel={onCancel}
-        materialError={material.materialError}
-        materialNotice={material.materialNotice}
-        onClearMaterialMessages={material.resetMaterialMessages}
-        materialBusy={material.materialBusy}
-        readingScan={material.readingScan}
-        pasteText={material.pasteText}
-        onPasteTextChange={material.setPasteText}
-        pasteFilename={material.pasteFilename}
-        onPasteFilenameChange={material.setPasteFilename}
-        alsoCover={material.alsoCover}
-        onAlsoCoverChange={material.setAlsoCover}
-        onGuestPaste={material.onGuestPaste}
-        onAccountPaste={material.onAccountPaste}
-        uploadFile={material.uploadFile}
-        onUploadFileChange={material.setUploadFile}
-        onFigureFilesChange={material.setFigureFiles}
-        onUploadFile={material.onUploadFile}
-        offerLearningObjectives={material.offerLearningObjectives}
-        submitLabel={material.submitLabel}
-        submitDisabled={material.submitDisabled}
-        freePathImageHelper={material.freePathImageHelper}
+        materialError={materialUi.materialError}
+        materialNotice={materialUi.materialNotice}
+        onClearMaterialMessages={materialUi.resetMaterialMessages}
+        materialBusy={materialUi.materialBusy}
+        readingScan={materialUi.readingScan}
+        pasteText={materialUi.pasteText}
+        onPasteTextChange={materialUi.setPasteText}
+        pasteFilename={materialUi.pasteFilename}
+        onPasteFilenameChange={materialUi.setPasteFilename}
+        alsoCover={materialUi.alsoCover}
+        onAlsoCoverChange={materialUi.setAlsoCover}
+        onGuestPaste={materialUi.onGuestPaste}
+        onAccountPaste={materialUi.onAccountPaste}
+        uploadFile={materialUi.uploadFile}
+        onUploadFileChange={materialUi.setUploadFile}
+        onFigureFilesChange={materialUi.setFigureFiles}
+        onUploadFile={materialUi.onUploadFile}
+        offerLearningObjectives={materialUi.offerLearningObjectives}
+        submitLabel={materialUi.submitLabel}
+        submitDisabled={materialUi.submitDisabled}
+        freePathImageHelper={materialUi.freePathImageHelper}
         renderUploadConsents={() => (
           <>
             <PdfSplitConsent
-              open={material.pdfSplitOpen}
-              fileName={material.uploadFile?.name ?? "PDF"}
-              figuresWillSkip={material.figureFiles.length > 0}
-              progressLabel={material.pdfSplitProgress}
-              busy={material.materialBusy}
+              open={materialUi.pdfSplitOpen}
+              fileName={materialUi.uploadFile?.name ?? "PDF"}
+              figuresWillSkip={materialUi.figureFiles.length > 0}
+              progressLabel={materialUi.pdfSplitProgress}
+              busy={materialUi.materialBusy}
               onConfirm={() => {
-                void material.onPdfSplitConfirm();
+                void materialUi.onPdfSplitConfirm();
               }}
-              onCancel={material.onPdfSplitCancel}
+              onCancel={materialUi.onPdfSplitCancel}
             />
             <PptxSplitConsent
-              open={material.pptxSplitOpen}
-              fileName={material.uploadFile?.name ?? "PPTX"}
+              open={materialUi.pptxSplitOpen}
+              fileName={materialUi.uploadFile?.name ?? "PPTX"}
               maxMb={fileSizeCapMb()}
-              progressLabel={material.pptxSplitProgress}
-              busy={material.materialBusy}
+              progressLabel={materialUi.pptxSplitProgress}
+              busy={materialUi.materialBusy}
               onConfirm={() => {
-                void material.onPptxSplitConfirm();
+                void materialUi.onPptxSplitConfirm();
               }}
-              onCancel={material.onPptxSplitCancel}
+              onCancel={materialUi.onPptxSplitCancel}
             />
             <PdfCompressConsent
-              open={material.pdfCompressOpen}
-              fileName={material.uploadFile?.name ?? "PDF"}
-              progressLabel={material.pdfCompressProgress}
-              busy={material.materialBusy}
+              open={materialUi.pdfCompressOpen}
+              fileName={materialUi.uploadFile?.name ?? "PDF"}
+              progressLabel={materialUi.pdfCompressProgress}
+              busy={materialUi.materialBusy}
               onConfirm={() => {
-                void material.onPdfCompressConfirm();
+                void materialUi.onPdfCompressConfirm();
               }}
-              onCancel={material.onPdfCompressCancel}
+              onCancel={materialUi.onPdfCompressCancel}
             />
           </>
         )}
-        createCard={create.createCard}
-        createBusy={create.createBusy}
-        createImageBusy={create.createImageBusy}
-        createError={create.createError}
-        createNotice={create.createNotice}
-        createSessionHasCard={create.createSessionHasCard}
-        createNeedsImage={create.createNeedsImage}
-        createImageKey={create.createImageKey}
+        createCard={createUi.createCard}
+        createBusy={createUi.createBusy}
+        createImageBusy={createUi.createImageBusy}
+        createError={createUi.createError}
+        createNotice={createUi.createNotice}
+        createSessionHasCard={createUi.createSessionHasCard}
+        createNeedsImage={createUi.createNeedsImage}
+        createImageKey={createUi.createImageKey}
         deckImageKeys={deckImageKeys}
-        createImageInputRef={create.createImageInputRef}
-        onCreateChange={create.onCreateChange}
-        onCreateCard={create.onCreateCard}
-        onCreateImageUpload={create.onCreateImageUpload}
-        applyCreateImageKey={create.applyCreateImageKey}
-        clearCreateNotice={create.clearCreateNotice}
-        hubDiyAllowedTypes={create.hubDiyAllowedTypes}
+        createImageInputRef={createUi.createImageInputRef}
+        onCreateChange={createUi.onCreateChange}
+        onCreateCard={createUi.onCreateCard}
+        onCreateImageUpload={createUi.onCreateImageUpload}
+        applyCreateImageKey={createUi.applyCreateImageKey}
+        clearCreateNotice={createUi.clearCreateNotice}
+        hubDiyAllowedTypes={createUi.hubDiyAllowedTypes}
       />
     </Box>
   );

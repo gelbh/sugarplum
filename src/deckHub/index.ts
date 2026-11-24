@@ -17,7 +17,13 @@ export { default as DeckHubMoveCardDialog } from "./DeckHubMoveCardDialog";
 export {
   default as DeckHubCreateView,
   type DeckHubCreateViewProps,
+  type DeckHubCreateMaterialUi,
+  type DeckHubCreateCardUi,
 } from "./DeckHubCreateView";
+export {
+  deckHubCreateMaterialUi,
+  deckHubCreateCardUi,
+} from "./deckHubCreateBinders";
 export {
   default as DeckHubWorkshopView,
   type DeckHubWorkshopViewProps,
