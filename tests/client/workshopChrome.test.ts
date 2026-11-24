@@ -4,7 +4,7 @@ import {
   ROW_ACTION,
   WORKSHOP_SURFACE,
   createWorkshopViewPref,
-} from "../../src/deckHub/workshopChrome";
+} from "../../src/deckHub/workshop/workshopChrome";
 
 describe("workshopChrome", () => {
   afterEach(() => {

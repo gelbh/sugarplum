@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { runHygieneRegenAll } from "../../src/deckHub/hygieneRegenAll";
+import { runHygieneRegenAll } from "../../src/deckHub/hygiene/hygieneRegenAll";
 import type { RegenCardType } from "../../src/api/types";
 
 function resolveType(type: string): RegenCardType | null {

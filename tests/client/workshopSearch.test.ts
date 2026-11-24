@@ -5,7 +5,7 @@ import {
   materialMatchesWorkshopQuery,
   normalizeWorkshopQuery,
   pruneIdsToVisible,
-} from "../../src/deckHub/workshopSearch";
+} from "../../src/deckHub/workshop/workshopSearch";
 
 function card(
   partial: Partial<CardDraftView> &

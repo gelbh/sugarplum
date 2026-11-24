@@ -5,15 +5,15 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import MissionBoard from "../../src/deckHub/MissionBoard";
+import MissionBoard from "../../src/deckHub/hub/MissionBoard";
 import {
   popWorkshop,
   pushWorkshop,
   replaceWorkshop,
   type WorkshopFrame,
-} from "../../src/deckHub/workshopStack";
-import WorkshopShell from "../../src/deckHub/WorkshopShell";
-import AddMaterialWorkshop from "../../src/deckHub/AddMaterialWorkshop";
+} from "../../src/deckHub/workshop/workshopStack";
+import WorkshopShell from "../../src/deckHub/workshop/WorkshopShell";
+import AddMaterialWorkshop from "../../src/deckHub/create/AddMaterialWorkshop";
 import type { CardDraftView } from "../../src/api/client";
 import { theme } from "../../src/theme";
 

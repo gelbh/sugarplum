@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DIY_OCCLUSION_FREE_PATH_NOTICE } from "../../src/deckHub/openDiyOcclusion";
+import { DIY_OCCLUSION_FREE_PATH_NOTICE } from "../../src/deckHub/diy/openDiyOcclusion";
 import {
   CREATE_FREE_PATH_IMAGE_NOTICE,
   createFreePathImageNotice,

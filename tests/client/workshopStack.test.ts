@@ -4,7 +4,7 @@ import {
   pushWorkshop,
   replaceWorkshop,
   type WorkshopFrame,
-} from "../../src/deckHub/workshopStack";
+} from "../../src/deckHub/workshop/workshopStack";
 
 describe("workshopStack", () => {
   it("pushes cards then diy addMaterial for Browse Create", () => {

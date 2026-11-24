@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 describe("DiyCardPreview fillHeight face slot", () => {
   it("uses intrinsic md maxWidth inside the fillHeight branch", () => {
     const src = readFileSync(
-      resolve(process.cwd(), "src/deckHub/DiyCardPreview.tsx"),
+      resolve(process.cwd(), "src/deckHub/diy/DiyCardPreview.tsx"),
       "utf8",
     );
     const fillBranch = src.match(

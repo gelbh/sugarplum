@@ -1,62 +1,62 @@
-export { default as CoverPickerDialog } from "./CoverPickerDialog";
-export { default as CoverPickerPanel } from "./CoverPickerPanel";
+export { default as CoverPickerDialog } from "./cover/CoverPickerDialog";
+export { default as CoverPickerPanel } from "./cover/CoverPickerPanel";
 export {
   DIALOG_PAPER_SX,
   DIALOG_TITLE_SX,
   DIALOG_CANCEL_SX,
   PRIMARY_PILL_SX,
   GHOST_PILL_SX,
-} from "./deckHubDialogSx";
-export { default as DeckHubDraftPickerDialog } from "./DeckHubDraftPickerDialog";
-export { default as DeckHubDeleteMaterialDialog } from "./DeckHubDeleteMaterialDialog";
-export { default as DeckHubResetScheduleDialog } from "./DeckHubResetScheduleDialog";
-export { default as DeckHubRenameDialog } from "./DeckHubRenameDialog";
-export { default as DeckHubDeleteDialog } from "./DeckHubDeleteDialog";
-export { default as DeckHubEditCardDialog } from "./DeckHubEditCardDialog";
-export { default as DeckHubMoveCardDialog } from "./DeckHubMoveCardDialog";
+} from "./dialogs/deckHubDialogSx";
+export { default as DeckHubDraftPickerDialog } from "./dialogs/DeckHubDraftPickerDialog";
+export { default as DeckHubDeleteMaterialDialog } from "./dialogs/DeckHubDeleteMaterialDialog";
+export { default as DeckHubResetScheduleDialog } from "./dialogs/DeckHubResetScheduleDialog";
+export { default as DeckHubRenameDialog } from "./dialogs/DeckHubRenameDialog";
+export { default as DeckHubDeleteDialog } from "./dialogs/DeckHubDeleteDialog";
+export { default as DeckHubEditCardDialog } from "./dialogs/DeckHubEditCardDialog";
+export { default as DeckHubMoveCardDialog } from "./dialogs/DeckHubMoveCardDialog";
 export {
   default as DeckHubCreateView,
   type DeckHubCreateViewProps,
   type DeckHubCreateMaterialUi,
   type DeckHubCreateCardUi,
-} from "./DeckHubCreateView";
+} from "./create/DeckHubCreateView";
 export {
   deckHubCreateMaterialUi,
   deckHubCreateCardUi,
-} from "./deckHubCreateBinders";
+} from "./create/deckHubCreateBinders";
 export {
   default as DeckHubWorkshopView,
   type DeckHubWorkshopViewProps,
-} from "./DeckHubWorkshopView";
+} from "./workshop/DeckHubWorkshopView";
 export {
   default as DeckHubHubView,
   type DeckHubHubViewProps,
-} from "./DeckHubHubView";
+} from "./hub/DeckHubHubView";
 export {
   default as DeckHubDialogs,
   type DeckHubDialogsProps,
-} from "./DeckHubDialogs";
-export { default as EmptyNext } from "./EmptyNext";
+} from "./dialogs/DeckHubDialogs";
+export { default as EmptyNext } from "./hub/EmptyNext";
 export {
   default as ClaimCoverageFilmstrip,
   type ClaimJumpTarget,
-} from "./ClaimCoverageFilmstrip";
-export { default as HubNavCard } from "./HubNavCard";
+} from "./hub/ClaimCoverageFilmstrip";
+export { default as HubNavCard } from "./hub/HubNavCard";
 export {
   FigureSuggestPanel,
   type FigureSuggestPanelProps,
-} from "./FigureSuggestPanel";
-export { hubDiyTypes } from "./hubDiyTypes";
+} from "./cover/FigureSuggestPanel";
+export { hubDiyTypes } from "./diy/hubDiyTypes";
 export {
   collectDeckImageKeys,
   validateHubCreateCard,
   type HubCreateValidation,
-} from "./hubDiyCreate";
+} from "./create/hubDiyCreate";
 export {
   occlusionMaskScrollTop,
   occlusionTileFocusTransform,
   type OcclusionMaskBox,
-} from "./occlusionLayout";
+} from "./diy/occlusionLayout";
 export {
   ensureLayoutSession,
   detectFigureBoxesOnCanvas,
@@ -69,44 +69,44 @@ export {
   type LetterboxMeta,
   type ParsedDetection,
   type DetectFigureResult,
-} from "./layoutOnnx";
+} from "./cover/layoutOnnx";
 export {
   MAX_IMAGE_BYTES,
   cssRectToSourceRect,
   assertWithinImageByteLimit,
   cropCanvasToPngFile,
-} from "./pdfPageRender";
-export { default as AddMaterialWorkshop } from "./AddMaterialWorkshop";
-export { default as CardsWorkshop } from "./CardsWorkshop";
-export { default as DeckHygienePanel } from "./DeckHygienePanel";
+} from "./cover/pdfPageRender";
+export { default as AddMaterialWorkshop } from "./create/AddMaterialWorkshop";
+export { default as CardsWorkshop } from "./cards/CardsWorkshop";
+export { default as DeckHygienePanel } from "./hygiene/DeckHygienePanel";
 export {
   createDeckHubWorkshopOpeners,
   type DeckHubWorkshopOpenersCtx,
-} from "./deckHubWorkshopOpeners";
-export { default as DeckHubTitleHeader } from "./DeckHubTitleHeader";
-export { default as MaterialsWorkshop } from "./MaterialsWorkshop";
-export { default as MissionBoard } from "./MissionBoard";
-export { default as StudyReadySheet } from "./StudyReadySheet";
-export { default as WorkshopShell } from "./WorkshopShell";
+} from "./workshop/deckHubWorkshopOpeners";
+export { default as DeckHubTitleHeader } from "./hub/DeckHubTitleHeader";
+export { default as MaterialsWorkshop } from "./materials/MaterialsWorkshop";
+export { default as MissionBoard } from "./hub/MissionBoard";
+export { default as StudyReadySheet } from "./hub/StudyReadySheet";
+export { default as WorkshopShell } from "./workshop/WorkshopShell";
 export {
   type WorkshopFrame,
   type WorkshopId,
   pushWorkshop,
   popWorkshop,
   replaceWorkshop,
-} from "./workshopStack";
-export { useCreateCardController } from "./useCreateCardController";
-export { useAddMaterialWorkshop } from "./useAddMaterialWorkshop";
-export { useCardsWorkshop } from "./useCardsWorkshop";
-export { useDeckHubCardMutations } from "./useDeckHubCardMutations";
-export { useDeckHubDeckLifecycle } from "./useDeckHubDeckLifecycle";
-export { useDeckHubDraftPicker } from "./useDeckHubDraftPicker";
-export { useDeckHubExport } from "./useDeckHubExport";
-export { useDeckHubLoad } from "./useDeckHubLoad";
-export { useDeckHubMaterialDelete } from "./useDeckHubMaterialDelete";
-export { useDeckHubWorkshopNav } from "./useDeckHubWorkshopNav";
-export { useStudyReadySheet } from "./useStudyReadySheet";
+} from "./workshop/workshopStack";
+export { useCreateCardController } from "./create/useCreateCardController";
+export { useAddMaterialWorkshop } from "./create/useAddMaterialWorkshop";
+export { useCardsWorkshop } from "./cards/useCardsWorkshop";
+export { useDeckHubCardMutations } from "./page/useDeckHubCardMutations";
+export { useDeckHubDeckLifecycle } from "./page/useDeckHubDeckLifecycle";
+export { useDeckHubDraftPicker } from "./page/useDeckHubDraftPicker";
+export { useDeckHubExport } from "./page/useDeckHubExport";
+export { useDeckHubLoad } from "./page/useDeckHubLoad";
+export { useDeckHubMaterialDelete } from "./page/useDeckHubMaterialDelete";
+export { useDeckHubWorkshopNav } from "./workshop/useDeckHubWorkshopNav";
+export { useStudyReadySheet } from "./hub/useStudyReadySheet";
 export {
   DIY_OCCLUSION_FREE_PATH_NOTICE,
   openDiyOcclusionFromImageKey,
-} from "./openDiyOcclusion";
+} from "./diy/openDiyOcclusion";
