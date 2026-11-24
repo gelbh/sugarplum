@@ -3,7 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
-import { composeSubjectKnowledge } from "../../src/study/subjectKnowledge";
+import { composeSubjectKnowledge } from "../../src/study/queue/subjectKnowledge";
 import {
   compositionJsonFromSummary,
   listKnowledgeSummariesForUser,

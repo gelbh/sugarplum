@@ -18,7 +18,7 @@ import { resolveLocalDayStartIso } from "../../src/study/localDay";
 import {
   composeSubjectKnowledge,
   type CompositionScheduleInput,
-} from "../../src/study/subjectKnowledge";
+} from "../../src/study/queue/subjectKnowledge";
 import { ensureUserGamification } from "../gamification/xp";
 
 export type InsightsSummaryOpts = {

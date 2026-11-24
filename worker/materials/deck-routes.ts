@@ -22,7 +22,7 @@ import { assertSingleCloze, assertValidMcqOptions } from "../generation/schema";
 import { cardContentFingerprint } from "../cards/contentFingerprint";
 import { encodeStoredBack, serializeCard, type CardRow } from "../cards/routes";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
-import { composeSubjectKnowledge } from "../../src/study/subjectKnowledge";
+import { composeSubjectKnowledge } from "../../src/study/queue/subjectKnowledge";
 import {
   refreshKnowledgeSummaryForOwnedCard,
   refreshKnowledgeSummaryForSubject,

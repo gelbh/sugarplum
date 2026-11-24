@@ -5,7 +5,7 @@ import {
   type QueueCandidate,
   type QueueResult,
   type StudyPrefs,
-} from "../../src/study/policyQueue";
+} from "../../src/study/queue/policyQueue";
 import type { ScheduleRowLike } from "./fsrs";
 import { loadIntrosUsedToday } from "./dayStats";
 import { loadStudyPrefs } from "./prefs";
