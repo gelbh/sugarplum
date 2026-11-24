@@ -4,7 +4,7 @@
  * type-only): those edges poison CF worker graphs that touch this entry.
  * Worker insights stay on study leaves (allowlisted). Product UI uses ./index.ts.
  */
-export type { StudyRating } from "./studyRating";
+export type { StudyRating } from "./grading/studyRating";
 export type {
   CardType,
   CardDraftView,
@@ -20,15 +20,15 @@ export {
   dueScopeFromSearch,
   type DueScopeOpts,
   type DueCacheSnapshot,
-} from "./dueCache";
+} from "./queue/dueCache";
 export {
   gradeColorVars,
   gradeChartFill,
   type GradeColorVars,
-} from "./gradeColors";
-export { GRADE_LABELS, gradeLabelMultiline } from "./gradeLabels";
-export { pendingCardIdSet, clearPendingGrades, type PendingGrade } from "./pendingGrades";
-export { STUDY_MEDIA_CACHE } from "./studyMediaCache";
+} from "./grading/gradeColors";
+export { GRADE_LABELS, gradeLabelMultiline } from "./grading/gradeLabels";
+export { pendingCardIdSet, clearPendingGrades, type PendingGrade } from "./grading/pendingGrades";
+export { STUDY_MEDIA_CACHE } from "./media/studyMediaCache";
 export {
   MATURE_INTERVAL_DAYS,
   classifyKnowledgeBucket,
@@ -38,7 +38,7 @@ export {
   type SubjectKnowledgeBucketsAggregate,
   type SubjectKnowledge,
   type CompositionScheduleInput,
-} from "./subjectKnowledge";
+} from "./queue/subjectKnowledge";
 export {
   clientLocalDay,
   serverUtcDay,
@@ -49,7 +49,7 @@ export {
   type EasyDay,
   localDayKey,
   applyLoadBalance,
-} from "./loadBalance";
+} from "./queue/loadBalance";
 export {
   clozeSpoken,
   clozeParts,
@@ -65,12 +65,12 @@ export {
   assertSingleCloze,
   CLOZE_BLANK_MAX,
   CLOZE_EXTRA_LABEL,
-} from "./clozeFormat";
+} from "./faces/clozeFormat";
 export {
   buildDueHistogramFromDues,
   type DueHistogramBuckets,
-} from "./dueHistogram";
-export { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "./policyPrefs";
+} from "./queue/dueHistogram";
+export { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "./queue/policyPrefs";
 export {
   type StudyPrefs,
   type QueueCandidate,
@@ -78,7 +78,7 @@ export {
   type BuildStudyQueueOpts,
   isIntroEligible,
   buildStudyQueue,
-} from "./policyQueue";
+} from "./queue/policyQueue";
 export {
   parseProvenanceJson,
   provenanceExcerptText,
@@ -93,13 +93,13 @@ export {
   scheduleColumnsFromCard,
   type ScheduleRowLike,
   type FsrsSchedulerCard,
-} from "./retrievability";
+} from "./fsrs/retrievability";
 export {
   weaknessScore,
   rankWeakness,
   type WeaknessCandidate,
   type WeaknessRow,
-} from "./weakness";
+} from "./queue/weakness";
 export {
   normalizeProvenancePages,
   mergeProvenancePagesIntoJson,

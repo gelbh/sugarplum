@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gradeColorVars } from "../../src/study/gradeColors";
+import { gradeColorVars } from "../../src/study/grading/gradeColors";
 
 describe("gradeColorVars", () => {
   it("maps each FSRS rating to brand spectrum CSS vars", () => {

@@ -7,4 +7,4 @@ export {
   type QueueCandidate,
   type QueueResult,
   type StudyPrefs,
-} from "../../src/study/policyQueue";
+} from "../../src/study/queue/policyQueue";

@@ -4,7 +4,7 @@ import {
   emptyTally,
   gradedTotal,
   sessionSurface,
-} from "../../src/study/sessionTally";
+} from "../../src/study/session/sessionTally";
 
 describe("session tally", () => {
   it("counts each rating once", () => {

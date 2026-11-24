@@ -35,8 +35,8 @@ import { cardDueIso } from "../../src/guest/policyDue";
 import {
   cardFromScheduleRow,
   retrievability,
-} from "../../src/study/retrievability";
-import { aggregateSubjectRecall } from "../../src/study/subjectRecall";
+} from "../../src/study/fsrs/retrievability";
+import { aggregateSubjectRecall } from "../../src/study/queue/subjectRecall";
 
 const COMPOSITION_NOW = new Date("2026-11-01T12:00:00.000Z");
 
@@ -1223,7 +1223,7 @@ describe("guest store", () => {
     const { FSRS7_DEFAULT_WEIGHTS } = await import("ts-fsrs/models/fsrs-7");
     const { replayCardFromLogs } = await import("../../src/study/fsrs/fsrsReplay");
     const { scheduleColumnsFromCard } =
-      await import("../../src/study/retrievability");
+      await import("../../src/study/fsrs/retrievability");
     enterGuest(storage);
     const subject = guestCreateSubject("Reschedule subject", storage);
     const deck = guestCreateDeck("Reschedule deck", subject.id, storage);

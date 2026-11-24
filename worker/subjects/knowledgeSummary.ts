@@ -1,4 +1,4 @@
-import { composeSubjectKnowledge } from "../../src/study/subjectKnowledge";
+import { composeSubjectKnowledge } from "../../src/study/queue/subjectKnowledge";
 
 export type KnowledgeSummaryRow = {
   subject_id: string;
