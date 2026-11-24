@@ -4,7 +4,6 @@ import { getCards } from "./inspect";
 import { seedCard, seedDeck, seedGenerationJob, seedMaterial, seedSession, seedUser } from "./seed";
 import type { Bindings } from "./types";
 
-/** user-a + deck-a + sess-a + mat-a + job-1 (needs_review). Cards draft-review suite default. */
 export async function seedCardsReviewOwner(env: Bindings): Promise<void> {
   await seedUser(env, {
     id: "user-a",
