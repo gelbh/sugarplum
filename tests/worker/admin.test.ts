@@ -18,6 +18,7 @@ import {
   seedUser,
   seedUserSecret,
   seedUserStudyDay,
+  installSqlMarkerCounter,
   withTestBindings,
 } from "./harness";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -562,26 +563,13 @@ describe("GET /api/admin/users (allowlisted)", () => {
 
   it("chunks metrics queries when limit exceeds 12", async () => {
     let metricsPrepares = 0;
-    const base = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
-    const env: Bindings = {
-      ...base,
-      DB: new Proxy(base.DB, {
-        get(target, prop, _receiver) {
-          if (prop === "prepare") {
-            return (query: string) => {
-              if (query.includes("sugarplum:admin-list-metrics")) {
-                metricsPrepares += 1;
-              }
-              return target.prepare(query);
-            };
-          }
-          const value = Reflect.get(target, prop, target);
-          return typeof value === "function"
-            ? (value as (...args: unknown[]) => unknown).bind(target)
-            : value;
-        },
-      }),
-    };
+    const env = installSqlMarkerCounter(
+      withTestBindings(cfEnv, { adminEmails: "ops@example.com" }),
+      "sugarplum:admin-list-metrics",
+      () => {
+        metricsPrepares += 1;
+      },
+    );
     await seedManyListUsers(env, 13);
     const res = await app.request(
       "/api/admin/users?limit=13",

@@ -189,6 +189,21 @@ export function installAdminOverviewPrepareCounter(env: Bindings): Bindings {
   };
 }
 
+/** Increment `onHit` when `prepare` SQL includes `marker`; return stmt unchanged. */
+export function installSqlMarkerCounter(
+  env: Bindings,
+  marker: string,
+  onHit: () => void,
+): Bindings {
+  return {
+    ...env,
+    DB: wrapDbPrepare(env.DB, (query, stmt) => {
+      if (query.includes(marker)) onHit();
+      return stmt;
+    }),
+  };
+}
+
 export function clearProgressWrites(): void {
   progressWrites.length = 0;
 }

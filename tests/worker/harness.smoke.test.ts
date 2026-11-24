@@ -1,8 +1,16 @@
 import { afterEach, describe, it, expect } from "vitest";
 import { env } from "cloudflare:workers";
-import { resetTestDb, seedUser, seedSession } from "./harness";
+import {
+  clearQueueMessages,
+  getQueueMessages,
+  installQueueRecorders,
+  resetTestDb,
+  seedSession,
+  seedUser,
+} from "./harness";
 
 afterEach(async () => {
+  clearQueueMessages();
   await resetTestDb(env);
 });
 
@@ -26,5 +34,14 @@ describe("harness smoke", () => {
     const raw = await env.SESSIONS.get("sess-smoke");
     expect(raw).toBeTruthy();
     expect(JSON.parse(raw!).userId).toBe("u-smoke");
+  });
+
+  it("record-only queues capture sends without a real binding", async () => {
+    const recorded = installQueueRecorders(
+      { ...env, GENERATE_QUEUE: undefined },
+      { forward: false },
+    );
+    await recorded.GENERATE_QUEUE!.send({ jobId: "j-smoke" });
+    expect(getQueueMessages()).toEqual([{ jobId: "j-smoke" }]);
   });
 });
