@@ -1,9 +1,35 @@
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getCards,
+  getExportJobs,
+  getMaterials,
+  getR2Keys,
+  getUserSecrets,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedExportJob,
+  seedGenerationJob,
+  seedMaterial,
+  seedR2,
+  seedSession,
+  seedUsageEvent,
+  seedUser,
+  seedUserSecret,
+  seedUserStudyDay,
+  withTestBindings,
+} from "./harness";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { hashPassword } from "../../worker/auth/password";
-import { createTestEnv } from "./test-env";
 import { isAdminUser, parseAdminEmails } from "../../worker/admin/allowlist";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
 
 describe("parseAdminEmails", () => {
   it("lowercases and splits", () => {
@@ -47,15 +73,15 @@ describe("isAdminUser", () => {
 
 describe("GET /api/auth/me is_admin", () => {
   it("true for allowlisted google-linked session", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedUser(env, {
       id: "u1",
       email: "ops@example.com",
       password_hash: null,
       oauth_subject: "google-sub",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("s1", "u1");
+    await seedSession(env, "s1", "u1");
     const res = await app.request(
       "/api/auth/me",
       { headers: { cookie: `${SESSION_COOKIE}=s1` } },
@@ -66,15 +92,15 @@ describe("GET /api/auth/me is_admin", () => {
   });
 
   it("false for allowlisted password-only user", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedUser(env, {
       id: "u1",
       email: "ops@example.com",
       password_hash: "x",
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("s1", "u1");
+    await seedSession(env, "s1", "u1");
     const res = await app.request(
       "/api/auth/me",
       { headers: { cookie: `${SESSION_COOKIE}=s1` } },
@@ -87,21 +113,21 @@ describe("GET /api/auth/me is_admin", () => {
 
 describe("GET /api/admin/users", () => {
   it("401 without session", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
     const res = await app.request("/api/admin/users", {}, env);
     expect(res.status).toBe(401);
   });
 
   it("403 when signed in but not allowlisted", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedUser(env, {
       id: "u1",
       email: "learner@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("s1", "u1");
+    await seedSession(env, "s1", "u1");
     const res = await app.request(
       "/api/admin/users",
       { headers: { cookie: `${SESSION_COOKIE}=s1` } },
@@ -111,15 +137,15 @@ describe("GET /api/admin/users", () => {
   });
 
   it("403 when ADMIN_EMAILS empty", async () => {
-    const env = createTestEnv(); // no adminEmails
-    env.seedUser({
+    const env = cfEnv; // no adminEmails
+    await seedUser(env, {
       id: "u1",
       email: "ops@example.com",
       password_hash: null,
       oauth_subject: "google-ops",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("s1", "u1");
+    await seedSession(env, "s1", "u1");
     const res = await app.request(
       "/api/admin/users",
       { headers: { cookie: `${SESSION_COOKIE}=s1` } },
@@ -129,15 +155,15 @@ describe("GET /api/admin/users", () => {
   });
 
   it("403 when allowlisted but password-only (no oauth_subject)", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedUser(env, {
       id: "u-pw",
       email: "ops@example.com",
       password_hash: "x",
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("s-pw", "u-pw");
+    await seedSession(env, "s-pw", "u-pw");
     const res = await app.request(
       "/api/admin/users",
       { headers: { cookie: `${SESSION_COOKIE}=s-pw` } },
@@ -147,36 +173,36 @@ describe("GET /api/admin/users", () => {
   });
 });
 
-function seedAdminMonitorFixture(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+async function seedAdminMonitorFixture(env: Bindings) {
+  await seedUser(env, {
     id: "admin-u",
     email: "ops@example.com",
     password_hash: null,
     oauth_subject: "google-admin",
     created_at: "2025-01-01T00:00:00.000Z",
   });
-  env.seedUser({
+  await seedUser(env, {
     id: "u-alice",
     email: "alice@example.com",
     password_hash: null,
     oauth_subject: "google-alice",
     created_at: "2026-10-28T00:00:00.000Z",
   });
-  env.seedUser({
+  await seedUser(env, {
     id: "u-bob",
     email: "bob@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-10-25T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-alice",
     user_id: "u-alice",
     title: "Alice deck",
     subject_hint: null,
     created_at: "2026-10-28T01:00:00.000Z",
   });
-  env.seedMaterial({
+  await seedMaterial(env, {
     id: "mat-alice",
     deck_id: "deck-alice",
     kind: "paste",
@@ -186,7 +212,7 @@ function seedAdminMonitorFixture(env: ReturnType<typeof createTestEnv>) {
     status: "ready",
     created_at: "2026-10-28T01:00:00.000Z",
   });
-  env.seedGenerationJob({
+  await seedGenerationJob(env, {
     id: "job-alice",
     material_id: "mat-alice",
     status: "done",
@@ -196,7 +222,7 @@ function seedAdminMonitorFixture(env: ReturnType<typeof createTestEnv>) {
     created_at: "2026-10-28T02:00:00.000Z",
     finished_at: "2026-10-28T02:05:00.000Z",
   });
-  env.seedCard({
+  await seedCard(env, {
     id: "card-a1",
     deck_id: "deck-alice",
     job_id: "job-alice",
@@ -209,7 +235,7 @@ function seedAdminMonitorFixture(env: ReturnType<typeof createTestEnv>) {
     created_at: "2026-10-28T02:10:00.000Z",
     updated_at: "2026-10-28T02:10:00.000Z",
   });
-  env.seedCard({
+  await seedCard(env, {
     id: "card-a2",
     deck_id: "deck-alice",
     job_id: "job-alice",
@@ -222,7 +248,7 @@ function seedAdminMonitorFixture(env: ReturnType<typeof createTestEnv>) {
     created_at: "2026-10-28T02:11:00.000Z",
     updated_at: "2026-10-28T02:11:00.000Z",
   });
-  env.seedSession("s-admin", "admin-u");
+  await seedSession(env, "s-admin", "admin-u");
 }
 
 describe("GET /api/admin/overview", () => {
@@ -235,21 +261,21 @@ describe("GET /api/admin/overview", () => {
   });
 
   it("401 without session", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
     const res = await app.request("/api/admin/overview", {}, env);
     expect(res.status).toBe(401);
   });
 
   it("403 when not allowlisted", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedUser(env, {
       id: "u1",
       email: "learner@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("s1", "u1");
+    await seedSession(env, "s1", "u1");
     const res = await app.request(
       "/api/admin/overview",
       { headers: { cookie: `${SESSION_COOKIE}=s1` } },
@@ -259,8 +285,8 @@ describe("GET /api/admin/overview", () => {
   });
 
   it("returns user totals for allowlisted admin", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
     const res = await app.request(
       "/api/admin/overview",
       { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
@@ -277,9 +303,9 @@ describe("GET /api/admin/overview", () => {
   });
 
   it("job path counts exclude regen rows; token sums include them", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
-    env.seedUsageEvent({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
+    await seedUsageEvent(env, {
       id: "ue-gen",
       user_id: "u-alice",
       job_id: "job-1",
@@ -291,7 +317,7 @@ describe("GET /api/admin/overview", () => {
       tokens_total: 15,
       created_at: "2026-10-28T00:00:00.000Z",
     });
-    env.seedUsageEvent({
+    await seedUsageEvent(env, {
       id: "ue-regen",
       user_id: "u-alice",
       job_id: null,
@@ -327,9 +353,9 @@ describe("GET /api/admin/users (allowlisted)", () => {
   });
 
   it("200 with heavy user rows", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
-    env.seedUsageEvent({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
+    await seedUsageEvent(env, {
       id: "ue-alice",
       user_id: "u-alice",
       created_at: "2026-10-29T08:00:00.000Z",
@@ -380,9 +406,9 @@ describe("GET /api/admin/users (allowlisted)", () => {
   });
 
   it("filters by status and google", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
+    await seedUser(env, {
       id: "u-disabled",
       email: "disabled@example.com",
       password_hash: null,
@@ -416,9 +442,9 @@ describe("GET /api/admin/users (allowlisted)", () => {
   });
 
   it("sorts by tokens_30d ascending", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
-    env.seedUsageEvent({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
+    await seedUsageEvent(env, {
       id: "ue-alice-2",
       user_id: "u-alice",
       created_at: "2026-10-29T08:00:00.000Z",
@@ -430,7 +456,7 @@ describe("GET /api/admin/users (allowlisted)", () => {
       job_id: null,
       provider: null,
     });
-    env.seedUsageEvent({
+    await seedUsageEvent(env, {
       id: "ue-bob-2",
       user_id: "u-bob",
       created_at: "2026-10-29T09:00:00.000Z",
@@ -460,8 +486,8 @@ describe("GET /api/admin/users (allowlisted)", () => {
   });
 
   it("filters by q on email", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
     const res = await app.request(
       "/api/admin/users?q=ALICE",
       { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
@@ -472,20 +498,20 @@ describe("GET /api/admin/users (allowlisted)", () => {
     expect(body.users.map((u) => u.email)).toEqual(["alice@example.com"]);
   });
 
-  function seedManyListUsers(
-    env: ReturnType<typeof createTestEnv>,
+  async function seedManyListUsers(
+    env: Bindings,
     count: number,
   ) {
-    env.seedUser({
+    await seedUser(env, {
       id: "admin-u",
       email: "ops@example.com",
       password_hash: null,
       oauth_subject: "google-admin",
       created_at: "2025-01-01T00:00:00.000Z",
     });
-    env.seedSession("s-admin", "admin-u");
+    await seedSession(env, "s-admin", "admin-u");
     for (let i = 0; i < count; i++) {
-      env.seedUser({
+      await seedUser(env, {
         id: `bulk-u-${i}`,
         email: `user-${String(i).padStart(3, "0")}@example.com`,
         password_hash: null,
@@ -496,8 +522,8 @@ describe("GET /api/admin/users (allowlisted)", () => {
   }
 
   it("defaults limit to 50 when omitted", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedManyListUsers(env, 55);
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedManyListUsers(env, 55);
     const res = await app.request(
       "/api/admin/users",
       { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
@@ -509,8 +535,8 @@ describe("GET /api/admin/users (allowlisted)", () => {
   });
 
   it("clamps limit to 100", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedManyListUsers(env, 110);
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedManyListUsers(env, 110);
     const res = await app.request(
       "/api/admin/users?limit=999",
       { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
@@ -522,8 +548,8 @@ describe("GET /api/admin/users (allowlisted)", () => {
   });
 
   it("falls back to limit 50 when limit is invalid", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedManyListUsers(env, 55);
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedManyListUsers(env, 55);
     const res = await app.request(
       "/api/admin/users?limit=nope",
       { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
@@ -537,21 +563,21 @@ describe("GET /api/admin/users (allowlisted)", () => {
 
 describe("GET /api/admin/users/:id", () => {
   it("401 without session", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
     const res = await app.request("/api/admin/users/u-alice", {}, env);
     expect(res.status).toBe(401);
   });
 
   it("403 when not allowlisted", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedUser(env, {
       id: "u1",
       email: "learner@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("s1", "u1");
+    await seedSession(env, "s1", "u1");
     const res = await app.request(
       "/api/admin/users/u-alice",
       { headers: { cookie: `${SESSION_COOKIE}=s1` } },
@@ -561,8 +587,8 @@ describe("GET /api/admin/users/:id", () => {
   });
 
   it("404 when user missing", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
     const res = await app.request(
       "/api/admin/users/missing-user",
       { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
@@ -572,9 +598,9 @@ describe("GET /api/admin/users/:id", () => {
   });
 
   it("200 with profile, counts, recent jobs, and study days", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
-    env.seedGenerationJob({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
+    await seedGenerationJob(env, {
       id: "job-alice-old",
       material_id: "mat-alice",
       status: "failed",
@@ -584,17 +610,17 @@ describe("GET /api/admin/users/:id", () => {
       created_at: "2026-10-27T02:00:00.000Z",
       finished_at: "2026-10-27T02:01:00.000Z",
     });
-    env.seedUserStudyDay({
+    await seedUserStudyDay(env, {
       user_id: "u-alice",
       day: "2026-10-28",
       intros_used: 3,
     });
-    env.seedUserStudyDay({
+    await seedUserStudyDay(env, {
       user_id: "u-alice",
       day: "2026-10-27",
       intros_used: 1,
     });
-    env.seedUserStudyDay({
+    await seedUserStudyDay(env, {
       user_id: "u-bob",
       day: "2026-10-28",
       intros_used: 9,
@@ -642,8 +668,8 @@ describe("GET /api/admin/users/:id", () => {
   });
 
   it("returns empty activity arrays for user with no content", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
     const res = await app.request(
       "/api/admin/users/u-bob",
       { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
@@ -667,9 +693,9 @@ describe("GET /api/admin/users/:id", () => {
   });
 
   it("includes disabled_at when present on detail", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
+    await seedUser(env, {
       id: "u-alice",
       email: "alice@example.com",
       password_hash: null,
@@ -690,8 +716,8 @@ describe("GET /api/admin/users/:id", () => {
 
 describe("disabled_at auth enforcement", () => {
   it("401 on /api/auth/me for disabled user with valid session", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u-disabled",
       email: "disabled@example.com",
       password_hash: null,
@@ -699,7 +725,7 @@ describe("disabled_at auth enforcement", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       disabled_at: "2026-10-29T09:00:00.000Z",
     });
-    env.seedSession("s-disabled", "u-disabled");
+    await seedSession(env, "s-disabled", "u-disabled");
     const res = await app.request(
       "/api/auth/me",
       { headers: { cookie: `${SESSION_COOKIE}=s-disabled` } },
@@ -711,9 +737,9 @@ describe("disabled_at auth enforcement", () => {
   });
 
   it("login as disabled returns 401 without minting a session", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const password = "long-enough-password";
-    env.seedUser({
+    await seedUser(env, {
       id: "u-disabled-pw",
       email: "disabled-pw@example.com",
       password_hash: await hashPassword(password),
@@ -760,9 +786,9 @@ describe("disabled_at auth enforcement", () => {
   });
 
   it("admin list includes disabled_at when set", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
+    await seedUser(env, {
       id: "u-bob",
       email: "bob@example.com",
       password_hash: null,
@@ -801,8 +827,8 @@ describe("POST /api/admin/users/:id/disable", () => {
   });
 
   it("400 when target email is allowlisted", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
     const res = await app.request(
       "/api/admin/users/admin-u/disable",
       { method: "POST", headers: adminHeaders },
@@ -819,8 +845,8 @@ describe("POST /api/admin/users/:id/disable", () => {
   });
 
   it("sets disabled_at for non-allowlisted user", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
     const res = await app.request(
       "/api/admin/users/u-alice/disable",
       { method: "POST", headers: adminHeaders },
@@ -837,8 +863,8 @@ describe("POST /api/admin/users/:id/disable", () => {
   });
 
   it("404 when user missing", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
     const res = await app.request(
       "/api/admin/users/missing/disable",
       { method: "POST", headers: adminHeaders },
@@ -850,9 +876,9 @@ describe("POST /api/admin/users/:id/disable", () => {
 
 describe("POST /api/admin/users/:id/enable", () => {
   it("clears disabled_at", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
+    await seedUser(env, {
       id: "u-alice",
       email: "alice@example.com",
       password_hash: null,
@@ -877,9 +903,9 @@ describe("POST /api/admin/users/:id/enable", () => {
 });
 
 describe("POST /api/admin/users/:id/wipe", () => {
-  function seedWipeTarget(env: ReturnType<typeof createTestEnv>) {
-    seedAdminMonitorFixture(env);
-    env.seedMaterial({
+  async function seedWipeTarget(env: Bindings) {
+    await seedAdminMonitorFixture(env);
+    await seedMaterial(env, {
       id: "mat-alice",
       deck_id: "deck-alice",
       kind: "paste",
@@ -889,7 +915,7 @@ describe("POST /api/admin/users/:id/wipe", () => {
       status: "ready",
       created_at: "2026-10-28T01:00:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "card-a1",
       deck_id: "deck-alice",
       job_id: "job-alice",
@@ -902,7 +928,7 @@ describe("POST /api/admin/users/:id/wipe", () => {
       created_at: "2026-10-28T02:10:00.000Z",
       updated_at: "2026-10-28T02:10:00.000Z",
     });
-    env.seedExportJob({
+    await seedExportJob(env, {
       id: "export-alice",
       user_id: "u-alice",
       status: "ready",
@@ -914,14 +940,14 @@ describe("POST /api/admin/users/:id/wipe", () => {
       updated_at: "2026-10-28T03:00:00.000Z",
       expires_at: "2026-10-30T03:00:00.000Z",
     });
-    env.seedUserSecret({
+    await seedUserSecret(env, {
       user_id: "u-alice",
       provider: "openai",
       ciphertext: "secret-cipher",
       created_at: "2026-10-28T00:00:00.000Z",
       updated_at: "2026-10-28T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-alice-pdf",
       deck_id: "deck-alice",
       kind: "pdf",
@@ -931,16 +957,16 @@ describe("POST /api/admin/users/:id/wipe", () => {
       status: "ready",
       created_at: "2026-10-28T01:05:00.000Z",
     });
-    env.seedR2("materials/deck-alice/mat-alice.txt", "paste body");
-    env.seedR2("materials/deck-alice/mat-alice.pdf", "pdf-bytes");
-    env.seedR2("materials/deck-alice/fig-1.png", "png-bytes");
-    env.seedR2("materials/deck-alice/figures/mat-alice-pdf/0.png", "crop");
-    env.seedR2("exports/u-alice/export-alice.apkg", "apkg-bytes");
+    await seedR2(env, "materials/deck-alice/mat-alice.txt", "paste body");
+    await seedR2(env, "materials/deck-alice/mat-alice.pdf", "pdf-bytes");
+    await seedR2(env, "materials/deck-alice/fig-1.png", "png-bytes");
+    await seedR2(env, "materials/deck-alice/figures/mat-alice-pdf/0.png", "crop");
+    await seedR2(env, "exports/u-alice/export-alice.apkg", "apkg-bytes");
   }
 
   it("400 when confirmEmail mismatches; user remains", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedWipeTarget(env);
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedWipeTarget(env);
     const res = await app.request(
       "/api/admin/users/u-alice/wipe",
       {
@@ -957,13 +983,13 @@ describe("POST /api/admin/users/:id/wipe", () => {
       env,
     );
     expect(detail.status).toBe(200);
-    expect(env.getCards().some((c) => c.deck_id === "deck-alice")).toBe(true);
-    expect(env.getR2Keys()).toContain("materials/deck-alice/mat-alice.txt");
+    expect((await getCards(env)).some((c) => c.deck_id === "deck-alice")).toBe(true);
+    expect((await getR2Keys(env))).toContain("materials/deck-alice/mat-alice.txt");
   });
 
   it("400 when wipe target is allowlisted", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
     const res = await app.request(
       "/api/admin/users/admin-u/wipe",
       {
@@ -977,8 +1003,8 @@ describe("POST /api/admin/users/:id/wipe", () => {
   });
 
   it("deletes user CASCADE and best-effort R2 keys on confirm", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedWipeTarget(env);
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedWipeTarget(env);
     const res = await app.request(
       "/api/admin/users/u-alice/wipe",
       {
@@ -995,46 +1021,46 @@ describe("POST /api/admin/users/:id/wipe", () => {
       env,
     );
     expect(detail.status).toBe(404);
-    expect(env.getCards().some((c) => c.deck_id === "deck-alice")).toBe(false);
-    expect(env.getMaterials().some((m) => m.deck_id === "deck-alice")).toBe(
+    expect((await getCards(env)).some((c) => c.deck_id === "deck-alice")).toBe(false);
+    expect((await getMaterials(env)).some((m) => m.deck_id === "deck-alice")).toBe(
       false,
     );
-    expect(env.getUserSecrets().some((s) => s.user_id === "u-alice")).toBe(
+    expect((await getUserSecrets(env)).some((s) => s.user_id === "u-alice")).toBe(
       false,
     );
-    expect(env.getExportJobs().some((j) => j.user_id === "u-alice")).toBe(
+    expect((await getExportJobs(env)).some((j) => j.user_id === "u-alice")).toBe(
       false,
     );
-    expect(env.getR2Keys()).not.toContain("materials/deck-alice/mat-alice.txt");
-    expect(env.getR2Keys()).not.toContain("materials/deck-alice/mat-alice.pdf");
-    expect(env.getR2Keys()).not.toContain("materials/deck-alice/fig-1.png");
-    expect(env.getR2Keys()).not.toContain(
+    expect((await getR2Keys(env))).not.toContain("materials/deck-alice/mat-alice.txt");
+    expect((await getR2Keys(env))).not.toContain("materials/deck-alice/mat-alice.pdf");
+    expect((await getR2Keys(env))).not.toContain("materials/deck-alice/fig-1.png");
+    expect((await getR2Keys(env))).not.toContain(
       "materials/deck-alice/figures/mat-alice-pdf/0.png",
     );
-    expect(env.getR2Keys()).not.toContain("exports/u-alice/export-alice.apkg");
-    expect(env.getR2Keys()).toEqual([]);
+    expect((await getR2Keys(env))).not.toContain("exports/u-alice/export-alice.apkg");
+    expect((await getR2Keys(env))).toEqual([]);
   });
 });
 
 describe("GET /api/admin/users/:id/export", () => {
   it("includes card fronts and material text; omits secrets and password_hash", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
+    await seedUser(env, {
       id: "u-alice",
       email: "alice@example.com",
       password_hash: "should-never-export",
       oauth_subject: "google-alice",
       created_at: "2026-10-28T00:00:00.000Z",
     });
-    env.seedUserSecret({
+    await seedUserSecret(env, {
       user_id: "u-alice",
       provider: "openai",
       ciphertext: "secret-cipher",
       created_at: "2026-10-28T00:00:00.000Z",
       updated_at: "2026-10-28T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-alice",
       deck_id: "deck-alice",
       kind: "paste",
@@ -1044,7 +1070,7 @@ describe("GET /api/admin/users/:id/export", () => {
       status: "ready",
       created_at: "2026-10-28T01:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-pdf",
       deck_id: "deck-alice",
       kind: "pdf",
@@ -1054,7 +1080,7 @@ describe("GET /api/admin/users/:id/export", () => {
       status: "ready",
       created_at: "2026-10-28T01:05:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "card-a1",
       deck_id: "deck-alice",
       job_id: "job-alice",
@@ -1067,8 +1093,8 @@ describe("GET /api/admin/users/:id/export", () => {
       created_at: "2026-10-28T02:10:00.000Z",
       updated_at: "2026-10-28T02:10:00.000Z",
     });
-    env.seedR2("materials/deck-alice/mat-alice.txt", "hello paste body");
-    env.seedR2("materials/deck-alice/mat-pdf.pdf", "%PDF-binary");
+    await seedR2(env, "materials/deck-alice/mat-alice.txt", "hello paste body");
+    await seedR2(env, "materials/deck-alice/mat-pdf.pdf", "%PDF-binary");
 
     const res = await app.request(
       "/api/admin/users/u-alice/export",
@@ -1113,8 +1139,8 @@ describe("GET /api/admin/users/:id/export", () => {
   });
 
   it("404 when user missing", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    seedAdminMonitorFixture(env);
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedAdminMonitorFixture(env);
     const res = await app.request(
       "/api/admin/users/missing/export",
       { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },

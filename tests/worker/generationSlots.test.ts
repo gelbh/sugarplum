@@ -1,4 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { RUNNING_JOB_STALE_MS } from "../../worker/generation/progress";
 import {
   MAX_GENERATION_SLOTS,
@@ -12,7 +16,10 @@ import {
   acquireGenerationSlot,
   releaseGenerationSlot,
 } from "../../worker/generation/slots";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("generation slot lease", () => {
   it("exports cap 2 and lease ttl at most RUNNING_JOB_STALE_MS", () => {
@@ -74,7 +81,7 @@ describe("generation slot lease", () => {
   });
 
   it("env slot binding: third acquire fails until a holder releases", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const a = await acquireGenerationSlot(env, "job-a");
     const b = await acquireGenerationSlot(env, "job-b");
     expect(a).toEqual({ ok: true });

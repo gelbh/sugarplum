@@ -1,27 +1,38 @@
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedSession,
+  seedUser,
+} from "../harness";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
-import { createTestEnv } from "../test-env";
 import {
   neighborsAround,
   rankBoardRows,
   type BoardNeighbor,
 } from "../../../worker/gamification/weeklyBoard";
 
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
 const NOW = "2026-01-07T12:00:00.000Z"; // inside 2026-W02
 
-function seedAuthedUser(
-  env: ReturnType<typeof createTestEnv>,
+async function seedAuthedUser(
+  env: Bindings,
   opts: { id: string; email: string; session: string },
 ) {
-  env.seedUser({
+  await seedUser(env, {
     id: opts.id,
     email: opts.email,
     password_hash: null,
     oauth_subject: null,
     created_at: NOW,
   });
-  env.seedSession(opts.session, opts.id);
+  await seedSession(env, opts.session, opts.id);
   return opts;
 }
 
@@ -69,23 +80,23 @@ describe("GET /api/leaderboard/weekly me payload", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(NOW));
 
-    const env = createTestEnv();
-    const a = seedAuthedUser(env, {
+    const env = cfEnv;
+    const a = await seedAuthedUser(env, {
       id: "user-a",
       email: "a@example.com",
       session: "sess-a",
     });
-    const b = seedAuthedUser(env, {
+    const b = await seedAuthedUser(env, {
       id: "user-b",
       email: "b@example.com",
       session: "sess-b",
     });
-    const c = seedAuthedUser(env, {
+    const c = await seedAuthedUser(env, {
       id: "user-c",
       email: "c@example.com",
       session: "sess-c",
     });
-    seedAuthedUser(env, {
+    await seedAuthedUser(env, {
       id: "user-d",
       email: "d@example.com",
       session: "sess-d",
@@ -167,13 +178,13 @@ describe("GET /api/leaderboard/weekly me payload", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(NOW));
 
-    const env = createTestEnv();
-    const a = seedAuthedUser(env, {
+    const env = cfEnv;
+    const a = await seedAuthedUser(env, {
       id: "user-a",
       email: "a@example.com",
       session: "sess-a",
     });
-    const d = seedAuthedUser(env, {
+    const d = await seedAuthedUser(env, {
       id: "user-d",
       email: "d@example.com",
       session: "sess-d",
@@ -227,13 +238,13 @@ describe("GET /api/leaderboard/weekly me payload", () => {
   });
 
   it("GET /api/leaderboard/all-time ranks by xp_total", async () => {
-    const env = createTestEnv();
-    const a = seedAuthedUser(env, {
+    const env = cfEnv;
+    const a = await seedAuthedUser(env, {
       id: "user-a",
       email: "a@example.com",
       session: "sess-a",
     });
-    const b = seedAuthedUser(env, {
+    const b = await seedAuthedUser(env, {
       id: "user-b",
       email: "b@example.com",
       session: "sess-b",

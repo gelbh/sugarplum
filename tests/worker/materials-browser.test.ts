@@ -1,7 +1,25 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  getCards,
+  getGenerationJobs,
+  getMaterials,
+  getR2Keys,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedR2,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 type MaterialListRow = {
   id: string;
@@ -17,23 +35,23 @@ type MaterialListRow = {
 
 describe("GET /api/decks/:id/materials", () => {
   it("lists deck materials and hides PDF figure crops", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Owner deck",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedMaterial({
+    await seedSession(env, "sess-a", "user-a");
+    await seedMaterial(env, {
       id: "paste-1",
       deck_id: "deck-a",
       kind: "paste",
@@ -43,7 +61,7 @@ describe("GET /api/decks/:id/materials", () => {
       status: "ready",
       created_at: "2026-01-01T01:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "figure-1",
       deck_id: "deck-a",
       kind: "image",
@@ -71,29 +89,29 @@ describe("GET /api/decks/:id/materials", () => {
   });
 
   it("returns 404 when listing another user's deck materials", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedUser({
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Owner deck",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "paste-1",
       deck_id: "deck-a",
       kind: "paste",
@@ -103,7 +121,7 @@ describe("GET /api/decks/:id/materials", () => {
       status: "ready",
       created_at: "2026-01-01T01:00:00.000Z",
     });
-    env.seedSession("sess-b", "user-b");
+    await seedSession(env, "sess-b", "user-b");
 
     const res = await app.request(
       "/api/decks/deck-a/materials",
@@ -117,37 +135,37 @@ describe("GET /api/decks/:id/materials", () => {
 
 describe("GET /api/materials", () => {
   it("returns owner materials with deck_title and excludes other users", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedUser({
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Anatomy",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-b",
       user_id: "user-b",
       title: "Secret",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedMaterial({
+    await seedSession(env, "sess-a", "user-a");
+    await seedMaterial(env, {
       id: "mine-old",
       deck_id: "deck-a",
       kind: "paste",
@@ -157,7 +175,7 @@ describe("GET /api/materials", () => {
       status: "ready",
       created_at: "2026-01-01T01:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mine-new",
       deck_id: "deck-a",
       kind: "image",
@@ -167,7 +185,7 @@ describe("GET /api/materials", () => {
       status: "ready",
       created_at: "2026-01-01T03:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "figure-hidden",
       deck_id: "deck-a",
       kind: "image",
@@ -177,7 +195,7 @@ describe("GET /api/materials", () => {
       status: "ready",
       created_at: "2026-01-01T03:30:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "theirs",
       deck_id: "deck-b",
       kind: "paste",
@@ -205,23 +223,23 @@ describe("GET /api/materials", () => {
 
 describe("GET /api/materials/:id/download", () => {
   it("returns paste bytes with attachment disposition", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Owner deck",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedMaterial({
+    await seedSession(env, "sess-a", "user-a");
+    await seedMaterial(env, {
       id: "paste-1",
       deck_id: "deck-a",
       kind: "paste",
@@ -231,7 +249,7 @@ describe("GET /api/materials/:id/download", () => {
       status: "ready",
       created_at: "2026-01-01T01:00:00.000Z",
     });
-    env.seedR2("materials/deck-a/paste-1.txt", "hello paste body");
+    await seedR2(env, "materials/deck-a/paste-1.txt", "hello paste body");
 
     const res = await app.request(
       "/api/materials/paste-1/download",
@@ -248,29 +266,29 @@ describe("GET /api/materials/:id/download", () => {
   });
 
   it("returns 404 when another user downloads", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedUser({
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Owner deck",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "paste-1",
       deck_id: "deck-a",
       kind: "paste",
@@ -280,8 +298,8 @@ describe("GET /api/materials/:id/download", () => {
       status: "ready",
       created_at: "2026-01-01T01:00:00.000Z",
     });
-    env.seedR2("materials/deck-a/paste-1.txt", "secret");
-    env.seedSession("sess-b", "user-b");
+    await seedR2(env, "materials/deck-a/paste-1.txt", "secret");
+    await seedSession(env, "sess-b", "user-b");
 
     const res = await app.request(
       "/api/materials/paste-1/download",
@@ -293,23 +311,23 @@ describe("GET /api/materials/:id/download", () => {
   });
 
   it("returns 404 when R2 object is missing", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Owner deck",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedMaterial({
+    await seedSession(env, "sess-a", "user-a");
+    await seedMaterial(env, {
       id: "paste-1",
       deck_id: "deck-a",
       kind: "paste",
@@ -332,23 +350,23 @@ describe("GET /api/materials/:id/download", () => {
 
 describe("DELETE /api/materials/:id", () => {
   it("deletes paste material, R2, and draft/rejected cards; keeps accepted with null job", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Owner deck",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedMaterial({
+    await seedSession(env, "sess-a", "user-a");
+    await seedMaterial(env, {
       id: "paste-1",
       deck_id: "deck-a",
       kind: "paste",
@@ -358,8 +376,8 @@ describe("DELETE /api/materials/:id", () => {
       status: "ready",
       created_at: "2026-01-01T01:00:00.000Z",
     });
-    env.seedR2("materials/deck-a/paste-1.txt", "paste body");
-    env.seedGenerationJob({
+    await seedR2(env, "materials/deck-a/paste-1.txt", "paste body");
+    await seedGenerationJob(env, {
       id: "job-1",
       material_id: "paste-1",
       status: "needs_review",
@@ -369,7 +387,7 @@ describe("DELETE /api/materials/:id", () => {
       created_at: "2026-01-01T01:10:00.000Z",
       finished_at: "2026-01-01T01:15:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-draft",
       deck_id: "deck-a",
       job_id: "job-1",
@@ -382,7 +400,7 @@ describe("DELETE /api/materials/:id", () => {
       created_at: "2026-01-01T01:16:00.000Z",
       updated_at: "2026-01-01T01:16:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-rejected",
       deck_id: "deck-a",
       job_id: "job-1",
@@ -395,7 +413,7 @@ describe("DELETE /api/materials/:id", () => {
       created_at: "2026-01-01T01:17:00.000Z",
       updated_at: "2026-01-01T01:17:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-accepted",
       deck_id: "deck-a",
       job_id: "job-1",
@@ -419,37 +437,36 @@ describe("DELETE /api/materials/:id", () => {
     );
 
     expect(res.status).toBe(204);
-    expect(env.getMaterials().some((m) => m.id === "paste-1")).toBe(false);
-    expect(env.getR2Keys()).not.toContain("materials/deck-a/paste-1.txt");
-    expect(env.getGenerationJobs().some((j) => j.id === "job-1")).toBe(false);
+    expect((await getMaterials(env)).some((m) => m.id === "paste-1")).toBe(false);
+    expect((await getR2Keys(env))).not.toContain("materials/deck-a/paste-1.txt");
+    expect((await getGenerationJobs(env)).some((j) => j.id === "job-1")).toBe(false);
     expect(
-      env
-        .getCards()
+      (await getCards(env))
         .map((c) => c.id)
         .sort(),
     ).toEqual(["c-accepted"]);
-    expect(env.getCards()[0]?.job_id).toBeNull();
+    expect((await getCards(env))[0]?.job_id).toBeNull();
   });
 
   it("returns 409 when accepted card media references a figure key", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Owner deck",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
     const figureKey = "materials/deck-a/figures/pdf-1/0.png";
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "figure-1",
       deck_id: "deck-a",
       kind: "image",
@@ -459,8 +476,8 @@ describe("DELETE /api/materials/:id", () => {
       status: "ready",
       created_at: "2026-01-01T02:00:00.000Z",
     });
-    env.seedR2(figureKey, "png-bytes");
-    env.seedCard({
+    await seedR2(env, figureKey, "png-bytes");
+    await seedCard(env, {
       id: "c-media",
       deck_id: "deck-a",
       job_id: null,
@@ -484,30 +501,30 @@ describe("DELETE /api/materials/:id", () => {
     );
 
     expect(res.status).toBe(409);
-    expect(env.getMaterials().some((m) => m.id === "figure-1")).toBe(true);
-    expect(env.getR2Keys()).toContain(figureKey);
+    expect((await getMaterials(env)).some((m) => m.id === "figure-1")).toBe(true);
+    expect((await getR2Keys(env))).toContain(figureKey);
   });
 
   it("returns 409 when deleting pdf parent whose figure is referenced by accepted card media", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Owner deck",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
     const pdfKey = "materials/deck-a/pdf-1.pdf";
     const figureKey = "materials/deck-a/figures/pdf-1/0.png";
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "pdf-1",
       deck_id: "deck-a",
       kind: "pdf",
@@ -517,7 +534,7 @@ describe("DELETE /api/materials/:id", () => {
       status: "ready",
       created_at: "2026-01-01T01:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "figure-1",
       deck_id: "deck-a",
       kind: "image",
@@ -527,9 +544,9 @@ describe("DELETE /api/materials/:id", () => {
       status: "ready",
       created_at: "2026-01-01T02:00:00.000Z",
     });
-    env.seedR2(pdfKey, "pdf-bytes");
-    env.seedR2(figureKey, "png-bytes");
-    env.seedCard({
+    await seedR2(env, pdfKey, "pdf-bytes");
+    await seedR2(env, figureKey, "png-bytes");
+    await seedCard(env, {
       id: "c-media",
       deck_id: "deck-a",
       job_id: null,
@@ -554,34 +571,33 @@ describe("DELETE /api/materials/:id", () => {
 
     expect(res.status).toBe(409);
     expect(
-      env
-        .getMaterials()
+      (await getMaterials(env))
         .map((m) => m.id)
         .sort(),
     ).toEqual(["figure-1", "pdf-1"]);
-    expect(env.getR2Keys().sort()).toEqual([figureKey, pdfKey].sort());
+    expect((await getR2Keys(env)).sort()).toEqual([figureKey, pdfKey].sort());
   });
 
   it("deletes pdf parent and unreferenced figure children plus R2", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Owner deck",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
     const pdfKey = "materials/deck-a/pdf-1.pdf";
     const figureKey = "materials/deck-a/figures/pdf-1/0.png";
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "pdf-1",
       deck_id: "deck-a",
       kind: "pdf",
@@ -591,7 +607,7 @@ describe("DELETE /api/materials/:id", () => {
       status: "ready",
       created_at: "2026-01-01T01:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "figure-1",
       deck_id: "deck-a",
       kind: "image",
@@ -601,9 +617,9 @@ describe("DELETE /api/materials/:id", () => {
       status: "ready",
       created_at: "2026-01-01T02:00:00.000Z",
     });
-    env.seedR2(pdfKey, "pdf-bytes");
-    env.seedR2(figureKey, "png-bytes");
-    env.seedR2("materials/deck-a/keep.txt", "keep");
+    await seedR2(env, pdfKey, "pdf-bytes");
+    await seedR2(env, figureKey, "png-bytes");
+    await seedR2(env, "materials/deck-a/keep.txt", "keep");
 
     const res = await app.request(
       "/api/materials/pdf-1",
@@ -615,30 +631,30 @@ describe("DELETE /api/materials/:id", () => {
     );
 
     expect(res.status).toBe(204);
-    expect(env.getMaterials().map((m) => m.id)).toEqual([]);
-    expect(env.getR2Keys().sort()).toEqual(["materials/deck-a/keep.txt"]);
+    expect((await getMaterials(env)).map((m) => m.id)).toEqual([]);
+    expect((await getR2Keys(env)).sort()).toEqual(["materials/deck-a/keep.txt"]);
   });
 
   it("deletes pdf when only draft cards reference figure media", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Owner deck",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
     const pdfKey = "materials/deck-a/pdf-1.pdf";
     const figureKey = "materials/deck-a/figures/pdf-1/0.png";
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "pdf-1",
       deck_id: "deck-a",
       kind: "pdf",
@@ -648,7 +664,7 @@ describe("DELETE /api/materials/:id", () => {
       status: "ready",
       created_at: "2026-01-01T01:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "figure-1",
       deck_id: "deck-a",
       kind: "image",
@@ -658,9 +674,9 @@ describe("DELETE /api/materials/:id", () => {
       status: "ready",
       created_at: "2026-01-01T02:00:00.000Z",
     });
-    env.seedR2(pdfKey, "pdf-bytes");
-    env.seedR2(figureKey, "png-bytes");
-    env.seedGenerationJob({
+    await seedR2(env, pdfKey, "pdf-bytes");
+    await seedR2(env, figureKey, "png-bytes");
+    await seedGenerationJob(env, {
       id: "job-pdf",
       material_id: "pdf-1",
       status: "needs_review",
@@ -670,7 +686,7 @@ describe("DELETE /api/materials/:id", () => {
       created_at: "2026-01-01T02:10:00.000Z",
       finished_at: "2026-01-01T02:15:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-draft-fig",
       deck_id: "deck-a",
       job_id: "job-pdf",
@@ -694,8 +710,8 @@ describe("DELETE /api/materials/:id", () => {
     );
 
     expect(res.status).toBe(204);
-    expect(env.getMaterials().map((m) => m.id)).toEqual([]);
-    expect(env.getCards().map((c) => c.id)).toEqual([]);
-    expect(env.getR2Keys()).toEqual([]);
+    expect((await getMaterials(env)).map((m) => m.id)).toEqual([]);
+    expect((await getCards(env)).map((c) => c.id)).toEqual([]);
+    expect((await getR2Keys(env))).toEqual([]);
   });
 });

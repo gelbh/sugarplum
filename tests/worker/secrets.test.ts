@@ -1,4 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getUserSecrets,
+  resetTestDb,
+  seedSession,
+  seedUser,
+  TEST_SECRETS_WRAP_KEY,
+  withTestBindings,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import {
@@ -8,7 +18,10 @@ import {
   parseSecretMeta,
   wrapKeyBytes,
 } from "../../worker/crypto/secrets";
-import { createTestEnv, TEST_SECRETS_WRAP_KEY } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("secrets crypto", () => {
   it("accepts a 32-byte UTF-8 wrap key", () => {
@@ -34,20 +47,20 @@ describe("secrets crypto", () => {
 });
 
 describe("GET/PUT/DELETE /api/settings/llm", () => {
-  function seedUser(env: ReturnType<typeof createTestEnv>) {
-    env.seedUser({
+  async function seedOwner(env: Bindings) {
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
   }
 
   it("rejects unknown provider strings and URL-as-provider", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = withTestBindings(cfEnv, { secretsWrapKey: TEST_SECRETS_WRAP_KEY });
+    await seedOwner(env);
     for (const provider of ["https://api.openai.com/v1", "openrouter", "mock"]) {
       const res = await app.request(
         "/api/settings/llm",
@@ -66,8 +79,8 @@ describe("GET/PUT/DELETE /api/settings/llm", () => {
   });
 
   it("PUT stores ciphertext and GET never includes the raw key", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = withTestBindings(cfEnv, { secretsWrapKey: TEST_SECRETS_WRAP_KEY });
+    await seedOwner(env);
     const apiKey = "sk-live-never-return-this-key";
     const last4 = apiKeyLast4(apiKey);
 
@@ -93,7 +106,7 @@ describe("GET/PUT/DELETE /api/settings/llm", () => {
     });
     expect(JSON.stringify(putBody)).not.toContain(apiKey);
 
-    const stored = env.getUserSecrets();
+    const stored = (await getUserSecrets(env));
     expect(stored).toHaveLength(1);
     expect(stored[0]?.ciphertext.includes(apiKey)).toBe(false);
     expect(await decryptSecret(stored[0]!.ciphertext, env.SECRETS_WRAP_KEY)).toBe(
@@ -121,8 +134,8 @@ describe("GET/PUT/DELETE /api/settings/llm", () => {
   });
 
   it("PUT zai defaults model to glm-4.7-flash when omitted", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = withTestBindings(cfEnv, { secretsWrapKey: TEST_SECRETS_WRAP_KEY });
+    await seedOwner(env);
     const putRes = await app.request(
       "/api/settings/llm",
       {
@@ -155,8 +168,8 @@ describe("GET/PUT/DELETE /api/settings/llm", () => {
   });
 
   it("PUT zai persists allowlisted model glm-4.7", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = withTestBindings(cfEnv, { secretsWrapKey: TEST_SECRETS_WRAP_KEY });
+    await seedOwner(env);
     const putRes = await app.request(
       "/api/settings/llm",
       {
@@ -188,8 +201,8 @@ describe("GET/PUT/DELETE /api/settings/llm", () => {
   });
 
   it("PUT zai rejects unknown model", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = withTestBindings(cfEnv, { secretsWrapKey: TEST_SECRETS_WRAP_KEY });
+    await seedOwner(env);
     const putRes = await app.request(
       "/api/settings/llm",
       {
@@ -210,8 +223,8 @@ describe("GET/PUT/DELETE /api/settings/llm", () => {
   });
 
   it("PUT openai ignores model and stores null", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = withTestBindings(cfEnv, { secretsWrapKey: TEST_SECRETS_WRAP_KEY });
+    await seedOwner(env);
     const putRes = await app.request(
       "/api/settings/llm",
       {
@@ -236,8 +249,8 @@ describe("GET/PUT/DELETE /api/settings/llm", () => {
   });
 
   it("GET returns configured:false when no secret stored", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = withTestBindings(cfEnv, { secretsWrapKey: TEST_SECRETS_WRAP_KEY });
+    await seedOwner(env);
 
     const getRes = await app.request(
       "/api/settings/llm",
@@ -251,14 +264,14 @@ describe("GET/PUT/DELETE /api/settings/llm", () => {
   });
 
   it("derives fixed wrap key in harness when SECRETS_WRAP_KEY would be missing", () => {
-    const env = createTestEnv();
+    const env = withTestBindings(cfEnv, { secretsWrapKey: TEST_SECRETS_WRAP_KEY });
     expect(env.SECRETS_WRAP_KEY).toBe(TEST_SECRETS_WRAP_KEY);
     expect(env.SECRETS_WRAP_KEY.length).toBe(32);
   });
 
   it("DELETE removes the stored key and returns configured false", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = withTestBindings(cfEnv, { secretsWrapKey: TEST_SECRETS_WRAP_KEY });
+    await seedOwner(env);
     const apiKey = "sk-delete-me-please";
     const putRes = await app.request(
       "/api/settings/llm",
@@ -287,7 +300,7 @@ describe("GET/PUT/DELETE /api/settings/llm", () => {
     expect(body).toEqual({ configured: false });
     expect(JSON.stringify(body)).not.toContain(apiKey);
     expect(body).not.toHaveProperty("ciphertext");
-    expect(env.getUserSecrets()).toEqual([]);
+    expect((await getUserSecrets(env))).toEqual([]);
 
     const getRes = await app.request(
       "/api/settings/llm",
@@ -298,8 +311,8 @@ describe("GET/PUT/DELETE /api/settings/llm", () => {
   });
 
   it("DELETE with no stored key still returns configured false", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = withTestBindings(cfEnv, { secretsWrapKey: TEST_SECRETS_WRAP_KEY });
+    await seedOwner(env);
     const delRes = await app.request(
       "/api/settings/llm",
       {

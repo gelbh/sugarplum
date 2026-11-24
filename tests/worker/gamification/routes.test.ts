@@ -1,27 +1,43 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getAchievementCompletions,
+  getXpLedger,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedReviewLog,
+  seedSchedule,
+  seedSession,
+  seedUser,
+} from "../harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
 import { traitsForAchievement } from "../../../worker/gamification/traits";
 import type { Rarity } from "../../../worker/gamification/constants";
-import { createTestEnv } from "../test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const NOW = "2026-01-05T12:00:00.000Z"; // ISO week 2026-W02 (Mon Jan 5)
 
-function seedAuthedUser(
-  env: ReturnType<typeof createTestEnv>,
+async function seedAuthedUser(
+  env: Bindings,
   opts?: { id?: string; email?: string; session?: string },
 ) {
   const id = opts?.id ?? "user-routes";
   const email = opts?.email ?? "routes@example.com";
   const session = opts?.session ?? "sess-routes";
-  env.seedUser({
+  await seedUser(env, {
     id,
     email,
     password_hash: null,
     oauth_subject: null,
     created_at: NOW,
   });
-  env.seedSession(session, id);
+  await seedSession(env, session, id);
   return { id, email, session };
 }
 
@@ -78,25 +94,25 @@ type LeaderboardBody = {
 
 describe("gamification read APIs", () => {
   it("GET /api/achievements returns 401 without session", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request("/api/achievements", {}, env);
     expect(res.status).toBe(401);
   });
 
   it("GET /api/gamification returns 401 without session", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request("/api/gamification", {}, env);
     expect(res.status).toBe(401);
   });
 
   it("GET /api/leaderboard/weekly returns 401 without session", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request("/api/leaderboard/weekly", {}, env);
     expect(res.status).toBe(401);
   });
 
   it("PATCH /api/gamification/settings returns 401 without session", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request(
       "/api/gamification/settings",
       {
@@ -110,8 +126,8 @@ describe("gamification read APIs", () => {
   });
 
   it("GET /api/achievements reports both plum conditions", async () => {
-    const env = createTestEnv();
-    const { session } = seedAuthedUser(env);
+    const env = cfEnv;
+    const { session } = await seedAuthedUser(env);
     const res = await app.request(
       "/api/achievements",
       { headers: cookie(session) },
@@ -129,8 +145,8 @@ describe("gamification read APIs", () => {
   });
 
   it("GET /api/achievements lists the full 55-medal catalog", async () => {
-    const env = createTestEnv();
-    const { session } = seedAuthedUser(env);
+    const env = cfEnv;
+    const { session } = await seedAuthedUser(env);
     const res = await app.request(
       "/api/achievements",
       { headers: cookie(session) },
@@ -145,8 +161,8 @@ describe("gamification read APIs", () => {
   });
 
   it("GET /api/achievements returns items with derived traits", async () => {
-    const env = createTestEnv();
-    const { session } = seedAuthedUser(env);
+    const env = cfEnv;
+    const { session } = await seedAuthedUser(env);
 
     const res = await app.request(
       "/api/achievements",
@@ -184,21 +200,21 @@ describe("gamification read APIs", () => {
   });
 
   it("GET /api/achievements silently backfills historical unlocks once", async () => {
-    const env = createTestEnv();
-    const { id: userId, session } = seedAuthedUser(env, {
+    const env = cfEnv;
+    const { id: userId, session } = await seedAuthedUser(env, {
       id: "user-backfill",
       email: "backfill@example.com",
       session: "sess-backfill",
     });
 
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-bf",
       user_id: userId,
       title: "BF",
       subject_hint: null,
       created_at: NOW,
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "card-bf",
       deck_id: "deck-bf",
       job_id: null,
@@ -211,7 +227,7 @@ describe("gamification read APIs", () => {
       created_at: NOW,
       updated_at: NOW,
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "card-bf",
       due: "2026-02-01T00:00:00.000Z",
       stability: 1,
@@ -227,7 +243,7 @@ describe("gamification read APIs", () => {
 
     for (let i = 0; i < 50; i++) {
       const day = String(1 + (i % 28)).padStart(2, "0");
-      env.seedReviewLog({
+      await seedReviewLog(env, {
         id: `rl-bf-${i}`,
         card_id: "card-bf",
         rating: 3,
@@ -248,24 +264,21 @@ describe("gamification read APIs", () => {
     const reviews25 = body.items.find((i) => i.def.id === "reviews_25");
     expect(reviews25?.completedAt).toBeTruthy();
 
-    const completions = env
-      .getAchievementCompletions()
+    const completions = (await getAchievementCompletions(env))
       .filter((c) => c.user_id === userId && c.achievement_id === "reviews_25");
     expect(completions).toHaveLength(1);
     expect(completions[0]!.backdated).toBe(1);
 
     // Backdated completions must not stamp unlock XP into "now" (weekly board).
     expect(
-      env
-        .getXpLedger()
+      (await getXpLedger(env))
         .filter(
           (e) =>
             e.user_id === userId && e.idempotency_key === "unlock:reviews_25",
         ),
     ).toHaveLength(0);
 
-    const markerKeys = env
-      .getXpLedger()
+    const markerKeys = (await getXpLedger(env))
       .filter(
         (e) =>
           e.user_id === userId && e.idempotency_key === `backfill:v1:${userId}`,
@@ -273,11 +286,9 @@ describe("gamification read APIs", () => {
     expect(markerKeys).toHaveLength(1);
     expect(markerKeys[0]!.amount).toBe(0);
 
-    const ledgerBefore = env
-      .getXpLedger()
+    const ledgerBefore = (await getXpLedger(env))
       .filter((e) => e.user_id === userId).length;
-    const completionCountBefore = env
-      .getAchievementCompletions()
+    const completionCountBefore = (await getAchievementCompletions(env))
       .filter((c) => c.user_id === userId).length;
 
     const second = await app.request(
@@ -287,18 +298,18 @@ describe("gamification read APIs", () => {
     );
     expect(second.status).toBe(200);
 
-    expect(env.getXpLedger().filter((e) => e.user_id === userId).length).toBe(
+    expect((await getXpLedger(env)).filter((e) => e.user_id === userId).length).toBe(
       ledgerBefore,
     );
     expect(
-      env.getAchievementCompletions().filter((c) => c.user_id === userId)
+      (await getAchievementCompletions(env)).filter((c) => c.user_id === userId)
         .length,
     ).toBe(completionCountBefore);
   });
 
   it("GET /api/achievements backfill does not unlock clear_due for empty users", async () => {
-    const env = createTestEnv();
-    const { id: userId, session } = seedAuthedUser(env, {
+    const env = cfEnv;
+    const { id: userId, session } = await seedAuthedUser(env, {
       id: "user-empty-bf",
       email: "empty-bf@example.com",
       session: "sess-empty-bf",
@@ -312,15 +323,13 @@ describe("gamification read APIs", () => {
     expect(res.status).toBe(200);
 
     expect(
-      env
-        .getAchievementCompletions()
+      (await getAchievementCompletions(env))
         .filter(
           (c) => c.user_id === userId && c.achievement_id === "clear_due_1",
         ),
     ).toHaveLength(0);
     expect(
-      env
-        .getXpLedger()
+      (await getXpLedger(env))
         .filter(
           (e) =>
             e.user_id === userId && e.idempotency_key === "unlock:clear_due_1",
@@ -329,21 +338,21 @@ describe("gamification read APIs", () => {
   });
 
   it("GET /api/achievements backfill decays expired streak but unlocks from best", async () => {
-    const env = createTestEnv();
-    const { id: userId, session } = seedAuthedUser(env, {
+    const env = cfEnv;
+    const { id: userId, session } = await seedAuthedUser(env, {
       id: "user-streak-bf",
       email: "streak-bf@example.com",
       session: "sess-streak-bf",
     });
 
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-st",
       user_id: userId,
       title: "ST",
       subject_hint: null,
       created_at: NOW,
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "card-st",
       deck_id: "deck-st",
       job_id: null,
@@ -356,7 +365,7 @@ describe("gamification read APIs", () => {
       created_at: NOW,
       updated_at: NOW,
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "card-st",
       due: "2026-02-01T00:00:00.000Z",
       stability: 1,
@@ -372,7 +381,7 @@ describe("gamification read APIs", () => {
 
     for (let i = 0; i < 14; i++) {
       const day = String(i + 1).padStart(2, "0");
-      env.seedReviewLog({
+      await seedReviewLog(env, {
         id: `rl-st-${i}`,
         card_id: "card-st",
         rating: 3,
@@ -394,8 +403,7 @@ describe("gamification read APIs", () => {
       body.items.find((i) => i.def.id === "streak_7")?.completedAt,
     ).toBeTruthy();
     expect(
-      env
-        .getAchievementCompletions()
+      (await getAchievementCompletions(env))
         .find((c) => c.user_id === userId && c.achievement_id === "streak_7")
         ?.backdated,
     ).toBe(1);
@@ -413,8 +421,8 @@ describe("gamification read APIs", () => {
   });
 
   it("GET /api/gamification returns defaults after ensure", async () => {
-    const env = createTestEnv();
-    const { session } = seedAuthedUser(env);
+    const env = cfEnv;
+    const { session } = await seedAuthedUser(env);
 
     const res = await app.request(
       "/api/gamification",
@@ -441,8 +449,8 @@ describe("gamification read APIs", () => {
   });
 
   it("PATCH /api/gamification/settings clamps dailyGoalReviews", async () => {
-    const env = createTestEnv();
-    const { session } = seedAuthedUser(env);
+    const env = cfEnv;
+    const { session } = await seedAuthedUser(env);
 
     const patch = await app.request(
       "/api/gamification/settings",
@@ -470,8 +478,8 @@ describe("gamification read APIs", () => {
   });
 
   it("PATCH /api/gamification/settings updates boardOptIn and displayName", async () => {
-    const env = createTestEnv();
-    const { session } = seedAuthedUser(env);
+    const env = cfEnv;
+    const { session } = await seedAuthedUser(env);
 
     const patch = await app.request(
       "/api/gamification/settings",
@@ -499,18 +507,18 @@ describe("gamification read APIs", () => {
   });
 
   it("GET /api/leaderboard/weekly uses ISO week key and opt-in only", async () => {
-    const env = createTestEnv();
-    const a = seedAuthedUser(env, {
+    const env = cfEnv;
+    const a = await seedAuthedUser(env, {
       id: "user-a",
       email: "a@example.com",
       session: "sess-a",
     });
-    const b = seedAuthedUser(env, {
+    const b = await seedAuthedUser(env, {
       id: "user-b",
       email: "b@example.com",
       session: "sess-b",
     });
-    seedAuthedUser(env, {
+    await seedAuthedUser(env, {
       id: "user-c",
       email: "c@example.com",
       session: "sess-c",
@@ -619,7 +627,7 @@ describe("gamification read APIs", () => {
   });
 
   it("GET /api/leaderboard/weekly ranks opt-in weekly XP for current ISO week", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     // Freeze week by using ledger timestamps relative to real now's ISO week.
     const now = new Date();
     const day = now.getUTCDay() || 7;
@@ -631,17 +639,17 @@ describe("gamification read APIs", () => {
     inWeek.setUTCHours(12, 0, 0, 0);
     const inWeekIso = inWeek.toISOString();
 
-    const a = seedAuthedUser(env, {
+    const a = await seedAuthedUser(env, {
       id: "lb-a",
       email: "lba@example.com",
       session: "sess-lb-a",
     });
-    const b = seedAuthedUser(env, {
+    const b = await seedAuthedUser(env, {
       id: "lb-b",
       email: "lbb@example.com",
       session: "sess-lb-b",
     });
-    seedAuthedUser(env, {
+    await seedAuthedUser(env, {
       id: "lb-c",
       email: "lbc@example.com",
       session: "sess-lb-c",

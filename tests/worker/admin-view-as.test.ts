@@ -1,3 +1,24 @@
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getAtlases,
+  getCards,
+  getDecks,
+  getSchedules,
+  getUsers,
+  resetTestDb,
+  seedAtlas,
+  seedAtlasMaterial,
+  seedCard,
+  seedDeck,
+  seedMaterial,
+  seedR2,
+  seedSchedule,
+  seedSession,
+  seedSubject,
+  seedUser,
+  withTestBindings,
+} from "./harness";
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { State } from "ts-fsrs";
 import { app } from "../../worker/index";
@@ -8,7 +29,10 @@ import {
 } from "../../worker/admin/clone-user";
 import { getDb } from "../../worker/db/client";
 import { VIEW_AS_READ_ONLY_CODE } from "../../src/api/problemWire";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const ADMIN_EMAIL = "ops@example.com";
 const adminHeaders = {
@@ -18,28 +42,28 @@ const adminHeaders = {
 const NOW = "2026-01-01T12:00:00.000Z";
 const SOURCE_R2 = "users/u-alice/decks/deck-a/materials/mat-1.pdf";
 
-function seedAdminAndLearnerWithLibrary(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+async function seedAdminAndLearnerWithLibrary(env: Bindings) {
+  await seedUser(env, {
     id: "admin-u",
     email: ADMIN_EMAIL,
     password_hash: null,
     oauth_subject: "google-admin",
     created_at: "2025-01-01T00:00:00.000Z",
   });
-  env.seedUser({
+  await seedUser(env, {
     id: "u-alice",
     email: "alice@example.com",
     password_hash: null,
     oauth_subject: "google-alice",
     created_at: "2026-10-28T00:00:00.000Z",
   });
-  env.seedSubject({
+  await seedSubject(env, {
     id: "subj-a",
     user_id: "u-alice",
     title: "Anatomy",
     created_at: NOW,
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: "u-alice",
     title: "Spine",
@@ -47,7 +71,7 @@ function seedAdminAndLearnerWithLibrary(env: ReturnType<typeof createTestEnv>) {
     subject_id: "subj-a",
     created_at: NOW,
   });
-  env.seedMaterial({
+  await seedMaterial(env, {
     id: "mat-1",
     deck_id: "deck-a",
     kind: "pdf",
@@ -59,7 +83,7 @@ function seedAdminAndLearnerWithLibrary(env: ReturnType<typeof createTestEnv>) {
     content_hash: "hash-1",
     source_role: "lecture",
   });
-  env.seedCard({
+  await seedCard(env, {
     id: "card-a",
     deck_id: "deck-a",
     job_id: null,
@@ -72,7 +96,7 @@ function seedAdminAndLearnerWithLibrary(env: ReturnType<typeof createTestEnv>) {
     created_at: NOW,
     updated_at: NOW,
   });
-  env.seedSchedule({
+  await seedSchedule(env, {
     card_id: "card-a",
     due: "2020-01-01T00:00:00.000Z",
     stability: 40,
@@ -85,7 +109,7 @@ function seedAdminAndLearnerWithLibrary(env: ReturnType<typeof createTestEnv>) {
     state: State.Review,
     last_review: "2025-12-01T12:00:00.000Z",
   });
-  env.seedSession("s-admin", "admin-u");
+  await seedSession(env, "s-admin", "admin-u");
 }
 
 afterEach(() => {
@@ -94,10 +118,10 @@ afterEach(() => {
 
 describe("admin view-as library", () => {
   it("start does not clone decks/cards; GETs read source rows", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearnerWithLibrary(env);
-    const deckCount = env.getDecks().length;
-    const cardCount = env.getCards().length;
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearnerWithLibrary(env);
+    const deckCount = (await getDecks(env)).length;
+    const cardCount = (await getCards(env)).length;
 
     const start = await app.request(
       "/api/admin/users/u-alice/impersonate",
@@ -105,9 +129,9 @@ describe("admin view-as library", () => {
       env,
     );
     expect(start.status).toBe(200);
-    expect(env.getDecks().length).toBe(deckCount);
-    expect(env.getCards().length).toBe(cardCount);
-    expect(env.getUsers().filter((u) => u.sandbox_of != null)).toHaveLength(0);
+    expect((await getDecks(env)).length).toBe(deckCount);
+    expect((await getCards(env)).length).toBe(cardCount);
+    expect((await getUsers(env)).filter((u) => u.sandbox_of != null)).toHaveLength(0);
 
     const decks = await app.request(
       "/api/decks",
@@ -118,13 +142,12 @@ describe("admin view-as library", () => {
   });
 
   it("learner mutates return 403 and leave source unchanged", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearnerWithLibrary(env);
-    const frontBefore = env
-      .getCards()
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearnerWithLibrary(env);
+    const frontBefore = (await getCards(env))
       .find((c) => c.id === "card-a")!.front_json;
     const scheduleBefore = {
-      ...env.getSchedules().find((s) => s.card_id === "card-a")!,
+      ...(await getSchedules(env)).find((s) => s.card_id === "card-a")!,
     };
 
     await app.request(
@@ -169,11 +192,10 @@ describe("admin view-as library", () => {
     );
     expect(del.status).toBe(403);
 
-    expect(env.getCards().find((c) => c.id === "card-a")!.front_json).toBe(
+    expect((await getCards(env)).find((c) => c.id === "card-a")!.front_json).toBe(
       frontBefore,
     );
-    const scheduleAfter = env
-      .getSchedules()
+    const scheduleAfter = (await getSchedules(env))
       .find((s) => s.card_id === "card-a")!;
     expect(scheduleAfter.reps).toBe(scheduleBefore.reps);
     expect(scheduleAfter.due).toBe(scheduleBefore.due);
@@ -187,16 +209,16 @@ describe("admin view-as library", () => {
   });
 
   it("Focus GET during view-as does not refresh fingerprint", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearnerWithLibrary(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearnerWithLibrary(env);
     const packR2 = "atlas/atlas-alice/pack-1.txt";
-    env.seedAtlas({
+    await seedAtlas(env, {
       id: "atlas-alice",
       user_id: "u-alice",
       template_key: "parasite",
       created_at: NOW,
     });
-    env.seedAtlasMaterial({
+    await seedAtlasMaterial(env, {
       id: "pack-1",
       atlas_id: "atlas-alice",
       kind: "paste",
@@ -208,7 +230,7 @@ describe("admin view-as library", () => {
       content_hash: "pack-hash",
       source_role: "tutorial",
     });
-    env.seedR2(packR2, "Fasciola hepatica tutorial notes");
+    await seedR2(env, packR2, "Fasciola hepatica tutorial notes");
     await env.DB.prepare(
       `INSERT INTO atlas_entry_focus (
          atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at
@@ -246,7 +268,7 @@ describe("admin view-as library", () => {
       listed.entries.find((e) => e.id === "fasciola-hepatica"),
     ).toMatchObject({ tier: "standard" });
     expect(
-      env.getAtlases().find((a) => a.id === "atlas-alice")
+      (await getAtlases(env)).find((a) => a.id === "atlas-alice")
         ?.focus_pack_fingerprint ?? null,
     ).toBeNull();
   });
@@ -254,9 +276,9 @@ describe("admin view-as library", () => {
 
 describe("cloneUserGraph (legacy helper)", () => {
   it("throws and leaves no partial when over card limit", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearnerWithLibrary(env);
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearnerWithLibrary(env);
+    await seedUser(env, {
       id: "sandbox-tmp",
       email: "sandbox+tmp@sandbox.invalid",
       password_hash: null,
@@ -271,14 +293,14 @@ describe("cloneUserGraph (legacy helper)", () => {
     ).rejects.toBeInstanceOf(CloneLimitExceededError);
 
     expect(
-      env.getDecks().filter((d) => d.user_id === "sandbox-tmp"),
+      (await getDecks(env)).filter((d) => d.user_id === "sandbox-tmp"),
     ).toHaveLength(0);
   });
 
   it("clones atlas_entry_notes with remapped entry_key", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearnerWithLibrary(env);
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearnerWithLibrary(env);
+    await seedUser(env, {
       id: "sandbox-tmp",
       email: "sandbox+tmp@sandbox.invalid",
       password_hash: null,
@@ -286,7 +308,7 @@ describe("cloneUserGraph (legacy helper)", () => {
       created_at: NOW,
       sandbox_of: "u-alice",
     });
-    env.seedAtlas({
+    await seedAtlas(env, {
       id: "atlas-alice",
       user_id: "u-alice",
       template_key: "parasite",
@@ -304,8 +326,7 @@ describe("cloneUserGraph (legacy helper)", () => {
       maxCards: 10_000,
     });
 
-    const sandboxAtlas = env
-      .getAtlases()
+    const sandboxAtlas = (await getAtlases(env))
       .find((a) => a.user_id === "sandbox-tmp");
     expect(sandboxAtlas).toBeTruthy();
     const { results } = await env.DB.prepare(

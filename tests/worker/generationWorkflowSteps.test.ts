@@ -1,4 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getCards,
+  getGenerationJobs,
+  getR2Keys,
+  resetTestDb,
+  seedDeck,
+  seedMaterial,
+  seedR2,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { runAfterPersistPhase } from "../../worker/generation/afterPersist";
 import { enqueueGeneration } from "../../worker/generation/enqueue";
 import {
@@ -7,31 +20,34 @@ import {
 } from "../../worker/generation/extractSidecar";
 import { mockLlmAdapter, type LlmAdapter } from "../../worker/generation/llm";
 import { runPass1Phase } from "../../worker/generation/pass1";
-import { createTestEnv } from "./test-env";
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: "user-a",
     title: "Bio",
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
 }
 
 async function seedPasteJob(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
   text: string,
 ) {
-  env.seedMaterial({
+  await seedMaterial(env, {
     id: "mat-1",
     deck_id: "deck-a",
     kind: "paste",
@@ -41,7 +57,7 @@ async function seedPasteJob(
     status: "ready",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedR2("materials/deck-a/mat-1.txt", text);
+  await seedR2(env, "materials/deck-a/mat-1.txt", text);
   const jobId = await enqueueGeneration(env, {
     materialId: "mat-1",
     deckId: "deck-a",
@@ -61,8 +77,8 @@ function spyLlm(base: LlmAdapter = mockLlmAdapter()): LlmAdapter & {
 
 describe("generation workflow step helpers", () => {
   it("pass1 soft-completes to needs_review before afterPersist", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const msg = await seedPasteJob(
       env,
       "Mitochondria are the powerhouse of the cell.",
@@ -71,24 +87,24 @@ describe("generation workflow step helpers", () => {
 
     const pass1 = await runPass1Phase(env, msg, { llm });
     expect(pass1).toBe("done");
-    expect(env.getCards().length).toBeGreaterThan(0);
+    expect((await getCards(env)).length).toBeGreaterThan(0);
     expect(
-      env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
+      (await getGenerationJobs(env)).find((j) => j.id === msg.jobId)?.status,
     ).toBe("needs_review");
-    expect(env.getR2Keys()).toContain(extractSidecarKey(msg.jobId));
+    expect((await getR2Keys(env))).toContain(extractSidecarKey(msg.jobId));
     const sidecar = await getExtractSidecar(env, msg.jobId);
     expect(sidecar?.drafts.length).toBeGreaterThan(0);
 
     await runAfterPersistPhase(env, msg, { llm });
     expect(
-      env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
+      (await getGenerationJobs(env)).find((j) => j.id === msg.jobId)?.status,
     ).toBe("needs_review");
     expect(await getExtractSidecar(env, msg.jobId)).toBeNull();
   });
 
   it("afterPersist soft-fails gap-fill and still finalizes (V2)", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const msg = await seedPasteJob(
       env,
       [
@@ -113,9 +129,9 @@ describe("generation workflow step helpers", () => {
 
     await runPass1Phase(env, { ...msg, autoFollowup: true }, { llm });
     expect(
-      env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
+      (await getGenerationJobs(env)).find((j) => j.id === msg.jobId)?.status,
     ).toBe("needs_review");
-    const pass1Cards = env.getCards().length;
+    const pass1Cards = (await getCards(env)).length;
     expect(pass1Cards).toBeGreaterThan(0);
 
     const after = await runAfterPersistPhase(
@@ -124,15 +140,15 @@ describe("generation workflow step helpers", () => {
       { llm },
     );
     expect(after).toBe("done");
-    expect(env.getCards()).toHaveLength(pass1Cards);
+    expect((await getCards(env))).toHaveLength(pass1Cards);
     expect(
-      env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
+      (await getGenerationJobs(env)).find((j) => j.id === msg.jobId)?.status,
     ).toBe("needs_review");
   });
 
   it("afterPersist soft-finalizes when sidecar is missing but drafts exist", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const msg = await seedPasteJob(
       env,
       "Mitochondria are the powerhouse of the cell.",
@@ -141,15 +157,15 @@ describe("generation workflow step helpers", () => {
 
     await runPass1Phase(env, msg, { llm });
     expect(
-      env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
+      (await getGenerationJobs(env)).find((j) => j.id === msg.jobId)?.status,
     ).toBe("needs_review");
     await env.MATERIALS.delete(extractSidecarKey(msg.jobId));
 
     const after = await runAfterPersistPhase(env, msg, { llm });
     expect(after).toBe("done");
     expect(
-      env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
+      (await getGenerationJobs(env)).find((j) => j.id === msg.jobId)?.status,
     ).toBe("needs_review");
-    expect(env.getCards().length).toBeGreaterThan(0);
+    expect((await getCards(env)).length).toBeGreaterThan(0);
   });
 });

@@ -1,4 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedAtlasMaterial,
+  seedDeck,
+  seedMaterial,
+  seedSession,
+  seedSubject,
+  seedUser,
+} from "../harness";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   enrichEntriesWithFocus,
   focusRefreshLeaseActive,
@@ -10,20 +21,24 @@ import { loadParasiteDataset } from "../../../worker/atlas/datasets/parasites/in
 import { overlayAtlas } from "../../../worker/atlas/merge";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
-import { createTestEnv } from "../test-env";
 import type { AtlasEntryView } from "../../../src/atlas/types";
 import type { Env } from "../../../worker/env";
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
-  env.seedSubject({
+  await seedSession(env, "sess-a", "user-a");
+  await seedSubject(env, {
     id: "sub-1",
     user_id: "user-a",
     title: "Parasitology",
@@ -39,7 +54,7 @@ function authHeaders(json = false): HeadersInit {
 }
 
 async function createAtlas(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
 ): Promise<string> {
   const created = await app.request(
     "/api/atlas",
@@ -52,7 +67,7 @@ async function createAtlas(
 }
 
 async function pasteAtlasPack(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
   atlasId: string,
   opts: { text: string; filename: string; source_role?: string },
 ) {
@@ -90,8 +105,8 @@ describe("focusRefreshLeaseActive", () => {
 
 describe("listEntriesWithFocus skipMutatingRefresh", () => {
   it("enriches without scheduling or rewriting fingerprint", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlasId = await createAtlas(env);
     const paste = await pasteAtlasPack(env, atlasId, {
       text: "Intro to flukes",
@@ -146,8 +161,8 @@ describe("listEntriesWithFocus skipMutatingRefresh", () => {
 
 describe("atlas focus persistence helpers", () => {
   it("GET shows override even when refresh never rewrote tier", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlasId = await createAtlas(env);
 
     const paste = await pasteAtlasPack(env, atlasId, {
@@ -187,8 +202,8 @@ describe("atlas focus persistence helpers", () => {
   });
 
   it("heals partial null focus when materials exist", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlasId = await createAtlas(env);
 
     const paste = await pasteAtlasPack(env, atlasId, {
@@ -428,8 +443,8 @@ describe("enrichEntriesWithFocus override", () => {
 
 describe("atlas focus empty materials and lazy GET", () => {
   it("keeps override rows when scannable materials become empty", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlasId = await createAtlas(env);
 
     const paste = await pasteAtlasPack(env, atlasId, {
@@ -493,8 +508,8 @@ describe("atlas focus empty materials and lazy GET", () => {
   });
 
   it("rejects a null JSON body on focus PATCH", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlasId = await createAtlas(env);
 
     const res = await app.request(
@@ -510,11 +525,11 @@ describe("atlas focus empty materials and lazy GET", () => {
   });
 
   it("lazy-refreshes Focus on GET when cache is empty but ready pack materials exist", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlasId = await createAtlas(env);
 
-    env.seedAtlasMaterial({
+    await seedAtlasMaterial(env, {
       id: "mat-pre",
       atlas_id: atlasId,
       kind: "pdf",
@@ -543,8 +558,8 @@ describe("atlas focus empty materials and lazy GET", () => {
   });
 
   it("clears stale automatic Focus on GET when the pack is empty", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlasId = await createAtlas(env);
     const now = "2026-01-01T00:00:00.000Z";
 
@@ -603,10 +618,10 @@ describe("atlas focus empty materials and lazy GET", () => {
   });
 
   it("ignores non-ready pack materials during Focus refresh", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlasId = await createAtlas(env);
-    env.seedAtlasMaterial({
+    await seedAtlasMaterial(env, {
       id: "mat-uploading",
       atlas_id: atlasId,
       kind: "pdf",
@@ -632,8 +647,8 @@ describe("atlas focus empty materials and lazy GET", () => {
   });
 
   it("schedules pack Focus refresh when schedule is provided", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlasId = await createAtlas(env);
 
     const paste = await pasteAtlasPack(env, atlasId, {
@@ -720,8 +735,8 @@ describe("atlas focus empty materials and lazy GET", () => {
   });
 
   it("retries pack Focus refresh when refreshing lease is legacy untimed", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlasId = await createAtlas(env);
 
     const paste = await pasteAtlasPack(env, atlasId, {
@@ -796,8 +811,8 @@ describe("atlas focus empty materials and lazy GET", () => {
   });
 
   it("rescans complete Focus map when pack fingerprint is missing or stale", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlasId = await createAtlas(env);
 
     const paste = await pasteAtlasPack(env, atlasId, {
@@ -876,9 +891,9 @@ describe("atlas focus empty materials and lazy GET", () => {
   });
 
   it("deck-only ready materials do not Key; atlas pack paste can", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedDeck({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedDeck(env, {
       id: "deck-1",
       user_id: "user-a",
       title: "Parasitology deck",
@@ -888,7 +903,7 @@ describe("atlas focus empty materials and lazy GET", () => {
     });
     const atlasId = await createAtlas(env);
 
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "deck-mat",
       deck_id: "deck-1",
       kind: "pdf",
@@ -941,8 +956,8 @@ describe("atlas focus in_pack", () => {
     "Sheep scab: Psoroptes ovis. Follicle mites: Demodex (canis, bovis).";
 
   async function packAtlas() {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlasId = await createAtlas(env);
     const paste = await pasteAtlasPack(env, atlasId, {
       text: ARTHROPOD_NOTES,
@@ -953,7 +968,7 @@ describe("atlas focus in_pack", () => {
     return { env, atlasId };
   }
 
-  async function list(env: ReturnType<typeof createTestEnv>, atlasId: string) {
+  async function list(env: Bindings, atlasId: string) {
     return listEntriesWithFocus(env.DB, env, {
       atlasId,
       userId: "user-a",
@@ -965,7 +980,7 @@ describe("atlas focus in_pack", () => {
     entries.find((e) => e.id === id)?.inPack;
 
   async function storedInPack(
-    env: ReturnType<typeof createTestEnv>,
+    env: Bindings,
     atlasId: string,
     entryKey: string,
   ) {
@@ -1046,7 +1061,7 @@ describe("atlas focus in_pack", () => {
     expect(result.entries.every((e) => e.inPack === null)).toBe(true);
   });
 
-  async function markStale(env: ReturnType<typeof createTestEnv>, atlasId: string) {
+  async function markStale(env: Bindings, atlasId: string) {
     await env.DB.prepare(
       "UPDATE atlases SET focus_pack_fingerprint = ? WHERE id = ?",
     )

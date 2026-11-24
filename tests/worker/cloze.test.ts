@@ -1,4 +1,20 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getCards,
+  getGenerationJobs,
+  getQueueMessages,
+  installQueueRecorders,
+  resetTestDb,
+  seedDeck,
+  seedMaterial,
+  seedR2,
+  seedSession,
+  seedUser,
+  seedUserSecret,
+  TEST_SECRETS_WRAP_KEY,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import {
   assertSingleCloze,
   parseCardDrafts,
@@ -9,7 +25,10 @@ import { processGenerateJob } from "../../worker/generation/consumer";
 import { encryptSecret } from "../../worker/crypto/secrets";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv, TEST_SECRETS_WRAP_KEY } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("assertSingleCloze", () => {
   it("allows multi-blank cloze", () => {
@@ -210,27 +229,27 @@ describe("mock LLM adapter", () => {
 });
 
 describe("generation pipeline (paste + mock LLM)", () => {
-  async function seedPasteOwner(env: ReturnType<typeof createTestEnv>) {
-    env.seedUser({
+  async function seedPasteOwner(env: Bindings) {
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Bio",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
     const ciphertext = await encryptSecret(
       "sk-test-mock-key",
       TEST_SECRETS_WRAP_KEY,
     );
-    env.seedUserSecret({
+    await seedUserSecret(env, {
       user_id: "user-a",
       provider: "mock",
       ciphertext,
@@ -240,7 +259,7 @@ describe("generation pipeline (paste + mock LLM)", () => {
   }
 
   it("paste enqueue → consumer drafts → job needs_review; GET /api/jobs/:id polls", async () => {
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     await seedPasteOwner(env);
 
     const pasteRes = await app.request(
@@ -264,7 +283,7 @@ describe("generation pipeline (paste + mock LLM)", () => {
     };
     expect(pasteBody.jobId).toBeTruthy();
 
-    const queued = env.getQueueMessages() as {
+    const queued = getQueueMessages() as {
       jobId: string;
       materialId: string;
       deckId: string;
@@ -274,7 +293,7 @@ describe("generation pipeline (paste + mock LLM)", () => {
 
     await processGenerateJob(env, queued[0]!, { llm: mockLlmAdapter() });
 
-    const jobs = env.getGenerationJobs();
+    const jobs = (await getGenerationJobs(env));
     expect(jobs).toHaveLength(1);
     expect(jobs[0]!.status).toBe("needs_review");
     expect(jobs[0]!.error).toBeNull();
@@ -290,7 +309,7 @@ describe("generation pipeline (paste + mock LLM)", () => {
     expect(storedProgress.percent).toBe(100);
     expect(storedProgress.label).toBeTruthy();
 
-    const cards = env.getCards();
+    const cards = (await getCards(env));
     expect(cards).toHaveLength(3);
     expect(cards.every((c) => c.status === "draft")).toBe(true);
     expect(cards.filter((c) => c.type === "qa")).toHaveLength(2);
@@ -324,9 +343,9 @@ describe("generation pipeline (paste + mock LLM)", () => {
   });
 
   it("failed job leaves last progress_json and GET returns it", async () => {
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     await seedPasteOwner(env);
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-pdf",
       deck_id: "deck-a",
       kind: "pdf",
@@ -336,7 +355,7 @@ describe("generation pipeline (paste + mock LLM)", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedR2("materials/deck-a/mat-pdf-progress.pdf", "%PDF-fake");
+    await seedR2(env, "materials/deck-a/mat-pdf-progress.pdf", "%PDF-fake");
 
     const { enqueueGeneration } =
       await import("../../worker/generation/enqueue");
@@ -351,7 +370,7 @@ describe("generation pipeline (paste + mock LLM)", () => {
       { llm: mockLlmAdapter() },
     );
 
-    const job = env.getGenerationJobs().find((j) => j.id === jobId);
+    const job = (await getGenerationJobs(env)).find((j) => j.id === jobId);
     expect(job?.status).toBe("failed");
     expect(job?.progress_json).not.toBeNull();
     const failedProgress = JSON.parse(job!.progress_json!) as {
@@ -377,9 +396,9 @@ describe("generation pipeline (paste + mock LLM)", () => {
 
   it("PDF extract feeds generation and yields draft cards", async () => {
     const { minimalPdfWithText } = await import("./pdf-fixture");
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     await seedPasteOwner(env);
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-pdf",
       deck_id: "deck-a",
       kind: "pdf",
@@ -390,7 +409,7 @@ describe("generation pipeline (paste + mock LLM)", () => {
       created_at: "2026-01-01T00:00:00.000Z",
     });
     const pdfBytes = minimalPdfWithText("Mitochondria produce ATP");
-    env.seedR2(
+    await seedR2(env, 
       "materials/deck-a/mat-pdf.pdf",
       new TextDecoder().decode(pdfBytes),
     );
@@ -408,16 +427,16 @@ describe("generation pipeline (paste + mock LLM)", () => {
       { llm: mockLlmAdapter() },
     );
 
-    const job = env.getGenerationJobs().find((j) => j.id === jobId);
+    const job = (await getGenerationJobs(env)).find((j) => j.id === jobId);
     expect(job?.status).toBe("needs_review");
     expect(job?.error).toBeNull();
-    expect(env.getCards().length).toBeGreaterThan(0);
+    expect((await getCards(env)).length).toBeGreaterThan(0);
   });
 
   it("empty PDF extract fails the job with an actionable hint", async () => {
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     await seedPasteOwner(env);
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-pdf-empty",
       deck_id: "deck-a",
       kind: "pdf",
@@ -427,7 +446,7 @@ describe("generation pipeline (paste + mock LLM)", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedR2("materials/deck-a/mat-empty.pdf", "%PDF-1.1\n%%EOF");
+    await seedR2(env, "materials/deck-a/mat-empty.pdf", "%PDF-1.1\n%%EOF");
 
     const { enqueueGeneration } =
       await import("../../worker/generation/enqueue");
@@ -442,24 +461,24 @@ describe("generation pipeline (paste + mock LLM)", () => {
       { llm: mockLlmAdapter() },
     );
 
-    const job = env.getGenerationJobs().find((j) => j.id === jobId);
+    const job = (await getGenerationJobs(env)).find((j) => j.id === jobId);
     expect(job?.status).toBe("failed");
     expect(job?.error).toMatch(/PDF|OCR|text/i);
-    expect(env.getCards()).toHaveLength(0);
+    expect((await getCards(env))).toHaveLength(0);
   });
 
   it("GET /api/jobs/:id returns 404 for another user", async () => {
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     await seedPasteOwner(env);
-    env.seedUser({
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-b", "user-b");
-    env.seedMaterial({
+    await seedSession(env, "sess-b", "user-b");
+    await seedMaterial(env, {
       id: "mat-1",
       deck_id: "deck-a",
       kind: "paste",

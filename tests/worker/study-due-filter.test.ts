@@ -1,27 +1,43 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect } from "vitest";
+import { env } from "cloudflare:workers";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
+import {
+  getSchedules,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedSchedule,
+  seedSession,
+  seedSubject,
+  seedUser,
+  seedUserStudyPrefs,
+  type Bindings,
+} from "./harness";
+
+afterEach(async () => {
+  await resetTestDb(env);
+});
 
 const PAST_DUE = "2020-01-01T00:00:00.000Z";
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+async function seedOwner(bindings: Bindings) {
+  await seedUser(bindings, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(bindings, "sess-a", "user-a");
 }
 
-function seedAcceptedDue(
-  env: ReturnType<typeof createTestEnv>,
+async function seedAcceptedDue(
+  bindings: Bindings,
   cardId: string,
   deckId: string,
 ) {
-  env.seedCard({
+  await seedCard(bindings, {
     id: cardId,
     deck_id: deckId,
     job_id: null,
@@ -34,7 +50,7 @@ function seedAcceptedDue(
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSchedule({
+  await seedSchedule(bindings, {
     card_id: cardId,
     due: PAST_DUE,
     stability: 0,
@@ -50,15 +66,15 @@ function seedAcceptedDue(
 }
 
 /** Two decks under one subject, each with a due accepted card. */
-function seedScopedFixture(env: ReturnType<typeof createTestEnv>) {
-  seedOwner(env);
-  env.seedSubject({
+async function seedScopedFixture(bindings: Bindings) {
+  await seedOwner(bindings);
+  await seedSubject(bindings, {
     id: "sub-1",
     user_id: "user-a",
     title: "Anatomy",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(bindings, {
     id: "deck-1",
     user_id: "user-a",
     title: "Bones",
@@ -66,7 +82,7 @@ function seedScopedFixture(env: ReturnType<typeof createTestEnv>) {
     subject_id: "sub-1",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(bindings, {
     id: "deck-2",
     user_id: "user-a",
     title: "Muscles",
@@ -74,8 +90,8 @@ function seedScopedFixture(env: ReturnType<typeof createTestEnv>) {
     subject_id: "sub-1",
     created_at: "2026-01-02T00:00:00.000Z",
   });
-  seedAcceptedDue(env, "card-1", "deck-1");
-  seedAcceptedDue(env, "card-2", "deck-2");
+  await seedAcceptedDue(bindings, "card-1", "deck-1");
+  await seedAcceptedDue(bindings, "card-2", "deck-2");
 }
 
 type DueBody = {
@@ -92,8 +108,7 @@ type DueBody = {
 
 describe("GET /api/study/due filter", () => {
   it("filters to one deck when deckId is set", async () => {
-    const env = createTestEnv();
-    seedScopedFixture(env);
+    await seedScopedFixture(env);
 
     const res = await app.request(
       "/api/study/due?deckId=deck-1",
@@ -108,15 +123,14 @@ describe("GET /api/study/due filter", () => {
   });
 
   it("returns all due cards in a subject when subjectId is set", async () => {
-    const env = createTestEnv();
-    seedScopedFixture(env);
-    env.seedSubject({
+    await seedScopedFixture(env);
+    await seedSubject(env, {
       id: "sub-other",
       user_id: "user-a",
       title: "Other",
       created_at: "2026-01-03T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-other",
       user_id: "user-a",
       title: "Other deck",
@@ -124,7 +138,7 @@ describe("GET /api/study/due filter", () => {
       subject_id: "sub-other",
       created_at: "2026-01-03T00:00:00.000Z",
     });
-    seedAcceptedDue(env, "card-other", "deck-other");
+    await seedAcceptedDue(env, "card-other", "deck-other");
 
     const res = await app.request(
       "/api/study/due?subjectId=sub-1",
@@ -138,8 +152,7 @@ describe("GET /api/study/due filter", () => {
   });
 
   it("returns 400 when both deckId and subjectId are set", async () => {
-    const env = createTestEnv();
-    seedScopedFixture(env);
+    await seedScopedFixture(env);
 
     const res = await app.request(
       "/api/study/due?deckId=deck-1&subjectId=sub-1",
@@ -151,8 +164,7 @@ describe("GET /api/study/due filter", () => {
   });
 
   it("returns 404 for missing deckId", async () => {
-    const env = createTestEnv();
-    seedScopedFixture(env);
+    await seedScopedFixture(env);
 
     const res = await app.request(
       "/api/study/due?deckId=missing-deck",
@@ -164,22 +176,21 @@ describe("GET /api/study/due filter", () => {
   });
 
   it("returns 404 for another user's deckId", async () => {
-    const env = createTestEnv();
-    seedScopedFixture(env);
-    env.seedUser({
+    await seedScopedFixture(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSubject({
+    await seedSubject(env, {
       id: "sub-b",
       user_id: "user-b",
       title: "Theirs",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-b",
       user_id: "user-b",
       title: "Private",
@@ -187,7 +198,7 @@ describe("GET /api/study/due filter", () => {
       subject_id: "sub-b",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    seedAcceptedDue(env, "card-b", "deck-b");
+    await seedAcceptedDue(env, "card-b", "deck-b");
 
     const res = await app.request(
       "/api/study/due?deckId=deck-b",
@@ -199,16 +210,15 @@ describe("GET /api/study/due filter", () => {
   });
 
   it("returns 404 for another user's subjectId", async () => {
-    const env = createTestEnv();
-    seedScopedFixture(env);
-    env.seedUser({
+    await seedScopedFixture(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSubject({
+    await seedSubject(env, {
       id: "sub-b",
       user_id: "user-b",
       title: "Theirs",
@@ -225,15 +235,14 @@ describe("GET /api/study/due filter", () => {
   });
 
   it("omits both params and keeps global due behavior", async () => {
-    const env = createTestEnv();
-    seedScopedFixture(env);
-    env.seedSubject({
+    await seedScopedFixture(env);
+    await seedSubject(env, {
       id: "sub-2",
       user_id: "user-a",
       title: "Other",
       created_at: "2026-01-03T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-3",
       user_id: "user-a",
       title: "Other deck",
@@ -241,7 +250,7 @@ describe("GET /api/study/due filter", () => {
       subject_id: "sub-2",
       created_at: "2026-01-03T00:00:00.000Z",
     });
-    seedAcceptedDue(env, "card-3", "deck-3");
+    await seedAcceptedDue(env, "card-3", "deck-3");
 
     const res = await app.request(
       "/api/study/due",
@@ -259,9 +268,8 @@ describe("GET /api/study/due filter", () => {
   });
 
   it("caps new cards at intro budget and reports heldIntroCount", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedDeck({
+    await seedOwner(env);
+    await seedDeck(env, {
       id: "deck-many",
       user_id: "user-a",
       title: "Many",
@@ -269,7 +277,11 @@ describe("GET /api/study/due filter", () => {
       created_at: "2026-01-01T00:00:00.000Z",
     });
     for (let i = 0; i < 50; i++) {
-      seedAcceptedDue(env, `new-${String(i).padStart(2, "0")}`, "deck-many");
+      await seedAcceptedDue(
+        env,
+        `new-${String(i).padStart(2, "0")}`,
+        "deck-many",
+      );
     }
 
     const res = await app.request(
@@ -287,9 +299,8 @@ describe("GET /api/study/due filter", () => {
   });
 
   it("raises intro slice with introBonus for Study more", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedDeck({
+    await seedOwner(env);
+    await seedDeck(env, {
       id: "deck-many",
       user_id: "user-a",
       title: "Many",
@@ -297,7 +308,11 @@ describe("GET /api/study/due filter", () => {
       created_at: "2026-01-01T00:00:00.000Z",
     });
     for (let i = 0; i < 50; i++) {
-      seedAcceptedDue(env, `new-${String(i).padStart(2, "0")}`, "deck-many");
+      await seedAcceptedDue(
+        env,
+        `new-${String(i).padStart(2, "0")}`,
+        "deck-many",
+      );
     }
 
     const res = await app.request(
@@ -314,16 +329,15 @@ describe("GET /api/study/due filter", () => {
   });
 
   it("GET /due does not mutate schedule dues (pendingDeferrals only)", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedDeck({
+    await seedOwner(env);
+    await seedDeck(env, {
       id: "deck-rev",
       user_id: "user-a",
       title: "Reviews",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedUserStudyPrefs({
+    await seedUserStudyPrefs(env, {
       user_id: "user-a",
       intro_budget: 20,
       review_budget: 2,
@@ -335,7 +349,7 @@ describe("GET /api/study/due filter", () => {
     const dueNow = new Date().toISOString();
     for (let i = 0; i < 5; i++) {
       const id = `rev-${i}`;
-      env.seedCard({
+      await seedCard(env, {
         id,
         deck_id: "deck-rev",
         job_id: null,
@@ -348,7 +362,7 @@ describe("GET /api/study/due filter", () => {
         created_at: "2026-01-01T00:00:00.000Z",
         updated_at: "2026-01-01T00:00:00.000Z",
       });
-      env.seedSchedule({
+      await seedSchedule(env, {
         card_id: id,
         due: dueNow,
         stability: 100,
@@ -363,8 +377,7 @@ describe("GET /api/study/due filter", () => {
       });
     }
 
-    const duesBefore = env
-      .getSchedules()
+    const duesBefore = (await getSchedules(env))
       .filter((s) => s.card_id.startsWith("rev-"))
       .map((s) => [s.card_id, s.due] as const)
       .sort((a, b) => a[0].localeCompare(b[0]));
@@ -380,8 +393,7 @@ describe("GET /api/study/due filter", () => {
     };
     expect(body.pendingDeferrals.length).toBeGreaterThan(0);
 
-    const duesAfter = env
-      .getSchedules()
+    const duesAfter = (await getSchedules(env))
       .filter((s) => s.card_id.startsWith("rev-"))
       .map((s) => [s.card_id, s.due] as const)
       .sort((a, b) => a[0].localeCompare(b[0]));
@@ -398,8 +410,7 @@ describe("GET /api/study/due filter", () => {
     expect(commit.status).toBe(200);
     const committed = (await commit.json()) as { deferredCount: number };
     expect(committed.deferredCount).toBeGreaterThan(0);
-    const duesCommitted = env
-      .getSchedules()
+    const duesCommitted = (await getSchedules(env))
       .filter((s) => s.card_id.startsWith("rev-"))
       .map((s) => s.due);
     expect(duesCommitted.some((d) => d !== dueNow)).toBe(true);

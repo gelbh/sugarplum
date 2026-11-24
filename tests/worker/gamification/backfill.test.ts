@@ -1,11 +1,20 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  getXpLedger,
+  resetTestDb,
+  seedUser,
+} from "../harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { backfillUser } from "../../../worker/gamification/backfill";
-import { createTestEnv } from "../test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("backfillUser", () => {
   it("stays idempotent when two runs overlap", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u-bf",
       email: "bf@test.com",
       password_hash: null,
@@ -16,8 +25,7 @@ describe("backfillUser", () => {
       backfillUser(env.DB, "u-bf"),
       backfillUser(env.DB, "u-bf"),
     ]);
-    const markers = env
-      .getXpLedger()
+    const markers = (await getXpLedger(env))
       .filter((e) => e.idempotency_key === "backfill:v1:u-bf");
     expect(markers).toHaveLength(1);
   });

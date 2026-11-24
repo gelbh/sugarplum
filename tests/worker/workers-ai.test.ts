@@ -1,3 +1,7 @@
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+} from "./harness";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createLlmAdapter,
@@ -18,7 +22,10 @@ import {
   createWorkersAiAdapter,
   isWorkersAiDeprecatedModelError,
 } from "../../worker/generation/workers-ai";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const sampleCardsJson = JSON.stringify({
   cards: [
@@ -100,7 +107,7 @@ describe("Workers AI adapter", () => {
       },
     );
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
 
     const adapter = createWorkersAiAdapter(env);
@@ -131,7 +138,7 @@ describe("Workers AI adapter", () => {
         return chatCompletionResult('{"cards":[]}');
       },
     );
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
     await adapter.complete({
@@ -152,7 +159,7 @@ describe("Workers AI adapter", () => {
       expect(inputs.reasoning).toBeUndefined();
       return chatCompletionResult('{"cards":[]}');
     });
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
     await adapter.complete({
@@ -203,7 +210,7 @@ describe("Workers AI adapter", () => {
         return chatCompletionResult('{"cards":[]}');
       },
     );
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
     await adapter.complete({
@@ -249,7 +256,7 @@ describe("Workers AI adapter", () => {
       },
     }));
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 
@@ -301,7 +308,7 @@ describe("Workers AI adapter", () => {
       })
       .mockResolvedValueOnce(chatCompletionResult(compactOk));
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 
@@ -326,7 +333,7 @@ describe("Workers AI adapter", () => {
       .mockRejectedValueOnce(new Error("JSON Mode couldn't be met"))
       .mockResolvedValueOnce(chatCompletionResult(sampleCardsJson));
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 
@@ -370,7 +377,7 @@ describe("Workers AI adapter", () => {
       },
     }));
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 
@@ -406,7 +413,7 @@ describe("Workers AI adapter", () => {
       },
     );
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
 
     const adapter = createWorkersAiAdapter(env);
@@ -433,7 +440,7 @@ describe("Workers AI adapter", () => {
       },
     }));
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
     const result = await adapter.complete({
@@ -463,7 +470,7 @@ describe("Workers AI adapter", () => {
       },
     );
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 
@@ -497,7 +504,7 @@ describe("Workers AI adapter", () => {
       ],
     }));
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 
@@ -518,7 +525,7 @@ describe("Workers AI adapter", () => {
   });
 
   it("throws when AI binding is missing", () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     // Simulate misconfigured Worker without AI.
     (env as { AI?: Ai }).AI = undefined;
     expect(() => createWorkersAiAdapter(env)).toThrow(/env\.AI/i);
@@ -531,7 +538,7 @@ describe("Workers AI adapter", () => {
       throw err;
     });
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 
@@ -574,7 +581,7 @@ describe("Workers AI 3046 request-timeout retry", () => {
       return chatCompletionResult('{"ok":true}');
     });
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 
@@ -590,7 +597,7 @@ describe("Workers AI 3046 request-timeout retry", () => {
       throw timeoutErr();
     });
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 
@@ -610,7 +617,7 @@ describe("Workers AI 3046 request-timeout retry", () => {
       throw err;
     });
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 
@@ -628,7 +635,7 @@ describe("Workers AI 3046 request-timeout retry", () => {
       throw new Error("model unavailable");
     });
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 
@@ -646,7 +653,7 @@ describe("Workers AI 3046 request-timeout retry", () => {
       throw timeoutErr();
     });
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 
@@ -666,7 +673,7 @@ describe("Workers AI 3046 request-timeout retry", () => {
       return Promise.resolve(chatCompletionResult('{"ok":true}'));
     });
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 
@@ -680,7 +687,7 @@ describe("Workers AI 3046 request-timeout retry", () => {
   it("exhausts retries when AI.run hangs past every local deadline", async () => {
     const run = vi.fn(() => new Promise(() => {}));
 
-    const env = createTestEnv();
+    const env = cfEnv;
     env.AI = { run } as unknown as Ai;
     const adapter = createWorkersAiAdapter(env);
 

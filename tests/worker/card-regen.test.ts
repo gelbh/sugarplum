@@ -1,4 +1,27 @@
-import { describe, it, expect, vi } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getCardRegenOps,
+  getCardRegenQueueMessages,
+  getCards,
+  getQueueMessages,
+  getSchedules,
+  getUsageEvents,
+  installQueueRecorders,
+  resetTestDb,
+  seedCard,
+  seedCardRegenOp,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedR2,
+  seedReviewLog,
+  seedSchedule,
+  seedSession,
+  seedStudyClaim,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { capRegenSourceText } from "../../worker/generation/card-regen";
@@ -18,24 +41,27 @@ import {
 } from "../../worker/generation/quota";
 import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/claim-card-fallback";
 import { WORKERS_AI_MODEL } from "../../worker/generation/workers-ai";
-import { createTestEnv } from "./test-env";
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: "user-a",
     title: "Bio",
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedMaterial({
+  await seedMaterial(env, {
     id: "mat-a",
     deck_id: "deck-a",
     kind: "paste",
@@ -45,11 +71,11 @@ function seedOwner(env: ReturnType<typeof createTestEnv>) {
     status: "ready",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
 }
 
-function seedThreeDrafts(env: ReturnType<typeof createTestEnv>) {
-  env.seedGenerationJob({
+async function seedThreeDrafts(env: Bindings) {
+  await seedGenerationJob(env, {
     id: "job-a",
     material_id: "mat-a",
     status: "needs_review",
@@ -58,7 +84,7 @@ function seedThreeDrafts(env: ReturnType<typeof createTestEnv>) {
     created_at: "2026-01-01T01:00:00.000Z",
     finished_at: "2026-01-01T01:05:00.000Z",
   });
-  env.seedCard({
+  await seedCard(env, {
     id: "c-left",
     deck_id: "deck-a",
     job_id: "job-a",
@@ -74,7 +100,7 @@ function seedThreeDrafts(env: ReturnType<typeof createTestEnv>) {
     created_at: "2026-01-01T01:06:00.000Z",
     updated_at: "2026-01-01T01:06:00.000Z",
   });
-  env.seedCard({
+  await seedCard(env, {
     id: "c-mid",
     deck_id: "deck-a",
     job_id: "job-a",
@@ -90,7 +116,7 @@ function seedThreeDrafts(env: ReturnType<typeof createTestEnv>) {
     created_at: "2026-01-01T01:07:00.000Z",
     updated_at: "2026-01-01T01:07:00.000Z",
   });
-  env.seedCard({
+  await seedCard(env, {
     id: "c-right",
     deck_id: "deck-a",
     job_id: "job-a",
@@ -146,7 +172,7 @@ const COMPOUND_MCQ = JSON.stringify({
 });
 
 function stubWorkersAiSequence(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
   contents: string[],
 ) {
   let i = 0;
@@ -171,12 +197,12 @@ function stubWorkersAiSequence(
 }
 
 /** Happy path: extract claims, then write one typed card. */
-function stubWorkersAiMcq(env: ReturnType<typeof createTestEnv>) {
+function stubWorkersAiMcq(env: Bindings) {
   return stubWorkersAiSequence(env, [VALID_CLAIMS, VALID_MCQ]);
 }
 
 function regenRequest(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
   cardId = "c-mid",
   type = "mcq",
   cookie = "sess-a",
@@ -196,20 +222,20 @@ function regenRequest(
 }
 
 function latestCardRegenMessage(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
 ): CardRegenQueueMessage {
-  const msgs = env.getCardRegenQueueMessages() as CardRegenQueueMessage[];
+  const msgs = getCardRegenQueueMessages() as CardRegenQueueMessage[];
   const last = msgs[msgs.length - 1];
   if (!last) throw new Error("expected cardRegen queue message");
   return last;
 }
 
-async function processLatestCardRegen(env: ReturnType<typeof createTestEnv>) {
+async function processLatestCardRegen(env: Bindings) {
   return processCardRegenOp(env, latestCardRegenMessage(env));
 }
 
 async function getRegenOp(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
   opId: string,
   cookie = "sess-a",
 ) {
@@ -223,7 +249,7 @@ async function getRegenOp(
 }
 
 async function enqueueAndProcess(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
   cardId = "c-mid",
   type = "mcq",
 ) {
@@ -238,10 +264,10 @@ async function enqueueAndProcess(
 
 describe("POST /api/cards/:id/regen", () => {
   it("skips extract when card has claim_id and keeps claim_id after update", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedStudyClaim({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedStudyClaim(env, {
       id: "cl-mid",
       job_id: "job-a",
       deck_id: "deck-a",
@@ -253,9 +279,9 @@ describe("POST /api/cards/:id/regen", () => {
       pages_json: JSON.stringify([1]),
       created_at: "2026-01-01T01:06:00.000Z",
     });
-    const mid = env.getCards().find((c) => c.id === "c-mid")!;
-    env.seedCard({ ...mid, claim_id: "cl-mid" });
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const mid = (await getCards(env)).find((c) => c.id === "c-mid")!;
+    await seedCard(env, { ...mid, claim_id: "cl-mid" });
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
 
     const run = vi.fn(async (_model: string, input: unknown) => {
       expect(_model).toBe(WORKERS_AI_CLAIM_CARD_MODEL);
@@ -281,7 +307,7 @@ describe("POST /api/cards/:id/regen", () => {
     const { body, result } = await enqueueAndProcess(env);
     expect(result).toBe("done");
     expect(run).toHaveBeenCalled();
-    const updated = env.getCards().find((c) => c.id === "c-mid")!;
+    const updated = (await getCards(env)).find((c) => c.id === "c-mid")!;
     expect(updated.claim_id).toBe("cl-mid");
     expect(JSON.parse(updated.front_json)).toBe(
       "Which organelle produces ATP?",
@@ -297,10 +323,10 @@ describe("POST /api/cards/:id/regen", () => {
   });
 
   it("resolves claim by exact excerpt when claim_id is null and heals claim_id", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedStudyClaim({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedStudyClaim(env, {
       id: "cl-orphan",
       job_id: "job-a",
       deck_id: "deck-a",
@@ -312,7 +338,7 @@ describe("POST /api/cards/:id/regen", () => {
       pages_json: JSON.stringify([1]),
       created_at: "2026-01-01T01:06:00.000Z",
     });
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
     const run = vi.fn(async (_model: string, input: unknown) => {
       const messages = (
         input as { messages?: Array<{ role: string; content: string }> }
@@ -335,16 +361,16 @@ describe("POST /api/cards/:id/regen", () => {
     const { result } = await enqueueAndProcess(env);
     expect(result).toBe("done");
     expect(run).toHaveBeenCalledTimes(1);
-    expect(env.getCards().find((c) => c.id === "c-mid")!.claim_id).toBe(
+    expect((await getCards(env)).find((c) => c.id === "c-mid")!.claim_id).toBe(
       "cl-orphan",
     );
   });
 
   it("heals dangling claim_id when excerpt matches another study_claims row", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedStudyClaim({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedStudyClaim(env, {
       id: "cl-real",
       job_id: "job-a",
       deck_id: "deck-a",
@@ -356,24 +382,64 @@ describe("POST /api/cards/:id/regen", () => {
       pages_json: null,
       created_at: "2026-01-01T01:06:00.000Z",
     });
-    const mid = env.getCards().find((c) => c.id === "c-mid")!;
-    env.seedCard({ ...mid, claim_id: "cl-missing" });
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    // Real D1 cannot store a missing claim_id FK. Cross-deck claim_id hits the
+    // same resolve path (SELECT id + deck_id → miss → excerpt heal).
+    await seedDeck(env, {
+      id: "deck-other",
+      user_id: "user-a",
+      title: "Other",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await seedMaterial(env, {
+      id: "mat-other",
+      deck_id: "deck-other",
+      kind: "paste",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await seedGenerationJob(env, {
+      id: "job-other",
+      material_id: "mat-other",
+      status: "needs_review",
+      error: null,
+      coverage_json: null,
+      created_at: "2026-01-01T01:00:00.000Z",
+      finished_at: null,
+    });
+    await seedStudyClaim(env, {
+      id: "cl-missing",
+      job_id: "job-other",
+      deck_id: "deck-other",
+      subject: "Gone",
+      predicate: "missing",
+      source_span: "gone",
+      object: null,
+      qualifiers_json: null,
+      pages_json: null,
+      created_at: "2026-01-01T01:05:00.000Z",
+    });
+    const mid = (await getCards(env)).find((c) => c.id === "c-mid")!;
+    await seedCard(env, { ...mid, claim_id: "cl-missing" });
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
     const run = stubWorkersAiSequence(env, [VALID_MCQ]);
 
     const { result } = await enqueueAndProcess(env);
     expect(result).toBe("done");
     expect(run).toHaveBeenCalledTimes(1);
-    expect(env.getCards().find((c) => c.id === "c-mid")!.claim_id).toBe(
+    expect((await getCards(env)).find((c) => c.id === "c-mid")!.claim_id).toBe(
       "cl-real",
     );
   });
 
   it("uses matched claim for write but does not steal claim_id owned by a sibling", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedStudyClaim({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedStudyClaim(env, {
       id: "cl-owned",
       job_id: "job-a",
       deck_id: "deck-a",
@@ -385,27 +451,27 @@ describe("POST /api/cards/:id/regen", () => {
       pages_json: null,
       created_at: "2026-01-01T01:06:00.000Z",
     });
-    const left = env.getCards().find((c) => c.id === "c-left")!;
-    env.seedCard({ ...left, claim_id: "cl-owned" });
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const left = (await getCards(env)).find((c) => c.id === "c-left")!;
+    await seedCard(env, { ...left, claim_id: "cl-owned" });
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
     const run = stubWorkersAiSequence(env, [VALID_MCQ]);
 
     const { result } = await enqueueAndProcess(env);
     expect(result).toBe("done");
     expect(run).toHaveBeenCalledTimes(1);
-    expect(env.getCards().find((c) => c.id === "c-mid")!.claim_id ?? null).toBe(
+    expect((await getCards(env)).find((c) => c.id === "c-mid")!.claim_id ?? null).toBe(
       null,
     );
-    expect(env.getCards().find((c) => c.id === "c-left")!.claim_id).toBe(
+    expect((await getCards(env)).find((c) => c.id === "c-left")!.claim_id).toBe(
       "cl-owned",
     );
   });
 
   it("regenerates middle draft as mcq and leaves sibling fronts intact", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedR2(
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedR2(env, 
       "materials/deck-a/mat-a.txt",
       "Mitochondria produce ATP in eukaryotic cells.",
     );
@@ -443,7 +509,7 @@ describe("POST /api/cards/:id/regen", () => {
     ]);
     expect(run).toHaveBeenCalled();
 
-    const cards = env.getCards().filter((c) => c.job_id === "job-a");
+    const cards = (await getCards(env)).filter((c) => c.job_id === "job-a");
     expect(cards).toHaveLength(3);
     expect(cards.map((c) => c.id).sort()).toEqual([
       "c-left",
@@ -459,7 +525,7 @@ describe("POST /api/cards/:id/regen", () => {
     expect(mid.type).toBe("mcq");
     expect(JSON.parse(mid.front_json)).toBe("Which organelle produces ATP?");
 
-    const regenEvents = env.getUsageEvents().filter((e) => e.kind === "regen");
+    const regenEvents = (await getUsageEvents(env)).filter((e) => e.kind === "regen");
     expect(regenEvents).toHaveLength(1);
     expect(regenEvents[0]).toMatchObject({
       user_id: "user-a",
@@ -474,10 +540,10 @@ describe("POST /api/cards/:id/regen", () => {
   });
 
   it("fails the op when free-gen daily cap is exhausted on workers-ai", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
     stubWorkersAiMcq(env);
     for (let i = 0; i < FREE_GEN_DAILY_CAP; i++) {
       await consumeFreeGenSlot(env, "user-a");
@@ -492,21 +558,21 @@ describe("POST /api/cards/:id/regen", () => {
     };
     expect(opBody.status).toBe("failed");
     expect(opBody.error).toMatch(/Daily free generation limit/i);
-    expect(env.getUsageEvents().filter((e) => e.kind === "regen")).toHaveLength(
+    expect((await getUsageEvents(env)).filter((e) => e.kind === "regen")).toHaveLength(
       0,
     );
     expect(
-      JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json),
+      JSON.parse((await getCards(env)).find((c) => c.id === "c-mid")!.front_json),
     ).toBe("Middle front?");
   });
 
   it("prefers provenance excerpt over oversized material as extract corpus", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
     const huge = `${"Mitochondria produce ATP. ".repeat(400)}${"X".repeat(CHUNK_CHAR_LIMIT)}`;
     expect(huge.length).toBeGreaterThan(CHUNK_CHAR_LIMIT);
-    env.seedR2("materials/deck-a/mat-a.txt", huge);
+    await seedR2(env, "materials/deck-a/mat-a.txt", huge);
     const run = stubWorkersAiMcq(env);
 
     const { result } = await enqueueAndProcess(env);
@@ -523,9 +589,9 @@ describe("POST /api/cards/:id/regen", () => {
   });
 
   it("clears media_r2_keys when regenerating a visual card as text", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedGenerationJob({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedGenerationJob(env, {
       id: "job-vis",
       material_id: "mat-a",
       status: "needs_review",
@@ -534,7 +600,7 @@ describe("POST /api/cards/:id/regen", () => {
       created_at: "2026-01-01T01:00:00.000Z",
       finished_at: "2026-01-01T01:05:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-vis",
       deck_id: "deck-a",
       job_id: "job-vis",
@@ -550,7 +616,7 @@ describe("POST /api/cards/:id/regen", () => {
       created_at: "2026-01-01T01:06:00.000Z",
       updated_at: "2026-01-01T01:06:00.000Z",
     });
-    env.seedR2(
+    await seedR2(env, 
       "materials/deck-a/mat-a.txt",
       "Mitochondria produce ATP in eukaryotic cells.",
     );
@@ -565,14 +631,14 @@ describe("POST /api/cards/:id/regen", () => {
     expect(opBody.card?.type).toBe("mcq");
     expect(opBody.card?.media_r2_keys ?? []).toEqual([]);
     expect(
-      env.getCards().find((c) => c.id === "c-vis")!.media_r2_keys_json,
+      (await getCards(env)).find((c) => c.id === "c-vis")!.media_r2_keys_json,
     ).toBe(null);
   });
 
   it("returns 422 when provenance and material text are both missing", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedGenerationJob({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedGenerationJob(env, {
       id: "job-empty",
       material_id: "mat-a",
       status: "needs_review",
@@ -581,7 +647,7 @@ describe("POST /api/cards/:id/regen", () => {
       created_at: "2026-01-01T01:00:00.000Z",
       finished_at: "2026-01-01T01:05:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-nosource",
       deck_id: "deck-a",
       job_id: "job-empty",
@@ -609,25 +675,25 @@ describe("POST /api/cards/:id/regen", () => {
       env,
     );
     expect(res.status).toBe(422);
-    const midBefore = env.getCards().find((c) => c.id === "c-nosource")!;
+    const midBefore = (await getCards(env)).find((c) => c.id === "c-nosource")!;
     expect(midBefore.type).toBe("qa");
     expect(JSON.parse(midBefore.front_json)).toBe("Orphan Q?");
   });
 
   it("returns 404 for non-owner", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedR2("materials/deck-a/mat-a.txt", "source text");
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedR2(env, "materials/deck-a/mat-a.txt", "source text");
     stubWorkersAiMcq(env);
-    env.seedUser({
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-b", "user-b");
+    await seedSession(env, "sess-b", "user-b");
 
     const res = await app.request(
       "/api/cards/c-mid/regen",
@@ -642,13 +708,13 @@ describe("POST /api/cards/:id/regen", () => {
       env,
     );
     expect(res.status).toBe(404);
-    expect(env.getCards()).toHaveLength(3);
+    expect((await getCards(env))).toHaveLength(3);
   });
 
   it("accepted regen keeps schedule due unchanged", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedGenerationJob({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedGenerationJob(env, {
       id: "job-acc",
       material_id: "mat-a",
       status: "needs_review",
@@ -657,7 +723,7 @@ describe("POST /api/cards/:id/regen", () => {
       created_at: "2026-01-01T01:00:00.000Z",
       finished_at: "2026-01-01T01:05:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-acc",
       deck_id: "deck-a",
       job_id: "job-acc",
@@ -674,7 +740,7 @@ describe("POST /api/cards/:id/regen", () => {
       updated_at: "2026-01-01T01:06:00.000Z",
     });
     const due = "2026-03-15T12:00:00.000Z";
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "c-acc",
       due,
       stability: 2.5,
@@ -687,7 +753,7 @@ describe("POST /api/cards/:id/regen", () => {
       state: 2,
       last_review: "2026-03-12T12:00:00.000Z",
     });
-    env.seedR2(
+    await seedR2(env, 
       "materials/deck-a/mat-a.txt",
       "Mitochondria produce ATP in eukaryotic cells.",
     );
@@ -701,15 +767,15 @@ describe("POST /api/cards/:id/regen", () => {
     };
     expect(opBody.card?.status).toBe("accepted");
     expect(opBody.card?.type).toBe("mcq");
-    expect(env.getSchedules()).toHaveLength(1);
-    expect(env.getSchedules()[0]!.due).toBe(due);
-    expect(env.getSchedules()[0]!.reps).toBe(2);
+    expect((await getSchedules(env))).toHaveLength(1);
+    expect((await getSchedules(env))[0]!.due).toBe(due);
+    expect((await getSchedules(env))[0]!.reps).toBe(2);
   });
 
   it("includes study struggle text in the regen prompt when again/lapses > 0", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedGenerationJob({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedGenerationJob(env, {
       id: "job-struggle",
       material_id: "mat-a",
       status: "needs_review",
@@ -718,7 +784,7 @@ describe("POST /api/cards/:id/regen", () => {
       created_at: "2026-01-01T01:00:00.000Z",
       finished_at: "2026-01-01T01:05:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-struggle",
       deck_id: "deck-a",
       job_id: "job-struggle",
@@ -734,7 +800,7 @@ describe("POST /api/cards/:id/regen", () => {
       created_at: "2026-01-01T01:06:00.000Z",
       updated_at: "2026-01-01T01:06:00.000Z",
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "c-struggle",
       due: "2026-03-15T12:00:00.000Z",
       stability: 2.5,
@@ -747,7 +813,7 @@ describe("POST /api/cards/:id/regen", () => {
       state: 2,
       last_review: "2026-03-12T12:00:00.000Z",
     });
-    env.seedReviewLog({
+    await seedReviewLog(env, {
       id: "rl-struggle-1",
       card_id: "c-struggle",
       rating: 1,
@@ -756,7 +822,7 @@ describe("POST /api/cards/:id/regen", () => {
       reviewed_at: new Date().toISOString(),
       state_json: "{}",
     });
-    env.seedR2(
+    await seedR2(env, 
       "materials/deck-a/mat-a.txt",
       "Mitochondria produce ATP in eukaryotic cells.",
     );
@@ -779,10 +845,10 @@ describe("POST /api/cards/:id/regen", () => {
   });
 
   it("retries once with the validation error when the write reply is invalid", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
     const run = stubWorkersAiSequence(env, [
       VALID_CLAIMS,
       "not json at all",
@@ -798,16 +864,16 @@ describe("POST /api/cards/:id/regen", () => {
     const user = writeReask.messages.find((m) => m.role === "user")!.content;
     expect(user).toMatch(/previous reply was rejected/i);
     expect(
-      env.getUsageEvents().filter((e) => e.kind === "regen")[0],
+      (await getUsageEvents(env)).filter((e) => e.kind === "regen")[0],
     ).toMatchObject({ tokens_total: 420 });
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
   });
 
   it("fails the op with the validation error after two invalid write replies", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
     const run = stubWorkersAiSequence(env, [
       VALID_CLAIMS,
       "not json at all",
@@ -823,16 +889,16 @@ describe("POST /api/cards/:id/regen", () => {
       /non-JSON/,
     );
     expect(
-      JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json),
+      JSON.parse((await getCards(env)).find((c) => c.id === "c-mid")!.front_json),
     ).toBe("Middle front?");
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
   });
 
   it("refunds the free slot when Workers AI is at capacity", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
     const run = vi.fn(async () => {
       throw Object.assign(new Error("upstream busy"), { status: 429 });
     });
@@ -849,10 +915,10 @@ describe("POST /api/cards/:id/regen", () => {
   });
 
   it("reasks once when the first MCQ answer is not among its options", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
     const badMcq = JSON.stringify({
       cards: [
         {
@@ -872,10 +938,10 @@ describe("POST /api/cards/:id/regen", () => {
   });
 
   it("compact-retries write when the first write reply is truncated mid-JSON", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
     const run = stubWorkersAiSequence(env, [
       VALID_CLAIMS,
       '{"cards":[{"type":"mcq","front":"Which',
@@ -888,10 +954,10 @@ describe("POST /api/cards/:id/regen", () => {
   });
 
   it("fails the op when extract yields no claims", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
     const run = stubWorkersAiSequence(env, [
       JSON.stringify({ claims: [] }),
       VALID_MCQ,
@@ -901,16 +967,16 @@ describe("POST /api/cards/:id/regen", () => {
     expect(result).toBe("failed");
     expect(run).toHaveBeenCalledTimes(1);
     expect(
-      JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json),
+      JSON.parse((await getCards(env)).find((c) => c.id === "c-mid")!.front_json),
     ).toBe("Middle front?");
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(0);
   });
 
   it("fails the op when Layer-1 rejects the card after quality reask", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
     const run = stubWorkersAiSequence(env, [
       VALID_CLAIMS,
       COMPOUND_MCQ,
@@ -921,16 +987,16 @@ describe("POST /api/cards/:id/regen", () => {
     expect(result).toBe("failed");
     expect(run.mock.calls.length).toBeGreaterThanOrEqual(3);
     expect(
-      JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json),
+      JSON.parse((await getCards(env)).find((c) => c.id === "c-mid")!.front_json),
     ).toBe("Middle front?");
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(0);
   });
 
   it("returns the same op id on a second POST while in flight", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
     stubWorkersAiMcq(env);
 
     const first = await regenRequest(env);
@@ -944,17 +1010,17 @@ describe("POST /api/cards/:id/regen", () => {
     expect(second.status).toBe(202);
     const secondBody = (await second.json()) as { op: { id: string } };
     expect(secondBody.op.id).toBe(firstBody.op.id);
-    expect(env.getCardRegenOps()).toHaveLength(1);
+    expect((await getCardRegenOps(env))).toHaveLength(1);
     // Second POST re-enqueues while still queued (lost-message recovery).
-    expect(env.getCardRegenQueueMessages()).toHaveLength(2);
-    expect(env.getQueueMessages()).toHaveLength(0);
+    expect(getCardRegenQueueMessages()).toHaveLength(2);
+    expect(getQueueMessages()).toHaveLength(0);
   });
 
   it("processCardRegenOp is idempotent after done", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
     const run = stubWorkersAiMcq(env);
 
     const { result } = await enqueueAndProcess(env);
@@ -963,19 +1029,19 @@ describe("POST /api/cards/:id/regen", () => {
     const again = await processLatestCardRegen(env);
     expect(again).toBe("done");
     expect(run.mock.calls.length).toBe(callsAfterFirst);
-    expect(env.getUsageEvents().filter((e) => e.kind === "regen")).toHaveLength(
+    expect((await getUsageEvents(env)).filter((e) => e.kind === "regen")).toHaveLength(
       1,
     );
   });
 
   it("fails stale running card regen ops", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedThreeDrafts(env);
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedThreeDrafts(env);
     const staleCreated = new Date(
       Date.now() - RUNNING_JOB_STALE_MS - 60_000,
     ).toISOString();
-    env.seedCardRegenOp({
+    await seedCardRegenOp(env, {
       id: "op-stale",
       card_id: "c-mid",
       user_id: "user-a",
@@ -988,7 +1054,7 @@ describe("POST /api/cards/:id/regen", () => {
 
     const failed = await failStaleCardRegenOps(env);
     expect(failed).toBe(1);
-    const op = env.getCardRegenOps().find((o) => o.id === "op-stale")!;
+    const op = (await getCardRegenOps(env)).find((o) => o.id === "op-stale")!;
     expect(op.status).toBe("failed");
     expect(op.error).toBe(STALE_CARD_REGEN_FAIL_ERROR);
   });

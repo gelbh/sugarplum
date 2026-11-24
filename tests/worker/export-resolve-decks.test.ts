@@ -1,6 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+  seedDeck,
+  seedSubject,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { resolveExportDeckIds } from "../../worker/export/resolveExportDecks";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const userA = {
   id: "user-a",
@@ -18,18 +28,18 @@ const userB = {
   created_at: "2026-01-01T00:00:00.000Z",
 };
 
-function seedOwnedLibrary() {
-  const env = createTestEnv();
-  env.seedUser(userA);
-  env.seedUser(userB);
+async function seedOwnedLibrary() {
+  const env = cfEnv;
+  await seedUser(env, userA);
+  await seedUser(env, userB);
 
-  env.seedSubject({
+  await seedSubject(env, {
     id: "subject-a",
     user_id: userA.id,
     title: "Anatomy",
     created_at: userA.created_at,
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a1",
     user_id: userA.id,
     title: "Bones",
@@ -37,7 +47,7 @@ function seedOwnedLibrary() {
     subject_id: "subject-a",
     created_at: "2026-01-01T00:00:01.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a2",
     user_id: userA.id,
     title: "Muscles",
@@ -45,7 +55,7 @@ function seedOwnedLibrary() {
     subject_id: "subject-a",
     created_at: "2026-01-01T00:00:02.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-solo",
     user_id: userA.id,
     title: "Loose deck",
@@ -54,13 +64,13 @@ function seedOwnedLibrary() {
     created_at: "2026-01-01T00:00:03.000Z",
   });
 
-  env.seedSubject({
+  await seedSubject(env, {
     id: "subject-b",
     user_id: userB.id,
     title: "Foreign",
     created_at: userB.created_at,
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-b1",
     user_id: userB.id,
     title: "Other bones",
@@ -74,7 +84,7 @@ function seedOwnedLibrary() {
 
 describe("resolveExportDeckIds", () => {
   it("expands a subject to owned decks in created_at order", async () => {
-    const env = seedOwnedLibrary();
+    const env = await seedOwnedLibrary();
 
     const ids = await resolveExportDeckIds(env, userA.id, {
       type: "subject",
@@ -85,7 +95,7 @@ describe("resolveExportDeckIds", () => {
   });
 
   it("unions selection subjects and decks, deduping first-seen order", async () => {
-    const env = seedOwnedLibrary();
+    const env = await seedOwnedLibrary();
 
     const ids = await resolveExportDeckIds(env, userA.id, {
       type: "selection",
@@ -97,7 +107,7 @@ describe("resolveExportDeckIds", () => {
   });
 
   it("yields [] for a foreign subject", async () => {
-    const env = seedOwnedLibrary();
+    const env = await seedOwnedLibrary();
 
     const ids = await resolveExportDeckIds(env, userA.id, {
       type: "subject",
@@ -108,7 +118,7 @@ describe("resolveExportDeckIds", () => {
   });
 
   it("keeps owned deck-only selection and omits foreign deck ids", async () => {
-    const env = seedOwnedLibrary();
+    const env = await seedOwnedLibrary();
 
     const ids = await resolveExportDeckIds(env, userA.id, {
       type: "selection",
@@ -120,7 +130,7 @@ describe("resolveExportDeckIds", () => {
   });
 
   it("returns the deck id for deck scope without soft-omitting", async () => {
-    const env = seedOwnedLibrary();
+    const env = await seedOwnedLibrary();
 
     const ids = await resolveExportDeckIds(env, userA.id, {
       type: "deck",

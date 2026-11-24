@@ -1,7 +1,26 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getExportJobs,
+  getExportQueueMessages,
+  installQueueRecorders,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedExportJob,
+  seedSchedule,
+  seedSession,
+  seedSubject,
+  seedUser,
+  withTestBindings,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const user = {
   id: "user-a",
@@ -11,16 +30,16 @@ const user = {
   created_at: "2026-01-01T00:00:00.000Z",
 };
 
-function setup() {
-  const env = createTestEnv();
-  env.seedUser(user);
-  env.seedSubject({
+async function setup() {
+  const env = installQueueRecorders(cfEnv);
+  await seedUser(env, user);
+  await seedSubject(env, {
     id: "subject-a",
     user_id: user.id,
     title: "Anatomy",
     created_at: user.created_at,
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: user.id,
     title: "Bones",
@@ -28,7 +47,7 @@ function setup() {
     subject_id: "subject-a",
     created_at: user.created_at,
   });
-  env.seedSession("sess-a", user.id);
+  await seedSession(env, "sess-a", user.id);
   return env;
 }
 
@@ -40,11 +59,11 @@ function headers() {
   };
 }
 
-function seedCard(
-  env: ReturnType<typeof createTestEnv>,
-  overrides: Partial<Parameters<typeof env.seedCard>[0]> = {},
+async function seedCardFixture(
+  env: Bindings,
+  overrides: Partial<import("./harness").CardRow> = {},
 ) {
-  env.seedCard({
+  await seedCard(env, {
     id: "card-a",
     deck_id: "deck-a",
     job_id: null,
@@ -62,7 +81,7 @@ function seedCard(
 
 describe("export routes", () => {
   it("requires authentication", async () => {
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     const response = await app.request(
       "/api/exports",
       {
@@ -80,7 +99,7 @@ describe("export routes", () => {
   });
 
   it("returns 404 when reading another user's export", async () => {
-    const env = setup();
+    const env = await setup();
     const response = await app.request(
       "/api/exports/not-owned",
       { headers: headers() },
@@ -91,7 +110,7 @@ describe("export routes", () => {
   });
 
   it("rejects a deck with no accepted cards", async () => {
-    const env = setup();
+    const env = await setup();
     const response = await app.request(
       "/api/exports",
       {
@@ -116,10 +135,10 @@ describe("export routes", () => {
   });
 
   it("exports an accepted occlusion deck with media", async () => {
-    const env = setup();
+    const env = await setup();
     const imageKey = "materials/deck-a/fig.png";
     await env.MATERIALS.put(imageKey, new Uint8Array([137, 80, 78, 71]));
-    seedCard(env, {
+    await seedCardFixture(env, {
       id: "card-occlusion",
       type: "occlusion",
       front_json: JSON.stringify({
@@ -166,8 +185,8 @@ describe("export routes", () => {
   });
 
   it("rejects invalid occlusion-only decks as all-skipped", async () => {
-    const env = setup();
-    seedCard(env, {
+    const env = await setup();
+    await seedCardFixture(env, {
       id: "card-occlusion-bad",
       type: "occlusion",
       front_json: JSON.stringify({
@@ -201,14 +220,14 @@ describe("export routes", () => {
   });
 
   it("counts skipped invalid occlusion beside exportable qa", async () => {
-    const env = setup();
-    seedCard(env, {
+    const env = await setup();
+    await seedCardFixture(env, {
       id: "card-qa",
       type: "qa",
       front_json: JSON.stringify("Q"),
       back_json: JSON.stringify("A"),
     });
-    seedCard(env, {
+    await seedCardFixture(env, {
       id: "card-occlusion-bad",
       type: "occlusion",
       front_json: JSON.stringify({
@@ -235,7 +254,7 @@ describe("export routes", () => {
   });
 
   it("marks a missing deck export as failed", async () => {
-    const env = setup();
+    const env = await setup();
     const response = await app.request(
       "/api/exports",
       {
@@ -247,14 +266,14 @@ describe("export routes", () => {
     );
 
     expect(response.status).toBe(404);
-    expect(env.getExportJobs()).toHaveLength(1);
-    expect(env.getExportJobs()[0]?.status).toBe("failed");
+    expect((await getExportJobs(env))).toHaveLength(1);
+    expect((await getExportJobs(env))[0]?.status).toBe("failed");
   });
 
   it("builds a ready export and serves APKG bytes", async () => {
-    const env = setup();
-    seedCard(env);
-    env.seedSchedule({
+    const env = await setup();
+    await seedCardFixture(env);
+    await seedSchedule(env, {
       card_id: "card-a",
       due: "2026-01-02T00:00:00.000Z",
       stability: 1,
@@ -314,8 +333,8 @@ describe("export routes", () => {
   });
 
   it("returns 410 when downloading an expired export", async () => {
-    const env = setup();
-    seedCard(env);
+    const env = await setup();
+    await seedCardFixture(env);
     const create = await app.request(
       "/api/exports",
       {
@@ -327,9 +346,12 @@ describe("export routes", () => {
     );
     expect(create.status).toBe(201);
     const body = (await create.json()) as { id: string };
-    const job = env.getExportJobs().find((row) => row.id === body.id);
+    const job = (await getExportJobs(env)).find((row) => row.id === body.id);
     expect(job).toBeTruthy();
-    job!.expires_at = "2020-01-01T00:00:00.000Z";
+    await seedExportJob(env, {
+      ...job!,
+      expires_at: "2020-01-01T00:00:00.000Z",
+    });
 
     const download = await app.request(
       `/api/exports/${body.id}/download`,
@@ -340,8 +362,8 @@ describe("export routes", () => {
   });
 
   it("exports a subject of owned decks", async () => {
-    const env = setup();
-    env.seedDeck({
+    const env = await setup();
+    await seedDeck(env, {
       id: "deck-b",
       user_id: user.id,
       title: "Muscles",
@@ -349,8 +371,8 @@ describe("export routes", () => {
       subject_id: "subject-a",
       created_at: "2026-01-01T00:00:01.000Z",
     });
-    seedCard(env);
-    seedCard(env, {
+    await seedCardFixture(env);
+    await seedCardFixture(env, {
       id: "card-b",
       deck_id: "deck-b",
       front_json: JSON.stringify("Biceps?"),
@@ -375,8 +397,8 @@ describe("export routes", () => {
   });
 
   it("exports a selection union of subject and deck ids", async () => {
-    const env = setup();
-    env.seedDeck({
+    const env = await setup();
+    await seedDeck(env, {
       id: "deck-solo",
       user_id: user.id,
       title: "Loose",
@@ -384,8 +406,8 @@ describe("export routes", () => {
       subject_id: null,
       created_at: user.created_at,
     });
-    seedCard(env);
-    seedCard(env, {
+    await seedCardFixture(env);
+    await seedCardFixture(env, {
       id: "card-solo",
       deck_id: "deck-solo",
       front_json: JSON.stringify("Solo?"),
@@ -411,7 +433,7 @@ describe("export routes", () => {
   });
 
   it("returns 400 when selection resolves to no owned decks", async () => {
-    const env = setup();
+    const env = await setup();
     const response = await app.request(
       "/api/exports",
       {
@@ -437,25 +459,25 @@ describe("export routes", () => {
       detail: "No decks to export",
       warnings: { missingMedia: 0, skippedCards: 0 },
     });
-    expect(env.getExportJobs()[0]?.status).toBe("failed");
+    expect((await getExportJobs(env))[0]?.status).toBe("failed");
   });
 
   it("omits foreign selection ids and 400s when none remain", async () => {
-    const env = setup();
-    env.seedUser({
+    const env = await setup();
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: user.created_at,
     });
-    env.seedSubject({
+    await seedSubject(env, {
       id: "subject-b",
       user_id: "user-b",
       title: "Foreign",
       created_at: user.created_at,
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-b",
       user_id: "user-b",
       title: "Other",
@@ -492,12 +514,12 @@ describe("export routes", () => {
   });
 
   it("enqueues over-threshold selection and returns 202 queued", async () => {
-    const env = setup();
+    const env = await setup();
     const deckIds: string[] = [];
     for (let i = 0; i < 11; i++) {
       const id = `deck-bulk-${i}`;
       deckIds.push(id);
-      env.seedDeck({
+      await seedDeck(env, {
         id,
         user_id: user.id,
         title: `Bulk ${i}`,
@@ -505,7 +527,7 @@ describe("export routes", () => {
         subject_id: "subject-a",
         created_at: user.created_at,
       });
-      env.seedCard({
+      await seedCardFixture(env, {
         id: `card-bulk-${i}`,
         deck_id: id,
         job_id: null,
@@ -544,25 +566,25 @@ describe("export routes", () => {
       status: "queued",
       downloadPath: null,
     });
-    expect(env.getExportJobs()[0]?.status).toBe("queued");
-    expect(env.getExportQueueMessages()).toEqual([{ exportId: body.id }]);
+    expect((await getExportJobs(env))[0]?.status).toBe("queued");
+    expect(getExportQueueMessages()).toEqual([{ exportId: body.id }]);
   });
 
   it("returns 503 when over threshold and EXPORT_QUEUE is unbound", async () => {
-    const env = createTestEnv({ exportQueue: false });
-    env.seedUser(user);
-    env.seedSubject({
+    const env = installQueueRecorders(withTestBindings(cfEnv, { exportQueue: false }));
+    await seedUser(env, user);
+    await seedSubject(env, {
       id: "subject-a",
       user_id: user.id,
       title: "Anatomy",
       created_at: user.created_at,
     });
-    env.seedSession("sess-a", user.id);
+    await seedSession(env, "sess-a", user.id);
     const deckIds: string[] = [];
     for (let i = 0; i < 11; i++) {
       const id = `deck-bulk-${i}`;
       deckIds.push(id);
-      env.seedDeck({
+      await seedDeck(env, {
         id,
         user_id: user.id,
         title: `Bulk ${i}`,
@@ -570,7 +592,7 @@ describe("export routes", () => {
         subject_id: "subject-a",
         created_at: user.created_at,
       });
-      env.seedCard({
+      await seedCardFixture(env, {
         id: `card-bulk-${i}`,
         deck_id: id,
         job_id: null,
@@ -600,16 +622,16 @@ describe("export routes", () => {
     );
 
     expect(response.status).toBe(503);
-    expect(env.getExportJobs()[0]?.status).toBe("failed");
+    expect((await getExportJobs(env))[0]?.status).toBe("failed");
   });
 
   it("marks queued job failed with 503 when EXPORT_QUEUE.send throws", async () => {
-    const env = setup();
+    const env = await setup();
     const deckIds: string[] = [];
     for (let i = 0; i < 11; i++) {
       const id = `deck-send-fail-${i}`;
       deckIds.push(id);
-      env.seedDeck({
+      await seedDeck(env, {
         id,
         user_id: user.id,
         title: `Bulk ${i}`,
@@ -617,7 +639,7 @@ describe("export routes", () => {
         subject_id: "subject-a",
         created_at: user.created_at,
       });
-      env.seedCard({
+      await seedCardFixture(env, {
         id: `card-send-fail-${i}`,
         deck_id: id,
         job_id: null,
@@ -652,8 +674,8 @@ describe("export routes", () => {
     );
 
     expect(response.status).toBe(503);
-    expect(env.getExportJobs()[0]?.status).toBe("failed");
-    expect(env.getExportJobs()[0]?.error).toMatch(/unavailable/i);
-    expect(env.getExportQueueMessages()).toEqual([]);
+    expect((await getExportJobs(env))[0]?.status).toBe("failed");
+    expect((await getExportJobs(env))[0]?.error).toMatch(/unavailable/i);
+    expect(getExportQueueMessages()).toEqual([]);
   });
 });

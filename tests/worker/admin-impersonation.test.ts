@@ -1,3 +1,16 @@
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getUsers,
+  getUserSecrets,
+  resetTestDb,
+  seedDeck,
+  seedSession,
+  seedSessionRecord,
+  seedUser,
+  seedUserSecret,
+  withTestBindings,
+} from "./harness";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { app } from "../../worker/index";
 import {
@@ -6,7 +19,10 @@ import {
   SESSION_COOKIE,
 } from "../../worker/auth/session";
 import { VIEW_AS_READ_ONLY_CODE } from "../../src/api/problemWire";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const ADMIN_EMAIL = "ops@example.com";
 const adminHeaders = {
@@ -14,22 +30,22 @@ const adminHeaders = {
   "content-type": "application/json",
 };
 
-function seedAdminAndLearner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+async function seedAdminAndLearner(env: Bindings) {
+  await seedUser(env, {
     id: "admin-u",
     email: ADMIN_EMAIL,
     password_hash: null,
     oauth_subject: "google-admin",
     created_at: "2025-01-01T00:00:00.000Z",
   });
-  env.seedUser({
+  await seedUser(env, {
     id: "u-alice",
     email: "alice@example.com",
     password_hash: null,
     oauth_subject: "google-alice",
     created_at: "2026-10-28T00:00:00.000Z",
   });
-  env.seedSession("s-admin", "admin-u");
+  await seedSession(env, "s-admin", "admin-u");
 }
 
 afterEach(() => {
@@ -38,9 +54,9 @@ afterEach(() => {
 
 describe("admin view-as impersonation", () => {
   it("start then exit keeps cookie id and restores actor", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearner(env);
-    const usersBefore = env.getUsers().length;
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearner(env);
+    const usersBefore = (await getUsers(env)).length;
 
     const start = await app.request(
       "/api/admin/users/u-alice/impersonate",
@@ -59,9 +75,9 @@ describe("admin view-as impersonation", () => {
     expect(startBody.ok).toBe(true);
     expect(startBody.impersonation.sourceUserId).toBe("u-alice");
     expect(startBody.impersonation.sourceEmail).toBe("alice@example.com");
-    expect(env.getUsers().length).toBe(usersBefore);
+    expect((await getUsers(env)).length).toBe(usersBefore);
     expect(
-      env.getUsers().filter((u) => u.sandbox_of === "u-alice"),
+      (await getUsers(env)).filter((u) => u.sandbox_of === "u-alice"),
     ).toHaveLength(0);
 
     const rawWhile = await env.SESSIONS.get("s-admin");
@@ -86,8 +102,8 @@ describe("admin view-as impersonation", () => {
   });
 
   it("/me returns source identity, actor is_admin, and impersonation block", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearner(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearner(env);
 
     await app.request(
       "/api/admin/users/u-alice/impersonate",
@@ -122,24 +138,24 @@ describe("admin view-as impersonation", () => {
   });
 
   it("400 when impersonating allowlisted admin", async () => {
-    const env = createTestEnv({
+    const env = withTestBindings(cfEnv, {
       adminEmails: `${ADMIN_EMAIL},ops2@example.com`,
     });
-    env.seedUser({
+    await seedUser(env, {
       id: "admin-u",
       email: ADMIN_EMAIL,
       password_hash: null,
       oauth_subject: "google-admin",
       created_at: "2025-01-01T00:00:00.000Z",
     });
-    env.seedUser({
+    await seedUser(env, {
       id: "admin-other",
       email: "ops2@example.com",
       password_hash: null,
       oauth_subject: "google-ops2",
       created_at: "2025-01-02T00:00:00.000Z",
     });
-    env.seedSession("s-admin", "admin-u");
+    await seedSession(env, "s-admin", "admin-u");
 
     const res = await app.request(
       "/api/admin/users/admin-other/impersonate",
@@ -156,8 +172,8 @@ describe("admin view-as impersonation", () => {
   });
 
   it("400 when impersonating self", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearner(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearner(env);
     const res = await app.request(
       "/api/admin/users/admin-u/impersonate",
       { method: "POST", headers: adminHeaders },
@@ -173,22 +189,22 @@ describe("admin view-as impersonation", () => {
   });
 
   it("403 for non-admin impersonate and exit", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedUser(env, {
       id: "u-learner",
       email: "learner@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedUser({
+    await seedUser(env, {
       id: "u-alice",
       email: "alice@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-02T00:00:00.000Z",
     });
-    env.seedSession("s-learner", "u-learner");
+    await seedSession(env, "s-learner", "u-learner");
     const headers = {
       cookie: `${SESSION_COOKIE}=s-learner`,
       "content-type": "application/json",
@@ -208,9 +224,9 @@ describe("admin view-as impersonation", () => {
   });
 
   it("400 wipe of sandbox user", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearner(env);
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearner(env);
+    await seedUser(env, {
       id: "sandbox-u",
       email: "sandbox+alice@sandbox.invalid",
       password_hash: null,
@@ -239,9 +255,9 @@ describe("admin view-as impersonation", () => {
   });
 
   it("does not create sandbox users or secrets rows on start", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearner(env);
-    env.seedUserSecret({
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearner(env);
+    await seedUserSecret(env, {
       user_id: "u-alice",
       provider: "openai",
       ciphertext: "enc:alice",
@@ -255,18 +271,18 @@ describe("admin view-as impersonation", () => {
       { method: "POST", headers: adminHeaders },
       env,
     );
-    expect(env.getUsers().filter((u) => u.sandbox_of != null)).toHaveLength(0);
-    expect(env.getUserSecrets().some((s) => s.user_id === "u-alice")).toBe(
+    expect((await getUsers(env)).filter((u) => u.sandbox_of != null)).toHaveLength(0);
+    expect((await getUserSecrets(env)).some((s) => s.user_id === "u-alice")).toBe(
       true,
     );
   });
 
   it("TTL expiry restores actor without deleting users", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearner(env);
-    const usersBefore = env.getUsers().length;
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearner(env);
+    const usersBefore = (await getUsers(env)).length;
     const startedAt = Date.now() - (IMPERSONATION_TTL_SECONDS + 60) * 1000;
-    env.seedSessionRecord("s-admin", {
+    await seedSessionRecord(env, "s-admin", {
       userId: "u-alice",
       expiresAt: Date.now() + 60_000,
       actorUserId: "admin-u",
@@ -290,8 +306,8 @@ describe("admin view-as impersonation", () => {
       is_admin: true,
     });
     expect(body.impersonation).toBeUndefined();
-    expect(env.getUsers().length).toBe(usersBefore);
-    expect(env.getUsers().some((u) => u.id === "u-alice")).toBe(true);
+    expect((await getUsers(env)).length).toBe(usersBefore);
+    expect((await getUsers(env)).some((u) => u.id === "u-alice")).toBe(true);
 
     const raw = await env.SESSIONS.get("s-admin");
     const rec = parseSessionRecord(raw!);
@@ -300,8 +316,8 @@ describe("admin view-as impersonation", () => {
   });
 
   it("403 PUT/DELETE settings/llm while impersonating", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearner(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearner(env);
     await app.request(
       "/api/admin/users/u-alice/impersonate",
       { method: "POST", headers: adminHeaders },
@@ -328,8 +344,8 @@ describe("admin view-as impersonation", () => {
   });
 
   it("GET /api/admin/users succeeds for actor during impersonation", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearner(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearner(env);
     await app.request(
       "/api/admin/users/u-alice/impersonate",
       { method: "POST", headers: adminHeaders },
@@ -346,14 +362,14 @@ describe("admin view-as impersonation", () => {
   });
 
   it("401 GET /api/admin/users when actor disabled mid-impersonation", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearner(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearner(env);
     await app.request(
       "/api/admin/users/u-alice/impersonate",
       { method: "POST", headers: adminHeaders },
       env,
     );
-    env.seedUser({
+    await seedUser(env, {
       id: "admin-u",
       email: ADMIN_EMAIL,
       password_hash: null,
@@ -370,8 +386,8 @@ describe("admin view-as impersonation", () => {
   });
 
   it("logout clears session and leaves source user intact", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearner(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearner(env);
     await app.request(
       "/api/admin/users/u-alice/impersonate",
       { method: "POST", headers: adminHeaders },
@@ -384,13 +400,13 @@ describe("admin view-as impersonation", () => {
       env,
     );
     expect(logout.status).toBe(200);
-    expect(env.getUsers().some((u) => u.id === "u-alice")).toBe(true);
+    expect((await getUsers(env)).some((u) => u.id === "u-alice")).toBe(true);
     expect(await env.SESSIONS.get("s-admin")).toBeNull();
   });
 
   it("403 GET OAuth/calendar connect and fsrs-optimize during view-as", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearner(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearner(env);
     await app.request(
       "/api/admin/users/u-alice/impersonate",
       { method: "POST", headers: adminHeaders },
@@ -418,8 +434,8 @@ describe("admin view-as impersonation", () => {
   });
 
   it("403 admin wipe during view-as (Exit and logout only)", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearner(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearner(env);
     await app.request(
       "/api/admin/users/u-alice/impersonate",
       { method: "POST", headers: adminHeaders },
@@ -448,10 +464,10 @@ describe("admin view-as impersonation", () => {
   });
 
   it("expired view-as TTL restores actor before RO middleware", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearner(env);
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearner(env);
     const startedAt = Date.now() - (IMPERSONATION_TTL_SECONDS + 60) * 1000;
-    env.seedSessionRecord("s-admin", {
+    await seedSessionRecord(env, "s-admin", {
       userId: "u-alice",
       expiresAt: Date.now() + 60_000,
       actorUserId: "admin-u",
@@ -479,9 +495,9 @@ describe("admin view-as impersonation", () => {
   });
 
   it("allows browsing a disabled source user", async () => {
-    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
-    seedAdminAndLearner(env);
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
+    await seedAdminAndLearner(env);
+    await seedUser(env, {
       id: "u-frozen",
       email: "frozen@example.com",
       password_hash: null,
@@ -489,7 +505,7 @@ describe("admin view-as impersonation", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       disabled_at: "2026-11-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-frozen",
       user_id: "u-frozen",
       title: "Frozen deck",

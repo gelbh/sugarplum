@@ -1,38 +1,53 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getCards,
+  getSchedules,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedSchedule,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: "user-a",
     title: "Bio",
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-b",
     user_id: "user-a",
     title: "Chem",
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
 }
 
-function seedAcceptedCard(
-  env: ReturnType<typeof createTestEnv>,
+async function seedAcceptedCard(
+  env: Bindings,
   opts: { id: string; deckId: string; status?: string },
 ) {
-  env.seedCard({
+  await seedCard(env, {
     id: opts.id,
     deck_id: opts.deckId,
     job_id: null,
@@ -48,7 +63,7 @@ function seedAcceptedCard(
 }
 
 async function postMove(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
   cardId: string,
   deckId: string,
   sessionId = "sess-a",
@@ -69,24 +84,24 @@ async function postMove(
 
 describe("POST /api/cards/:id/move", () => {
   it("updates deck_id for accepted card", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedAcceptedCard(env, { id: "card-1", deckId: "deck-a" });
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedAcceptedCard(env, { id: "card-1", deckId: "deck-a" });
 
     const res = await postMove(env, "card-1", "deck-b");
     expect(res.status).toBe(200);
     const body = (await res.json()) as { deck_id: string };
     expect(body.deck_id).toBe("deck-b");
-    expect(env.getCards().find((c) => c.id === "card-1")!.deck_id).toBe(
+    expect((await getCards(env)).find((c) => c.id === "card-1")!.deck_id).toBe(
       "deck-b",
     );
   });
 
   it("leaves card_schedules unchanged", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedAcceptedCard(env, { id: "card-1", deckId: "deck-a" });
-    env.seedSchedule({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedAcceptedCard(env, { id: "card-1", deckId: "deck-a" });
+    await seedSchedule(env, {
       card_id: "card-1",
       due: "2020-06-01T00:00:00.000Z",
       stability: 2.5,
@@ -102,7 +117,7 @@ describe("POST /api/cards/:id/move", () => {
 
     const res = await postMove(env, "card-1", "deck-b");
     expect(res.status).toBe(200);
-    const schedules = env.getSchedules();
+    const schedules = (await getSchedules(env));
     expect(schedules).toHaveLength(1);
     expect(schedules[0]).toMatchObject({
       card_id: "card-1",
@@ -113,23 +128,23 @@ describe("POST /api/cards/:id/move", () => {
   });
 
   it("returns 200 for same-deck no-op", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedAcceptedCard(env, { id: "card-1", deckId: "deck-a" });
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedAcceptedCard(env, { id: "card-1", deckId: "deck-a" });
 
     const res = await postMove(env, "card-1", "deck-a");
     expect(res.status).toBe(200);
     const body = (await res.json()) as { deck_id: string };
     expect(body.deck_id).toBe("deck-a");
-    expect(env.getCards().find((c) => c.id === "card-1")!.deck_id).toBe(
+    expect((await getCards(env)).find((c) => c.id === "card-1")!.deck_id).toBe(
       "deck-a",
     );
   });
 
   it("returns 400 for draft card", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedAcceptedCard(env, {
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedAcceptedCard(env, {
       id: "card-draft",
       deckId: "deck-a",
       status: "draft",
@@ -138,14 +153,14 @@ describe("POST /api/cards/:id/move", () => {
     const res = await postMove(env, "card-draft", "deck-b");
     expect(res.status).toBe(400);
     expect(
-      env.getCards().find((c) => c.id === "card-draft")!.deck_id,
+      (await getCards(env)).find((c) => c.id === "card-draft")!.deck_id,
     ).toBe("deck-a");
   });
 
   it("returns 400 for rejected card", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedAcceptedCard(env, {
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedAcceptedCard(env, {
       id: "card-rej",
       deckId: "deck-a",
       status: "rejected",
@@ -156,9 +171,9 @@ describe("POST /api/cards/:id/move", () => {
   });
 
   it("updates deck_id for archived card", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedAcceptedCard(env, {
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedAcceptedCard(env, {
       id: "card-arch",
       deckId: "deck-a",
       status: "archived",
@@ -166,43 +181,43 @@ describe("POST /api/cards/:id/move", () => {
 
     const res = await postMove(env, "card-arch", "deck-b");
     expect(res.status).toBe(200);
-    expect(env.getCards().find((c) => c.id === "card-arch")!.deck_id).toBe(
+    expect((await getCards(env)).find((c) => c.id === "card-arch")!.deck_id).toBe(
       "deck-b",
     );
   });
 
   it("returns 404 for another user's card", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedAcceptedCard(env, { id: "card-1", deckId: "deck-a" });
-    env.seedUser({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedAcceptedCard(env, { id: "card-1", deckId: "deck-a" });
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-b", "user-b");
+    await seedSession(env, "sess-b", "user-b");
 
     const res = await postMove(env, "card-1", "deck-b", "sess-b");
     expect(res.status).toBe(404);
-    expect(env.getCards().find((c) => c.id === "card-1")!.deck_id).toBe(
+    expect((await getCards(env)).find((c) => c.id === "card-1")!.deck_id).toBe(
       "deck-a",
     );
   });
 
   it("returns 404 when target deck belongs to another user", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedAcceptedCard(env, { id: "card-1", deckId: "deck-a" });
-    env.seedUser({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedAcceptedCard(env, { id: "card-1", deckId: "deck-a" });
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-other",
       user_id: "user-b",
       title: "Other",
@@ -212,7 +227,7 @@ describe("POST /api/cards/:id/move", () => {
 
     const res = await postMove(env, "card-1", "deck-other");
     expect(res.status).toBe(404);
-    expect(env.getCards().find((c) => c.id === "card-1")!.deck_id).toBe(
+    expect((await getCards(env)).find((c) => c.id === "card-1")!.deck_id).toBe(
       "deck-a",
     );
   });

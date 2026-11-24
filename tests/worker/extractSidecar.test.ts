@@ -1,11 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   extractSidecarKey,
   getExtractSidecar,
   putExtractSidecar,
   deleteExtractSidecar,
 } from "../../worker/generation/extractSidecar";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("extractSidecar", () => {
   it("uses a stable R2 key per job", () => {
@@ -13,7 +24,7 @@ describe("extractSidecar", () => {
   });
 
   it("round-trips text, window resume, and drafts", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const drafts = [
       {
         type: "qa" as const,
@@ -42,22 +53,22 @@ describe("extractSidecar", () => {
   });
 
   it("resolves sandbox owner via materials→decks join (no generation_jobs.user_id)", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Bio",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-a",
       deck_id: "deck-a",
       kind: "paste",
@@ -67,7 +78,7 @@ describe("extractSidecar", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "job-join",
       material_id: "mat-a",
       status: "needs_review",

@@ -1,8 +1,20 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+  seedCard,
+  seedCardRegenOp,
+  seedDeck,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { flagAcceptedCardsForHygiene } from "../../worker/generation/deck-hygiene";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const NOW = "2026-11-19T12:00:00.000Z";
 
@@ -47,16 +59,16 @@ describe("flagAcceptedCardsForHygiene", () => {
 
 describe("GET /api/decks/:id/hygiene", () => {
   it("returns flagged accepted cards for the owner", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u1",
       email: "u1@example.com",
       password_hash: null,
       oauth_subject: "g-u1",
       created_at: NOW,
     });
-    env.seedSession("s1", "u1");
-    env.seedDeck({
+    await seedSession(env, "s1", "u1");
+    await seedDeck(env, {
       id: "deck-1",
       user_id: "u1",
       title: "Imm",
@@ -65,7 +77,7 @@ describe("GET /api/decks/:id/hygiene", () => {
       created_at: NOW,
     });
     const essayBack = Array.from({ length: 30 }, (_, i) => `w${i}`).join(" ");
-    env.seedCard({
+    await seedCard(env, {
       id: "c-essay",
       deck_id: "deck-1",
       job_id: null,
@@ -78,7 +90,7 @@ describe("GET /api/decks/:id/hygiene", () => {
       created_at: NOW,
       updated_at: NOW,
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-safe",
       deck_id: "deck-1",
       job_id: null,
@@ -105,16 +117,16 @@ describe("GET /api/decks/:id/hygiene", () => {
   });
 
   it("includes regen_op when a queued/running op exists", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u1",
       email: "u1@example.com",
       password_hash: null,
       oauth_subject: "g-u1",
       created_at: NOW,
     });
-    env.seedSession("s1", "u1");
-    env.seedDeck({
+    await seedSession(env, "s1", "u1");
+    await seedDeck(env, {
       id: "deck-1",
       user_id: "u1",
       title: "Imm",
@@ -123,7 +135,7 @@ describe("GET /api/decks/:id/hygiene", () => {
       created_at: NOW,
     });
     const essayBack = Array.from({ length: 30 }, (_, i) => `w${i}`).join(" ");
-    env.seedCard({
+    await seedCard(env, {
       id: "c-essay",
       deck_id: "deck-1",
       job_id: null,
@@ -136,7 +148,7 @@ describe("GET /api/decks/:id/hygiene", () => {
       created_at: NOW,
       updated_at: NOW,
     });
-    env.seedCardRegenOp({
+    await seedCardRegenOp(env, {
       id: "op-1",
       card_id: "c-essay",
       user_id: "u1",
@@ -165,23 +177,23 @@ describe("GET /api/decks/:id/hygiene", () => {
   });
 
   it("404s for non-owner", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u1",
       email: "u1@example.com",
       password_hash: null,
       oauth_subject: "g-u1",
       created_at: NOW,
     });
-    env.seedUser({
+    await seedUser(env, {
       id: "u2",
       email: "u2@example.com",
       password_hash: null,
       oauth_subject: "g-u2",
       created_at: NOW,
     });
-    env.seedSession("s2", "u2");
-    env.seedDeck({
+    await seedSession(env, "s2", "u2");
+    await seedDeck(env, {
       id: "deck-1",
       user_id: "u1",
       title: "Imm",

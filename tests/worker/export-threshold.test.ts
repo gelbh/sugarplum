@@ -1,4 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedR2,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   EXPORT_SYNC_MAX_CARDS,
   EXPORT_SYNC_MAX_DECKS,
@@ -7,7 +16,10 @@ import {
   estimateExportWorkload,
   shouldEnqueueExport,
 } from "../../worker/export/threshold";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const user = {
   id: "user-a",
@@ -17,9 +29,9 @@ const user = {
   created_at: "2026-01-01T00:00:00.000Z",
 };
 
-function setupDeck(env: ReturnType<typeof createTestEnv>, deckId = "deck-a") {
-  env.seedUser(user);
-  env.seedDeck({
+async function setupDeck(env: Bindings, deckId = "deck-a") {
+  await seedUser(env, user);
+  await seedDeck(env, {
     id: deckId,
     user_id: user.id,
     title: "Bones",
@@ -67,9 +79,9 @@ describe("shouldEnqueueExport", () => {
 
 describe("estimateExportWorkload", () => {
   it("counts accepted cards and zero media for a small deck", async () => {
-    const env = createTestEnv();
-    setupDeck(env);
-    env.seedCard({
+    const env = cfEnv;
+    await setupDeck(env);
+    await seedCard(env, {
       id: "card-a",
       deck_id: "deck-a",
       job_id: null,
@@ -82,7 +94,7 @@ describe("estimateExportWorkload", () => {
       created_at: user.created_at,
       updated_at: user.created_at,
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "card-draft",
       deck_id: "deck-a",
       job_id: null,
@@ -102,11 +114,11 @@ describe("estimateExportWorkload", () => {
   });
 
   it("sums R2 head sizes for media keys", async () => {
-    const env = createTestEnv();
-    setupDeck(env);
+    const env = cfEnv;
+    await setupDeck(env);
     const key = "materials/deck-a/fig.png";
-    env.seedR2(key, "x".repeat(4096));
-    env.seedCard({
+    await seedR2(env, key, "x".repeat(4096));
+    await seedCard(env, {
       id: "card-a",
       deck_id: "deck-a",
       job_id: null,
@@ -126,10 +138,10 @@ describe("estimateExportWorkload", () => {
   });
 
   it("counts unknown media heads as 1 MiB each", async () => {
-    const env = createTestEnv();
-    setupDeck(env);
+    const env = cfEnv;
+    await setupDeck(env);
     const key = "materials/deck-a/missing.png";
-    env.seedCard({
+    await seedCard(env, {
       id: "card-a",
       deck_id: "deck-a",
       job_id: null,
@@ -148,10 +160,10 @@ describe("estimateExportWorkload", () => {
   });
 
   it("reports over-card workload for 201 accepted cards", async () => {
-    const env = createTestEnv();
-    setupDeck(env);
+    const env = cfEnv;
+    await setupDeck(env);
     for (let i = 0; i < EXPORT_SYNC_MAX_CARDS + 1; i++) {
-      env.seedCard({
+      await seedCard(env, {
         id: `card-${i}`,
         deck_id: "deck-a",
         job_id: null,
@@ -172,14 +184,14 @@ describe("estimateExportWorkload", () => {
   });
 
   it("reports over-deck workload from deck id count", async () => {
-    const env = createTestEnv();
-    setupDeck(env);
+    const env = cfEnv;
+    await setupDeck(env);
     const deckIds = Array.from(
       { length: EXPORT_SYNC_MAX_DECKS + 1 },
       (_, i) => `deck-${i}`,
     );
     for (const id of deckIds) {
-      env.seedDeck({
+      await seedDeck(env, {
         id,
         user_id: user.id,
         title: id,
@@ -195,16 +207,16 @@ describe("estimateExportWorkload", () => {
   });
 
   it("ignores foreign decks in the workload estimate", async () => {
-    const env = createTestEnv();
-    setupDeck(env);
-    env.seedUser({
+    const env = cfEnv;
+    await setupDeck(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: user.created_at,
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-foreign",
       user_id: "user-b",
       title: "Foreign",
@@ -213,7 +225,7 @@ describe("estimateExportWorkload", () => {
       created_at: user.created_at,
     });
     for (let i = 0; i < EXPORT_SYNC_MAX_CARDS + 1; i++) {
-      env.seedCard({
+      await seedCard(env, {
         id: `foreign-card-${i}`,
         deck_id: "deck-foreign",
         job_id: null,

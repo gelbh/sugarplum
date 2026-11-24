@@ -1,4 +1,21 @@
-import { describe, expect, it, vi } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getCards,
+  getGenerationJobs,
+  getQueueMessages,
+  installQueueRecorders,
+  resetTestDb,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedR2,
+  seedSession,
+  seedUser,
+  seedUserSecret,
+  TEST_SECRETS_WRAP_KEY,
+} from "./harness";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { encryptSecret } from "../../worker/crypto/secrets";
 import { processGenerateJob } from "../../worker/generation/consumer";
 import { enqueueGeneration } from "../../worker/generation/enqueue";
@@ -13,28 +30,30 @@ import {
   parseCardDrafts,
   type CardDraft,
 } from "../../worker/generation/schema";
-import { createTestEnv, TEST_SECRETS_WRAP_KEY } from "./test-env";
 
-function seedOwner(env: ReturnType<typeof createTestEnv>, withSecret = false) {
-  env.seedUser({
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedOwner(env: Bindings, withSecret = false) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: "user-a",
     title: "Bio",
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
   return withSecret
-    ? encryptSecret("sk-test-mock-key", TEST_SECRETS_WRAP_KEY).then(
-        (ciphertext) => {
-          env.seedUserSecret({
+    ? encryptSecret("sk-test-mock-key", TEST_SECRETS_WRAP_KEY).then(async (ciphertext) => {
+          await seedUserSecret(env, {
             user_id: "user-a",
             provider: "mock",
             ciphertext,
@@ -47,10 +66,10 @@ function seedOwner(env: ReturnType<typeof createTestEnv>, withSecret = false) {
 }
 
 async function seedPasteJob(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
   text: string,
 ) {
-  env.seedMaterial({
+  await seedMaterial(env, {
     id: "mat-1",
     deck_id: "deck-a",
     kind: "paste",
@@ -60,7 +79,7 @@ async function seedPasteJob(
     status: "ready",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedR2("materials/deck-a/mat-1.txt", text);
+  await seedR2(env, "materials/deck-a/mat-1.txt", text);
   const jobId = await enqueueGeneration(env, {
     materialId: "mat-1",
     deckId: "deck-a",
@@ -213,14 +232,14 @@ describe("processGenerateJob gap-fill", () => {
   const gappyText = `${COVERED_LINE}\n${GAP_LINE}`;
 
   it("appends a claim-gap card in pass 1 without a second free slot", async () => {
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     await seedOwner(env, false);
     const msg = await seedPasteJob(env, gappyText);
-    expect(env.getQueueMessages().at(-1)).toMatchObject({ autoFollowup: true });
+    expect(getQueueMessages().at(-1)).toMatchObject({ autoFollowup: true });
 
     let gapStage = "";
-    const llm = gappyLlm(false, () => {
-      const job = env.getGenerationJobs().find((row) => row.id === msg.jobId);
+    const llm = gappyLlm(false, async () => {
+      const job = (await getGenerationJobs(env)).find((row) => row.id === msg.jobId);
       const progress = JSON.parse(job!.progress_json!) as {
         stage: string;
         free_gen_slots?: number;
@@ -244,12 +263,12 @@ describe("processGenerateJob gap-fill", () => {
     expect(users[0]).toContain(COVERED_LINE);
     expect(users[1]).toContain(GAP_LINE);
     expect(users[1]).not.toContain(COVERED_LINE);
-    const fronts = env.getCards().map((card) => JSON.parse(card.front_json));
+    const fronts = (await getCards(env)).map((card) => JSON.parse(card.front_json));
     expect(fronts).toEqual([
       "What is the powerhouse of the cell?",
       "Which cranial nerve is twelve?",
     ]);
-    const job = env.getGenerationJobs().find((row) => row.id === msg.jobId);
+    const job = (await getGenerationJobs(env)).find((row) => row.id === msg.jobId);
     expect(job?.status).toBe("needs_review");
     const progress = JSON.parse(job!.progress_json!) as {
       stage: string;
@@ -264,14 +283,15 @@ describe("processGenerateJob gap-fill", () => {
   });
 
   it("still claim-gap extracts when autoFollowup is omitted; skips when no claim gaps", async () => {
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     await seedOwner(env, false);
     const omitted = await seedPasteJob(env, gappyText);
     const llm = gappyLlm();
     await processGenerateJob(env, omitted, { llm });
     expect(extractPassCount(llm)).toBe(2);
 
-    const envFalse = createTestEnv();
+    await resetTestDb(cfEnv);
+    const envFalse = installQueueRecorders(cfEnv);
     await seedOwner(envFalse, false);
     const flagged = await seedPasteJob(envFalse, gappyText);
     const llmFalse = gappyLlm();
@@ -282,7 +302,8 @@ describe("processGenerateJob gap-fill", () => {
     );
     expect(extractPassCount(llmFalse)).toBe(2);
 
-    const envCovered = createTestEnv();
+    await resetTestDb(cfEnv);
+    const envCovered = installQueueRecorders(cfEnv);
     await seedOwner(envCovered, false);
     const covered = await seedPasteJob(envCovered, COVERED_LINE);
     const llmCovered = gappyLlm();
@@ -296,7 +317,7 @@ describe("processGenerateJob gap-fill", () => {
   });
 
   it("claim-gap fills in pass 1 even when the free cap would block draft follow-up", async () => {
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     await seedOwner(env, false);
     for (let i = 0; i < FREE_GEN_DAILY_CAP - 1; i++) {
       await consumeFreeGenSlot(env, "user-a");
@@ -311,22 +332,22 @@ describe("processGenerateJob gap-fill", () => {
 
     expect(result).toBe("done");
     expect(extractPassCount(llm)).toBe(2);
-    expect(env.getCards()).toHaveLength(2);
+    expect((await getCards(env))).toHaveLength(2);
     expect(
-      env.getGenerationJobs().find((row) => row.id === msg.jobId)?.status,
+      (await getGenerationJobs(env)).find((row) => row.id === msg.jobId)?.status,
     ).toBe("needs_review");
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(
       FREE_GEN_DAILY_CAP,
     );
     const progress = JSON.parse(
-      env.getGenerationJobs().find((row) => row.id === msg.jobId)!
+      (await getGenerationJobs(env)).find((row) => row.id === msg.jobId)!
         .progress_json!,
     ) as { free_gen_slots?: number };
     expect(progress.free_gen_slots).toBe(1);
   });
 
   it("keeps pass 1 when claim-gap throws and draft follow-up also fails", async () => {
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     await seedOwner(env, false);
     const msg = await seedPasteJob(env, gappyText);
     const llm = gappyLlm(true);
@@ -339,25 +360,25 @@ describe("processGenerateJob gap-fill", () => {
     expect(result).toBe("done");
     // Pass-1 main + failed claim-gap, then draft follow-up main + failed claim-gap.
     expect(extractPassCount(llm)).toBe(4);
-    expect(env.getCards()).toHaveLength(1);
+    expect((await getCards(env))).toHaveLength(1);
     expect(
-      env.getGenerationJobs().find((row) => row.id === msg.jobId)?.status,
+      (await getGenerationJobs(env)).find((row) => row.id === msg.jobId)?.status,
     ).toBe("needs_review");
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(2);
   });
 
   it("emits enrich progress during draft gap-fill follow-up", async () => {
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     await seedOwner(env, false);
     const msg = await seedPasteJob(env, gappyText);
 
     let claimGapExtracts = 0;
     let enrichDuringFollowup = false;
     let percentDuringFollowup = 100;
-    const llm = gappyLlm(true, () => {
+    const llm = gappyLlm(true, async () => {
       claimGapExtracts += 1;
       if (claimGapExtracts < 2) return;
-      const job = env.getGenerationJobs().find((row) => row.id === msg.jobId);
+      const job = (await getGenerationJobs(env)).find((row) => row.id === msg.jobId);
       const progress = JSON.parse(job!.progress_json!) as {
         stage: string;
         percent: number;
@@ -378,7 +399,7 @@ describe("processGenerateJob gap-fill", () => {
     expect(claimGapExtracts).toBeGreaterThanOrEqual(2);
     expect(enrichDuringFollowup).toBe(true);
     expect(percentDuringFollowup).toBeLessThan(100);
-    const job = env.getGenerationJobs().find((row) => row.id === msg.jobId);
+    const job = (await getGenerationJobs(env)).find((row) => row.id === msg.jobId);
     expect(job?.status).toBe("needs_review");
     const progress = JSON.parse(job!.progress_json!) as {
       stage: string;
@@ -389,14 +410,14 @@ describe("processGenerateJob gap-fill", () => {
   });
 
   it("does not take a third free slot when two slots were already charged", async () => {
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     await seedOwner(env, false);
     const msg = await seedPasteJob(env, gappyText);
-    const job = env.getGenerationJobs().find((row) => row.id === msg.jobId)!;
+    const job = (await getGenerationJobs(env)).find((row) => row.id === msg.jobId)!;
     const staleAt = new Date(
       Date.now() - RUNNING_JOB_STALE_MS - 1000,
     ).toISOString();
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       ...job,
       status: "running",
       progress_json: JSON.stringify({
@@ -426,17 +447,17 @@ describe("processGenerateJob gap-fill", () => {
     expect(extractPassCount(llm)).toBe(2);
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(2);
     const progress = JSON.parse(
-      env.getGenerationJobs().find((row) => row.id === msg.jobId)!
+      (await getGenerationJobs(env)).find((row) => row.id === msg.jobId)!
         .progress_json!,
     ) as { free_gen_slots?: number };
     expect(progress.free_gen_slots).toBe(2);
   });
 
   it("does not follow up an image job", async () => {
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     await seedOwner(env, false);
     const imageKey = "materials/deck-a/mat-img.png";
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-img",
       deck_id: "deck-a",
       kind: "image",
@@ -446,7 +467,7 @@ describe("processGenerateJob gap-fill", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedR2(imageKey, "fakepng");
+    await seedR2(env, imageKey, "fakepng");
     const jobId = await enqueueGeneration(env, {
       materialId: "mat-img",
       deckId: "deck-a",
@@ -461,7 +482,7 @@ describe("processGenerateJob gap-fill", () => {
     expect(result).toBe("done");
     expect(llm.generateDrafts).toHaveBeenCalledOnce();
     expect(
-      env.getGenerationJobs().find((row) => row.id === jobId)?.status,
+      (await getGenerationJobs(env)).find((row) => row.id === jobId)?.status,
     ).toBe("needs_review");
   });
 });

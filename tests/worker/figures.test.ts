@@ -1,4 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  getMaterials,
+  getR2Keys,
+  resetTestDb,
+  seedDeck,
+  seedMaterial,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import type { FigureCrop } from "../../worker/materials/docling";
 import {
   figureR2Key,
@@ -6,7 +15,31 @@ import {
   listFigureR2KeysForPdf,
   persistFigureCrops,
 } from "../../worker/materials/figures";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function ensureDeck(
+  env: typeof cfEnv,
+  deckId = "deck-a",
+): Promise<void> {
+  await seedUser(env, {
+    id: "user-a",
+    email: "a@example.com",
+    password_hash: null,
+    oauth_subject: null,
+    created_at: "2026-01-01T00:00:00.000Z",
+  });
+  await seedDeck(env, {
+    id: deckId,
+    user_id: "user-a",
+    title: "Figures",
+    subject_hint: null,
+    subject_id: null,
+    created_at: "2026-01-01T00:00:00.000Z",
+  });
+}
 
 function crop(
   overrides: Partial<FigureCrop> & Pick<FigureCrop, "index">,
@@ -56,7 +89,7 @@ describe("figureR2KeyPrefixBounds", () => {
 
 describe("persistFigureCrops", () => {
   it("stores each crop in R2 without inserting materials rows", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const crops = [crop({ page: 2, index: 0 }), crop({ page: 5, index: 1 })];
 
     const persisted = await persistFigureCrops(env, {
@@ -73,11 +106,11 @@ describe("persistFigureCrops", () => {
       "materials/deck-a/figures/pdf-parent/1.png",
     );
 
-    expect(env.getMaterials().filter((m) => m.kind === "image")).toHaveLength(
+    expect((await getMaterials(env)).filter((m) => m.kind === "image")).toHaveLength(
       0,
     );
 
-    expect(env.getR2Keys().sort()).toEqual([
+    expect((await getR2Keys(env)).sort()).toEqual([
       "materials/deck-a/figures/pdf-parent/0.png",
       "materials/deck-a/figures/pdf-parent/1.png",
     ]);
@@ -86,13 +119,14 @@ describe("persistFigureCrops", () => {
 
 describe("listFigureR2KeysForPdf", () => {
   it("returns sorted figure keys for the pdf material prefix", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
+    await ensureDeck(env);
     await persistFigureCrops(env, {
       deckId: "deck-a",
       pdfMaterialId: "pdf-parent",
       crops: [crop({ index: 1 }), crop({ index: 0 })],
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "other-img",
       deck_id: "deck-a",
       kind: "image",
@@ -115,7 +149,7 @@ describe("listFigureR2KeysForPdf", () => {
   });
 
   it("returns empty when no figure objects exist", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const keys = await listFigureR2KeysForPdf(env, {
       deckId: "deck-a",
       pdfMaterialId: "pdf-parent",
@@ -124,7 +158,7 @@ describe("listFigureR2KeysForPdf", () => {
   });
 
   it("lists figure keys when deck and pdf ids are production-length UUIDs", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const deckId = "f60321ef-35c7-49f2-85f6-19ff95e4911a";
     const pdfMaterialId = "4439969e-3fa4-4b66-b946-d534509f7baf";
     await persistFigureCrops(env, {
@@ -144,8 +178,9 @@ describe("listFigureR2KeysForPdf", () => {
 
 describe("persistFigureCrops race with client uploads", () => {
   it("skips crops whose r2_key is already uploading or ready", async () => {
-    const env = createTestEnv();
-    env.seedMaterial({
+    const env = cfEnv;
+    await ensureDeck(env);
+    await seedMaterial(env, {
       id: "client-crop",
       deck_id: "deck-a",
       kind: "image",
@@ -165,10 +200,10 @@ describe("persistFigureCrops race with client uploads", () => {
     expect(persisted.map((p) => p.r2Key)).toEqual([
       "materials/deck-a/figures/pdf-parent/1.png",
     ]);
-    expect(env.getMaterials().filter((m) => m.kind === "image")).toHaveLength(
+    expect((await getMaterials(env)).filter((m) => m.kind === "image")).toHaveLength(
       1,
     );
-    expect(env.getR2Keys()).toContain(
+    expect((await getR2Keys(env))).toContain(
       "materials/deck-a/figures/pdf-parent/1.png",
     );
   });
