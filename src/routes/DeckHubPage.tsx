@@ -3,20 +3,8 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
-import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
-import DialogEyebrow from "../shared/ui/DialogEyebrow";
 import { AddMaterialWorkshop } from "../deckHub";
 import {
   CompositionSpark,
@@ -43,6 +31,8 @@ import { createDeckHubWorkshopOpeners } from "../deckHub";
 import { DeckHubDeleteDialog } from "../deckHub";
 import { DeckHubDeleteMaterialDialog } from "../deckHub";
 import { DeckHubDraftPickerDialog } from "../deckHub";
+import { DeckHubEditCardDialog } from "../deckHub";
+import { DeckHubMoveCardDialog } from "../deckHub";
 import { DeckHubRenameDialog } from "../deckHub";
 import { DeckHubResetScheduleDialog } from "../deckHub";
 import { DeckHubTitleHeader } from "../deckHub";
@@ -51,13 +41,6 @@ import { MissionBoard } from "../deckHub";
 import { StudyReadySheet } from "../deckHub";
 import { WorkshopShell } from "../deckHub";
 import { type WorkshopFrame } from "../deckHub";
-import {
-  DIALOG_CANCEL_SX,
-  DIALOG_PAPER_SX,
-  DIALOG_TITLE_SX,
-  GHOST_PILL_SX,
-  PRIMARY_PILL_SX,
-} from "../deckHub";
 import { navigate } from "../shared/nav/navigate";
 import { useCreateCardController } from "../deckHub";
 import { useAddMaterialWorkshop } from "../deckHub";
@@ -72,8 +55,6 @@ import { useDeckHubWorkshopNav } from "../deckHub";
 import { useStudyReadySheet } from "../deckHub";
 import "../deckHub/motion";
 import {
-  asRegenType,
-  cardHasRegenSource,
   listDeckCards,
   type CardDraftView,
   type ClaimCoverage,
@@ -83,9 +64,8 @@ import {
   type Subject,
   type SubjectKnowledge,
 } from "../api/client";
-import { DraftCardEditor } from "../draftReview";
 import { isGuest } from "../guest/session";
-import { collectDeckImageKeys, hubDiyTypes } from "../deckHub";
+import { collectDeckImageKeys } from "../deckHub";
 import { ANKI_EXPORT_BUSY_LABEL } from "../export";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
@@ -779,226 +759,52 @@ export default function DeckHubPage({ deckId }: Props) {
         onConfirm={confirmDeleteDeck}
       />
 
-      <Dialog
-        open={editCard !== null}
+      <DeckHubEditCardDialog
+        card={editCard}
+        busy={editDialogBusy}
+        saveBusy={editBusy}
+        error={editError}
+        guest={guest}
+        cardRegenBusy={cardRegenBusy}
         onClose={() => !editDialogBusy && setEditCard(null)}
-        fullWidth
-        maxWidth="sm"
-        slotProps={{
-          paper: { sx: DIALOG_PAPER_SX },
+        onChange={onEditChange}
+        onSave={saveEdit}
+        onMove={() => {
+          if (editCard) void openMove(editCard);
         }}
-      >
-        <Box
-          sx={{
-            px: 3,
-            pt: 2.5,
-            pb: 1.5,
-            borderBottom: 1,
-            borderColor: "divider",
-            background:
-              "linear-gradient(180deg, rgba(91, 44, 111, 0.14) 0%, transparent 100%)",
-          }}
-        >
-          <DialogEyebrow label="Card" />
-          <DialogTitle sx={DIALOG_TITLE_SX}>Edit card</DialogTitle>
-        </Box>
-        <DialogContent sx={{ px: 3, pt: 2.5, pb: 1 }}>
-          {editError ? (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {editError}
-            </Alert>
-          ) : null}
-          {editCard ? (
-            <DraftCardEditor
-              card={editCard}
-              disabled={editDialogBusy}
-              onChange={onEditChange}
-              allowedTypes={hubDiyTypes(guest)}
-              regenAction={
-                guest
-                  ? undefined
-                  : {
-                      busy: cardRegenBusy,
-                      disabled:
-                        asRegenType(editCard.type) === null ||
-                        !cardHasRegenSource(editCard),
-                      onClick: () => {
-                        void onRegenEditCard();
-                      },
-                    }
-              }
-            />
-          ) : null}
-        </DialogContent>
-        <DialogActions
-          sx={{
-            px: 3,
-            py: 2,
-            gap: 1,
-            flexWrap: "wrap",
-            justifyContent: "space-between",
-          }}
-        >
-          <Stack
-            direction="row"
-            spacing={1}
-            useFlexGap
-            sx={{
-              flexWrap: "wrap",
-            }}
-          >
-            <Button
-              disabled={editDialogBusy || !editCard}
-              startIcon={<DriveFileMoveOutlinedIcon sx={{ fontSize: 18 }} />}
-              onClick={() => {
-                if (editCard) void openMove(editCard);
-              }}
-              sx={GHOST_PILL_SX}
-            >
-              Move
-            </Button>
-            <Button
-              disabled={editDialogBusy || !editCard}
-              startIcon={<RestartAltRoundedIcon sx={{ fontSize: 18 }} />}
-              onClick={() => setConfirmReset(true)}
-              sx={{
-                ...GHOST_PILL_SX,
-                borderColor: "rgba(196, 165, 116, 0.35)",
-                color: "var(--sp-grade-hard-fg, #e8d0a8)",
-                "&:hover": {
-                  boxShadow: "none",
-                  borderColor: "rgba(196, 165, 116, 0.55)",
-                  bgcolor: "rgba(196, 165, 116, 0.12)",
-                },
-              }}
-            >
-              Reset schedule
-            </Button>
-          </Stack>
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{
-              alignItems: "center",
-            }}
-          >
-            <Button
-              onClick={() => setEditCard(null)}
-              disabled={editDialogBusy}
-              sx={DIALOG_CANCEL_SX}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              disabled={editDialogBusy || !editCard}
-              onClick={saveEdit}
-              sx={PRIMARY_PILL_SX}
-            >
-              {editBusy ? "Saving…" : "Save"}
-            </Button>
-          </Stack>
-        </DialogActions>
-      </Dialog>
+        onRequestReset={() => setConfirmReset(true)}
+        onRegen={() => {
+          void onRegenEditCard();
+        }}
+      />
 
-      <Dialog
+      <DeckHubMoveCardDialog
         open={moveTarget !== null}
-        onClose={() => !moveBusy && setMoveTarget(null)}
-        fullWidth
-        maxWidth="xs"
-      >
-        <DialogTitle>
-          {moveAsBatch && selectedCardIds.size > 1
-            ? `Move ${selectedCardIds.size} cards`
-            : "Move card"}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ mb: 2 }}>
-            {moveAsBatch && selectedCardIds.size > 1
-              ? "Choose a subject and deck. Selected cards leave this deck; study schedules stay the same."
-              : "Choose a subject and deck. The card leaves this deck; its study schedule stays the same."}
-          </DialogContentText>
-          {moveError ? (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {moveError}
-            </Alert>
-          ) : null}
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <FormControl
-              fullWidth
-              disabled={moveBusy || moveSubjects.length === 0}
-            >
-              <InputLabel id="move-subject-label">Subject</InputLabel>
-              <Select
-                labelId="move-subject-label"
-                label="Subject"
-                value={moveSubjectId}
-                onChange={(ev) => onMoveSubjectChange(ev.target.value)}
-              >
-                {moveSubjects.map((s) => (
-                  <MenuItem key={s.id} value={s.id}>
-                    {s.title}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl
-              fullWidth
-              disabled={moveBusy || moveDeckChoices.length === 0}
-            >
-              <InputLabel id="move-deck-label">Deck</InputLabel>
-              <Select
-                labelId="move-deck-label"
-                label="Deck"
-                value={moveDeckId}
-                onChange={(ev) => setMoveDeckId(ev.target.value)}
-                displayEmpty
-                renderValue={(value) => {
-                  if (!value) {
-                    return moveDeckChoices.length === 0
-                      ? "No other decks in this subject"
-                      : "Choose a deck";
-                  }
-                  return (
-                    moveDecks.find((d) => d.id === value)?.title ??
-                    "Choose a deck"
-                  );
-                }}
-              >
-                {moveDeckChoices.map((d) => (
-                  <MenuItem key={d.id} value={d.id}>
-                    {d.title}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setMoveTarget(null);
-              setMoveAsBatch(false);
-            }}
-            disabled={moveBusy}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            disabled={moveBusy || !moveDeckId}
-            onClick={() => {
-              void confirmMoveCard({
-                selectedCardIds,
-                showArchived,
-                clearSelection,
-              });
-            }}
-          >
-            {moveBusy ? "Moving…" : "Move"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        batch={moveAsBatch}
+        selectedCount={selectedCardIds.size}
+        error={moveError}
+        busy={moveBusy}
+        subjects={moveSubjects}
+        decks={moveDecks}
+        deckChoices={moveDeckChoices}
+        subjectId={moveSubjectId}
+        deckId={moveDeckId}
+        onSubjectChange={onMoveSubjectChange}
+        onDeckChange={setMoveDeckId}
+        onClose={() => {
+          if (!moveBusy) {
+            setMoveTarget(null);
+            setMoveAsBatch(false);
+          }
+        }}
+        onConfirm={() => {
+          void confirmMoveCard({
+            selectedCardIds,
+            showArchived,
+            clearSelection,
+          });
+        }}
+      />
 
       <DeckHubResetScheduleDialog
         open={confirmReset}
