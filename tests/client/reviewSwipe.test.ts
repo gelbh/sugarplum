@@ -1,11 +1,11 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it } from "vitest";
-import { applyReviewSwipeFrame } from "../../src/study/useReviewSwipe";
+import { applyReviewSwipeFrame } from "../../src/study/gestures/useReviewSwipe";
 import {
   SWIPE_THRESHOLD_PX,
   resolveReviewSwipe,
   reviewSwipeVisual,
-} from "../../src/study/cardGestures";
+} from "../../src/study/gestures/cardGestures";
 
 describe("resolveReviewSwipe", () => {
   it("accepts a right swipe past the threshold", () => {

@@ -3,7 +3,7 @@ import { State } from "ts-fsrs";
 import {
   cardFromScheduleRow,
   retrievability,
-} from "../../src/study/retrievability";
+} from "../../src/study/fsrs/retrievability";
 
 const NOW = new Date("2026-10-28T15:00:00.000Z");
 

@@ -4,7 +4,7 @@ import {
   aggregateDueByDeck,
   buildDueBreakdown,
   dueSplitOk,
-} from "../../src/study/dueBreakdown";
+} from "../../src/study/queue/dueBreakdown";
 
 const meta = (partial: Partial<StudyQueueMeta> = {}): StudyQueueMeta => ({
   introUsed: 0,

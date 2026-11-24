@@ -5,7 +5,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import StudyFreshEmpty from "../../src/study/StudyFreshEmpty";
+import StudyFreshEmpty from "../../src/study/session/StudyFreshEmpty";
 import { theme } from "../../src/theme";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =

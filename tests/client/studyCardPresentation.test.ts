@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   isMcqCard,
   studyFrontText,
-} from "../../src/study/studyCardPresentation";
+} from "../../src/study/faces/studyCardPresentation";
 
 describe("studyCardPresentation", () => {
   it("detects mcq cards", () => {

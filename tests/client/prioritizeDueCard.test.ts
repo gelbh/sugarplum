@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   cardIdFromSearch,
   prioritizeDueCard,
-} from "../../src/study/prioritizeDueCard";
+} from "../../src/study/queue/prioritizeDueCard";
 
 type Row = { id: string };
 

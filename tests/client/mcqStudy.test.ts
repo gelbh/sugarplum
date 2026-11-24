@@ -6,7 +6,7 @@ import {
   mcqTapRating,
   parseMcqAnswers,
   shuffledMcqOptions,
-} from "../../src/study/mcqStudy";
+} from "../../src/study/faces/mcqStudy";
 
 describe("parseMcqAnswers / encodeMcqAnswers", () => {
   const options = ["Paris", "Rome", "Oslo", "Madrid"];

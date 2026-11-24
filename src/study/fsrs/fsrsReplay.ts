@@ -4,7 +4,7 @@ import {
   schedulerForPrefs,
   type FsrsPrefs,
 } from "./fsrsFactory";
-import { emptyFsrsCard, type FsrsSchedulerCard } from "../retrievability";
+import { emptyFsrsCard, type FsrsSchedulerCard } from "./retrievability";
 
 export type ReviewLogReplayRow = {
   reviewed_at: string;

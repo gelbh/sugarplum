@@ -1,16 +1,16 @@
-export { default as CardFace } from "./CardFace";
-export { default as ClozePrompt } from "./ClozePrompt";
-export { default as ClozeReveal } from "./ClozeReveal";
-export { default as GradeButtons } from "./GradeButtons";
-export { default as ReviewCard } from "./ReviewCard";
+export { default as CardFace } from "./faces/CardFace";
+export { default as ClozePrompt } from "./faces/ClozePrompt";
+export { default as ClozeReveal } from "./faces/ClozeReveal";
+export { default as GradeButtons } from "./grading/GradeButtons";
+export { default as ReviewCard } from "./faces/ReviewCard";
 export { StudyNotesButton } from "./notes/StudyNotesButton";
 export { default as StudyNotesDialog } from "./notes/StudyNotesDialog";
-export { default as SubjectKnowledgeBar } from "./SubjectKnowledgeBar";
+export { default as SubjectKnowledgeBar } from "./session/SubjectKnowledgeBar";
 export {
   default as StrugglingList,
   formatStrugglingCaption,
-} from "./StrugglingList";
-export { default as KeyChip } from "./KeyChip";
+} from "./session/StrugglingList";
+export { default as KeyChip } from "./session/KeyChip";
 export {
   FACE_SANS,
   FACE_SX,
@@ -24,9 +24,9 @@ export {
   FACE_MEDIA_SX,
   FACE_PROMPT_TEXT_SX,
   PROMPT_SX,
-} from "./studyFaceSx";
-export { useStudyCardGesture, applyStudySwipeFrame } from "./useStudyCardGesture";
-export { useReviewSwipe, applyReviewSwipeFrame } from "./useReviewSwipe";
+} from "./faces/studyFaceSx";
+export { useStudyCardGesture, applyStudySwipeFrame } from "./gestures/useStudyCardGesture";
+export { useReviewSwipe, applyReviewSwipeFrame } from "./gestures/useReviewSwipe";
 export {
   clozeSpoken,
   clozeParts,
@@ -41,7 +41,7 @@ export {
   hasSingleClozeBlank,
   CLOZE_BLANK_MAX,
   CLOZE_EXTRA_LABEL,
-} from "./clozeFormat";
+} from "./faces/clozeFormat";
 export {
   MCQ_ANSWER_SEP,
   parseMcqAnswers,
@@ -51,7 +51,7 @@ export {
   mcqTapRating,
   shuffledMcqOptions,
   mcqOptionButtonDisabled,
-} from "./mcqStudy";
+} from "./faces/mcqStudy";
 export {
   getEmbedPdfEngine,
   openPdfDocument,
@@ -63,46 +63,46 @@ export {
   type EmbedPdfDocument,
   type EmbedPdfPageLayout,
 } from "../materials/clientKernel";
-export { FlipCardPlate, StudyCardPlate } from "./CardFace";
-export { CardFaceMcqBody } from "./cardFaceMcq";
+export { FlipCardPlate, StudyCardPlate } from "./faces/CardFace";
+export { CardFaceMcqBody } from "./faces/cardFaceMcq";
 export {
   occlusionRevealAnswer,
   pickOcclusionRegion,
-} from "./pickOcclusionRegion";
+} from "./faces/pickOcclusionRegion";
 export {
   StudyChromeProvider,
   useStudyChrome,
   type StudyChromeValue,
-} from "./StudyChromeContext";
-export { type EasyDay, localDayKey, applyLoadBalance } from "./loadBalance";
-export { useGradeMailboxFlight } from "./useGradeMailboxFlight";
-export { studyQueueProgress } from "./studyQueueProgress";
+} from "./session/StudyChromeContext";
+export { type EasyDay, localDayKey, applyLoadBalance } from "./queue/loadBalance";
+export { useGradeMailboxFlight } from "./grading/useGradeMailboxFlight";
+export { studyQueueProgress } from "./queue/studyQueueProgress";
 export {
   isMcqCard,
   occlusionStudyParts,
   studyFrontText,
-} from "./studyCardPresentation";
+} from "./faces/studyCardPresentation";
 export { useStudyNotesOverlay } from "./notes/useStudyNotesOverlay";
 export { scopeLibraryBack } from "./scopeLibraryBack";
-export { default as LearningSoftWait } from "./LearningSoftWait";
-export { default as StudyFreshEmpty } from "./StudyFreshEmpty";
-export { default as SessionComplete } from "./SessionComplete";
-export { default as SessionQuietEnd } from "./SessionQuietEnd";
-export { getIntroBonus } from "./introBonus";
+export { default as LearningSoftWait } from "./session/LearningSoftWait";
+export { default as StudyFreshEmpty } from "./session/StudyFreshEmpty";
+export { default as SessionComplete } from "./session/SessionComplete";
+export { default as SessionQuietEnd } from "./session/SessionQuietEnd";
+export { getIntroBonus } from "./queue/introBonus";
 export { clientLocalDay } from "./localDay";
 export {
   StudyCardActions,
   type StudyCardActionsHandle,
-} from "./StudyCardActions";
-export { useLearningRequeue } from "./useLearningRequeue";
-export { usePendingGradeSync } from "./usePendingGradeSync";
-export { useStudyImmersion } from "./useStudyImmersion";
-export { useStudyGrade } from "./useStudyGrade";
-export { useStudyQueueLoad } from "./useStudyQueueLoad";
-export { useStudySessionKeys } from "./useStudySessionKeys";
-export { default as TodayDueBreakdown } from "./TodayDueBreakdown";
-export { pendingCardIdSet, type PendingGrade } from "./pendingGrades";
-export { warmDueMedia } from "./warmDueMedia";
+} from "./session/StudyCardActions";
+export { useLearningRequeue } from "./queue/useLearningRequeue";
+export { usePendingGradeSync } from "./grading/usePendingGradeSync";
+export { useStudyImmersion } from "./session/useStudyImmersion";
+export { useStudyGrade } from "./grading/useStudyGrade";
+export { useStudyQueueLoad } from "./queue/useStudyQueueLoad";
+export { useStudySessionKeys } from "./session/useStudySessionKeys";
+export { default as TodayDueBreakdown } from "./session/TodayDueBreakdown";
+export { pendingCardIdSet, type PendingGrade } from "./grading/pendingGrades";
+export { warmDueMedia } from "./media/warmDueMedia";
 export {
   maybeRunFsrsOptimize,
   runFsrsOptimizeTrainNow,
@@ -111,7 +111,7 @@ export { FSRS_MIN_REVIEWS } from "./fsrs/fsrsOptimizeConstants";
 export {
   type StudyPrefs,
   DEFAULT_STUDY_PREFS,
-} from "./policyQueue";
+} from "./queue/policyQueue";
 export {
   MATURE_INTERVAL_DAYS,
   classifyKnowledgeBucket,
@@ -119,7 +119,7 @@ export {
   composeSubjectKnowledge,
   type SubjectKnowledgeBuckets,
   type SubjectKnowledge,
-} from "./subjectKnowledge";
+} from "./session/subjectKnowledge";
 export {
   dueCacheKey,
   dueScopeFromSearch,
@@ -130,7 +130,7 @@ export {
   clearDueCache,
   type DueScopeOpts,
   type DueCacheSnapshot,
-} from "./dueCache";
+} from "./queue/dueCache";
 export {
   dueSplitOk,
   aggregateDueByDeck,
@@ -138,11 +138,11 @@ export {
   type DueDeckRow,
   type DueDeckRemainder,
   type DueBreakdown,
-} from "./dueBreakdown";
-export type { ReviewDecision } from "./ReviewCard";
+} from "./queue/dueBreakdown";
+export type { ReviewDecision } from "./faces/ReviewCard";
 export {
   emptyTally,
   gradedTotal,
   sessionSurface,
   type GradeTally,
-} from "./sessionTally";
+} from "./session/sessionTally";

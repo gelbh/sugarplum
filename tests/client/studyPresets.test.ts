@@ -4,7 +4,7 @@ import {
   applyStudyPreset,
   matchStudyPreset,
 } from "../../src/settings/studyPresets";
-import { DEFAULT_STUDY_PREFS } from "../../src/study/policyQueue";
+import { DEFAULT_STUDY_PREFS } from "../../src/study/queue/policyQueue";
 
 describe("studyPresets", () => {
   it("maps Light Steady Catch up budgets", () => {

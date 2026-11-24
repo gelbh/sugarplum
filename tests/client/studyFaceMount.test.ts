@@ -15,7 +15,7 @@ describe("study face mount", () => {
   });
 
   it("CardFace accepts MCQ props and has no content-height-only plate", () => {
-    const src = readFileSync(join(root, "src/study/CardFace.tsx"), "utf8");
+    const src = readFileSync(join(root, "src/study/faces/CardFace.tsx"), "utf8");
     expect(src).toMatch(/\bcardId\b/);
     expect(src).toMatch(/\boptions\b/);
     expect(src).toMatch(/type === ["']mcq["']/);

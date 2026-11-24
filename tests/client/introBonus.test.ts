@@ -3,7 +3,7 @@ import {
   bumpIntroBonus,
   getIntroBonus,
   setIntroBonus,
-} from "../../src/study/introBonus";
+} from "../../src/study/queue/introBonus";
 
 function installMemorySessionStorage() {
   const store = new Map<string, string>();

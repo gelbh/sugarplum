@@ -15,8 +15,8 @@ import { SESSION_COOKIE } from "../../worker/auth/session";
 import {
   cardFromScheduleRow,
   retrievability,
-} from "../../src/study/retrievability";
-import { aggregateSubjectRecall } from "../../src/study/subjectRecall";
+} from "../../src/study/fsrs/retrievability";
+import { aggregateSubjectRecall } from "../../src/study/session/subjectRecall";
 
 afterEach(async () => {
   await resetTestDb(cfEnv);

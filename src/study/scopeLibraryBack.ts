@@ -1,4 +1,4 @@
-import type { DueScopeOpts } from "./dueCache";
+import type { DueScopeOpts } from "./queue/dueCache";
 
 export function scopeLibraryBack(scope: DueScopeOpts): {
   href: string;
