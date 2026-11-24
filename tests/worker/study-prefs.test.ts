@@ -1,8 +1,18 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { clampStudyPrefs } from "../../src/study/policyPrefs";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("clampStudyPrefs rFloor alias", () => {
   it("mirrors rFloor to clamped desiredRetention", () => {
@@ -15,20 +25,20 @@ describe("clampStudyPrefs rFloor alias", () => {
 });
 
 describe("GET/PUT /api/settings/study", () => {
-  function seedUser(env: ReturnType<typeof createTestEnv>) {
-    env.seedUser({
+  async function seedUserFixture(env: Bindings) {
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
   }
 
   it("rejects unauthenticated requests", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = cfEnv;
+    await seedUserFixture(env);
 
     const getRes = await app.request("/api/settings/study", {}, env);
     expect(getRes.status).toBe(401);
@@ -50,8 +60,8 @@ describe("GET/PUT /api/settings/study", () => {
   });
 
   it("GET returns defaults when no prefs row exists", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = cfEnv;
+    await seedUserFixture(env);
 
     const getRes = await app.request(
       "/api/settings/study",
@@ -79,8 +89,8 @@ describe("GET/PUT /api/settings/study", () => {
   });
 
   it("PUT clamps budgets and mirrors rFloor to desiredRetention", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = cfEnv;
+    await seedUserFixture(env);
 
     const putRes = await app.request(
       "/api/settings/study",
@@ -143,8 +153,8 @@ describe("GET/PUT /api/settings/study", () => {
   });
 
   it("PUT clamps desiredRetention and mirrors rFloor", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = cfEnv;
+    await seedUserFixture(env);
 
     const putRes = await app.request(
       "/api/settings/study",
@@ -185,8 +195,8 @@ describe("GET/PUT /api/settings/study", () => {
   });
 
   it("PUT persists enableLoadBalance and easyDays", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = cfEnv;
+    await seedUserFixture(env);
 
     const easyDays = [
       "minimum",
@@ -224,8 +234,8 @@ describe("GET/PUT /api/settings/study", () => {
   });
 
   it("PUT clamps high intro and low review; ignores high rFloor input", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = cfEnv;
+    await seedUserFixture(env);
 
     const putRes = await app.request(
       "/api/settings/study",

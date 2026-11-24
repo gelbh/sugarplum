@@ -1,4 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  getGenerationJobs,
+  resetTestDb,
+  seedDeck,
+  seedMaterial,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   GENERATE_QUEUE_MAX_RETRIES,
   GENERATE_QUEUE_RETRY_DELAY_SEC,
@@ -24,7 +32,10 @@ import {
   readStartedAt,
   withoutStartedAt,
 } from "../../worker/generation/progress";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const FULL_STAGES = [
   "queued",
@@ -510,23 +521,23 @@ describe("toProgressJson", () => {
 
 describe("writeJobProgress", () => {
   it("persists progress_json on the generation job row", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const createdAt = "2026-10-26T00:00:00.000Z";
-    env.seedUser({
+    await seedUser(env, {
       id: "u1",
       email: "a@b.co",
       password_hash: "x",
       oauth_subject: null,
       created_at: createdAt,
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "d1",
       user_id: "u1",
       title: "Deck",
       subject_hint: null,
       created_at: createdAt,
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "m1",
       deck_id: "d1",
       kind: "paste",
@@ -561,7 +572,7 @@ describe("writeJobProgress", () => {
     };
     await writeJobProgress(env.DB, "j1", patch);
 
-    const jobs = env.getGenerationJobs();
+    const jobs = (await getGenerationJobs(env));
     expect(jobs).toHaveLength(1);
     expect(jobs[0].progress_json).toBe(toProgressJson(patch));
     const roundTrip = JSON.parse(jobs[0].progress_json!) as Record<

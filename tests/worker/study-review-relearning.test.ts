@@ -1,30 +1,42 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedSchedule,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { State } from "ts-fsrs";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const NOW = "2026-01-01T12:00:00.000Z";
 
 describe("POST /api/study/review relearning", () => {
   it("grades a state=3 (relearning) card without 500", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-relearn",
       email: "relearn@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: NOW,
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-relearn",
       user_id: "user-relearn",
       title: "Relearn deck",
       subject_hint: null,
       created_at: NOW,
     });
-    env.seedSession("sess-relearn", "user-relearn");
-    env.seedCard({
+    await seedSession(env, "sess-relearn", "user-relearn");
+    await seedCard(env, {
       id: "card-relearn",
       deck_id: "deck-relearn",
       job_id: null,
@@ -37,7 +49,7 @@ describe("POST /api/study/review relearning", () => {
       created_at: NOW,
       updated_at: NOW,
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "card-relearn",
       due: "2020-01-01T00:00:00.000Z",
       stability: 0.5,

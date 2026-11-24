@@ -1,25 +1,39 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedSchedule,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("GET /api/journey", () => {
   it("returns 401 without session", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request("/api/journey", {}, env);
     expect(res.status).toBe(401);
   });
 
   it("zero decks → empty signals", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u1",
       email: "u@example.com",
       password_hash: "x",
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess1", "u1");
+    await seedSession(env, "sess1", "u1");
     const res = await app.request(
       "/api/journey",
       { headers: { Cookie: `${SESSION_COOKIE}=sess1` } },
@@ -37,42 +51,43 @@ describe("GET /api/journey", () => {
   });
 
   it("needs_review with drafts sets openReviewJobId", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u2",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-b",
       user_id: "u2",
       title: "T",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-1",
       deck_id: "deck-b",
-      kind: "text",
+      kind: "paste",
       r2_key: null,
       filename: null,
       page_count: null,
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "job-need",
       material_id: "mat-1",
       status: "needs_review",
       error: null,
       coverage_json: null,
+      progress_json: null,
       created_at: "2026-01-02T00:00:00.000Z",
       finished_at: null,
     });
     // draft card attached to that job
-    env.seedCard({
+    await seedCard(env, {
       id: "card-draft",
       deck_id: "deck-b",
       job_id: "job-need",
@@ -85,7 +100,7 @@ describe("GET /api/journey", () => {
       created_at: "2026-01-02T00:00:00.000Z",
       updated_at: "2026-01-02T00:00:00.000Z",
     });
-    env.seedSession("sess2", "u2");
+    await seedSession(env, "sess2", "u2");
 
     const res = await app.request(
       "/api/journey",
@@ -111,41 +126,42 @@ describe("GET /api/journey", () => {
   });
 
   it("queued job sets pendingGenerationJobId", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u-pend",
       email: "p@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-p",
       user_id: "u-pend",
       title: "T",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-p",
       deck_id: "deck-p",
-      kind: "text",
+      kind: "paste",
       r2_key: null,
       filename: null,
       page_count: null,
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "job-queued",
       material_id: "mat-p",
       status: "queued",
       error: null,
       coverage_json: null,
+      progress_json: null,
       created_at: "2026-01-02T00:00:00.000Z",
       finished_at: null,
     });
-    env.seedSession("sess-p", "u-pend");
+    await seedSession(env, "sess-p", "u-pend");
 
     const res = await app.request(
       "/api/journey",
@@ -171,15 +187,15 @@ describe("GET /api/journey", () => {
   });
 
   it("accepted card increments acceptedCount; draft does not", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u3",
       email: "c@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-c",
       user_id: "u3",
       title: "T",
@@ -187,7 +203,7 @@ describe("GET /api/journey", () => {
       created_at: "2026-01-01T00:00:00.000Z",
     });
     // accepted card with past due schedule
-    env.seedCard({
+    await seedCard(env, {
       id: "card-acc",
       deck_id: "deck-c",
       job_id: null,
@@ -200,7 +216,7 @@ describe("GET /api/journey", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "card-acc",
       due: "2020-01-01T00:00:00.000Z",
       stability: 0,
@@ -215,7 +231,7 @@ describe("GET /api/journey", () => {
     });
 
     // a draft card should not count toward accepted/due
-    env.seedCard({
+    await seedCard(env, {
       id: "card-draft-2",
       deck_id: "deck-c",
       job_id: null,
@@ -229,7 +245,7 @@ describe("GET /api/journey", () => {
       updated_at: "2026-01-01T00:00:00.000Z",
     });
 
-    env.seedSession("sess3", "u3");
+    await seedSession(env, "sess3", "u3");
     const res = await app.request(
       "/api/journey",
       { headers: { Cookie: `${SESSION_COOKIE}=sess3` } },
@@ -244,21 +260,21 @@ describe("GET /api/journey", () => {
 
 describe("GET /api/journey/generation", () => {
   it("returns 401 without session", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request("/api/journey/generation", {}, env);
     expect(res.status).toBe(401);
   });
 
   it("empty user → both nulls with only job id keys", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u-gen-empty",
       email: "empty-gen@example.com",
       password_hash: "x",
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-gen-empty", "u-gen-empty");
+    await seedSession(env, "sess-gen-empty", "u-gen-empty");
     const res = await app.request(
       "/api/journey/generation",
       { headers: { Cookie: `${SESSION_COOKIE}=sess-gen-empty` } },

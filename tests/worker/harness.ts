@@ -248,6 +248,11 @@ export type { AchievementDefSeed };
 
 export type Bindings = Env;
 
+/** D1 bind rejects undefined; coerce to null. */
+function d1v<T>(v: T | undefined): T | null {
+  return v === undefined ? null : v;
+}
+
 type WorkflowBinding = NonNullable<Env["GENERATION_WORKFLOW"]>;
 type WorkflowInstanceRow = { status: string; output?: unknown; params?: unknown };
 
@@ -719,16 +724,16 @@ export async function seedCard(env: Bindings, row: CardRow): Promise<void> {
     .bind(
       row.id,
       row.deck_id,
-      row.job_id,
+      d1v(row.job_id),
       row.type,
       row.front_json,
       row.back_json,
-      row.media_r2_keys_json,
-      row.provenance_json,
+      d1v(row.media_r2_keys_json),
+      d1v(row.provenance_json),
       row.status,
       row.reject_reason ?? null,
       row.created_at,
-      row.updated_at,
+      row.updated_at ?? row.created_at,
       row.claim_id ?? null,
       row.content_fp ?? null,
     )
@@ -828,11 +833,11 @@ export async function seedGenerationJob(
       row.id,
       row.material_id,
       row.status,
-      row.error,
-      row.coverage_json,
-      row.progress_json,
+      d1v(row.error),
+      d1v(row.coverage_json),
+      d1v(row.progress_json),
       row.created_at,
-      row.finished_at,
+      d1v(row.finished_at),
       row.figure_extract_mode ?? "fast",
       row.topic_hints_json ?? null,
       row.avoid_patterns_json ?? null,

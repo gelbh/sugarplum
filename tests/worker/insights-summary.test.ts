@@ -1,8 +1,22 @@
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedReviewLog,
+  seedSchedule,
+  seedSession,
+  seedUser,
+} from "./harness";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
 import type { InsightsSummary } from "../../src/insights/types";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
 
 describe("GET /api/insights/summary", () => {
   beforeEach(() => {
@@ -14,21 +28,21 @@ describe("GET /api/insights/summary", () => {
   });
 
   it("returns 401 without session", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request("/api/insights/summary", {}, env);
     expect(res.status).toBe(401);
   });
 
   it("returns zero-filled series for empty user", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
 
     const res = await app.request(
       "/api/insights/summary?tzOffsetMinutes=0",
@@ -69,37 +83,37 @@ describe("GET /api/insights/summary", () => {
   });
 
   it("aggregates own reviews and excludes other users", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedUser({
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Mine",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-b",
       user_id: "user-b",
       title: "Theirs",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedCard({
+    await seedSession(env, "sess-a", "user-a");
+    await seedCard(env, {
       id: "mine",
       deck_id: "deck-a",
       job_id: null,
@@ -112,7 +126,7 @@ describe("GET /api/insights/summary", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "theirs",
       deck_id: "deck-b",
       job_id: null,
@@ -125,7 +139,7 @@ describe("GET /api/insights/summary", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "mine",
       due: "2026-11-13T00:00:00.000Z",
       stability: 10,
@@ -138,7 +152,7 @@ describe("GET /api/insights/summary", () => {
       state: 2,
       last_review: "2026-11-12T00:00:00.000Z",
     });
-    env.seedReviewLog({
+    await seedReviewLog(env, {
       id: "rl-1",
       card_id: "mine",
       rating: 1,
@@ -147,7 +161,7 @@ describe("GET /api/insights/summary", () => {
       reviewed_at: "2026-11-13T08:00:00.000Z",
       state_json: "{}",
     });
-    env.seedReviewLog({
+    await seedReviewLog(env, {
       id: "rl-2",
       card_id: "mine",
       rating: 3,
@@ -156,7 +170,7 @@ describe("GET /api/insights/summary", () => {
       reviewed_at: "2026-11-12T08:00:00.000Z",
       state_json: "{}",
     });
-    env.seedReviewLog({
+    await seedReviewLog(env, {
       id: "rl-other",
       card_id: "theirs",
       rating: 1,
@@ -189,23 +203,23 @@ describe("GET /api/insights/summary", () => {
   });
 
   it("honors localDay for reviewedToday bucket", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Mine",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedCard({
+    await seedSession(env, "sess-a", "user-a");
+    await seedCard(env, {
       id: "mine",
       deck_id: "deck-a",
       job_id: null,
@@ -218,7 +232,7 @@ describe("GET /api/insights/summary", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedReviewLog({
+    await seedReviewLog(env, {
       id: "rl-old",
       card_id: "mine",
       rating: 3,
@@ -242,15 +256,15 @@ describe("GET /api/insights/summary", () => {
   });
 
   it("scales windows for rangeDays=365", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
 
     const res = await app.request(
       "/api/insights/summary?tzOffsetMinutes=0&rangeDays=365",

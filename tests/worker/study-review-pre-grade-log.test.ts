@@ -1,30 +1,44 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  getReviewLogs,
+  getSchedules,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedSchedule,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { State } from "ts-fsrs";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const NOW = "2026-01-01T12:00:00.000Z";
 
 describe("POST /api/study/review pre-grade scheduled_days", () => {
   it("writes pre-review interval into review_logs.scheduled_days", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-pregrade",
       email: "pregrade@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: NOW,
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-pregrade",
       user_id: "user-pregrade",
       title: "Pregrade deck",
       subject_hint: null,
       created_at: NOW,
     });
-    env.seedSession("sess-pregrade", "user-pregrade");
-    env.seedCard({
+    await seedSession(env, "sess-pregrade", "user-pregrade");
+    await seedCard(env, {
       id: "card-pregrade",
       deck_id: "deck-pregrade",
       job_id: null,
@@ -38,7 +52,7 @@ describe("POST /api/study/review pre-grade scheduled_days", () => {
       updated_at: NOW,
     });
     const preInterval = 30;
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "card-pregrade",
       due: "2020-01-01T00:00:00.000Z",
       stability: 40,
@@ -67,12 +81,11 @@ describe("POST /api/study/review pre-grade scheduled_days", () => {
     );
     expect(res.status).toBe(200);
 
-    const logs = env.getReviewLogs().filter((l) => l.card_id === "card-pregrade");
+    const logs = (await getReviewLogs(env)).filter((l) => l.card_id === "card-pregrade");
     expect(logs).toHaveLength(1);
     expect(logs[0]?.scheduled_days).toBe(preInterval);
 
-    const schedule = env
-      .getSchedules()
+    const schedule = (await getSchedules(env))
       .find((s) => s.card_id === "card-pregrade");
     expect(schedule?.scheduled_days).not.toBe(preInterval);
 
