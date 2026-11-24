@@ -1,4 +1,4 @@
-import { encodeMcqAnswers, parseMcqAnswers } from "../study/mcqStudy";
+import { encodeMcqAnswers, parseMcqAnswers } from "../study";
 
 export const MCQ_MIN = 3;
 export const MCQ_MAX = 5;

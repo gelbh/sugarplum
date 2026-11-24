@@ -43,6 +43,16 @@ export {
   CLOZE_EXTRA_LABEL,
 } from "./clozeFormat";
 export {
+  MCQ_ANSWER_SEP,
+  parseMcqAnswers,
+  encodeMcqAnswers,
+  mcqAnswersEqual,
+  mcqSetRating,
+  mcqTapRating,
+  shuffledMcqOptions,
+  mcqOptionButtonDisabled,
+} from "./mcqStudy";
+export {
   getEmbedPdfEngine,
   openPdfDocument,
   listPdfPages,
