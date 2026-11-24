@@ -6,9 +6,9 @@ import {
   installWorkflowRecorders,
   resetTestDb,
   seedCard,
-  seedDeck,
+  seedClaimsNeedsReviewOwnerWithSession,
+  seedClaimsOrphan,
   seedGenerationJob,
-  seedMaterial,
   seedSession,
   seedStudyClaim,
   seedUser,
@@ -47,55 +47,13 @@ const COMPOUND_QA = JSON.stringify({
   ],
 });
 
-async function seedOwnerNeedsReview(env: Bindings) {
-  await seedUser(env, {
-    id: "user-a",
-    email: "a@example.com",
-    password_hash: null,
-    oauth_subject: null,
-    created_at: "2026-01-01T00:00:00.000Z",
-  });
-  await seedDeck(env, {
-    id: "deck-a",
-    user_id: "user-a",
-    title: "Bio",
-    subject_hint: null,
-    created_at: "2026-01-01T00:00:00.000Z",
-  });
-  await seedMaterial(env, {
-    id: "mat-a",
-    deck_id: "deck-a",
-    kind: "paste",
-    r2_key: null,
-    filename: null,
-    page_count: null,
-    status: "ready",
-    created_at: "2026-01-01T00:00:00.000Z",
-  });
-  await seedGenerationJob(env, {
-    id: "job-a",
-    material_id: "mat-a",
-    status: "needs_review",
-    error: null,
-    coverage_json: null,
-    created_at: "2026-01-01T01:00:00.000Z",
-    finished_at: "2026-01-01T01:05:00.000Z",
-  });
-  await seedSession(env, "sess-a", "user-a");
-}
-
-async function seedOrphanClaim(env: Bindings) {
-  await seedStudyClaim(env, {
+async function seedDefaultOrphan(env: Bindings) {
+  await seedClaimsOrphan(env, {
     id: "cl-orphan",
-    job_id: "job-a",
-    deck_id: "deck-a",
     subject: "IgA",
     predicate: "protects mucosa",
-    object: null,
-    source_span: "IgA protects mucosa",
-    qualifiers_json: null,
-    pages_json: "[1]",
-    created_at: "2026-01-01T01:02:00.000Z",
+    span: "IgA protects mucosa",
+    createdAt: "2026-01-01T01:02:00.000Z",
   });
 }
 
@@ -126,8 +84,8 @@ function stubWriteOnlyQa(env: Bindings, content = VALID_QA) {
 describe("POST /api/jobs/:id/claims/:claimId/generate", () => {
   it("creates a draft from an orphan claim without extract", async () => {
     const env = cfEnv;
-    await seedOwnerNeedsReview(env);
-    await seedOrphanClaim(env);
+    await seedClaimsNeedsReviewOwnerWithSession(env);
+    await seedDefaultOrphan(env);
     const run = stubWriteOnlyQa(env);
 
     const res = await app.request(
@@ -179,8 +137,8 @@ describe("POST /api/jobs/:id/claims/:claimId/generate", () => {
 
   it("returns 409 when the claim already has a card", async () => {
     const env = cfEnv;
-    await seedOwnerNeedsReview(env);
-    await seedOrphanClaim(env);
+    await seedClaimsNeedsReviewOwnerWithSession(env);
+    await seedDefaultOrphan(env);
     await seedCard(env, {
       id: "card-existing",
       deck_id: "deck-a",
@@ -216,8 +174,8 @@ describe("POST /api/jobs/:id/claims/:claimId/generate", () => {
 
   it("returns 422 when Layer-1 rejects after reask and does not insert", async () => {
     const env = cfEnv;
-    await seedOwnerNeedsReview(env);
-    await seedOrphanClaim(env);
+    await seedClaimsNeedsReviewOwnerWithSession(env);
+    await seedDefaultOrphan(env);
     let i = 0;
     const run = vi.fn(async () => {
       i += 1;
@@ -258,8 +216,8 @@ describe("POST /api/jobs/:id/claims/:claimId/generate", () => {
 
   it("returns 404 for missing claim or non-owner", async () => {
     const env = cfEnv;
-    await seedOwnerNeedsReview(env);
-    await seedOrphanClaim(env);
+    await seedClaimsNeedsReviewOwnerWithSession(env);
+    await seedDefaultOrphan(env);
     await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
@@ -302,8 +260,8 @@ describe("POST /api/jobs/:id/claims/:claimId/generate", () => {
 describe("POST /api/jobs/:id/claims/fill-orphans", () => {
   it("starts Fill-all Workflow and returns 202", async () => {
     const env = installWorkflowRecorders(cfEnv);
-    await seedOwnerNeedsReview(env);
-    await seedOrphanClaim(env);
+    await seedClaimsNeedsReviewOwnerWithSession(env);
+    await seedDefaultOrphan(env);
     await seedStudyClaim(env, {
       id: "cl-2",
       job_id: "job-a",
@@ -345,8 +303,8 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
 
   it("returns 409 when Fill-all already in progress", async () => {
     const env = installWorkflowRecorders(cfEnv);
-    await seedOwnerNeedsReview(env);
-    await seedOrphanClaim(env);
+    await seedClaimsNeedsReviewOwnerWithSession(env);
+    await seedDefaultOrphan(env);
 
     const headers = {
       "content-type": "application/json",
@@ -368,7 +326,7 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
 
   it("returns zeros when no orphans", async () => {
     const env = installWorkflowRecorders(cfEnv);
-    await seedOwnerNeedsReview(env);
+    await seedClaimsNeedsReviewOwnerWithSession(env);
     stubWriteOnlyQa(env);
 
     const res = await app.request(
@@ -395,8 +353,8 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
 
   it("GET status is idle then running", async () => {
     const env = installWorkflowRecorders(cfEnv);
-    await seedOwnerNeedsReview(env);
-    await seedOrphanClaim(env);
+    await seedClaimsNeedsReviewOwnerWithSession(env);
+    await seedDefaultOrphan(env);
 
     const idle = await app.request(
       "/api/jobs/job-a/claims/fill-orphans",
@@ -434,8 +392,8 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
 
   it("returns 404 for non-owner", async () => {
     const env = installWorkflowRecorders(cfEnv);
-    await seedOwnerNeedsReview(env);
-    await seedOrphanClaim(env);
+    await seedClaimsNeedsReviewOwnerWithSession(env);
+    await seedDefaultOrphan(env);
     await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
@@ -462,8 +420,8 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
 
   it("returns 409 when job is not needs_review", async () => {
     const env = installWorkflowRecorders(cfEnv);
-    await seedOwnerNeedsReview(env);
-    await seedOrphanClaim(env);
+    await seedClaimsNeedsReviewOwnerWithSession(env);
+    await seedDefaultOrphan(env);
     await seedGenerationJob(env, {
       id: "job-a",
       material_id: "mat-a",
@@ -492,8 +450,8 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
 
   it("DELETE terminates an in-flight Fill-all", async () => {
     const env = installWorkflowRecorders(cfEnv);
-    await seedOwnerNeedsReview(env);
-    await seedOrphanClaim(env);
+    await seedClaimsNeedsReviewOwnerWithSession(env);
+    await seedDefaultOrphan(env);
     const headers = {
       "content-type": "application/json",
       cookie: `${SESSION_COOKIE}=sess-a`,
