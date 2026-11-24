@@ -12,8 +12,9 @@ describe("DiyCardPreview fillHeight face slot", () => {
       /: fillHeight\s*\n\s*\?\s*\{([\s\S]*?)\}\s*\n\s*: \{/,
     )?.[1];
     expect(fillBranch, "fillHeight ternary arm").toBeTruthy();
-    expect(fillBranch).toMatch(/maxWidth\s*:/);
-    expect(fillBranch).toMatch(/\bmd\s*:/);
+    expect(fillBranch).toMatch(
+      /maxWidth\s*:\s*\{[\s\S]*?\bmd\s*:\s*editorFaceMaxWidthMd/,
+    );
     expect(fillBranch).toMatch(/height\s*:[\s\S]*xs\s*:\s*"100%"/);
   });
 });

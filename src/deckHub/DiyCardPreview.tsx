@@ -152,6 +152,21 @@ function previewFront(card: CardDraftView): string {
   return typeof card.front === "string" ? card.front : "";
 }
 
+/** Shared desktop (md+) face caps for editor preview (fillHeight + intrinsic). */
+function editorFaceMaxWidthMd(type: CardDraftView["type"]): number {
+  return type === "mcq" || type === "occlusion" ? 280 : 240;
+}
+
+function editorFaceMaxHeightMd(
+  type: CardDraftView["type"],
+): number | string {
+  return type === "mcq"
+    ? 360
+    : type === "occlusion"
+      ? "min(420px, 70vh)"
+      : 300;
+}
+
 function previewParts(card: CardDraftView): {
   front: string;
   back: string;
@@ -339,31 +354,35 @@ export default function DiyCardPreview({
                 ? {
                     height: { xs: "100%", md: "auto" },
                     width: { xs: "auto", md: "100%" },
-                    maxWidth:
-                      card.type === "mcq" || card.type === "occlusion"
-                        ? { xs: "100%", md: 280 }
-                        : { xs: "100%", md: 240 },
-                    maxHeight:
-                      card.type === "mcq"
-                        ? { xs: "100%", md: 360 }
-                        : card.type === "occlusion"
-                          ? { xs: "100%", md: "min(420px, 70vh)" }
-                          : { xs: "100%", md: 300 },
+                    maxWidth: {
+                      xs: "100%",
+                      md: editorFaceMaxWidthMd(card.type),
+                    },
+                    maxHeight: {
+                      xs: "100%",
+                      md: editorFaceMaxHeightMd(card.type),
+                    },
                     minHeight: 0,
                     minWidth: 0,
                   }
                 : {
                     width: "100%",
-                    maxWidth:
-                      card.type === "mcq" || card.type === "occlusion"
-                        ? { xs: 200, md: 280 }
-                        : { xs: 168, md: 240 },
-                    maxHeight:
-                      card.type === "mcq"
-                        ? { xs: 220, md: 360 }
-                        : card.type === "occlusion"
-                          ? { xs: "min(240px, 36vh)", md: "min(420px, 70vh)" }
-                          : { xs: 180, md: 300 },
+                    maxWidth: {
+                      xs:
+                        card.type === "mcq" || card.type === "occlusion"
+                          ? 200
+                          : 168,
+                      md: editorFaceMaxWidthMd(card.type),
+                    },
+                    maxHeight: {
+                      xs:
+                        card.type === "mcq"
+                          ? 220
+                          : card.type === "occlusion"
+                            ? "min(240px, 36vh)"
+                            : 180,
+                      md: editorFaceMaxHeightMd(card.type),
+                    },
                     minHeight: 0,
                     minWidth: 0,
                   }),
