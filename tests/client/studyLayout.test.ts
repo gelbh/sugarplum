@@ -13,6 +13,7 @@ const expected = [
   "grading/GradeButtons.tsx",
   "session/StudyChromeContext.tsx",
   "faces/CardFace.tsx",
+  "faces/KeyChip.tsx",
   "faces/clozeFormat.ts",
   "gestures/cardGestures.ts",
   "media/studyMediaCache.ts",
@@ -46,5 +47,6 @@ describe("src/study subdomain layout", () => {
     for (const rel of mustNotExistAtRoot) {
       expect(existsSync(resolve(root, rel)), rel).toBe(false);
     }
+    expect(existsSync(resolve(root, "session/KeyChip.tsx"))).toBe(false);
   });
 });

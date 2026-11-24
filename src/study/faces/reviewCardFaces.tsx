@@ -26,7 +26,8 @@ import {
   isOcclusionFront,
   type DraftEditorChange,
 } from "../../draftReview/kernel";
-import { FaceOverline, FlipCardPlate, StudyCardPlate } from "./CardFace";
+import { FlipCardPlate, StudyCardPlate } from "./cardPlates";
+import { FaceOverline } from "./faceOverline";
 import ClozePrompt from "./ClozePrompt";
 import ClozeReveal from "./ClozeReveal";
 import {

@@ -25,7 +25,7 @@ import {
   plainShortcutKey,
 } from "../session/studyKeys";
 import { FaceOverline } from "./faceOverline";
-import KeyChip from "../session/KeyChip";
+import KeyChip from "./KeyChip";
 import { FACE_SANS, FACE_SX } from "./studyFaceSx";
 
 const FEEDBACK_MS = 650;

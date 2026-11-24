@@ -15,12 +15,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import {
-  downloadMaterialUrl,
-  getJob,
-  listMaterials,
-  patchCardProvenancePages,
-} from "../../api/client";
+import { patchCardProvenancePages } from "../../api/client";
 import { isGuest } from "../../guest/session";
 import {
   normalizeExcerptText,
@@ -35,6 +30,7 @@ import {
   pagesToPersistAfterRescue,
   pagesToPersistAfterSearchHits,
 } from "./notesProvenanceWrite";
+import { useNotesMaterialLoad } from "./useNotesMaterialLoad";
 import { extractPptxSlides } from "./pptxSlideText";
 
 const NotesEmbedPdfStage = lazy(() =>
@@ -49,10 +45,6 @@ const NotesPptxStage = lazy(() =>
   })),
 );
 
-const FILE_ERROR = "Could not open the file.";
-
-type MaterialKind = "pdf" | "pptx";
-
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -61,10 +53,6 @@ type Props = {
   jobId: string | null;
   cardId?: string | null;
 };
-
-function isAbort(err: unknown): boolean {
-  return err instanceof DOMException && err.name === "AbortError";
-}
 
 export default function StudyNotesDialog({
   open,
@@ -80,10 +68,11 @@ export default function StudyNotesDialog({
   const writeChainRef = useRef(Promise.resolve());
   const lastPersistedFirstRef = useRef<number | null>(null);
   const copyRef = useRef<(() => void) | null>(null);
-  const [title, setTitle] = useState("Notes");
-  const [error, setError] = useState<string | null>(null);
-  const [materialKind, setMaterialKind] = useState<MaterialKind | null>(null);
-  const [materialBytes, setMaterialBytes] = useState<Uint8Array | null>(null);
+  const { title, error, materialKind, materialBytes } = useNotesMaterialLoad({
+    open,
+    jobId,
+    page,
+  });
   const [viewPage, setViewPage] = useState<number | null>(null);
   const [pageCount, setPageCount] = useState(0);
   const [pageInput, setPageInput] = useState("");
@@ -134,65 +123,6 @@ export default function StudyNotesDialog({
     setViewPage(page);
     setPageInput(page != null ? String(page) : "");
   }, [open, page, cardId]);
-
-  useEffect(() => {
-    if (!open || !jobId || isGuest()) {
-      setTitle("Notes");
-      setError(null);
-      setMaterialKind(null);
-      setMaterialBytes(null);
-      return;
-    }
-
-    let cancelled = false;
-    const ac = new AbortController();
-    setTitle("Notes");
-    setError(null);
-    setMaterialKind(null);
-    setMaterialBytes(null);
-
-    void (async () => {
-      try {
-        // Material stays on the source deck after a card move; resolve by id.
-        const [job, materials] = await Promise.all([
-          getJob(jobId),
-          listMaterials(),
-        ]);
-        if (cancelled) return;
-        const material = materials.find((item) => item.id === job.material_id);
-        if (!material) {
-          setError(FILE_ERROR);
-          return;
-        }
-        setTitle(material.filename || "Notes");
-        const kind =
-          material.kind === "pdf" || material.kind === "pptx"
-            ? material.kind
-            : null;
-        if (!kind || page === null) return;
-        const response = await fetch(downloadMaterialUrl(material.id), {
-          credentials: "include",
-          cache: "no-store",
-          signal: ac.signal,
-        });
-        if (!response.ok) throw new Error(String(response.status));
-        const bytes = new Uint8Array(await response.arrayBuffer());
-        if (cancelled) return;
-        setMaterialKind(kind);
-        setMaterialBytes(bytes);
-      } catch (err) {
-        if (cancelled || isAbort(err)) return;
-        setError(FILE_ERROR);
-        setMaterialKind(null);
-        setMaterialBytes(null);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      ac.abort();
-    };
-  }, [open, jobId, page]);
 
   // PDF scrubber navigate write-back (thin inventory → [displayPage]).
   useEffect(() => {
@@ -301,11 +231,9 @@ export default function StudyNotesDialog({
           pagesForExcerpt(excerpt, [{ page: displayPage, text: hitText }])
             .length > 0;
         setWashHits(hits);
-        setError(null);
       } catch {
         if (!cancelled) {
           setWashHits(false);
-          setError(null);
         }
       }
     })();

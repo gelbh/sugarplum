@@ -4,19 +4,14 @@ export { default as ClozeReveal } from "./faces/ClozeReveal";
 export { default as GradeButtons } from "./grading/GradeButtons";
 export { default as ReviewCard } from "./faces/ReviewCard";
 export { StudyNotesButton } from "./notes/StudyNotesButton";
-export { default as StudyNotesDialog } from "./notes/StudyNotesDialog";
 export { default as SubjectKnowledgeBar } from "./session/SubjectKnowledgeBar";
 export {
   default as StrugglingList,
   formatStrugglingCaption,
 } from "./session/StrugglingList";
-export { default as KeyChip } from "./session/KeyChip";
+export { default as KeyChip } from "./faces/KeyChip";
 export {
   FACE_SANS,
-  FACE_SX,
-  FACE_DISABLED_SX,
-  CARD_COLUMN_SX,
-  faceMotionSx,
   FACE_ANSWER_TEXT_SX,
   FACE_BODY_SX,
   FACE_FRONT_ECHO_SX,
@@ -29,7 +24,6 @@ export { useStudyCardGesture, applyStudySwipeFrame } from "./gestures/useStudyCa
 export { useReviewSwipe, applyReviewSwipeFrame } from "./gestures/useReviewSwipe";
 export {
   clozeSpoken,
-  clozeParts,
   blankClozeFront,
   revealClozeFront,
   extractClozeAnswer,
@@ -38,7 +32,6 @@ export {
   composeClozeFront,
   parseClozeDiyFields,
   hasClozeBlank,
-  hasSingleClozeBlank,
   CLOZE_BLANK_MAX,
   CLOZE_EXTRA_LABEL,
 } from "./faces/clozeFormat";
@@ -46,7 +39,6 @@ export {
   MCQ_ANSWER_SEP,
   parseMcqAnswers,
   encodeMcqAnswers,
-  mcqAnswersEqual,
   mcqSetRating,
   mcqTapRating,
   shuffledMcqOptions,
@@ -63,7 +55,7 @@ export {
   type EmbedPdfDocument,
   type EmbedPdfPageLayout,
 } from "../materials/clientKernel";
-export { FlipCardPlate, StudyCardPlate } from "./faces/CardFace";
+export { FlipCardPlate, StudyCardPlate } from "./faces/cardPlates";
 export { CardFaceMcqBody } from "./faces/cardFaceMcq";
 export {
   occlusionRevealAnswer,
@@ -72,7 +64,6 @@ export {
 export {
   StudyChromeProvider,
   useStudyChrome,
-  type StudyChromeValue,
 } from "./session/StudyChromeContext";
 export { type EasyDay, localDayKey, applyLoadBalance } from "./queue/loadBalance";
 export { useGradeMailboxFlight } from "./grading/useGradeMailboxFlight";
@@ -117,7 +108,6 @@ export {
   classifyKnowledgeBucket,
   aggregateSubjectKnowledge,
   composeSubjectKnowledge,
-  type SubjectKnowledgeBuckets,
   type SubjectKnowledge,
 } from "./queue/subjectKnowledge";
 export {
@@ -128,15 +118,11 @@ export {
   pruneDueCacheCard,
   filterDueExcludingPending,
   clearDueCache,
-  type DueScopeOpts,
-  type DueCacheSnapshot,
 } from "./queue/dueCache";
 export {
   dueSplitOk,
   aggregateDueByDeck,
   buildDueBreakdown,
-  type DueDeckRow,
-  type DueDeckRemainder,
   type DueBreakdown,
 } from "./queue/dueBreakdown";
 export type { ReviewDecision } from "./faces/ReviewCard";
@@ -144,5 +130,4 @@ export {
   emptyTally,
   gradedTotal,
   sessionSurface,
-  type GradeTally,
 } from "./session/sessionTally";
