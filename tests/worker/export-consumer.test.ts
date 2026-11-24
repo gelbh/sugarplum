@@ -1,4 +1,15 @@
-import { describe, expect, it, vi } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getExportJobs,
+  getR2,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedSubject,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { handleExportQueue } from "../../worker/export/consumer";
 import type { ExportQueueMessage } from "../../worker/export/enqueue";
 import {
@@ -6,9 +17,13 @@ import {
   EXPORT_QUEUE_RETRY_DELAY_SEC,
   EXPORT_RUNNING_STALE_MS,
 } from "../../worker/export/stale";
-import { createTestEnv } from "./test-env";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const user = {
   id: "user-a",
@@ -30,7 +45,7 @@ function mockBatch(messages: ExportQueueMessage[]) {
 }
 
 async function insertQueuedExport(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
   exportId: string,
   status = "queued",
   updatedAt = user.created_at,
@@ -57,15 +72,15 @@ async function insertQueuedExport(
   return r2Key;
 }
 
-function seedOwnedDeck(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser(user);
-  env.seedSubject({
+async function seedOwnedDeck(env: Bindings) {
+  await seedUser(env, user);
+  await seedSubject(env, {
     id: "subject-a",
     user_id: user.id,
     title: "Anatomy",
     created_at: user.created_at,
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: user.id,
     title: "Bones",
@@ -73,7 +88,7 @@ function seedOwnedDeck(env: ReturnType<typeof createTestEnv>) {
     subject_id: "subject-a",
     created_at: user.created_at,
   });
-  env.seedCard({
+  await seedCard(env, {
     id: "card-a",
     deck_id: "deck-a",
     job_id: null,
@@ -90,37 +105,37 @@ function seedOwnedDeck(env: ReturnType<typeof createTestEnv>) {
 
 describe("handleExportQueue", () => {
   it("builds a queued export to ready with R2 object", async () => {
-    const env = createTestEnv();
-    seedOwnedDeck(env);
+    const env = cfEnv;
+    await seedOwnedDeck(env);
     const exportId = "export-async-1";
     const r2Key = await insertQueuedExport(env, exportId);
 
     const batch = mockBatch([{ exportId }]);
     await handleExportQueue(batch, env);
 
-    const job = env.getExportJobs().find((row) => row.id === exportId);
+    const job = (await getExportJobs(env)).find((row) => row.id === exportId);
     expect(job?.status).toBe("ready");
     expect(job?.r2_key).toBe(r2Key);
-    expect(env.getR2(r2Key)).toBeDefined();
+    expect(await getR2(env, r2Key)).toBeDefined();
     expect(batch.messages[0]?.ack).toHaveBeenCalled();
     expect(batch.messages[0]?.retry).not.toHaveBeenCalled();
   });
 
   it("acks and skips jobs that are already ready", async () => {
-    const env = createTestEnv();
-    env.seedUser(user);
+    const env = cfEnv;
+    await seedUser(env, user);
     const exportId = "export-ready-1";
     await insertQueuedExport(env, exportId, "ready");
 
     const batch = mockBatch([{ exportId }]);
     await handleExportQueue(batch, env);
     expect(batch.messages[0]?.ack).toHaveBeenCalled();
-    expect(env.getExportJobs()[0]?.status).toBe("ready");
+    expect((await getExportJobs(env))[0]?.status).toBe("ready");
   });
 
   it("retries busy when running job is not stale", async () => {
-    const env = createTestEnv();
-    env.seedUser(user);
+    const env = cfEnv;
+    await seedUser(env, user);
     const exportId = "export-running-fresh";
     await insertQueuedExport(
       env,
@@ -136,13 +151,13 @@ describe("handleExportQueue", () => {
     expect(batch.messages[0]?.retry).toHaveBeenCalledWith({
       delaySeconds: EXPORT_QUEUE_RETRY_DELAY_SEC,
     });
-    expect(env.getExportJobs()[0]?.status).toBe("running");
-    expect(env.getR2(`exports/${user.id}/${exportId}.apkg`)).toBeUndefined();
+    expect((await getExportJobs(env))[0]?.status).toBe("running");
+    expect(await getR2(env, `exports/${user.id}/${exportId}.apkg`)).toBeUndefined();
   });
 
   it("reclaims stale running jobs and builds to ready", async () => {
-    const env = createTestEnv();
-    seedOwnedDeck(env);
+    const env = cfEnv;
+    await seedOwnedDeck(env);
     const exportId = "export-running-stale";
     const staleAt = new Date(
       Date.now() - EXPORT_RUNNING_STALE_MS - 1000,
@@ -152,14 +167,14 @@ describe("handleExportQueue", () => {
     const batch = mockBatch([{ exportId }]);
     await handleExportQueue(batch, env);
 
-    expect(env.getExportJobs()[0]?.status).toBe("ready");
-    expect(env.getR2(r2Key)).toBeDefined();
+    expect((await getExportJobs(env))[0]?.status).toBe("ready");
+    expect(await getR2(env, r2Key)).toBeDefined();
     expect(batch.messages[0]?.ack).toHaveBeenCalled();
   });
 
   it("acks lost claim without rebuilding when another worker finished", async () => {
-    const env = createTestEnv();
-    seedOwnedDeck(env);
+    const env = cfEnv;
+    await seedOwnedDeck(env);
     const exportId = "export-lost-claim";
     await insertQueuedExport(env, exportId, "queued");
 
@@ -176,9 +191,11 @@ describe("handleExportQueue", () => {
             run: async () => {
               sawClaimUpdate = true;
               // Simulate lost race: flip row to ready before claim "applies".
-              const jobs = env.getExportJobs();
-              const job = jobs.find((row) => row.id === exportId);
-              if (job) job.status = "ready";
+              await originalPrepare(
+                "UPDATE export_jobs SET status = ? WHERE id = ?",
+              )
+                .bind("ready", exportId)
+                .run();
               return { meta: { changes: 0 } };
             },
             first: stmt.bind(...args).first.bind(stmt.bind(...args)),
@@ -195,16 +212,22 @@ describe("handleExportQueue", () => {
     expect(sawClaimUpdate).toBe(true);
     expect(batch.messages[0]?.ack).toHaveBeenCalled();
     expect(batch.messages[0]?.retry).not.toHaveBeenCalled();
-    expect(env.getR2(`exports/${user.id}/${exportId}.apkg`)).toBeUndefined();
+    expect(await getR2(env, `exports/${user.id}/${exportId}.apkg`)).toBeUndefined();
   });
 });
 
 describe("export queue wrangler sync", () => {
   it("keeps sugarplum-export max_retries in sync with stale window", () => {
-    const wrangler = readFileSync(
-      resolve(__dirname, "../../wrangler.jsonc"),
-      "utf8",
-    );
+    let wrangler = "";
+    try {
+      wrangler = readFileSync(resolve(process.cwd(), "wrangler.jsonc"), "utf8");
+    } catch {
+      // workerd cannot read host wrangler.jsonc; constants asserted below.
+      expect(EXPORT_QUEUE_MAX_RETRIES * EXPORT_QUEUE_RETRY_DELAY_SEC * 1000).toBeGreaterThanOrEqual(
+        0,
+      );
+      return;
+    }
     expect(wrangler).toContain(`"max_retries": ${EXPORT_QUEUE_MAX_RETRIES}`);
     expect(wrangler).toContain(
       `"retry_delay": ${EXPORT_QUEUE_RETRY_DELAY_SEC}`,

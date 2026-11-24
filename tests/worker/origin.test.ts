@@ -1,7 +1,14 @@
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+} from "./harness";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { app } from "../../worker/index";
 import { isAllowedMutatingOrigin } from "../../worker/security/origin";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const SITEVERIFY_URL =
   "https://challenges.cloudflare.com/turnstile/v0/siteverify";
@@ -56,7 +63,7 @@ describe("isAllowedMutatingOrigin", () => {
 
 describe("mutating /api origin middleware", () => {
   it("rejects cross-origin POST", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     env.APP_URL = "https://sugarplum.gelbhart.dev";
     const res = await app.request(
       "/api/auth/register",
@@ -77,7 +84,7 @@ describe("mutating /api origin middleware", () => {
   });
 
   it("allows APP_URL origin", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     env.APP_URL = "https://sugarplum.gelbhart.dev";
     stubSiteverifyOk();
     const res = await app.request(
@@ -100,7 +107,7 @@ describe("mutating /api origin middleware", () => {
   });
 
   it("fails closed when APP_URL is unset", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     env.APP_URL = "";
     const res = await app.request(
       "/api/auth/register",

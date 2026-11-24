@@ -1,19 +1,29 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+  seedSession,
+  seedUser,
+  withTestBindings,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("GET /api/auth/me anatomy_viewer", () => {
   it("false when secret unset", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u1",
       email: "gelbharttomer@gmail.com",
       password_hash: "x",
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("s1", "u1");
+    await seedSession(env, "s1", "u1");
     const res = await app.request(
       "/api/auth/me",
       { headers: { cookie: `${SESSION_COOKIE}=s1` } },
@@ -24,17 +34,17 @@ describe("GET /api/auth/me anatomy_viewer", () => {
   });
 
   it("true for allowlisted email without Google link", async () => {
-    const env = createTestEnv({
+    const env = withTestBindings(cfEnv, {
       anatomyViewerEmails: "kyleygelbhart@gmail.com, gelbharttomer@gmail.com",
     });
-    env.seedUser({
+    await seedUser(env, {
       id: "u1",
       email: "GelbhartTomer@gmail.com",
       password_hash: "x",
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("s1", "u1");
+    await seedSession(env, "s1", "u1");
     const res = await app.request(
       "/api/auth/me",
       { headers: { cookie: `${SESSION_COOKIE}=s1` } },
@@ -45,11 +55,11 @@ describe("GET /api/auth/me anatomy_viewer", () => {
   });
 
   it("login includes anatomy_viewer for allowlisted email", async () => {
-    const env = createTestEnv({
+    const env = withTestBindings(cfEnv, {
       anatomyViewerEmails: "gelbharttomer@gmail.com",
     });
     const { hashPassword } = await import("../../worker/auth/password");
-    env.seedUser({
+    await seedUser(env, {
       id: "u1",
       email: "gelbharttomer@gmail.com",
       password_hash: await hashPassword("password-long-enough"),
@@ -77,18 +87,18 @@ describe("GET /api/auth/me anatomy_viewer", () => {
   });
 
   it("false for admin who is not on anatomy list", async () => {
-    const env = createTestEnv({
+    const env = withTestBindings(cfEnv, {
       adminEmails: "ops@example.com",
       anatomyViewerEmails: "kyleygelbhart@gmail.com",
     });
-    env.seedUser({
+    await seedUser(env, {
       id: "u1",
       email: "ops@example.com",
       password_hash: null,
       oauth_subject: "google-sub",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("s1", "u1");
+    await seedSession(env, "s1", "u1");
     const res = await app.request(
       "/api/auth/me",
       { headers: { cookie: `${SESSION_COOKIE}=s1` } },

@@ -1,30 +1,43 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  getCards,
+  getStudyClaims,
+  resetTestDb,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   attachClaimIdsToDrafts,
   insertDraftCards,
 } from "../../worker/generation/gap-fill";
 import type { StoredClaim } from "../../worker/generation/claims";
 import { CardDraftSchema } from "../../worker/generation/schema";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("persist study_claims + card claim_id", () => {
   it("inserts all claims and joins matched drafts by excerpt", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Bio",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-a",
       deck_id: "deck-a",
       kind: "paste",
@@ -34,7 +47,7 @@ describe("persist study_claims + card claim_id", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "job-a",
       material_id: "mat-a",
       status: "running",
@@ -81,8 +94,8 @@ describe("persist study_claims + card claim_id", () => {
       claims,
     });
 
-    expect(env.getStudyClaims()).toHaveLength(2);
-    const cards = env.getCards().filter((c) => c.job_id === "job-a");
+    expect((await getStudyClaims(env))).toHaveLength(2);
+    const cards = (await getCards(env)).filter((c) => c.job_id === "job-a");
     expect(cards).toHaveLength(2);
     const byFront = new Map(
       cards.map((c) => [JSON.parse(c.front_json) as string, c]),

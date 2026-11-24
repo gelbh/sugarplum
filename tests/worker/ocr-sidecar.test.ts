@@ -1,4 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  getCards,
+  getGenerationJobs,
+  getMaterials,
+  getR2,
+  resetTestDb,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedR2,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { mockLlmAdapter } from "../../worker/generation/llm";
@@ -16,8 +30,12 @@ import {
   parseStoredOcrPages,
   pdfTextOrOcrSidecar,
 } from "../../worker/materials/ocr-sidecar";
-import { createTestEnv } from "./test-env";
 import { minimalPdfWithText } from "./pdf-fixture";
+
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 function asBuffer(bytes: Uint8Array): ArrayBuffer {
   return bytes.buffer.slice(
@@ -200,23 +218,23 @@ describe("pdfTextOrOcrSidecar", () => {
 
 describe("complete upload sidecar", () => {
   it("stores ocr pages after the pdf is ready", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Owner deck",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedMaterial({
+    await seedSession(env, "sess-a", "user-a");
+    await seedMaterial(env, {
       id: "mat-1",
       deck_id: "deck-a",
       kind: "pdf",
@@ -244,8 +262,8 @@ describe("complete upload sidecar", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(env.getMaterials()[0]?.status).toBe("ready");
-    expect(env.getR2(ocrSidecarKey("deck-a", "mat-1"))).toContain(
+    expect((await getMaterials(env))[0]?.status).toBe("ready");
+    expect(await getR2(env, ocrSidecarKey("deck-a", "mat-1"))).toContain(
       "scanned cecum",
     );
   });
@@ -253,22 +271,22 @@ describe("complete upload sidecar", () => {
 
 describe("generate with sidecar", () => {
   it("does not fail empty when the sidecar fills the page", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Bio",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-pdf",
       deck_id: "deck-a",
       kind: "pdf",
@@ -278,11 +296,11 @@ describe("generate with sidecar", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedR2(
+    await seedR2(env, 
       "materials/deck-a/mat-pdf.pdf",
       new TextDecoder().decode(minimalPdfWithText("")),
     );
-    env.seedR2(
+    await seedR2(env, 
       ocrSidecarKey("deck-a", "mat-pdf"),
       JSON.stringify({
         pages: [{ page: 1, text: "Mitochondria produce ATP" }],
@@ -297,10 +315,10 @@ describe("generate with sidecar", () => {
       { jobId, materialId: "mat-pdf", deckId: "deck-a" },
       { llm: mockLlmAdapter() },
     );
-    const job = env.getGenerationJobs().find((row) => row.id === jobId);
+    const job = (await getGenerationJobs(env)).find((row) => row.id === jobId);
     expect(job?.status).toBe("needs_review");
     expect(job?.error).toBeNull();
-    expect(env.getCards().length).toBeGreaterThan(0);
+    expect((await getCards(env)).length).toBeGreaterThan(0);
   });
 });
 
@@ -341,24 +359,24 @@ function pdfWithPages(count: number): ArrayBuffer {
   return asBuffer(new TextEncoder().encode(body + xref + trailer));
 }
 
-function seedReadyPdf() {
-  const env = createTestEnv();
-  env.seedUser({
+async function seedReadyPdf() {
+  const env = cfEnv;
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: "user-a",
     title: "Owner deck",
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
-  env.seedMaterial({
+  await seedSession(env, "sess-a", "user-a");
+  await seedMaterial(env, {
     id: "mat-1",
     deck_id: "deck-a",
     kind: "pdf",
@@ -373,7 +391,7 @@ function seedReadyPdf() {
 
 describe("ocr refetch", () => {
   it("signs a GET for the owner including resume past page 120", async () => {
-    const env = seedReadyPdf();
+    const env = await seedReadyPdf();
     const res = await app.request(
       "/api/materials/mat-1/ocr-refetch",
       { method: "POST", headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
@@ -390,7 +408,7 @@ describe("ocr refetch", () => {
     expect(body.downloadUrl).toContain("materials/deck-a/mat-1.pdf");
     expect(body.downloadUrl).toContain("X-Amz-Expires=900");
 
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "job-far",
       material_id: "mat-1",
       status: "failed",
@@ -424,8 +442,8 @@ describe("ocr refetch", () => {
   });
 
   it("rejects a paste material", async () => {
-    const env = seedReadyPdf();
-    env.seedMaterial({
+    const env = await seedReadyPdf();
+    await seedMaterial(env, {
       id: "mat-paste",
       deck_id: "deck-a",
       kind: "paste",
@@ -444,15 +462,15 @@ describe("ocr refetch", () => {
   });
 
   it("returns 404 for a stranger", async () => {
-    const env = seedReadyPdf();
-    env.seedUser({
+    const env = await seedReadyPdf();
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-b", "user-b");
+    await seedSession(env, "sess-b", "user-b");
     const res = await app.request(
       "/api/materials/mat-1/ocr-refetch",
       { method: "POST", headers: { cookie: `${SESSION_COOKIE}=sess-b` } },
@@ -462,8 +480,8 @@ describe("ocr refetch", () => {
   });
 
   it("appends a new page, keeps stored text, and marks unstudied behind the cursor", async () => {
-    const env = seedReadyPdf();
-    env.seedGenerationJob({
+    const env = await seedReadyPdf();
+    await seedGenerationJob(env, {
       id: "job-resume-41",
       material_id: "mat-1",
       status: "failed",
@@ -475,7 +493,7 @@ describe("ocr refetch", () => {
       created_at: "2026-01-02T00:00:00.000Z",
       finished_at: "2026-01-02T00:00:00.000Z",
     });
-    env.seedR2(
+    await seedR2(env, 
       ocrSidecarKey("deck-a", "mat-1"),
       JSON.stringify({ pages: [{ page: 1, text: "first" }] }),
     );
@@ -499,7 +517,7 @@ describe("ocr refetch", () => {
     );
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ stored: 2 });
-    const stored = env.getR2(ocrSidecarKey("deck-a", "mat-1"));
+    const stored = await getR2(env, ocrSidecarKey("deck-a", "mat-1"));
     expect(typeof stored).toBe("string");
     const parsed = JSON.parse(stored as string) as {
       pages: { page: number; text: string }[];
@@ -526,7 +544,7 @@ describe("ocr refetch", () => {
     );
     expect(second.status).toBe(200);
     expect(await second.json()).toEqual({ stored: 2 });
-    expect(env.getR2(ocrSidecarKey("deck-a", "mat-1"))).toBe(beforeSecond);
+    expect(await getR2(env, ocrSidecarKey("deck-a", "mat-1"))).toBe(beforeSecond);
   });
 });
 

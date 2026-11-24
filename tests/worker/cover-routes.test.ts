@@ -1,8 +1,21 @@
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getR2,
+  resetTestDb,
+  seedR2,
+  seedSession,
+  seedSubject,
+  seedUser,
+} from "./harness";
 import { afterEach, describe, expect, it } from "vitest";
 import type { ExecutionContext } from "hono";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 type StubPhoto = {
   id: string;
@@ -22,16 +35,16 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
 });
 
-function seedOwner(env: ReturnType<typeof createTestEnv>, withKey = true) {
-  env.seedUser({
+async function seedOwner(env: Bindings, withKey = true) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
-  env.seedSubject({
+  await seedSession(env, "sess-a", "user-a");
+  await seedSubject(env, {
     id: "sub-1",
     user_id: "user-a",
     title: "Anatomy",
@@ -120,8 +133,8 @@ function photo(
 
 describe("cover routes", () => {
   it("sorts Unsplash results by downloads and pages", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const photos = [
       photo("p1", 1, "https://images.unsplash.com/p1?ixid=1"),
       photo("p2", 2, "https://images.unsplash.com/p2?ixid=1"),
@@ -179,8 +192,8 @@ describe("cover routes", () => {
   });
 
   it("stores urls.small from the photo payload and ignores a body image url", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const calls = installUnsplash(
       [photo("chosen", 12, "https://images.unsplash.com/chosen?ixid=keep-me")],
       [],
@@ -238,8 +251,8 @@ describe("cover routes", () => {
   });
 
   it("returns 404 when the photo id is unknown", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     installUnsplash([], []);
 
     const res = await app.request(
@@ -262,8 +275,8 @@ describe("cover routes", () => {
   });
 
   it("deletes the signed-in user's cover", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     installUnsplash(
       [photo("chosen", 3, "https://images.unsplash.com/chosen?ixid=1")],
       [],
@@ -304,8 +317,8 @@ describe("cover routes", () => {
   });
 
   it("rejects an empty search query", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const res = await app.request(
       "/api/covers/search?q=%20%20",
       { headers: authHeaders() },
@@ -321,8 +334,9 @@ describe("cover routes", () => {
   });
 
   it("returns 503 when Unsplash is not configured", async () => {
-    const env = createTestEnv();
-    seedOwner(env, false);
+    const env = cfEnv;
+    delete (env as { UNSPLASH_ACCESS_KEY?: string }).UNSPLASH_ACCESS_KEY;
+    await seedOwner(env, false);
     const res = await app.request(
       "/api/covers/search?q=heart",
       { headers: authHeaders() },
@@ -341,8 +355,8 @@ describe("cover routes", () => {
   });
 
   it("uploads a custom cover and serves it only to the owner", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const uploadRes = await app.request(
       "/api/covers/upload-url",
       {
@@ -366,7 +380,7 @@ describe("cover routes", () => {
     expect(upload.r2Key).toContain("covers/user-a/subject/sub-1/");
     expect(upload.uploadUrl).toContain(upload.r2Key);
 
-    env.seedR2(upload.r2Key, "fake-bytes");
+    await seedR2(env, upload.r2Key, "fake-bytes");
 
     const put = await app.request(
       "/api/covers/custom",
@@ -404,14 +418,14 @@ describe("cover routes", () => {
     expect(media.status).toBe(200);
     expect(media.headers.get("content-type")).toBe("image/jpeg");
 
-    env.seedUser({
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-b", "user-b");
+    await seedSession(env, "sess-b", "user-b");
     const foreign = await app.request(
       saved.imageUrl,
       { headers: { cookie: `${SESSION_COOKIE}=sess-b` } },
@@ -429,14 +443,14 @@ describe("cover routes", () => {
       env,
     );
     expect(del.status).toBe(204);
-    expect(env.getR2(upload.r2Key)).toBeUndefined();
+    expect(await getR2(env, upload.r2Key)).toBeUndefined();
   });
 
   it("rejects foreign cover keys and keeps same-key custom PUT idempotent", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const r2Key = "covers/user-a/subject/sub-1/img-1.jpg";
-    env.seedR2(r2Key, "bytes");
+    await seedR2(env, r2Key, "bytes");
 
     const bad = await app.request(
       "/api/covers/custom",
@@ -484,7 +498,7 @@ describe("cover routes", () => {
       env,
     );
     expect(again.status).toBe(200);
-    expect(env.getR2(r2Key)).toBe("bytes");
+    expect(await getR2(env, r2Key)).toBe("bytes");
 
     const media = await app.request(
       `/api/covers/media?key=${encodeURIComponent(r2Key)}`,
@@ -495,8 +509,8 @@ describe("cover routes", () => {
   });
 
   it("keeps the download ping alive without waiting on it", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     installUnsplash(
       [photo("chosen", 12, "https://images.unsplash.com/chosen?ixid=keep-me")],
       [],

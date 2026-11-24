@@ -1,8 +1,20 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedSchedule,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { Rating, newCard, review } from "../../worker/study/fsrs";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 /**
  * P0–P1 Spec Verify acceptance checks.
@@ -11,15 +23,15 @@ import { createTestEnv } from "./test-env";
  */
 describe("spec verify: auth scoping", () => {
   it("unauthenticated cannot list another user’s decks", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Private deck",
@@ -37,23 +49,23 @@ describe("spec verify: auth scoping", () => {
 
 describe("spec verify: draft gate", () => {
   it("draft never appears in /api/study/due", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Bio",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedCard({
+    await seedSession(env, "sess-a", "user-a");
+    await seedCard(env, {
       id: "card-draft",
       deck_id: "deck-a",
       job_id: null,
@@ -67,7 +79,7 @@ describe("spec verify: draft gate", () => {
       updated_at: "2026-01-01T00:00:00.000Z",
     });
     // Even with a schedule row (should not happen for drafts), due must skip drafts.
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "card-draft",
       due: "2020-01-01T00:00:00.000Z",
       stability: 0,
@@ -102,15 +114,15 @@ describe("spec verify: fsrs", () => {
 
 describe("spec verify: LLM settings", () => {
   it("GET LLM settings has no raw key", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
     const apiKey = "sk-live-verify-never-leak-this";
 
     const putRes = await app.request(
