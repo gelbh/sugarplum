@@ -223,7 +223,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "teladorsagia-circumcincta-hero.webp",
+          "file": "teladorsagia-circumcincta/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Dr Enterocasso",
@@ -472,7 +472,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "haemonchus-contortus-hero.webp",
+          "file": "haemonchus-contortus/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "division, CSIRO",
@@ -693,7 +693,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "trichostrongylus-spp-hero.webp",
+          "file": "trichostrongylus-spp/hero.webp",
           "role": "egg_oocyst",
           "caption": null,
           "credit": "CDC / DPDx",
@@ -1126,7 +1126,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "bunostomum-trigonocephalum-hero.webp",
+          "file": "bunostomum-trigonocephalum/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Daniel J. Drew",
@@ -1529,7 +1529,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "chabertia-ovina-hero.webp",
+          "file": "chabertia-ovina/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Brayton Howard Ransom / USDA Bureau of Animal Industry Bulletin 127",
@@ -1765,7 +1765,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "oesophagostomum-venulosum-hero.webp",
+          "file": "oesophagostomum-venulosum/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Brayton Howard Ransom / USDA Bureau of Animal Industry Bulletin 127",
@@ -1981,7 +1981,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "trichuris-ovis-hero.webp",
+          "file": "trichuris-ovis/hero.webp",
           "role": "egg_oocyst",
           "caption": null,
           "credit": "Brayton Howard Ransom / USDA Bureau of Animal Industry Bulletin 127 (after Curtice, 1890)",
@@ -3013,7 +3013,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "ostertagia-ostertagi-hero.webp",
+          "file": "ostertagia-ostertagi/hero.webp",
           "role": "larva",
           "caption": null,
           "credit": "USDA Agricultural Research Service",
@@ -3207,7 +3207,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "dictyocaulus-viviparus-hero.webp",
+          "file": "dictyocaulus-viviparus/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Alan R Walker",

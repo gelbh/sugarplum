@@ -145,7 +145,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "entamoeba-histolytica-hero.webp",
+          "file": "entamoeba-histolytica/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "The Other 95%",
@@ -315,7 +315,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "giardia-duodenalis-hero.webp",
+          "file": "giardia-duodenalis/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
@@ -483,7 +483,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "balantidium-coli-hero.webp",
+          "file": "balantidium-coli/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "The Other 95%",
@@ -641,7 +641,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "eimeria-spp-hero.webp",
+          "file": "eimeria-spp/hero.webp",
           "role": "egg_oocyst",
           "caption": "Eimeria tenella (Peabody microslide)",
           "credit": "Yale Peabody Museum of Natural History",
@@ -651,7 +651,7 @@
         },
         {
           "id": "lifecycle",
-          "file": "eimeria-spp-lifecycle.webp",
+          "file": "eimeria-spp/lifecycle.webp",
           "role": "lifecycle_diagram",
           "caption": null,
           "credit": "USDA",
@@ -835,7 +835,7 @@
       "images": [
         {
           "id": "lifecycle",
-          "file": "cryptosporidium-spp-lifecycle.webp",
+          "file": "cryptosporidium-spp/lifecycle.webp",
           "role": "lifecycle_diagram",
           "caption": null,
           "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
@@ -845,7 +845,7 @@
         },
         {
           "id": "hero",
-          "file": "cryptosporidium-spp-hero.webp",
+          "file": "cryptosporidium-spp/hero.webp",
           "role": "egg_oocyst",
           "caption": null,
           "credit": "CDC / DPDx (via Wikimedia Commons)",
@@ -1018,7 +1018,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "tritrichomonas-foetus-hero.webp",
+          "file": "tritrichomonas-foetus/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Chaoqun Yaor and Liza S Köster",
@@ -1580,7 +1580,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "toxoplasma-gondii-hero.webp",
+          "file": "toxoplasma-gondii/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Jacques Rigoulet, Alain Hennache, Pierre Lagourette, Catherine George, Loïc Longeart, Jean-Loïc Le Net and Jitender P. D",
@@ -1773,7 +1773,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "neospora-caninum-hero.webp",
+          "file": "neospora-caninum/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "agricultura.sp",
@@ -1989,7 +1989,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "sarcocystis-spp-hero.webp",
+          "file": "sarcocystis-spp/hero.webp",
           "role": "lesion",
           "caption": "Sarcocystis in sheep cardiac muscle (H&E)",
           "credit": "Tameem Baker",
@@ -2395,7 +2395,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "babesia-spp-hero.webp",
+          "file": "babesia-spp/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Michael Lippert",
@@ -2601,7 +2601,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "theileria-spp-hero.webp",
+          "file": "theileria-spp/hero.webp",
           "role": "other",
           "caption": "Theileria annulata piroplasms in bovine RBCs",
           "credit": "Alan R Walker",
@@ -2845,7 +2845,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "leishmania-infantum-hero.webp",
+          "file": "leishmania-infantum/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "CDC / DPDx Image Library",
@@ -3063,7 +3063,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "trypanosoma-spp-hero.webp",
+          "file": "trypanosoma-spp/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "CDC / Dr. Myron G. Schultz",
@@ -3280,7 +3280,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "plasmodium-spp-hero.webp",
+          "file": "plasmodium-spp/hero.webp",
           "role": "other",
           "caption": "P. falciparum macro- and microgametocytes in blood smear",
           "credit": "CDC / Dr. Mae Melvin",
@@ -3482,7 +3482,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "hepatozoon-canis-hero.webp",
+          "file": "hepatozoon-canis/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "K.regaskova",
