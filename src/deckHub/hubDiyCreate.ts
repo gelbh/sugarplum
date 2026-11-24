@@ -1,5 +1,5 @@
 import type { CardDraftView, CardType, HubCreateCardBody } from "../api/client";
-import { hasSingleClozeBlank } from "../study";
+import { hasClozeBlank } from "../study";
 import { backAnswer, isOcclusionFront } from "../draftReview";
 export { hubDiyTypes } from "./hubDiyTypes";
 
@@ -90,7 +90,7 @@ export function validateHubCreateCard(
   if (!front) {
     return { ok: false, error: "Front is required" };
   }
-  if (type === "cloze" && !hasSingleClozeBlank(front)) {
+  if (type === "cloze" && !hasClozeBlank(front)) {
     return { ok: false, error: "Add at least one blank in the sentence" };
   }
   const backRaw =
