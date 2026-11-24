@@ -44,13 +44,11 @@ export function toEntryView(entry: DatasetEntry): AtlasEntryView {
     fields: entry.fields,
     refs: entry.refs,
     images: entry.images.map(({ file, ...image }) => {
-      const src = `/atlas/parasites/${file}`;
+      const stem = `/atlas/parasites/${entry.key}/${file.slice(0, -5)}`;
       return {
         ...image,
-        src,
-        placeholderSrc: file.endsWith(".webp")
-          ? `/atlas/parasites/${file.slice(0, -5)}-blur.webp`
-          : undefined,
+        src: `${stem}.webp`,
+        placeholderSrc: `${stem}-blur.webp`,
       };
     }),
     editedAt: null,
@@ -206,7 +204,10 @@ export function mergeOverlayFields(
   const parse = (column: "fields_json" | "field_overrides_json") =>
     parseObject(row[column], { rowId: row.id, column });
   if (row.origin_key === null) {
-    return { fields: syncFields(viewFields(parse("fields_json"))), editedFields: [] };
+    return {
+      fields: syncFields(viewFields(parse("fields_json"))),
+      editedFields: [],
+    };
   }
   if (datasetFields === null) {
     return {
@@ -263,7 +264,10 @@ export function viewFromOverlay(
     // NULL means "use the dataset name", so dataset fixes to the name show through.
     commonName: row.common_name ?? base?.commonName ?? null,
     // Dataset aliases first, so their spelling wins a duplicate.
-    aliases: cleanAliasList([...(fromDataset?.aliases ?? []), ...learnerAliases]),
+    aliases: cleanAliasList([
+      ...(fromDataset?.aliases ?? []),
+      ...learnerAliases,
+    ]),
     learnerAliases,
     fields: merged.fields,
     refs: media.refs,
