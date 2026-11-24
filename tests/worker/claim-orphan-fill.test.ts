@@ -6,11 +6,9 @@ import {
   getStudyClaims,
   resetTestDb,
   seedCard,
-  seedDeck,
+  seedClaimsNeedsReviewOwner,
+  seedClaimsOrphan,
   seedGenerationJob,
-  seedMaterial,
-  seedStudyClaim,
-  seedUser,
 } from "./harness";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -26,60 +24,6 @@ import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/claim-card-
 afterEach(async () => {
   await resetTestDb(cfEnv);
 });
-
-async function seedOwnerNeedsReview(env: Bindings) {
-  await seedUser(env, {
-    id: "user-a",
-    email: "a@example.com",
-    password_hash: null,
-    oauth_subject: null,
-    created_at: "2026-01-01T00:00:00.000Z",
-  });
-  await seedDeck(env, {
-    id: "deck-a",
-    user_id: "user-a",
-    title: "Bio",
-    subject_hint: null,
-    created_at: "2026-01-01T00:00:00.000Z",
-  });
-  await seedMaterial(env, {
-    id: "mat-a",
-    deck_id: "deck-a",
-    kind: "paste",
-    r2_key: null,
-    filename: null,
-    page_count: null,
-    status: "ready",
-    created_at: "2026-01-01T00:00:00.000Z",
-  });
-  await seedGenerationJob(env, {
-    id: "job-a",
-    material_id: "mat-a",
-    status: "needs_review",
-    error: null,
-    coverage_json: null,
-    created_at: "2026-01-01T01:00:00.000Z",
-    finished_at: "2026-01-01T01:05:00.000Z",
-  });
-}
-
-async function seedOrphan(
-  env: Bindings,
-  args: { id: string; subject: string; span: string; createdAt: string },
-) {
-  await seedStudyClaim(env, {
-    id: args.id,
-    job_id: "job-a",
-    deck_id: "deck-a",
-    subject: args.subject,
-    predicate: "fact",
-    object: null,
-    source_span: args.span,
-    qualifiers_json: null,
-    pages_json: "[1]",
-    created_at: args.createdAt,
-  });
-}
 
 function qaJson(front: string, back: string, excerpt: string) {
   return JSON.stringify({
@@ -148,20 +92,20 @@ const msg = {
 describe("runClaimOrphanFillPhase", () => {
   it("fills orphan claims without extract", async () => {
     const env = cfEnv;
-    await seedOwnerNeedsReview(env);
-    await seedOrphan(env, {
+    await seedClaimsNeedsReviewOwner(env);
+    await seedClaimsOrphan(env, {
       id: "cl-1",
       subject: "IgA",
       span: "IgA protects mucosa",
       createdAt: "2026-01-01T01:02:00.000Z",
     });
-    await seedOrphan(env, {
+    await seedClaimsOrphan(env, {
       id: "cl-2",
       subject: "IgG",
       span: "IgG is in blood",
       createdAt: "2026-01-01T01:03:00.000Z",
     });
-    await seedOrphan(env, {
+    await seedClaimsOrphan(env, {
       id: "cl-3",
       subject: "IgM",
       span: "IgM is first response",
@@ -200,11 +144,11 @@ describe("runClaimOrphanFillPhase", () => {
 
   it("caps at AUTO_ORPHAN_FILL_CAP and leaves leftovers", async () => {
     const env = cfEnv;
-    await seedOwnerNeedsReview(env);
+    await seedClaimsNeedsReviewOwner(env);
     const bySpan: Record<string, string> = {};
     for (let i = 0; i < 7; i += 1) {
       const span = `Fact ${i} about topic`;
-      await seedOrphan(env, {
+      await seedClaimsOrphan(env, {
         id: `cl-${i}`,
         subject: `S${i}`,
         span,
@@ -234,14 +178,14 @@ describe("runClaimOrphanFillPhase", () => {
 
   it("stops on free-gen capacity and keeps earlier fills", async () => {
     const env = cfEnv;
-    await seedOwnerNeedsReview(env);
-    await seedOrphan(env, {
+    await seedClaimsNeedsReviewOwner(env);
+    await seedClaimsOrphan(env, {
       id: "cl-1",
       subject: "IgA",
       span: "IgA protects mucosa",
       createdAt: "2026-01-01T01:02:00.000Z",
     });
-    await seedOrphan(env, {
+    await seedClaimsOrphan(env, {
       id: "cl-2",
       subject: "IgG",
       span: "IgG is in blood",
@@ -275,14 +219,14 @@ describe("runClaimOrphanFillPhase", () => {
 
   it("soft-skips Layer-1 fail and continues", async () => {
     const env = cfEnv;
-    await seedOwnerNeedsReview(env);
-    await seedOrphan(env, {
+    await seedClaimsNeedsReviewOwner(env);
+    await seedClaimsOrphan(env, {
       id: "cl-bad",
       subject: "IgA",
       span: "IgA protects mucosa",
       createdAt: "2026-01-01T01:02:00.000Z",
     });
-    await seedOrphan(env, {
+    await seedClaimsOrphan(env, {
       id: "cl-good",
       subject: "IgG",
       span: "IgG is in blood",
@@ -321,8 +265,8 @@ describe("runClaimOrphanFillPhase", () => {
 
   it("treats already-linked as covered without duplicate", async () => {
     const env = cfEnv;
-    await seedOwnerNeedsReview(env);
-    await seedOrphan(env, {
+    await seedClaimsNeedsReviewOwner(env);
+    await seedClaimsOrphan(env, {
       id: "cl-linked",
       subject: "X",
       span: "Already linked span",
@@ -342,7 +286,7 @@ describe("runClaimOrphanFillPhase", () => {
       updated_at: "2026-01-01T01:03:00.000Z",
       claim_id: "cl-linked",
     });
-    await seedOrphan(env, {
+    await seedClaimsOrphan(env, {
       id: "cl-open",
       subject: "IgG",
       span: "IgG is in blood",
@@ -367,14 +311,14 @@ describe("runClaimOrphanFillPhase", () => {
 
   it("stops when capacity is remapped to a plain Error", async () => {
     const env = cfEnv;
-    await seedOwnerNeedsReview(env);
-    await seedOrphan(env, {
+    await seedClaimsNeedsReviewOwner(env);
+    await seedClaimsOrphan(env, {
       id: "cl-1",
       subject: "IgA",
       span: "IgA protects mucosa",
       createdAt: "2026-01-01T01:02:00.000Z",
     });
-    await seedOrphan(env, {
+    await seedClaimsOrphan(env, {
       id: "cl-2",
       subject: "IgG",
       span: "IgG is in blood",
@@ -417,7 +361,7 @@ describe("runClaimOrphanFillPhase", () => {
 
   it("no-ops when job is not needs_review", async () => {
     const env = cfEnv;
-    await seedOwnerNeedsReview(env);
+    await seedClaimsNeedsReviewOwner(env);
     await seedGenerationJob(env, {
       id: "job-a",
       material_id: "mat-a",
@@ -427,7 +371,7 @@ describe("runClaimOrphanFillPhase", () => {
       created_at: "2026-01-01T01:00:00.000Z",
       finished_at: null,
     });
-    await seedOrphan(env, {
+    await seedClaimsOrphan(env, {
       id: "cl-1",
       subject: "IgA",
       span: "IgA protects mucosa",
@@ -455,12 +399,12 @@ describe("fillOrphanClaims", () => {
 
   it("caps at FILL_ALL_REQUEST_CAP and reports remaining", async () => {
     const env = cfEnv;
-    await seedOwnerNeedsReview(env);
+    await seedClaimsNeedsReviewOwner(env);
     const bySpan: Record<string, string> = {};
     const totalOrphans = FILL_ALL_REQUEST_CAP + 4;
     for (let i = 0; i < totalOrphans; i += 1) {
       const span = `Fact ${i} about topic`;
-      await seedOrphan(env, {
+      await seedClaimsOrphan(env, {
         id: `cl-${i}`,
         subject: `S${i}`,
         span,
@@ -491,8 +435,8 @@ describe("fillOrphanClaims", () => {
 
   it("stops re-attempting orphans after soft-fail budget", async () => {
     const env = cfEnv;
-    await seedOwnerNeedsReview(env);
-    await seedOrphan(env, {
+    await seedClaimsNeedsReviewOwner(env);
+    await seedClaimsOrphan(env, {
       id: "cl-bad",
       subject: "Junk",
       span: "IgA protects mucosa",
@@ -550,7 +494,7 @@ describe("fillOrphanClaims", () => {
 
   it("returns zeros when job is not needs_review", async () => {
     const env = cfEnv;
-    await seedOwnerNeedsReview(env);
+    await seedClaimsNeedsReviewOwner(env);
     await seedGenerationJob(env, {
       id: "job-a",
       material_id: "mat-a",
@@ -560,7 +504,7 @@ describe("fillOrphanClaims", () => {
       created_at: "2026-01-01T01:00:00.000Z",
       finished_at: null,
     });
-    await seedOrphan(env, {
+    await seedClaimsOrphan(env, {
       id: "cl-1",
       subject: "IgA",
       span: "IgA protects mucosa",
