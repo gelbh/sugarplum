@@ -1,4 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+} from "./harness";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { regenerateClaimAwareCard } from "../../worker/generation/card-regen";
 import type { LlmAdapter } from "../../worker/generation/llm";
 import type { StudyClaim } from "../../worker/generation/claims";
@@ -7,8 +11,12 @@ import {
   WORKERS_AI_MODEL,
   WorkersAiCapacityError,
 } from "../../worker/generation/workers-ai";
-import { createTestEnv } from "./test-env";
 import type { CompleteInput } from "../../worker/generation/llm";
+
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const VALID_MCQ = JSON.stringify({
   cards: [
@@ -72,7 +80,7 @@ const regenBase = {
 
 describe("regenerateClaimAwareCard draft cache", () => {
   it("skips LLM on second regen with the same claim/type/suffix", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const { llm, complete } = mockRegenLlm([VALID_MCQ]);
     const first = await regenerateClaimAwareCard({
       ...regenBase,
@@ -97,7 +105,7 @@ describe("regenerateClaimAwareCard draft cache", () => {
   });
 
   it("misses when source_span differs", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const { llm } = mockRegenLlm([VALID_MCQ]);
     await regenerateClaimAwareCard({
       ...regenBase,
@@ -119,7 +127,7 @@ describe("regenerateClaimAwareCard draft cache", () => {
   });
 
   it("does not cache a Layer-1 failing draft; stores successful reask under reask key", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const { llm, complete } = mockRegenLlm([COMPOUND_MCQ, VALID_MCQ]);
     const first = await regenerateClaimAwareCard({
       ...regenBase,
@@ -209,7 +217,7 @@ describe("regenerateClaimAwareCard draft cache", () => {
   });
 
   it("partitions cache by actual write model (specialist vs glm)", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const complete = vi.fn(async (input: CompleteInput) => {
       if (input.model === WORKERS_AI_CLAIM_CARD_MODEL) {
         throw new WorkersAiCapacityError("capacity");

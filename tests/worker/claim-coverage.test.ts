@@ -1,11 +1,26 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedSession,
+  seedStudyClaim,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import {
   buildClaimCoverage,
   type ClaimCoverage,
 } from "../../worker/generation/claim-coverage";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("buildClaimCoverage", () => {
   it("maps one row per claim and summarizes linked vs orphan", () => {
@@ -53,22 +68,22 @@ describe("buildClaimCoverage", () => {
 });
 
 describe("GET /api/jobs/:id/claim-coverage", () => {
-  function seedOwnerJob(env: ReturnType<typeof createTestEnv>) {
-    env.seedUser({
+  async function seedOwnerJob(env: Bindings) {
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Bio",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-a",
       deck_id: "deck-a",
       kind: "paste",
@@ -78,7 +93,7 @@ describe("GET /api/jobs/:id/claim-coverage", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "job-a",
       material_id: "mat-a",
       status: "needs_review",
@@ -87,13 +102,13 @@ describe("GET /api/jobs/:id/claim-coverage", () => {
       created_at: "2026-01-01T01:00:00.000Z",
       finished_at: "2026-01-01T01:05:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
   }
 
   it("returns linked and orphan claims for the job owner", async () => {
-    const env = createTestEnv();
-    seedOwnerJob(env);
-    env.seedStudyClaim({
+    const env = cfEnv;
+    await seedOwnerJob(env);
+    await seedStudyClaim(env, {
       id: "cl-linked",
       job_id: "job-a",
       deck_id: "deck-a",
@@ -105,7 +120,7 @@ describe("GET /api/jobs/:id/claim-coverage", () => {
       pages_json: "[1]",
       created_at: "2026-01-01T01:01:00.000Z",
     });
-    env.seedStudyClaim({
+    await seedStudyClaim(env, {
       id: "cl-orphan",
       job_id: "job-a",
       deck_id: "deck-a",
@@ -117,7 +132,7 @@ describe("GET /api/jobs/:id/claim-coverage", () => {
       pages_json: null,
       created_at: "2026-01-01T01:02:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "card-linked",
       deck_id: "deck-a",
       job_id: "job-a",
@@ -151,9 +166,9 @@ describe("GET /api/jobs/:id/claim-coverage", () => {
   });
 
   it("returns one row per claim preferring the earliest linked card", async () => {
-    const env = createTestEnv();
-    seedOwnerJob(env);
-    env.seedStudyClaim({
+    const env = cfEnv;
+    await seedOwnerJob(env);
+    await seedStudyClaim(env, {
       id: "cl-1",
       job_id: "job-a",
       deck_id: "deck-a",
@@ -165,21 +180,7 @@ describe("GET /api/jobs/:id/claim-coverage", () => {
       pages_json: "[1]",
       created_at: "2026-01-01T01:01:00.000Z",
     });
-    env.seedCard({
-      id: "card-b",
-      deck_id: "deck-a",
-      job_id: "job-a",
-      type: "qa",
-      front_json: JSON.stringify("Later card"),
-      back_json: JSON.stringify("B"),
-      media_r2_keys_json: null,
-      provenance_json: null,
-      status: "draft",
-      created_at: "2026-01-01T01:04:00.000Z",
-      updated_at: "2026-01-01T01:04:00.000Z",
-      claim_id: "cl-1",
-    });
-    env.seedCard({
+    await seedCard(env, {
       id: "card-a",
       deck_id: "deck-a",
       job_id: "job-a",
@@ -192,6 +193,20 @@ describe("GET /api/jobs/:id/claim-coverage", () => {
       created_at: "2026-01-01T01:03:00.000Z",
       updated_at: "2026-01-01T01:03:00.000Z",
       claim_id: "cl-1",
+    });
+    await seedCard(env, {
+      id: "card-b",
+      deck_id: "deck-a",
+      job_id: "job-a",
+      type: "qa",
+      front_json: JSON.stringify("Later card"),
+      back_json: JSON.stringify("B"),
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "draft",
+      created_at: "2026-01-01T01:04:00.000Z",
+      updated_at: "2026-01-01T01:04:00.000Z",
+      claim_id: null,
     });
 
     const res = await app.request(
@@ -210,16 +225,16 @@ describe("GET /api/jobs/:id/claim-coverage", () => {
   });
 
   it("returns 404 for non-owner or missing job", async () => {
-    const env = createTestEnv();
-    seedOwnerJob(env);
-    env.seedUser({
+    const env = cfEnv;
+    await seedOwnerJob(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-b", "user-b");
+    await seedSession(env, "sess-b", "user-b");
 
     const missing = await app.request(
       "/api/jobs/no-such-job/claim-coverage",
@@ -238,22 +253,22 @@ describe("GET /api/jobs/:id/claim-coverage", () => {
 });
 
 describe("GET /api/decks/:id/claim-coverage", () => {
-  function seedDeckWithTwoJobs(env: ReturnType<typeof createTestEnv>) {
-    env.seedUser({
+  async function seedDeckWithTwoJobs(env: Bindings) {
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Bio",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-a",
       deck_id: "deck-a",
       kind: "paste",
@@ -263,7 +278,7 @@ describe("GET /api/decks/:id/claim-coverage", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-b",
       deck_id: "deck-a",
       kind: "paste",
@@ -273,7 +288,7 @@ describe("GET /api/decks/:id/claim-coverage", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "job-a",
       material_id: "mat-a",
       status: "needs_review",
@@ -282,7 +297,7 @@ describe("GET /api/decks/:id/claim-coverage", () => {
       created_at: "2026-01-01T01:00:00.000Z",
       finished_at: "2026-01-01T01:05:00.000Z",
     });
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "job-b",
       material_id: "mat-b",
       status: "done",
@@ -291,13 +306,13 @@ describe("GET /api/decks/:id/claim-coverage", () => {
       created_at: "2026-01-01T02:00:00.000Z",
       finished_at: "2026-01-01T02:05:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
   }
 
   it("aggregates claims across jobs for the deck owner", async () => {
-    const env = createTestEnv();
-    seedDeckWithTwoJobs(env);
-    env.seedStudyClaim({
+    const env = cfEnv;
+    await seedDeckWithTwoJobs(env);
+    await seedStudyClaim(env, {
       id: "cl-job-a",
       job_id: "job-a",
       deck_id: "deck-a",
@@ -309,7 +324,7 @@ describe("GET /api/decks/:id/claim-coverage", () => {
       pages_json: "[1]",
       created_at: "2026-01-01T01:01:00.000Z",
     });
-    env.seedStudyClaim({
+    await seedStudyClaim(env, {
       id: "cl-job-b-orphan",
       job_id: "job-b",
       deck_id: "deck-a",
@@ -321,7 +336,7 @@ describe("GET /api/decks/:id/claim-coverage", () => {
       pages_json: null,
       created_at: "2026-01-01T02:01:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "card-linked",
       deck_id: "deck-a",
       job_id: "job-a",
@@ -361,16 +376,16 @@ describe("GET /api/decks/:id/claim-coverage", () => {
   });
 
   it("returns 404 for non-owner or missing deck", async () => {
-    const env = createTestEnv();
-    seedDeckWithTwoJobs(env);
-    env.seedUser({
+    const env = cfEnv;
+    await seedDeckWithTwoJobs(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-b", "user-b");
+    await seedSession(env, "sess-b", "user-b");
 
     const missing = await app.request(
       "/api/decks/no-such-deck/claim-coverage",

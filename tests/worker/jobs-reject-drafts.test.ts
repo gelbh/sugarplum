@@ -1,24 +1,44 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getCards,
+  getGenerationJobs,
+  getQueueMessages,
+  getSchedules,
+  installQueueRecorders,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedSchedule,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: "user-a",
     title: "Bio",
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedMaterial({
+  await seedMaterial(env, {
     id: "mat-a",
     deck_id: "deck-a",
     kind: "paste",
@@ -28,11 +48,11 @@ function seedOwner(env: ReturnType<typeof createTestEnv>) {
     status: "ready",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
 }
 
-function seedNeedsReviewJob(env: ReturnType<typeof createTestEnv>) {
-  env.seedGenerationJob({
+async function seedNeedsReviewJob(env: Bindings) {
+  await seedGenerationJob(env, {
     id: "job-a",
     material_id: "mat-a",
     status: "needs_review",
@@ -48,7 +68,7 @@ function seedNeedsReviewJob(env: ReturnType<typeof createTestEnv>) {
     created_at: "2026-01-01T01:00:00.000Z",
     finished_at: "2026-01-01T01:05:00.000Z",
   });
-  env.seedCard({
+  await seedCard(env, {
     id: "c-draft",
     deck_id: "deck-a",
     job_id: "job-a",
@@ -61,7 +81,7 @@ function seedNeedsReviewJob(env: ReturnType<typeof createTestEnv>) {
     created_at: "2026-01-01T01:06:00.000Z",
     updated_at: "2026-01-01T01:06:00.000Z",
   });
-  env.seedCard({
+  await seedCard(env, {
     id: "c-draft-2",
     deck_id: "deck-a",
     job_id: "job-a",
@@ -74,7 +94,7 @@ function seedNeedsReviewJob(env: ReturnType<typeof createTestEnv>) {
     created_at: "2026-01-01T01:06:30.000Z",
     updated_at: "2026-01-01T01:06:30.000Z",
   });
-  env.seedCard({
+  await seedCard(env, {
     id: "c-accepted",
     deck_id: "deck-a",
     job_id: "job-a",
@@ -87,7 +107,7 @@ function seedNeedsReviewJob(env: ReturnType<typeof createTestEnv>) {
     created_at: "2026-01-01T01:07:00.000Z",
     updated_at: "2026-01-01T01:07:00.000Z",
   });
-  env.seedCard({
+  await seedCard(env, {
     id: "c-rejected",
     deck_id: "deck-a",
     job_id: "job-a",
@@ -100,7 +120,7 @@ function seedNeedsReviewJob(env: ReturnType<typeof createTestEnv>) {
     created_at: "2026-01-01T01:08:00.000Z",
     updated_at: "2026-01-01T01:08:00.000Z",
   });
-  env.seedSchedule({
+  await seedSchedule(env, {
     card_id: "c-accepted",
     due: "2026-01-02T00:00:00.000Z",
     stability: 1,
@@ -117,9 +137,9 @@ function seedNeedsReviewJob(env: ReturnType<typeof createTestEnv>) {
 
 describe("POST /api/jobs/:id/reject-drafts", () => {
   it("owner soft-clean rejects drafts only; keeps accepted; no requeue", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedNeedsReviewJob(env);
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedNeedsReviewJob(env);
 
     const res = await app.request(
       "/api/jobs/job-a/reject-drafts",
@@ -133,36 +153,36 @@ describe("POST /api/jobs/:id/reject-drafts", () => {
     const body = (await res.json()) as { rejectedCount: number };
     expect(body).toEqual({ rejectedCount: 2 });
 
-    const byId = Object.fromEntries(env.getCards().map((c) => [c.id, c]));
+    const byId = Object.fromEntries((await getCards(env)).map((c) => [c.id, c]));
     expect(byId["c-draft"]?.status).toBe("rejected");
     expect(byId["c-draft-2"]?.status).toBe("rejected");
     expect(byId["c-accepted"]?.status).toBe("accepted");
     expect(byId["c-rejected"]?.status).toBe("rejected");
-    expect(env.getCards()).toHaveLength(4);
-    expect(env.getSchedules()).toHaveLength(1);
+    expect((await getCards(env))).toHaveLength(4);
+    expect((await getSchedules(env))).toHaveLength(1);
 
-    const jobs = env.getGenerationJobs();
+    const jobs = (await getGenerationJobs(env));
     expect(jobs).toHaveLength(1);
     expect(jobs[0]).toMatchObject({
       id: "job-a",
       status: "needs_review",
       coverage_json: JSON.stringify({ covered: ["x"] }),
     });
-    expect(env.getQueueMessages()).toHaveLength(0);
+    expect(getQueueMessages()).toHaveLength(0);
   });
 
   it("returns 404 for non-owner", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    seedNeedsReviewJob(env);
-    env.seedUser({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedNeedsReviewJob(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-b", "user-b");
+    await seedSession(env, "sess-b", "user-b");
 
     const res = await app.request(
       "/api/jobs/job-a/reject-drafts",
@@ -173,14 +193,14 @@ describe("POST /api/jobs/:id/reject-drafts", () => {
       env,
     );
     expect(res.status).toBe(404);
-    expect(env.getCards().filter((c) => c.status === "draft")).toHaveLength(2);
-    expect(env.getQueueMessages()).toHaveLength(0);
+    expect((await getCards(env)).filter((c) => c.status === "draft")).toHaveLength(2);
+    expect(getQueueMessages()).toHaveLength(0);
   });
 
   it("returns 409 when job is running", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedGenerationJob({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedGenerationJob(env, {
       id: "job-run",
       material_id: "mat-a",
       status: "running",
@@ -196,7 +216,7 @@ describe("POST /api/jobs/:id/reject-drafts", () => {
       created_at: "2026-01-01T01:00:00.000Z",
       finished_at: null,
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-run",
       deck_id: "deck-a",
       job_id: "job-run",
@@ -219,14 +239,14 @@ describe("POST /api/jobs/:id/reject-drafts", () => {
       env,
     );
     expect(res.status).toBe(409);
-    expect(env.getCards()[0]!.status).toBe("draft");
-    expect(env.getQueueMessages()).toHaveLength(0);
+    expect((await getCards(env))[0]!.status).toBe("draft");
+    expect(getQueueMessages()).toHaveLength(0);
   });
 
   it("returns 409 when job is queued", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedGenerationJob({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedGenerationJob(env, {
       id: "job-q",
       material_id: "mat-a",
       status: "queued",
@@ -235,7 +255,7 @@ describe("POST /api/jobs/:id/reject-drafts", () => {
       created_at: "2026-01-01T01:00:00.000Z",
       finished_at: null,
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-q",
       deck_id: "deck-a",
       job_id: "job-q",
@@ -258,7 +278,7 @@ describe("POST /api/jobs/:id/reject-drafts", () => {
       env,
     );
     expect(res.status).toBe(409);
-    expect(env.getCards()[0]!.status).toBe("draft");
-    expect(env.getQueueMessages()).toHaveLength(0);
+    expect((await getCards(env))[0]!.status).toBe("draft");
+    expect(getQueueMessages()).toHaveLength(0);
   });
 });

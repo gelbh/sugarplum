@@ -1,31 +1,48 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getGenerationJobs,
+  getMaterials,
+  getQueueMessages,
+  installQueueRecorders,
+  resetTestDb,
+  seedDeck,
+  seedMaterial,
+  seedR2,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: "user-a",
     title: "Owner deck",
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
 }
 
 describe("PDF figure crop materials", () => {
   it("presigns a figure crop to R2 without creating a materials row", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedMaterial({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedMaterial(env, {
       id: "pdf-1",
       deck_id: "deck-a",
       kind: "pdf",
@@ -63,14 +80,14 @@ describe("PDF figure crop materials", () => {
     expect(body.materialId).toBeUndefined();
     expect(body.r2Key).toBe("materials/deck-a/figures/pdf-1/2.png");
     expect(body.uploadUrl).toContain("X-Amz-Signature=");
-    expect(env.getMaterials()).toHaveLength(1);
-    expect(env.getMaterials()[0]?.id).toBe("pdf-1");
+    expect((await getMaterials(env))).toHaveLength(1);
+    expect((await getMaterials(env))[0]?.id).toBe("pdf-1");
   });
 
   it("completes a legacy figure child without enqueueing a generation job", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedMaterial({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedMaterial(env, {
       id: "figure-1",
       deck_id: "deck-a",
       kind: "image",
@@ -94,14 +111,14 @@ describe("PDF figure crop materials", () => {
     expect((await res.json()) as { jobId: string | null }).toMatchObject({
       jobId: null,
     });
-    expect(env.getGenerationJobs()).toHaveLength(0);
-    expect(env.getQueueMessages()).toHaveLength(0);
+    expect((await getGenerationJobs(env))).toHaveLength(0);
+    expect(getQueueMessages()).toHaveLength(0);
   });
 
   it("skips free-path generation for an unrelated image upload", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedMaterial({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedMaterial(env, {
       id: "image-1",
       deck_id: "deck-a",
       kind: "image",
@@ -111,7 +128,7 @@ describe("PDF figure crop materials", () => {
       status: "uploading",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedR2(
+    await seedR2(env, 
       "materials/deck-a/image-1.png",
       new Uint8Array([137, 80, 78, 71]),
     );
@@ -130,22 +147,22 @@ describe("PDF figure crop materials", () => {
       jobId: null,
       manual_occlusion: true,
     });
-    expect(env.getGenerationJobs()).toHaveLength(0);
-    expect(env.getQueueMessages()).toHaveLength(0);
+    expect((await getGenerationJobs(env))).toHaveLength(0);
+    expect(getQueueMessages()).toHaveLength(0);
   });
 
   it("returns 404 when another user tries to presign figures", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedUser({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-b", "user-b");
-    env.seedMaterial({
+    await seedSession(env, "sess-b", "user-b");
+    await seedMaterial(env, {
       id: "pdf-1",
       deck_id: "deck-a",
       kind: "pdf",
@@ -178,9 +195,9 @@ describe("PDF figure crop materials", () => {
   });
 
   it("returns 400 when the parent material is not a PDF", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedMaterial({
+    const env = installQueueRecorders(cfEnv);
+    await seedOwner(env);
+    await seedMaterial(env, {
       id: "paste-1",
       deck_id: "deck-a",
       kind: "paste",

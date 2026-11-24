@@ -1,4 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import type { StudyClaim } from "../../worker/generation/claims";
 import {
   CLAIM_CARD_DRAFT_CACHE_TTL_SECONDS,
@@ -7,7 +11,10 @@ import {
   readClaimCardDraft,
   writeClaimCardDraft,
 } from "../../worker/generation/claim-card-draft-cache";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const CLAIM: StudyClaim = {
   subject: "Mitochondria",
@@ -77,7 +84,7 @@ describe("claimCardDraftCacheKey", () => {
 
 describe("readClaimCardDraft / writeClaimCardDraft", () => {
   it("round-trips a Layer-1-passing draft through env.CACHE", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const draft = {
       type: "mcq" as const,
       front: "Which organelle produces ATP?",

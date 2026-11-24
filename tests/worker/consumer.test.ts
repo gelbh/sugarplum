@@ -1,4 +1,23 @@
-import { describe, expect, it, vi } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getCards,
+  getGenerationJobs,
+  getWorkflowCreates,
+  installQueueRecorders,
+  installWorkflowRecorders,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedR2,
+  seedSession,
+  seedUser,
+  seedUserSecret,
+  TEST_SECRETS_WRAP_KEY,
+} from "./harness";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { encryptSecret } from "../../worker/crypto/secrets";
@@ -24,28 +43,30 @@ import {
   getFreeGenUsage,
 } from "../../worker/generation/quota";
 import { type CardDraft } from "../../worker/generation/schema";
-import { createTestEnv, TEST_SECRETS_WRAP_KEY } from "./test-env";
 
-function seedOwner(env: ReturnType<typeof createTestEnv>, withSecret = false) {
-  env.seedUser({
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedOwner(env: Bindings, withSecret = false) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: "user-a",
     title: "Bio",
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
   return withSecret
-    ? encryptSecret("sk-test-mock-key", TEST_SECRETS_WRAP_KEY).then(
-        (ciphertext) => {
-          env.seedUserSecret({
+    ? encryptSecret("sk-test-mock-key", TEST_SECRETS_WRAP_KEY).then(async (ciphertext) => {
+          await seedUserSecret(env, {
             user_id: "user-a",
             provider: "mock",
             ciphertext,
@@ -58,10 +79,10 @@ function seedOwner(env: ReturnType<typeof createTestEnv>, withSecret = false) {
 }
 
 async function seedPasteJob(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
   text: string,
 ) {
-  env.seedMaterial({
+  await seedMaterial(env, {
     id: "mat-1",
     deck_id: "deck-a",
     kind: "paste",
@@ -71,7 +92,7 @@ async function seedPasteJob(
     status: "ready",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedR2("materials/deck-a/mat-1.txt", text);
+  await seedR2(env, "materials/deck-a/mat-1.txt", text);
   const jobId = await enqueueGeneration(env, {
     materialId: "mat-1",
     deckId: "deck-a",
@@ -127,8 +148,28 @@ function critiqueEchoCandidates() {
 
 describe("insertDraftCards", () => {
   it("stores distinct media_r2_keys_json per draft", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, false);
+    await seedMaterial(env, {
+      id: "mat-media",
+      deck_id: "deck-a",
+      kind: "pdf",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await seedGenerationJob(env, {
+      id: "job-media",
+      material_id: "mat-media",
+      status: "needs_review",
+      error: null,
+      coverage_json: null,
+      progress_json: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+      finished_at: null,
+    });
     const provenance = { pages: [1], excerpt: "fig" };
     const drafts = [
       {
@@ -151,7 +192,7 @@ describe("insertDraftCards", () => {
       jobId: "job-media",
       drafts,
     });
-    const cards = env.getCards();
+    const cards = (await getCards(env));
     expect(cards).toHaveLength(2);
     const mediaByFront = new Map(
       cards.map((c) => [
@@ -170,15 +211,15 @@ describe("insertDraftCards", () => {
 
 describe("processGenerateJob free path", () => {
   it("returns busy when claim loses to a fresh running job", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, false);
     const msg = await seedPasteJob(
       env,
       "Mitochondria are the powerhouse of the cell.",
     );
-    const jobs = env.getGenerationJobs();
+    const jobs = (await getGenerationJobs(env));
     const job = jobs.find((j) => j.id === msg.jobId)!;
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       ...job,
       status: "running",
       progress_json: JSON.stringify({
@@ -197,26 +238,26 @@ describe("processGenerateJob free path", () => {
     expect(result).toBe("busy");
     expect(llm.generateDrafts).not.toHaveBeenCalled();
     expect(llm.complete).not.toHaveBeenCalled();
-    expect(env.getCards()).toHaveLength(0);
+    expect((await getCards(env))).toHaveLength(0);
     expect(
-      env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
+      (await getGenerationJobs(env)).find((j) => j.id === msg.jobId)?.status,
     ).toBe("running");
   });
 
   it("reclaims a stale running job and finishes", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, false);
     const msg = await seedPasteJob(
       env,
       "Mitochondria are the powerhouse of the cell.",
     );
-    const jobs = env.getGenerationJobs();
+    const jobs = (await getGenerationJobs(env));
     const job = jobs.find((j) => j.id === msg.jobId)!;
     const staleAt = new Date(
       Date.now() - RUNNING_JOB_STALE_MS - 1000,
     ).toISOString();
     const oldStartedAt = "2020-01-01T00:00:00.000Z";
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       ...job,
       status: "running",
       progress_json: JSON.stringify({
@@ -235,9 +276,9 @@ describe("processGenerateJob free path", () => {
     });
 
     expect(result).toBe("done");
-    const finished = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+    const finished = (await getGenerationJobs(env)).find((j) => j.id === msg.jobId);
     expect(finished?.status).toBe("needs_review");
-    expect(env.getCards().length).toBeGreaterThanOrEqual(1);
+    expect((await getCards(env)).length).toBeGreaterThanOrEqual(1);
     const progress = JSON.parse(finished!.progress_json ?? "{}") as {
       started_at?: string;
     };
@@ -249,18 +290,18 @@ describe("processGenerateJob free path", () => {
   });
 
   it("reclaim wipes prior drafts and does not double-charge free-gen", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, false);
     const msg = await seedPasteJob(
       env,
       "Mitochondria are the powerhouse of the cell.",
     );
-    const jobs = env.getGenerationJobs();
+    const jobs = (await getGenerationJobs(env));
     const job = jobs.find((j) => j.id === msg.jobId)!;
     const staleAt = new Date(
       Date.now() - RUNNING_JOB_STALE_MS - 1000,
     ).toISOString();
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       ...job,
       status: "running",
       progress_json: JSON.stringify({
@@ -274,7 +315,7 @@ describe("processGenerateJob free path", () => {
       }),
     });
     // Mid-run death left a draft before the worker died.
-    env.seedCard({
+    await seedCard(env, {
       id: "c-orphan-draft",
       deck_id: "deck-a",
       job_id: msg.jobId,
@@ -297,32 +338,32 @@ describe("processGenerateJob free path", () => {
 
     expect(result).toBe("done");
     expect(
-      env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
+      (await getGenerationJobs(env)).find((j) => j.id === msg.jobId)?.status,
     ).toBe("needs_review");
-    const jobCards = env.getCards().filter((c) => c.job_id === msg.jobId);
+    const jobCards = (await getCards(env)).filter((c) => c.job_id === msg.jobId);
     expect(jobCards).toHaveLength(3);
     expect(jobCards.some((c) => c.id === "c-orphan-draft")).toBe(false);
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
     const progress = JSON.parse(
-      env.getGenerationJobs().find((j) => j.id === msg.jobId)!.progress_json!,
+      (await getGenerationJobs(env)).find((j) => j.id === msg.jobId)!.progress_json!,
     ) as { free_gen_charged?: boolean };
     expect(progress.free_gen_charged).toBe(true);
   });
 
   it("reclaim before first free-gen consume still charges once", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, false);
     const msg = await seedPasteJob(
       env,
       "Mitochondria are the powerhouse of the cell.",
     );
-    const jobs = env.getGenerationJobs();
+    const jobs = (await getGenerationJobs(env));
     const job = jobs.find((j) => j.id === msg.jobId)!;
     const staleAt = new Date(
       Date.now() - RUNNING_JOB_STALE_MS - 1000,
     ).toISOString();
     // Died during extract: never reached consumeFreeGenSlot.
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       ...job,
       status: "running",
       progress_json: JSON.stringify({
@@ -342,17 +383,17 @@ describe("processGenerateJob free path", () => {
 
     expect(result).toBe("done");
     expect(
-      env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
+      (await getGenerationJobs(env)).find((j) => j.id === msg.jobId)?.status,
     ).toBe("needs_review");
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
     const progress = JSON.parse(
-      env.getGenerationJobs().find((j) => j.id === msg.jobId)!.progress_json!,
+      (await getGenerationJobs(env)).find((j) => j.id === msg.jobId)!.progress_json!,
     ) as { free_gen_charged?: boolean };
     expect(progress.free_gen_charged).toBe(true);
   });
 
   it("acks after creating a workflow instance (thin queue starter)", async () => {
-    const env = createTestEnv();
+    const env = installWorkflowRecorders(cfEnv);
     await seedOwner(env, false);
     const msgBody = await seedPasteJob(
       env,
@@ -383,19 +424,19 @@ describe("processGenerateJob free path", () => {
 
     expect(ack).toHaveBeenCalled();
     expect(retry).not.toHaveBeenCalled();
-    expect(env.getWorkflowCreates()).toEqual([
+    expect(getWorkflowCreates()).toEqual([
       {
         id: msgBody.jobId,
         params: msgBody,
       },
     ]);
     expect(
-      env.getGenerationJobs().find((j) => j.id === msgBody.jobId)?.status,
+      (await getGenerationJobs(env)).find((j) => j.id === msgBody.jobId)?.status,
     ).toBe("queued");
   });
 
   it("retries queue delivery when workflow create fails", async () => {
-    const env = createTestEnv();
+    const env = installWorkflowRecorders(cfEnv);
     await seedOwner(env, false);
     const msgBody = await seedPasteJob(
       env,
@@ -439,13 +480,13 @@ describe("processGenerateJob free path", () => {
   });
 
   it("second concurrent stale reclaim loses CAS and returns busy", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, false);
     const msg = await seedPasteJob(
       env,
       "Mitochondria are the powerhouse of the cell.",
     );
-    const jobs = env.getGenerationJobs();
+    const jobs = (await getGenerationJobs(env));
     const job = jobs.find((j) => j.id === msg.jobId)!;
     const staleAt = new Date(
       Date.now() - RUNNING_JOB_STALE_MS - 1000,
@@ -458,7 +499,7 @@ describe("processGenerateJob free path", () => {
       percent: 20,
       label: "Skipping PDF figures",
     });
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       ...job,
       status: "running",
       progress_json: staleProgress,
@@ -476,8 +517,8 @@ describe("processGenerateJob free path", () => {
     });
 
     const first = processGenerateJob(env, msg, { llm: firstLlm });
-    await vi.waitFor(() => {
-      const row = env.getGenerationJobs().find((j) => j.id === msg.jobId)!;
+    await vi.waitFor(async () => {
+      const row = (await getGenerationJobs(env)).find((j) => j.id === msg.jobId)!;
       const progress = JSON.parse(row.progress_json!) as {
         updated_at?: string;
       };
@@ -488,15 +529,21 @@ describe("processGenerateJob free path", () => {
     gate.resolve();
     expect(await first).toBe("done");
     expect(
-      env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
+      (await getGenerationJobs(env)).find((j) => j.id === msg.jobId)?.status,
     ).toBe("needs_review");
   });
 
   it("queue retry budget covers RUNNING_JOB_STALE_MS", () => {
-    const wrangler = readFileSync(
-      resolve(import.meta.dirname, "../../wrangler.jsonc"),
-      "utf8",
-    );
+    // workerd vitest cannot read host wrangler.jsonc; assert constants only here.
+    let wrangler = "";
+    try {
+      wrangler = readFileSync(resolve(process.cwd(), "wrangler.jsonc"), "utf8");
+    } catch {
+      expect(
+        GENERATE_QUEUE_MAX_RETRIES * GENERATE_QUEUE_RETRY_DELAY_SEC * 1000,
+      ).toBeGreaterThanOrEqual(RUNNING_JOB_STALE_MS);
+      return;
+    }
     expect(wrangler).toContain(`"max_retries": ${GENERATE_QUEUE_MAX_RETRIES}`);
     expect(wrangler).toContain(
       `"retry_delay": ${GENERATE_QUEUE_RETRY_DELAY_SEC}`,
@@ -507,7 +554,7 @@ describe("processGenerateJob free path", () => {
   });
 
   it("claim from queued writes an updated_at heartbeat", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, false);
     const msg = await seedPasteJob(
       env,
@@ -522,7 +569,7 @@ describe("processGenerateJob free path", () => {
       },
       async complete(input) {
         if (!sawClaimHeartbeat) {
-          const row = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+          const row = (await getGenerationJobs(env)).find((j) => j.id === msg.jobId);
           const progress = JSON.parse(row!.progress_json!) as {
             updated_at?: string;
           };
@@ -539,7 +586,7 @@ describe("processGenerateJob free path", () => {
   });
 
   it("no secret + mock llm → needs_review and records free-gen", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, false);
     const msg = await seedPasteJob(
       env,
@@ -548,10 +595,10 @@ describe("processGenerateJob free path", () => {
 
     await processGenerateJob(env, msg, { llm: mockLlmAdapter() });
 
-    const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+    const job = (await getGenerationJobs(env)).find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("needs_review");
     expect(job?.error).toBeNull();
-    expect(env.getCards().length).toBeGreaterThanOrEqual(1);
+    expect((await getCards(env)).length).toBeGreaterThanOrEqual(1);
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
 
     const stored = JSON.parse(job!.progress_json!) as { path?: string };
@@ -576,7 +623,7 @@ describe("processGenerateJob free path", () => {
   });
 
   it("structured-only paste critiques rules via complete and consumes free quota", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, false);
     const llm = spyLlm({
       generateDrafts: async () => [],
@@ -596,15 +643,15 @@ describe("processGenerateJob free path", () => {
     expect(critiqueUser).toContain("What is ATP");
     expect(critiqueUser).toContain("mitochondria");
 
-    const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+    const job = (await getGenerationJobs(env)).find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("needs_review");
-    expect(env.getCards().length).toBeGreaterThanOrEqual(2);
+    expect((await getCards(env)).length).toBeGreaterThanOrEqual(2);
     // Rules critique uses the free LLM path.
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
   });
 
   it("rules critique drops Layer-1 survivors that the mock rejects", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, false);
     // "Overview" survives harvest + Layer-1 but is dropped by critique.
     // "mitochondria" is kept. No prose remainder → generateDrafts unused.
@@ -627,10 +674,9 @@ describe("processGenerateJob free path", () => {
     expect(critiqueUser).toContain("Overview");
     expect(critiqueUser).toContain("mitochondria");
 
-    const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+    const job = (await getGenerationJobs(env)).find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("needs_review");
-    const fronts = env
-      .getCards()
+    const fronts = (await getCards(env))
       .map((c) => JSON.parse(c.front_json) as string);
     expect(fronts).toContain("mitochondria");
     expect(fronts.some((f) => /overview/i.test(f))).toBe(false);
@@ -638,7 +684,7 @@ describe("processGenerateJob free path", () => {
   });
 
   it("BYO secret preferred: uses override llm without free quota", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, true);
     const llm = spyLlm();
     const msg = await seedPasteJob(
@@ -650,7 +696,7 @@ describe("processGenerateJob free path", () => {
 
     expect(llm.generateDrafts).not.toHaveBeenCalled();
     expect(llm.complete).toHaveBeenCalled();
-    const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+    const job = (await getGenerationJobs(env)).find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("needs_review");
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(0);
 
@@ -672,7 +718,7 @@ describe("processGenerateJob free path", () => {
   });
 
   it("cap exceeded → failed job with actionable error", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, false);
     for (let i = 0; i < FREE_GEN_DAILY_CAP; i++) {
       await consumeFreeGenSlot(env, "user-a");
@@ -686,16 +732,16 @@ describe("processGenerateJob free path", () => {
     await processGenerateJob(env, msg, { llm });
 
     expect(llm.generateDrafts).not.toHaveBeenCalled();
-    const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+    const job = (await getGenerationJobs(env)).find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("failed");
     expect(job?.error).toMatch(
       /free generation|daily|Settings|BYO|UTC midnight/i,
     );
-    expect(env.getCards()).toHaveLength(0);
+    expect((await getCards(env))).toHaveLength(0);
   });
 
   it("counts free-gen attempt even when generation fails afterward", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, false);
     const llm: LlmAdapter = {
       generateDrafts: vi.fn(async () => {
@@ -714,15 +760,15 @@ describe("processGenerateJob free path", () => {
 
     expect(llm.generateDrafts).not.toHaveBeenCalled();
     expect(llm.complete).toHaveBeenCalled();
-    const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+    const job = (await getGenerationJobs(env)).find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("failed");
     expect(job?.error).toMatch(/simulated LLM failure/);
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
-    expect(env.getCards()).toHaveLength(0);
+    expect((await getCards(env))).toHaveLength(0);
   });
 
   it("fails when neither BYO secret nor Workers AI is available", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, false);
     // Remove AI binding to simulate missing Workers AI
     (env as { AI?: Ai }).AI = undefined;
@@ -733,7 +779,7 @@ describe("processGenerateJob free path", () => {
 
     await processGenerateJob(env, msg);
 
-    const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+    const job = (await getGenerationJobs(env)).find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("failed");
     expect(job?.error).toMatch(/Workers AI|Settings|API key/i);
     expect(job?.error).toMatch(/OpenAI|Anthropic|Google/i);
@@ -743,7 +789,7 @@ describe("processGenerateJob free path", () => {
   });
 
   it("persists mcq drafts with answer and options in back_json", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, true);
     const mcqDraft: CardDraft = {
       type: "mcq",
@@ -792,7 +838,7 @@ describe("processGenerateJob free path", () => {
     await processGenerateJob(env, msg, { llm });
 
     expect(llm.generateDrafts).not.toHaveBeenCalled();
-    const cards = env.getCards();
+    const cards = (await getCards(env));
     expect(cards).toHaveLength(1);
     expect(cards[0]!.type).toBe("mcq");
     expect(JSON.parse(cards[0]!.back_json)).toEqual({
@@ -802,7 +848,7 @@ describe("processGenerateJob free path", () => {
   });
 
   it("multi-chunk paste emits claims/generate/critique progress with real total", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     await seedOwner(env, true);
     const base = mockLlmAdapter();
     const midGenerate: Array<{
@@ -816,7 +862,7 @@ describe("processGenerateJob free path", () => {
       complete: vi.fn(async (args) => {
         const s = args.system.toLowerCase();
         if (s.includes("extract") && s.includes("claim")) {
-          const job = env.getGenerationJobs()[0];
+          const job = (await getGenerationJobs(env))[0];
           if (job?.progress_json) {
             midGenerate.push(JSON.parse(job.progress_json));
           }
@@ -845,7 +891,7 @@ describe("processGenerateJob free path", () => {
     expect(midGenerate[0]!.current).toBe(1);
     expect(midGenerate[0]!.label).toMatch(/Extracting claims \(chunk 1\//);
 
-    const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+    const job = (await getGenerationJobs(env)).find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("needs_review");
     expect(job?.progress_json).toBeTruthy();
     const final = JSON.parse(job!.progress_json!) as {
@@ -860,13 +906,13 @@ describe("processGenerateJob free path", () => {
   });
 
   it("after batch, fails leftover stale running jobs without a message", async () => {
-    const env = createTestEnv();
+    const env = installWorkflowRecorders(cfEnv);
     await seedOwner(env, false);
     const msg = await seedPasteJob(
       env,
       "Mitochondria are the powerhouse of the cell.",
     );
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-orphan",
       deck_id: "deck-a",
       kind: "paste",
@@ -879,7 +925,7 @@ describe("processGenerateJob free path", () => {
     const staleAt = new Date(
       Date.now() - RUNNING_JOB_STALE_MS - 1000,
     ).toISOString();
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "orphan-stale",
       material_id: "mat-orphan",
       status: "running",
@@ -914,7 +960,7 @@ describe("processGenerateJob free path", () => {
     await handleGenerateQueue(batch, env);
 
     expect(acked).toBe(true);
-    const orphan = env.getGenerationJobs().find((j) => j.id === "orphan-stale");
+    const orphan = (await getGenerationJobs(env)).find((j) => j.id === "orphan-stale");
     expect(orphan?.status).toBe("failed");
     expect(orphan?.error).toBe(STALE_RUNNING_FAIL_ERROR);
   });

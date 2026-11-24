@@ -1,31 +1,45 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: "user-a",
     title: "Bio",
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
 }
 
 describe("GET /api/jobs", () => {
   it("lists owner jobs that still have drafts, newest first", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedMaterial({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedMaterial(env, {
       id: "mat-a",
       deck_id: "deck-a",
       kind: "paste",
@@ -35,7 +49,7 @@ describe("GET /api/jobs", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "job-old",
       material_id: "mat-a",
       status: "needs_review",
@@ -44,7 +58,7 @@ describe("GET /api/jobs", () => {
       created_at: "2026-01-01T01:00:00.000Z",
       finished_at: "2026-01-01T01:05:00.000Z",
     });
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "job-new",
       material_id: "mat-a",
       status: "needs_review",
@@ -53,7 +67,7 @@ describe("GET /api/jobs", () => {
       created_at: "2026-01-02T01:00:00.000Z",
       finished_at: "2026-01-02T01:05:00.000Z",
     });
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "job-done",
       material_id: "mat-a",
       status: "done",
@@ -62,7 +76,7 @@ describe("GET /api/jobs", () => {
       created_at: "2026-01-03T01:00:00.000Z",
       finished_at: "2026-01-03T01:05:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-old",
       deck_id: "deck-a",
       job_id: "job-old",
@@ -75,7 +89,7 @@ describe("GET /api/jobs", () => {
       created_at: "2026-01-01T01:06:00.000Z",
       updated_at: "2026-01-01T01:06:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-new-1",
       deck_id: "deck-a",
       job_id: "job-new",
@@ -88,7 +102,7 @@ describe("GET /api/jobs", () => {
       created_at: "2026-01-02T01:06:00.000Z",
       updated_at: "2026-01-02T01:06:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-new-2",
       deck_id: "deck-a",
       job_id: "job-new",
@@ -101,7 +115,7 @@ describe("GET /api/jobs", () => {
       created_at: "2026-01-02T01:07:00.000Z",
       updated_at: "2026-01-02T01:07:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-accepted",
       deck_id: "deck-a",
       job_id: "job-done",
@@ -146,29 +160,29 @@ describe("GET /api/jobs", () => {
   });
 
   it("returns 401 without session", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request("/api/jobs", {}, env);
     expect(res.status).toBe(401);
   });
 
   it("does not list another user's jobs", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedUser({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-b",
       user_id: "user-b",
       title: "Chem",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-b",
       deck_id: "deck-b",
       kind: "paste",
@@ -178,7 +192,7 @@ describe("GET /api/jobs", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "job-b",
       material_id: "mat-b",
       status: "needs_review",
@@ -187,7 +201,7 @@ describe("GET /api/jobs", () => {
       created_at: "2026-01-01T01:00:00.000Z",
       finished_at: null,
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-b",
       deck_id: "deck-b",
       job_id: "job-b",

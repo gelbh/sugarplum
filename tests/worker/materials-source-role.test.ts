@@ -1,14 +1,34 @@
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getMaterials,
+  resetTestDb,
+  seedDeck,
+  seedMaterial,
+  seedSession,
+  seedUser,
+} from "./harness";
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const MIGRATIONS_DIR = fileURLToPath(
   new URL("../../migrations/", import.meta.url),
 );
+
+let sqliteAvailable = true;
+try {
+  new DatabaseSync(":memory:");
+} catch {
+  sqliteAvailable = false;
+}
 
 function freshDb(): DatabaseSync {
   const db = new DatabaseSync(":memory:");
@@ -24,7 +44,7 @@ function freshDb(): DatabaseSync {
 
 const NOW = "2026-11-09T00:00:00Z";
 
-describe("0025_material_source_role migration", () => {
+describe.skipIf(!sqliteAvailable)("0025_material_source_role migration", () => {
   let db: DatabaseSync;
 
   beforeEach(() => {
@@ -78,27 +98,27 @@ describe("0025_material_source_role migration", () => {
 });
 
 describe("materials source_role API", () => {
-  function seedOwner(env: ReturnType<typeof createTestEnv>) {
-    env.seedUser({
+  async function seedOwner(env: Bindings) {
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Owner deck",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
   }
 
   it("persists suggested role on paste and returns it from list", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const create = await app.request(
       "/api/decks/deck-a/materials/paste",
@@ -118,7 +138,7 @@ describe("materials source_role API", () => {
     expect(create.status).toBe(201);
     const created = (await create.json()) as { id: string; source_role: string };
     expect(created.source_role).toBe("tutorial");
-    expect(env.getMaterials()[0]?.source_role).toBe("tutorial");
+    expect((await getMaterials(env))[0]?.source_role).toBe("tutorial");
 
     const list = await app.request(
       "/api/decks/deck-a/materials",
@@ -135,8 +155,8 @@ describe("materials source_role API", () => {
   });
 
   it("accepts an explicit source_role override on paste", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const create = await app.request(
       "/api/decks/deck-a/materials/paste",
@@ -160,9 +180,9 @@ describe("materials source_role API", () => {
   });
 
   it("patches source_role on an owned material", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedMaterial({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedMaterial(env, {
       id: "mat-1",
       deck_id: "deck-a",
       kind: "pdf",
@@ -189,13 +209,13 @@ describe("materials source_role API", () => {
     expect(patch.status).toBe(200);
     const body = (await patch.json()) as { source_role: string };
     expect(body.source_role).toBe("past_paper");
-    expect(env.getMaterials()[0]?.source_role).toBe("past_paper");
+    expect((await getMaterials(env))[0]?.source_role).toBe("past_paper");
   });
 
   it("rejects an invalid source_role on patch", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedMaterial({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedMaterial(env, {
       id: "mat-1",
       deck_id: "deck-a",
       kind: "pdf",
@@ -223,9 +243,9 @@ describe("materials source_role API", () => {
   });
 
   it("rejects a null JSON body on source_role patch", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedMaterial({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedMaterial(env, {
       id: "mat-1",
       deck_id: "deck-a",
       kind: "pdf",

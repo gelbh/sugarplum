@@ -40,21 +40,40 @@ function harnessImportPath(file) {
 function markAsyncFunctions(src) {
   const lines = src.split("\n");
   for (let i = 0; i < lines.length; i++) {
-    if (!/^\s*function\s+\w+\s*\(/.test(lines[i])) continue;
+    if (!/^\s*(?:export\s+)?function\s+\w+\s*\(/.test(lines[i])) continue;
     if (/\basync\s+function\b/.test(lines[i])) continue;
-    let depth = 0;
-    let started = false;
-    let hasAwait = false;
+    // Skip param-list braces (e.g. `args: { id: string }`); start at body `{`.
+    let sigDepth = 0;
+    let bodyStart = -1;
     for (let j = i; j < lines.length; j++) {
+      const line = lines[j];
+      for (let k = 0; k < line.length; k++) {
+        const ch = line[k];
+        if (ch === "(") sigDepth++;
+        else if (ch === ")") sigDepth--;
+        else if (ch === "{" && sigDepth === 0) {
+          bodyStart = j;
+          break;
+        }
+      }
+      if (bodyStart >= 0) break;
+    }
+    if (bodyStart < 0) continue;
+    let depth = 0;
+    let hasAwait = false;
+    for (let j = bodyStart; j < lines.length; j++) {
       for (const ch of lines[j]) {
-        if (ch === "{") { depth++; started = true; }
+        if (ch === "{") depth++;
         else if (ch === "}") depth--;
       }
-      if (started && j > i && /\bawait\b/.test(lines[j])) hasAwait = true;
-      if (started && depth === 0) break;
+      if (/\bawait\b/.test(lines[j])) hasAwait = true;
+      if (depth === 0) break;
     }
     if (hasAwait) {
-      lines[i] = lines[i].replace(/^(\s*)function\s/, "$1async function ");
+      lines[i] = lines[i].replace(
+        /^(\s*)(export\s+)?function\s/,
+        (_, a, e) => `${a}${e || ""}async function `,
+      );
     }
   }
   return lines.join("\n");
@@ -70,7 +89,48 @@ function awaitAsyncCallSites(src) {
       `await ${fn}(`,
     );
   }
-  return s.replace(/\bawait\s+await\s+/g, "await ");
+  s = s.replace(/\bawait\s+await\s+/g, "await ");
+  // Never await vitest lifecycle helpers (awaitAsyncCallSites may hit wrongly named locals).
+  s = s.replace(
+    /\bawait\s+(afterEach|beforeEach|describe|it|test|suite)\s*\(/g,
+    "$1(",
+  );
+  return s;
+}
+
+/** Mark arrow callbacks that contain await as async (e.g. fetch mocks). */
+function markAsyncArrows(src) {
+  const lines = src.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    if (/\basync\s*\(/.test(lines[i])) continue;
+    if (/\basync\s+\(/.test(lines[i])) continue;
+    // Match (...) => {  or () => { on this line
+    const arrowRe = /(?:^|[=,(]\s*)(\([^)]*\)|\w+)\s*=>\s*\{/;
+    if (!arrowRe.test(lines[i])) continue;
+    // Skip vitest describe/it/test wrappers: they nest other async work.
+    if (/\b(describe|it|test|suite|beforeEach|afterEach)\s*\(/.test(lines[i])) {
+      continue;
+    }
+    let depth = 0;
+    let started = false;
+    let hasAwait = false;
+    for (let j = i; j < lines.length; j++) {
+      for (const ch of lines[j]) {
+        if (ch === "{") {
+          depth++;
+          started = true;
+        } else if (ch === "}") depth--;
+      }
+      if (started && /\bawait\b/.test(lines[j])) hasAwait = true;
+      if (started && depth === 0) break;
+    }
+    if (!hasAwait) continue;
+    lines[i] = lines[i].replace(
+      /(?:^|[=,(]\s*)(?:(\([^)]*\)|\w+)\s*=>\s*\{)/,
+      (full, params) => full.replace(`${params} =>`, `async ${params} =>`),
+    );
+  }
+  return lines.join("\n");
 }
 
 function collectHarnessImports(s) {
@@ -109,27 +169,32 @@ function insertResetHook(s) {
     "});",
     "",
   ].join("\n");
-  // After the full leading import section (including multi-line imports).
+  // After leading imports only (never into type/const/function bodies).
   const lines = s.split("\n");
   let i = 0;
+  let inImport = false;
   while (i < lines.length) {
     const line = lines[i];
-    if (line.startsWith("import ") || line.startsWith("}")) {
+    const trimmed = line.trim();
+    if (!inImport && /^import\b/.test(trimmed)) {
+      inImport = !(
+        /}\s*from\s*["']/.test(line) ||
+        /^import\s+["']/.test(trimmed) ||
+        (/^import\s+[\w*{]/.test(trimmed) && /from\s*["']/.test(line) && !line.includes("{")) ||
+        (/^import\s+type\s+\w+/.test(trimmed) && /from\s*["']/.test(line) && !line.includes("{"))
+      );
+      // multi-line named import: `import {` without `} from` yet
+      if (line.includes("{") && !/}\s*from\s*["']/.test(line)) inImport = true;
+      if (/}\s*from\s*["']/.test(line)) inImport = false;
       i++;
       continue;
     }
-    if (line.trim() === "" && i > 0) {
-      // keep going through blank lines amid imports only if next is import
-      let j = i;
-      while (j < lines.length && lines[j].trim() === "") j++;
-      if (j < lines.length && lines[j].startsWith("import ")) {
-        i = j;
-        continue;
-      }
-      break;
+    if (inImport) {
+      if (/}\s*from\s*["']/.test(line)) inImport = false;
+      i++;
+      continue;
     }
-    // continuation of multi-line import
-    if (i > 0 && (line.trim().startsWith("type ") || line.trim().endsWith(",") || line.includes("} from "))) {
+    if (trimmed === "") {
       i++;
       continue;
     }
@@ -224,6 +289,10 @@ function transform(src, file) {
 
   s = markAsyncFunctions(s);
   s = awaitAsyncCallSites(s);
+  // Second pass: helpers that gained await via awaited callee rewriting.
+  s = markAsyncFunctions(s);
+  s = awaitAsyncCallSites(s);
+  s = markAsyncArrows(s);
   s = ensureAfterEachImport(s);
 
   // Strip unused withTestBindings later via collect

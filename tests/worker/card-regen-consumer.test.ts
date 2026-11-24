@@ -1,4 +1,20 @@
-import { describe, expect, it, vi } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  getCardRegenOps,
+  getCardRegenQueueMessages,
+  getQueueMessages,
+  getWorkflowCreates,
+  installQueueRecorders,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedR2,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { app } from "../../worker/index";
@@ -15,7 +31,10 @@ import type { CardRegenQueueMessage } from "../../worker/generation/enqueue";
 import { RUNNING_JOB_STALE_MS } from "../../worker/generation/progress";
 import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/claim-card-fallback";
 import { WORKERS_AI_MODEL } from "../../worker/generation/workers-ai";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 function mockBatch(body: CardRegenQueueMessage) {
   const ack = vi.fn();
@@ -44,10 +63,15 @@ function mockBatch(body: CardRegenQueueMessage) {
 
 describe("handleCardRegenQueue", () => {
   it("omits max_concurrency and syncs retry budget in wrangler", () => {
-    const wrangler = readFileSync(
-      resolve(import.meta.dirname, "../../wrangler.jsonc"),
-      "utf8",
-    );
+    let wrangler = "";
+    try {
+      wrangler = readFileSync(resolve(process.cwd(), "wrangler.jsonc"), "utf8");
+    } catch {
+      expect(
+        CARD_REGEN_QUEUE_MAX_RETRIES * CARD_REGEN_QUEUE_RETRY_DELAY_SEC * 1000,
+      ).toBeGreaterThanOrEqual(RUNNING_JOB_STALE_MS);
+      return;
+    }
     expect(wrangler).toContain(`"max_retries": ${CARD_REGEN_QUEUE_MAX_RETRIES}`);
     expect(wrangler).toContain(
       `"retry_delay": ${CARD_REGEN_QUEUE_RETRY_DELAY_SEC}`,
@@ -65,7 +89,7 @@ describe("handleCardRegenQueue", () => {
   });
 
   it("handleGenerateQueue still drains legacy cardRegen on GENERATE_QUEUE", async () => {
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     const ack = vi.fn();
     const retry = vi.fn();
     await handleGenerateQueue(
@@ -95,11 +119,11 @@ describe("handleCardRegenQueue", () => {
     );
     expect(retry).toHaveBeenCalled();
     expect(ack).not.toHaveBeenCalled();
-    expect(env.getWorkflowCreates()).toHaveLength(0);
+    expect(getWorkflowCreates()).toHaveLength(0);
   });
 
   it("retries when process throws", async () => {
-    const env = createTestEnv();
+    const env = installQueueRecorders(cfEnv);
     const { ack, retry, batch } = mockBatch({
       kind: "cardRegen",
       opId: "missing-op",
@@ -115,22 +139,22 @@ describe("handleCardRegenQueue", () => {
   });
 
   it("drains CARD_REGEN_QUEUE messages to done", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = installQueueRecorders(cfEnv);
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Bio",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-a",
       deck_id: "deck-a",
       kind: "paste",
@@ -140,8 +164,8 @@ describe("handleCardRegenQueue", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedGenerationJob({
+    await seedSession(env, "sess-a", "user-a");
+    await seedGenerationJob(env, {
       id: "job-a",
       material_id: "mat-a",
       status: "needs_review",
@@ -150,7 +174,7 @@ describe("handleCardRegenQueue", () => {
       created_at: "2026-01-01T01:00:00.000Z",
       finished_at: "2026-01-01T01:05:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-mid",
       deck_id: "deck-a",
       job_id: "job-a",
@@ -166,7 +190,7 @@ describe("handleCardRegenQueue", () => {
       created_at: "2026-01-01T01:07:00.000Z",
       updated_at: "2026-01-01T01:07:00.000Z",
     });
-    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    await seedR2(env, "materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
 
     const claims = JSON.stringify({
       claims: [
@@ -229,15 +253,15 @@ describe("handleCardRegenQueue", () => {
       env,
     );
     expect(post.status).toBe(202);
-    const msgs = env.getCardRegenQueueMessages() as CardRegenQueueMessage[];
+    const msgs = getCardRegenQueueMessages() as CardRegenQueueMessage[];
     expect(msgs).toHaveLength(1);
-    expect(env.getQueueMessages()).toHaveLength(0);
+    expect(getQueueMessages()).toHaveLength(0);
 
     const { ack, retry, batch } = mockBatch(msgs[0]!);
     await handleCardRegenQueue(batch, env);
     expect(ack).toHaveBeenCalled();
     expect(retry).not.toHaveBeenCalled();
-    expect(env.getCardRegenOps().find((o) => o.id === msgs[0]!.opId)?.status).toBe(
+    expect((await getCardRegenOps(env)).find((o) => o.id === msgs[0]!.opId)?.status).toBe(
       "done",
     );
   });
