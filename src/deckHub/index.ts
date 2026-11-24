@@ -14,6 +14,10 @@ export { default as DeckHubRenameDialog } from "./DeckHubRenameDialog";
 export { default as DeckHubDeleteDialog } from "./DeckHubDeleteDialog";
 export { default as DeckHubEditCardDialog } from "./DeckHubEditCardDialog";
 export { default as DeckHubMoveCardDialog } from "./DeckHubMoveCardDialog";
+export {
+  default as DeckHubCreateView,
+  type DeckHubCreateViewProps,
+} from "./DeckHubCreateView";
 export { default as EmptyNext } from "./EmptyNext";
 export {
   default as ClaimCoverageFilmstrip,

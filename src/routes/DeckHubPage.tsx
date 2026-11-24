@@ -5,12 +5,8 @@ import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { AddMaterialWorkshop } from "../deckHub";
 import {
   CompositionSpark,
-  PdfCompressConsent,
-  PdfSplitConsent,
-  PptxSplitConsent,
   diyOcclusionNotice,
   freePathImageHelperText,
   isImageUploadContentType,
@@ -20,7 +16,6 @@ import {
   runConsentedPdfCompressUpload,
   runConsentedPdfSplitUpload,
   runConsentedPptxSplitUpload,
-  fileSizeCapMb,
 } from "../materials";
 import { CoverPickerDialog } from "../deckHub";
 import { useShellBackOverride } from "../app/shell/ShellBackOverride";
@@ -28,6 +23,7 @@ import { CardsWorkshop } from "../deckHub";
 import { ClaimCoverageFilmstrip, type ClaimJumpTarget } from "../deckHub";
 import { DeckHygienePanel } from "../deckHub";
 import { createDeckHubWorkshopOpeners } from "../deckHub";
+import { DeckHubCreateView } from "../deckHub";
 import { DeckHubDeleteDialog } from "../deckHub";
 import { DeckHubDeleteMaterialDialog } from "../deckHub";
 import { DeckHubDraftPickerDialog } from "../deckHub";
@@ -381,88 +377,6 @@ export default function DeckHubPage({ deckId }: Props) {
     [materials],
   );
 
-  const addMaterialWorkshop = creatingFlashcards ? (
-    <AddMaterialWorkshop
-      guest={guest}
-      tab={topWorkshop.tab ?? null}
-      onTabChange={material.onTabChange}
-      onCancel={onWorkshopBack}
-      materialError={material.materialError}
-      materialNotice={material.materialNotice}
-      onClearMaterialMessages={material.resetMaterialMessages}
-      materialBusy={material.materialBusy}
-      readingScan={material.readingScan}
-      pasteText={material.pasteText}
-      onPasteTextChange={material.setPasteText}
-      pasteFilename={material.pasteFilename}
-      onPasteFilenameChange={material.setPasteFilename}
-      alsoCover={material.alsoCover}
-      onAlsoCoverChange={material.setAlsoCover}
-      onGuestPaste={material.onGuestPaste}
-      onAccountPaste={material.onAccountPaste}
-      uploadFile={material.uploadFile}
-      onUploadFileChange={material.setUploadFile}
-      onFigureFilesChange={material.setFigureFiles}
-      onUploadFile={material.onUploadFile}
-      offerLearningObjectives={material.offerLearningObjectives}
-      submitLabel={material.submitLabel}
-      submitDisabled={material.submitDisabled}
-      freePathImageHelper={material.freePathImageHelper}
-      renderUploadConsents={() => (
-        <>
-          <PdfSplitConsent
-            open={material.pdfSplitOpen}
-            fileName={material.uploadFile?.name ?? "PDF"}
-            figuresWillSkip={material.figureFiles.length > 0}
-            progressLabel={material.pdfSplitProgress}
-            busy={material.materialBusy}
-            onConfirm={() => {
-              void material.onPdfSplitConfirm();
-            }}
-            onCancel={material.onPdfSplitCancel}
-          />
-          <PptxSplitConsent
-            open={material.pptxSplitOpen}
-            fileName={material.uploadFile?.name ?? "PPTX"}
-            maxMb={fileSizeCapMb()}
-            progressLabel={material.pptxSplitProgress}
-            busy={material.materialBusy}
-            onConfirm={() => {
-              void material.onPptxSplitConfirm();
-            }}
-            onCancel={material.onPptxSplitCancel}
-          />
-          <PdfCompressConsent
-            open={material.pdfCompressOpen}
-            fileName={material.uploadFile?.name ?? "PDF"}
-            progressLabel={material.pdfCompressProgress}
-            busy={material.materialBusy}
-            onConfirm={() => {
-              void material.onPdfCompressConfirm();
-            }}
-            onCancel={material.onPdfCompressCancel}
-          />
-        </>
-      )}
-      createCard={create.createCard}
-      createBusy={create.createBusy}
-      createImageBusy={create.createImageBusy}
-      createError={create.createError}
-      createNotice={create.createNotice}
-      createSessionHasCard={create.createSessionHasCard}
-      createNeedsImage={create.createNeedsImage}
-      createImageKey={create.createImageKey}
-      deckImageKeys={deckImageKeys}
-      createImageInputRef={create.createImageInputRef}
-      onCreateChange={create.onCreateChange}
-      onCreateCard={create.onCreateCard}
-      onCreateImageUpload={create.onCreateImageUpload}
-      applyCreateImageKey={create.applyCreateImageKey}
-      clearCreateNotice={create.clearCreateNotice}
-      hubDiyAllowedTypes={create.hubDiyAllowedTypes}
-    />
-  ) : null;
-
   return (
     <Container
       maxWidth={creatingFlashcards ? "lg" : "md"}
@@ -491,25 +405,15 @@ export default function DeckHubPage({ deckId }: Props) {
           sx={{ flex: 1, minHeight: 0 }}
         >
           {creatingFlashcards ? (
-            <Box
-              key="create-flashcards"
-              sx={{
-                flex: 1,
-                minHeight: 0,
-                display: "flex",
-                flexDirection: "column",
-                animation: "deckHubCreateIn 320ms cubic-bezier(0.2, 0, 0, 1)",
-                "@keyframes deckHubCreateIn": {
-                  from: { opacity: 0, transform: "translateX(40px)" },
-                  to: { opacity: 1, transform: "translateX(0)" },
-                },
-                "@media (prefers-reduced-motion: reduce)": {
-                  animation: "none",
-                },
-              }}
-            >
-              {addMaterialWorkshop}
-            </Box>
+            <DeckHubCreateView
+              guest={guest}
+              tab={topWorkshop.tab ?? null}
+              onTabChange={material.onTabChange}
+              onCancel={onWorkshopBack}
+              material={material}
+              create={create}
+              deckImageKeys={deckImageKeys}
+            />
           ) : workshopOpen ? (
             <WorkshopShell
               open
