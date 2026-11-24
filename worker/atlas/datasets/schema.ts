@@ -97,7 +97,9 @@ const datasetRefSchema = z.strictObject({
 
 const datasetImageSchema = z.strictObject({
   id: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
-  file: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*\.webp$/),
+  file: z
+    .string()
+    .regex(/^[a-z0-9]+(-[a-z0-9]+)*\/[a-z0-9]+(-[a-z0-9]+)*\.webp$/),
   role: z.enum(IMAGE_ROLES),
   caption: capped(120).nullable().default(null),
   credit: capped(120),
@@ -150,6 +152,13 @@ export const datasetEntrySchema = z
       });
     }
     for (const [i, img] of e.images.entries()) {
+      if (!img.file.startsWith(`${e.key}/`)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["images", i, "file"],
+          message: "image file must live under the entry key directory",
+        });
+      }
       if (img.role === "lifecycle_diagram" && img.isHero) {
         ctx.addIssue({
           code: "custom",
