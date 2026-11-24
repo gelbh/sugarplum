@@ -152,7 +152,6 @@ function previewFront(card: CardDraftView): string {
   return typeof card.front === "string" ? card.front : "";
 }
 
-/** Shared desktop (md+) face caps for editor preview (fillHeight + intrinsic). */
 function editorFaceMaxWidthMd(type: CardDraftView["type"]): number {
   return type === "mcq" || type === "occlusion" ? 280 : 240;
 }
