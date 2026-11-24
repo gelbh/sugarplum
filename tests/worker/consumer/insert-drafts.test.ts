@@ -5,9 +5,9 @@ import {
   seedConsumerOwner,
   seedGenerationJob,
   seedMaterial,
-} from "./harness";
+} from "../harness";
 import { afterEach, describe, expect, it } from "vitest";
-import { insertDraftCards } from "../../worker/generation/consumer";
+import { insertDraftCards } from "../../../worker/generation/consumer";
 
 afterEach(async () => {
   await resetTestDb(cfEnv);
