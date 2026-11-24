@@ -337,10 +337,18 @@ export default function DiyCardPreview({
                 }
               : fillHeight
                 ? {
-                    height: "100%",
-                    width: "auto",
-                    maxWidth: "100%",
-                    maxHeight: "100%",
+                    height: { xs: "100%", md: "auto" },
+                    width: { xs: "auto", md: "100%" },
+                    maxWidth:
+                      card.type === "mcq" || card.type === "occlusion"
+                        ? { xs: "100%", md: 280 }
+                        : { xs: "100%", md: 240 },
+                    maxHeight:
+                      card.type === "mcq"
+                        ? { xs: "100%", md: 360 }
+                        : card.type === "occlusion"
+                          ? { xs: "100%", md: "min(420px, 70vh)" }
+                          : { xs: "100%", md: 300 },
                     minHeight: 0,
                     minWidth: 0,
                   }
