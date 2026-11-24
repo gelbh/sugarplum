@@ -1,4 +1,11 @@
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -74,8 +81,14 @@ const PRIMARY_PILL_SX = {
   "&:hover": { boxShadow: "none" },
 } as const;
 
+export type StudyCardActionsHandle = {
+  openEdit: () => void;
+  openDelete: () => void;
+};
+
 type StudyCardActionsProps = {
   card: CardDraftView;
+  /** Hide the icon row; dialogs stay mountable (header overflow menu). */
   hidden: boolean;
   gradeBusy: boolean;
   offlineCopy: boolean;
@@ -90,19 +103,25 @@ type StudyCardActionsProps = {
   onRemoved: (cardId: string) => void;
 };
 
-export function StudyCardActions({
-  card,
-  hidden,
-  gradeBusy,
-  offlineCopy,
-  userId,
-  allowedTypes,
-  renderDraftCardEditor,
-  onDialogOpen,
-  onSaved,
-  onRegenerated,
-  onRemoved,
-}: StudyCardActionsProps) {
+export const StudyCardActions = forwardRef<
+  StudyCardActionsHandle,
+  StudyCardActionsProps
+>(function StudyCardActions(
+  {
+    card,
+    hidden,
+    gradeBusy,
+    offlineCopy,
+    userId,
+    allowedTypes,
+    renderDraftCardEditor,
+    onDialogOpen,
+    onSaved,
+    onRegenerated,
+    onRemoved,
+  },
+  ref,
+) {
   const [editCard, setEditCard] = useState<CardDraftView | null>(null);
   const [editBusy, setEditBusy] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -117,12 +136,6 @@ export function StudyCardActions({
     onDialogOpen(dialogOpen);
   }, [dialogOpen, onDialogOpen]);
 
-  useEffect(() => {
-    if (!hidden) return;
-    setEditCard(null);
-    setDeleteId(null);
-  }, [hidden]);
-
   function openEdit() {
     if (gradeBusy || offlineCopy) return;
     setEditError(null);
@@ -131,6 +144,36 @@ export function StudyCardActions({
       options: card.options ? [...card.options] : undefined,
     });
   }
+
+  function openDelete() {
+    if (gradeBusy || offlineCopy) return;
+    setDeleteError(null);
+    setDeleteId(card.id);
+  }
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      openEdit,
+      openDelete,
+    }),
+    [card, gradeBusy, offlineCopy],
+  );
+
+  // New card or entering zen icon-hide: close dialogs. Stay-hidden (mobile
+  // overflow menu) must not clear an in-progress edit/delete.
+  const wasHiddenRef = useRef(hidden);
+  useEffect(() => {
+    setEditCard(null);
+    setDeleteId(null);
+  }, [card.id]);
+  useEffect(() => {
+    if (hidden && !wasHiddenRef.current) {
+      setEditCard(null);
+      setDeleteId(null);
+    }
+    wasHiddenRef.current = hidden;
+  }, [hidden]);
 
   function onEditChange(next: DraftEditorChange) {
     setEditCard((prev) =>
@@ -340,4 +383,4 @@ export function StudyCardActions({
       </Dialog>
     </>
   );
-}
+});

@@ -26,8 +26,13 @@ export default function ClozePrompt({ front }: { front: string }) {
   const nodes: ReactNode[] = [];
   let blank = 0;
   for (const part of clozeParts(front)) {
-    if (part.kind === "text" || part.kind === "hint") {
+    if (part.kind === "text") {
       nodes.push(part.value);
+      continue;
+    }
+    if (part.hint?.trim()) {
+      nodes.push(part.hint);
+      blank += 1;
       continue;
     }
     nodes.push(

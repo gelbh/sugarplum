@@ -46,7 +46,7 @@ export default function MissionBoard({
     {
       id: "addMaterial",
       title: "Create flashcards",
-      blurb: "Upload, paste, or write a card",
+      blurb: "Upload, paste, or create a card",
       accent: emptyDeck,
     },
     ...(draftCount > 0

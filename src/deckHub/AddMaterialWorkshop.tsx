@@ -36,12 +36,6 @@ type Props = {
   tab: AddMaterialTab | null;
   onTabChange: (tab: AddMaterialTab | null) => void;
   onCancel: () => void;
-  /**
-   * When true (mission-board Create flashcards), method Back returns to the
-   * upload/paste/diy chooser. When false (opened from Browse cards/files with
-   * a stacked parent), method Back leaves the create flow to that parent.
-   */
-  returnToChooser?: boolean;
   materialError: string | null;
   materialNotice: string | null;
   onClearMaterialMessages: () => void;
@@ -88,7 +82,6 @@ export default function AddMaterialWorkshop({
   tab,
   onTabChange,
   onCancel,
-  returnToChooser = true,
   materialError,
   materialNotice,
   onClearMaterialMessages,
@@ -133,11 +126,6 @@ export default function AddMaterialWorkshop({
     : ["upload", "paste", "diy"];
   const activeTab =
     tab && methods.includes(tab) ? tab : tab === null ? null : methods[0];
-
-  function onMethodBack() {
-    if (returnToChooser) onTabChange(null);
-    else onCancel();
-  }
 
   const showMaterialAlerts = activeTab === "upload" || activeTab === "paste";
 
@@ -188,24 +176,49 @@ export default function AddMaterialWorkshop({
           flex: 1,
           width: "100%",
           minHeight: 0,
-          overflow: "auto",
+          // DIY fills the column (preview grows); other methods scroll as needed.
+          overflow: activeTab === "diy" ? { xs: "hidden", md: "auto" } : "auto",
           display: "flex",
-          // Center short upload/paste forms. DIY can be taller than the viewport;
-          // align start so the occlusion image stage is not clipped above the fold.
-          alignItems: activeTab === "diy" ? "flex-start" : "center",
-          justifyContent: "center",
+          alignItems:
+            activeTab === "diy"
+              ? { xs: "stretch", md: "flex-start" }
+              : "center",
+          justifyContent: activeTab === "diy" ? "flex-start" : "center",
           px: 2,
-          py: { xs: 3, md: 4 },
+          pt: {
+            xs: activeTab === "diy" ? 1.5 : 3,
+            md: 4,
+          },
+          pb: {
+            xs: activeTab === "diy" ? 1 : 3,
+            md: 4,
+          },
         }}
       >
         <Stack
-          spacing={2.5}
+          spacing={{
+            xs: activeTab === "diy" ? 1.25 : 2.5,
+            md: 2.5,
+          }}
           sx={{
             width: "100%",
+            minWidth: 0,
             maxWidth: activeTab === "diy" ? { xs: 520, md: 960 } : 520,
+            boxSizing: "border-box",
+            ...(activeTab === "diy"
+              ? {
+                  flex: 1,
+                  minHeight: 0,
+                  height: { xs: "100%", md: "auto" },
+                }
+              : {}),
           }}
         >
-          <StepHeader heading={meta.heading} blurb={meta.blurb} />
+          <StepHeader
+            heading={meta.heading}
+            blurb={meta.blurb}
+            compact={activeTab === "diy"}
+          />
           {alerts}
 
           {activeTab === "upload" && !guest ? (
@@ -218,7 +231,6 @@ export default function AddMaterialWorkshop({
               onUploadFileChange={onUploadFileChange}
               onFigureFilesChange={onFigureFilesChange}
               onUploadFile={onUploadFile}
-              onBack={onMethodBack}
               offerLearningObjectives={offerLearningObjectives}
               submitLabel={submitLabel}
               submitDisabled={submitDisabled}
@@ -230,7 +242,6 @@ export default function AddMaterialWorkshop({
             <AddMaterialPastePanel
               guest={guest}
               materialBusy={materialBusy}
-              createBusy={createBusy}
               pasteText={pasteText}
               onPasteTextChange={onPasteTextChange}
               pasteFilename={pasteFilename}
@@ -239,7 +250,6 @@ export default function AddMaterialWorkshop({
               onAlsoCoverChange={onAlsoCoverChange}
               onGuestPaste={onGuestPaste}
               onAccountPaste={onAccountPaste}
-              onBack={onMethodBack}
             />
           ) : null}
 
@@ -261,7 +271,6 @@ export default function AddMaterialWorkshop({
               applyCreateImageKey={applyCreateImageKey}
               clearCreateNotice={clearCreateNotice}
               hubDiyAllowedTypes={hubDiyAllowedTypes}
-              onBack={onMethodBack}
               onFinish={onCancel}
             />
           ) : null}

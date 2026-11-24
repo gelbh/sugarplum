@@ -3,7 +3,10 @@ import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import { goShellBack } from "../../shared/nav/navigate";
-import { useResolvedShellBack } from "./ShellBackOverride";
+import {
+  useResolvedShellBack,
+  useShellBackOverride,
+} from "./ShellBackOverride";
 import {
   SHELL_BG,
   SHELL_FG,
@@ -16,6 +19,8 @@ const BACK_SLOT = 40;
 /** Mobile top bar: Back for nested routes, centered logo + Alice wordmark. */
 export default function TopChrome() {
   const backHref = useResolvedShellBack(window.location.pathname);
+  const { handler: backHandler } = useShellBackOverride();
+  const showBack = backHandler != null || backHref != null;
 
   return (
     <Box
@@ -47,10 +52,13 @@ export default function TopChrome() {
             justifyContent: "center",
           }}
         >
-          {backHref ? (
+          {showBack ? (
             <IconButton
               aria-label="Back"
-              onClick={() => goShellBack(backHref)}
+              onClick={() => {
+                if (backHandler) backHandler();
+                else if (backHref) goShellBack(backHref);
+              }}
               size="small"
               sx={{ color: SHELL_FG }}
             >

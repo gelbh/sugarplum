@@ -1,11 +1,11 @@
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
 import IconButton from "@mui/material/IconButton";
 import InputBase from "@mui/material/InputBase";
 import Paper from "@mui/material/Paper";
 import Radio from "@mui/material/Radio";
 import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import { useEffect, useRef, useState } from "react";
@@ -50,26 +50,36 @@ export function ReviewMcqFace({
   onChange: (next: DraftEditorChange) => void;
 }) {
   const front = typeof card.front === "string" ? card.front : "";
-  const options = mcqDraftFromCard(card).options;
-  const [correctIndex, setCorrectIndex] = useState(
-    () => mcqDraftFromCard(card).correctIndex,
+  const seeded = mcqDraftFromCard(card);
+  const [correctIndices, setCorrectIndices] = useState(
+    () => seeded.correctIndices,
   );
+  const [allowMultiple] = useState(() => seeded.allowMultiple);
   useEffect(() => {
-    setCorrectIndex(mcqDraftFromCard(card).correctIndex);
+    const next = mcqDraftFromCard(card);
+    setCorrectIndices(next.correctIndices);
   }, [card.id]);
   useEffect(() => {
-    setCorrectIndex((i) =>
-      Math.min(Math.max(0, i), Math.max(0, options.length - 1)),
-    );
-  }, [options.length]);
-  const draft: McqDraft = { options, correctIndex };
+    setCorrectIndices((indices) => {
+      const max = Math.max(0, seeded.options.length - 1);
+      const clamped = [
+        ...new Set(indices.map((i) => Math.min(Math.max(0, i), max))),
+      ].sort((a, b) => a - b);
+      return clamped.length > 0 ? clamped : [0];
+    });
+  }, [seeded.options.length]);
+  const draft: McqDraft = {
+    options: seeded.options,
+    correctIndices,
+    allowMultiple,
+  };
   const rowKeys = useRef<string[]>([]);
   while (rowKeys.current.length < draft.options.length) {
     rowKeys.current.push(`${rowKeys.current.length}:${Math.random()}`);
   }
 
   const emit = (next: McqDraft, nextFront = front) => {
-    setCorrectIndex(next.correctIndex);
+    setCorrectIndices(next.correctIndices);
     onChange({
       front: nextFront,
       back: mcqBack(next),
@@ -104,59 +114,82 @@ export function ReviewMcqFace({
             }}
           />
           <Stack spacing={1}>
-            {draft.options.map((option, index) => (
-              <Stack
-                key={rowKeys.current[index]}
-                direction="row"
-                spacing={0.5}
-                sx={{
-                  alignItems: "center"
-                }}
-              >
-                <Radio
-                  size="small"
-                  checked={draft.correctIndex === index}
-                  disabled={disabled}
-                  onChange={() => emit(withMcqCorrect(draft, index))}
+            {draft.options.map((option, index) => {
+              const isCorrect = draft.correctIndices.includes(index);
+              return (
+                <Stack
+                  key={rowKeys.current[index]}
+                  direction="row"
+                  spacing={0.5}
                   sx={{
-                    color: "inherit",
-                    "&.Mui-checked": { color: "var(--sp-plum)" },
-                    "&&.Mui-disabled.Mui-checked": { color: "var(--sp-plum)" },
+                    alignItems: "center",
                   }}
-                  slotProps={{
-                    input: { "aria-label": `Correct choice ${index + 1}` }
-                  }}
-                />
-                {draft.correctIndex === index ? (
-                  <Typography component="span" variant="caption">
-                    Correct
-                  </Typography>
-                ) : null}
-                <InputBase
-                  fullWidth
-                  value={option}
-                  placeholder={`Choice ${index + 1}`}
-                  disabled={disabled}
-                  onChange={(e) =>
-                    emit(withMcqOptionText(draft, index, e.target.value))
-                  }
-                  inputProps={{ "aria-label": `Choice ${index + 1}` }}
-                  sx={FIELD_SX}
-                />
-                <IconButton
-                  size="small"
-                  aria-label={`Remove choice ${index + 1}`}
-                  disabled={disabled || draft.options.length <= MCQ_MIN}
-                  onClick={() => {
-                    rowKeys.current.splice(index, 1);
-                    emit(withMcqOptionRemoved(draft, index));
-                  }}
-                  sx={{ color: "inherit" }}
                 >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </Stack>
-            ))}
+                  {draft.allowMultiple ? (
+                    <Checkbox
+                      size="small"
+                      checked={isCorrect}
+                      disabled={disabled}
+                      onChange={() => emit(withMcqCorrect(draft, index))}
+                      sx={{
+                        color: "inherit",
+                        "&.Mui-checked": { color: "var(--sp-plum)" },
+                        "&&.Mui-disabled.Mui-checked": {
+                          color: "var(--sp-plum)",
+                        },
+                      }}
+                      slotProps={{
+                        input: {
+                          "aria-label": `Correct choice ${index + 1}`,
+                        },
+                      }}
+                    />
+                  ) : (
+                    <Radio
+                      size="small"
+                      checked={isCorrect}
+                      disabled={disabled}
+                      onChange={() => emit(withMcqCorrect(draft, index))}
+                      sx={{
+                        color: "inherit",
+                        "&.Mui-checked": { color: "var(--sp-plum)" },
+                        "&&.Mui-disabled.Mui-checked": {
+                          color: "var(--sp-plum)",
+                        },
+                      }}
+                      slotProps={{
+                        input: {
+                          "aria-label": `Correct choice ${index + 1}`,
+                        },
+                      }}
+                    />
+                  )}
+                  <InputBase
+                    fullWidth
+                    value={option}
+                    placeholder={`Choice ${index + 1}`}
+                    disabled={disabled}
+                    onChange={(e) =>
+                      emit(withMcqOptionText(draft, index, e.target.value))
+                    }
+                    inputProps={{ "aria-label": `Choice ${index + 1}` }}
+                    sx={FIELD_SX}
+                  />
+                  <IconButton
+                    size="small"
+                    aria-label={`Remove choice ${index + 1}`}
+                    disabled={disabled || draft.options.length <= MCQ_MIN}
+                    onClick={() => {
+                      rowKeys.current.splice(index, 1);
+                      emit(withMcqOptionRemoved(draft, index));
+                    }}
+                    sx={{ color: "inherit" }}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Stack>
+              );
+            })}
           </Stack>
           <Button
             size="small"

@@ -29,6 +29,8 @@ export const assertSingleCloze = assertClozeFront;
  * MCQ: 3–5 unique trimmed non-empty options; back must match one option.
  * Returns trimmed fields so persist/grade use the same exact strings.
  */
+const MCQ_ANSWER_SEP = "\u001f";
+
 export function assertValidMcqOptions(
   back: string,
   options: string[] | undefined,
@@ -43,6 +45,9 @@ export function assertValidMcqOptions(
   if (trimmed.some((o) => o.length === 0)) {
     throw new Error("MCQ options must be non-empty");
   }
+  if (trimmed.some((o) => o.includes(MCQ_ANSWER_SEP))) {
+    throw new Error("MCQ options cannot contain the answer separator");
+  }
   const seen = new Set<string>();
   for (const o of trimmed) {
     if (seen.has(o)) {
@@ -50,11 +55,28 @@ export function assertValidMcqOptions(
     }
     seen.add(o);
   }
-  const answer = back.trim();
-  if (!trimmed.includes(answer)) {
+  const rawAnswers = back.includes(MCQ_ANSWER_SEP)
+    ? back.split(MCQ_ANSWER_SEP)
+    : [back];
+  const answers = rawAnswers.map((part) => part.trim()).filter(Boolean);
+  if (answers.length === 0) {
     throw new Error("MCQ back must be one of the options");
   }
-  return { back: answer, options: trimmed };
+  const answerSeen = new Set<string>();
+  for (const answer of answers) {
+    if (!trimmed.includes(answer)) {
+      throw new Error("MCQ back must be one of the options");
+    }
+    if (answerSeen.has(answer)) {
+      throw new Error("MCQ correct answers must be unique");
+    }
+    answerSeen.add(answer);
+  }
+  const ordered = trimmed.filter((o) => answerSeen.has(o));
+  return {
+    back: ordered.join(MCQ_ANSWER_SEP),
+    options: trimmed,
+  };
 }
 
 /** Material page provenance; optional Atlas Make cards fields when present. */

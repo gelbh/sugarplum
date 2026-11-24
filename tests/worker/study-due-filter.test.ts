@@ -415,4 +415,55 @@ describe("GET /api/study/due filter", () => {
       .map((s) => s.due);
     expect(duesCommitted.some((d) => d !== dueNow)).toBe(true);
   });
+
+  it("reports nextDueAt when accepted cards are only due in the future", async () => {
+    await seedOwner(env);
+    await seedDeck(env, {
+      id: "deck-future",
+      user_id: "user-a",
+      title: "Later",
+      subject_hint: null,
+      subject_id: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const futureDue = "2099-06-15T12:00:00.000Z";
+    await seedCard(env, {
+      id: "card-future",
+      deck_id: "deck-future",
+      job_id: null,
+      type: "qa",
+      front_json: JSON.stringify("Q?"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "ex" }),
+      status: "accepted",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+    await seedSchedule(env, {
+      card_id: "card-future",
+      due: futureDue,
+      stability: 1,
+      difficulty: 5,
+      elapsed_days: 1,
+      scheduled_days: 1,
+      learning_steps: 0,
+      reps: 1,
+      lapses: 0,
+      state: 2,
+      last_review: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/study/due",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as DueBody & {
+      meta: { nextDueAt: string | null };
+    };
+    expect(body.cards).toHaveLength(0);
+    expect(body.meta.nextDueAt).toBe(futureDue);
+  });
 });

@@ -19,6 +19,7 @@ import { incrementIntrosUsedToday } from "./dayStats";
 import {
   applyDeferrals,
   buildDueQueueForUser,
+  loadNextDueAt,
   serializeDueCards,
 } from "./dueQueue";
 import { rankWeakness } from "./weakness";
@@ -133,13 +134,20 @@ studyRoutes.get("/due", async (c) => {
 
   await assertDueScope(db, userId, deckId, subjectId);
 
+  const scope = { deckId, subjectId };
   const { rows, queue } = await buildDueQueueForUser(
     db,
     userId,
     now,
-    { deckId, subjectId },
+    scope,
     introBonusRaw ?? 0,
     localDay,
+  );
+  const nextDueAt = await loadNextDueAt(
+    db,
+    userId,
+    now.toISOString(),
+    scope,
   );
 
   return c.json({
@@ -147,7 +155,7 @@ studyRoutes.get("/due", async (c) => {
       rows,
       queue.selected.map((s) => s.id),
     ),
-    meta: queue.meta,
+    meta: { ...queue.meta, nextDueAt },
     pendingDeferrals: queue.deferrals,
   });
 });

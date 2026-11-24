@@ -135,7 +135,8 @@ const GHOST_PILL_SX = {
 
 export default function DeckHubPage({ deckId }: Props) {
   const guest = isGuest();
-  const { setHref: setShellBack } = useShellBackOverride();
+  const { setHref: setShellBack, setHandler: setShellBackHandler } =
+    useShellBackOverride();
   const [deck, setDeck] = useState<Deck | null>(null);
   const [subject, setSubject] = useState<Subject | null>(null);
   const [cards, setCards] = useState<CardDraftView[]>([]);
@@ -358,6 +359,28 @@ export default function DeckHubPage({ deckId }: Props) {
     acceptedCount,
   });
 
+  // Method steps: TopChrome Back matches footer Back (chooser / leave stack).
+  useEffect(() => {
+    if (!creatingFlashcards || topWorkshop?.tab == null) {
+      setShellBackHandler(null);
+      return;
+    }
+    const returnToChooser = workshopStack.length <= 1;
+    const onTabChange = material.onTabChange;
+    setShellBackHandler(() => {
+      if (returnToChooser) onTabChange(null);
+      else onWorkshopBack();
+    });
+    return () => setShellBackHandler(null);
+  }, [
+    creatingFlashcards,
+    material.onTabChange,
+    onWorkshopBack,
+    setShellBackHandler,
+    topWorkshop?.tab,
+    workshopStack.length,
+  ]);
+
   const onJumpToClaimCard = useCallback(
     (target: ClaimJumpTarget) => {
       void (async () => {
@@ -423,7 +446,6 @@ export default function DeckHubPage({ deckId }: Props) {
       tab={topWorkshop.tab ?? null}
       onTabChange={material.onTabChange}
       onCancel={onWorkshopBack}
-      returnToChooser={workshopStack.length <= 1}
       materialError={material.materialError}
       materialNotice={material.materialNotice}
       onClearMaterialMessages={material.resetMaterialMessages}
@@ -504,7 +526,10 @@ export default function DeckHubPage({ deckId }: Props) {
     <Container
       maxWidth={creatingFlashcards ? "lg" : "md"}
       sx={{
-        py: { xs: 2, md: 3 },
+        py: {
+          xs: creatingFlashcards ? 1 : 2,
+          md: 3,
+        },
         display: "flex",
         flexDirection: "column",
         minHeight: { md: "100%" },

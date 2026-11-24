@@ -1,20 +1,65 @@
-import { useEffect, useState, type FormEvent } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
+import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { DraftCardEditor,
   type DraftEditorChange,
   type DraftPreviewFace,
 } from "../draftReview";
-import { CreateFlowNoticeFade } from "../library/CreateFlowNotice";
+import { TOP_BAR_HEIGHT } from "../app/shell/chromeTokens";
+import { CreateFlowNotice } from "../library/CreateFlowNotice";
 import type { CardDraftView, CardType } from "../api/client";
 import DiyCardPreview from "./DiyCardPreview";
-import { FOOTER_BTN_SX } from "./AddMaterialMethodChooser";
+
+const DIY_TOAST_TOP = `calc(${TOP_BAR_HEIGHT}px + env(safe-area-inset-top, 0px) + 10px)`;
+
+const DiyCreateToast = forwardRef<
+  HTMLDivElement,
+  {
+    tone: "error" | "success";
+    onClose?: () => void;
+    children: ReactNode;
+  }
+>(function DiyCreateToast({ tone, onClose, children }, ref) {
+  return (
+    <Box
+      ref={ref}
+      sx={{
+        width: "100%",
+        outline: "none",
+        "& > [role='status'], & > [role='alert']": {
+          bgcolor:
+            tone === "error"
+              ? "rgba(72, 24, 32, 0.97)"
+              : "rgba(32, 14, 30, 0.97)",
+          borderColor:
+            tone === "error"
+              ? "rgba(240, 180, 188, 0.55)"
+              : "rgba(209, 163, 226, 0.55)",
+          boxShadow: "0 10px 28px rgba(0, 0, 0, 0.45)",
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
+        },
+      }}
+    >
+      <CreateFlowNotice tone={tone} onClose={onClose}>
+        {children}
+      </CreateFlowNotice>
+    </Box>
+  );
+});
 
 type Props = {
   createCard: CardDraftView;
@@ -33,7 +78,6 @@ type Props = {
   applyCreateImageKey: (key: string) => void;
   clearCreateNotice: () => void;
   hubDiyAllowedTypes: CardType[];
-  onBack: () => void;
   onFinish: () => void;
 };
 
@@ -54,7 +98,6 @@ export default function AddMaterialDiyPanel({
   applyCreateImageKey,
   clearCreateNotice,
   hubDiyAllowedTypes,
-  onBack,
   onFinish,
 }: Props) {
   const [previewFace, setPreviewFace] = useState<DraftPreviewFace>("front");
@@ -69,19 +112,32 @@ export default function AddMaterialDiyPanel({
     return () => window.clearTimeout(t);
   }, [createNotice, clearCreateNotice]);
 
+  const noticeOpen = Boolean(createError || createNotice);
+
   return (
-    <Box component="form" onSubmit={onCreateCard} noValidate>
-      <Box
-        aria-live="polite"
+    <Box
+      component="form"
+      onSubmit={onCreateCard}
+      noValidate
+      sx={{
+        flex: 1,
+        minHeight: 0,
+        minWidth: 0,
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        height: { xs: "100%", md: "auto" },
+      }}
+    >
+      <Snackbar
+        open={noticeOpen}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
         sx={{
-          minHeight: 40,
-          mb: 1.5,
-          display: "flex",
-          alignItems: "center",
+          top: DIY_TOAST_TOP,
+          maxWidth: "min(440px, calc(100% - 24px))",
         }}
       >
-        <CreateFlowNoticeFade
-          open={Boolean(createError || createNotice)}
+        <DiyCreateToast
           tone={createError ? "error" : "success"}
           onClose={
             createNotice && !createError ? clearCreateNotice : undefined
@@ -102,30 +158,44 @@ export default function AddMaterialDiyPanel({
                 sx={{ color: "text.secondary", fontWeight: 400 }}
               >
                 {" · "}
-                Write another, or Finish
+                Create another, or Finish
               </Box>
             </>
           )}
-        </CreateFlowNoticeFade>
-      </Box>
+        </DiyCreateToast>
+      </Snackbar>
       <Box
         sx={{
+          flex: 1,
+          minHeight: 0,
+          minWidth: 0,
+          width: "100%",
           display: "grid",
           gridTemplateColumns: {
-            xs: "1fr",
+            xs: "minmax(0, 1fr)",
             md: "minmax(0, 1.35fr) minmax(220px, 280px)",
           },
-          gap: { xs: 2.5, md: 4 },
-          alignItems: "start",
+          gridTemplateRows: {
+            xs: "auto minmax(0, 1fr)",
+            md: "auto",
+          },
+          gap: { xs: 1.5, md: 4 },
+          alignItems: { xs: "stretch", md: "start" },
         }}
       >
-        <Stack spacing={2.25}>
+        <Stack
+          spacing={{ xs: 1.25, md: 2.25 }}
+          sx={{ minWidth: 0, width: "100%" }}
+        >
           <DraftCardEditor
             card={createCard}
             disabled={createBusy || createImageBusy}
             onChange={onCreateChange}
             allowedTypes={hubDiyAllowedTypes}
-            typePicker="cards"
+            dense
+            suppressOcclusionImageEmpty={
+              createNeedsImage && !createImageKey
+            }
             onPreviewFaceChange={setPreviewFace}
             afterTypePicker={
               createNeedsImage && createImageKey ? (
@@ -208,12 +278,16 @@ export default function AddMaterialDiyPanel({
               }}
             >
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                Add an image
+                {createCard.type === "occlusion"
+                  ? "Image required"
+                  : "Add an image"}
               </Typography>
               <Typography variant="body2" sx={{
                 color: "text.secondary"
               }}>
-                JPEG, PNG, or WebP up to 8MB
+                {createCard.type === "occlusion"
+                  ? "Upload or pick a deck image (JPEG, PNG, or WebP up to 8MB), then drag boxes over labels."
+                  : "JPEG, PNG, or WebP up to 8MB"}
               </Typography>
               <Stack
                 direction={{ xs: "column", sm: "row" }}
@@ -270,13 +344,17 @@ export default function AddMaterialDiyPanel({
           sx={{
             position: { md: "sticky" },
             top: { md: 24 },
-            order: { xs: -1, md: 0 },
-            alignSelf: { md: "start" },
+            alignSelf: { xs: "stretch", md: "start" },
+            minHeight: 0,
+            height: { xs: "100%", md: "auto" },
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           <DiyCardPreview
             card={createCard}
             face={previewFace}
+            fillHeight
             action={
               <Button
                 type="submit"
@@ -300,21 +378,20 @@ export default function AddMaterialDiyPanel({
           />
         </Box>
       </Box>
-      <Stack
-        direction="row"
-        spacing={1.5}
-        sx={{
-          justifyContent: "space-between",
-          alignItems: "center",
-          mt: 3,
-          pt: 2,
-          borderTop: "1px solid",
-          borderColor: "rgba(232, 216, 199, 0.12)"
-        }}>
-        <Button onClick={onBack} disabled={createBusy} sx={FOOTER_BTN_SX}>
-          Back
-        </Button>
-        {createSessionHasCard ? (
+      {createSessionHasCard ? (
+        <Stack
+          direction="row"
+          spacing={1.5}
+          sx={{
+            justifyContent: "flex-end",
+            alignItems: "center",
+            mt: 1.5,
+            pt: 1.5,
+            flexShrink: 0,
+            borderTop: "1px solid",
+            borderColor: "rgba(232, 216, 199, 0.12)",
+          }}
+        >
           <Button
             type="button"
             variant="contained"
@@ -333,8 +410,8 @@ export default function AddMaterialDiyPanel({
           >
             Finish
           </Button>
-        ) : null}
-      </Stack>
+        </Stack>
+      ) : null}
     </Box>
   );
 }

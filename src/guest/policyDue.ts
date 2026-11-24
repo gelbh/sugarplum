@@ -155,8 +155,16 @@ export function buildGuestDueResult(
     .map((id) => byId.get(id))
     .filter((c): c is CardDraftView => c != null);
 
+  let nextDueAt: string | null = null;
+  for (const c of accepted) {
+    const due = cardDueIso(c, nowIsoValue);
+    if (due > nowIsoValue && (nextDueAt == null || due < nextDueAt)) {
+      nextDueAt = due;
+    }
+  }
+
   return {
-    result: { cards, meta: queue.meta },
+    result: { cards, meta: { ...queue.meta, nextDueAt } },
     pendingDeferrals: queue.deferrals,
   };
 }

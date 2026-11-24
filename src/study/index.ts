@@ -1,5 +1,6 @@
 export { default as CardFace } from "./CardFace";
 export { default as ClozePrompt } from "./ClozePrompt";
+export { default as ClozeReveal } from "./ClozeReveal";
 export { default as GradeButtons } from "./GradeButtons";
 export { default as ReviewCard } from "./ReviewCard";
 export { StudyNotesButton } from "./notes/StudyNotesButton";
@@ -42,6 +43,16 @@ export {
   CLOZE_EXTRA_LABEL,
 } from "./clozeFormat";
 export {
+  MCQ_ANSWER_SEP,
+  parseMcqAnswers,
+  encodeMcqAnswers,
+  mcqAnswersEqual,
+  mcqSetRating,
+  mcqTapRating,
+  shuffledMcqOptions,
+  mcqOptionButtonDisabled,
+} from "./mcqStudy";
+export {
   getEmbedPdfEngine,
   openPdfDocument,
   listPdfPages,
@@ -79,7 +90,10 @@ export { default as SessionComplete } from "./SessionComplete";
 export { default as SessionQuietEnd } from "./SessionQuietEnd";
 export { getIntroBonus } from "./introBonus";
 export { clientLocalDay } from "./localDay";
-export { StudyCardActions } from "./StudyCardActions";
+export {
+  StudyCardActions,
+  type StudyCardActionsHandle,
+} from "./StudyCardActions";
 export { useLearningRequeue } from "./useLearningRequeue";
 export { usePendingGradeSync } from "./usePendingGradeSync";
 export { useStudyImmersion } from "./useStudyImmersion";

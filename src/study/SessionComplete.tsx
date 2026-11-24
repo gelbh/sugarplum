@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { GAMIFICATION_CHANGED_EVENT, getGamification } from "../api/client";
 import FruitMedal from "../achievements/FruitMedal";
 import type { UnlockView } from "../achievements/wire";
 import { gradeLabelMultiline } from "./gradeLabels";
@@ -63,34 +61,6 @@ export default function SessionComplete(props: SessionCompleteProps) {
   const muted = props.zen
     ? "color-mix(in srgb, var(--sp-ivory) 72%, transparent)"
     : "text.secondary";
-  const [streak, setStreak] = useState<{
-    current: number;
-    level: number;
-  } | null>(null);
-
-  useEffect(() => {
-    if (!props.showAchievements) return;
-    let cancelled = false;
-    let latest = 0;
-    const load = () => {
-      const req = ++latest;
-      void getGamification()
-        .then((g) => {
-          if (!cancelled && req === latest) {
-            setStreak({ current: g.streakCurrent, level: g.level });
-          }
-        })
-        .catch(() => {
-          if (!cancelled && req === latest) setStreak(null);
-        });
-    };
-    load();
-    window.addEventListener(GAMIFICATION_CHANGED_EVENT, load);
-    return () => {
-      cancelled = true;
-      window.removeEventListener(GAMIFICATION_CHANGED_EVENT, load);
-    };
-  }, [props.showAchievements]);
 
   const body = (
     <Box
@@ -246,18 +216,6 @@ export default function SessionComplete(props: SessionCompleteProps) {
               ))}
             </Stack>
           </Box>
-        ) : null}
-        {streak ? (
-          <Typography
-            variant="body2"
-            sx={{
-              mt: 1.5,
-              color: muted,
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            Streak {streak.current} · Level {streak.level}
-          </Typography>
         ) : null}
         <Stack
           spacing={1.25}

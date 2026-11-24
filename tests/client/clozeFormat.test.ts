@@ -127,12 +127,31 @@ describe("composeClozeFront", () => {
     expect(r).toEqual({
       ok: false,
       error: "Put the blank text inside the sentence.",
+      blankIndex: 0,
     });
   });
 
   it("does not wrap a letter prefix inside a longer word", () => {
     const r = composeClozeFront("The capital is Paris", "P");
     expect(r.ok).toBe(false);
+  });
+
+  it("points at the blank that reused a word", () => {
+    const r = composeClozeFront("one cat two dog", ["cat", "dog", "cat"]);
+    expect(r).toEqual({
+      ok: false,
+      blankIndex: 2,
+      error: "“cat” is already used as a blank.",
+    });
+  });
+
+  it("points at an earlier missing blank, not the last field", () => {
+    const r = composeClozeFront("The cat sat", ["dog", "cat"]);
+    expect(r).toEqual({
+      ok: false,
+      blankIndex: 0,
+      error: "Put “dog” inside the sentence.",
+    });
   });
 });
 

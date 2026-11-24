@@ -1,9 +1,32 @@
 import { describe, expect, it } from "vitest";
 import {
+  encodeMcqAnswers,
   mcqOptionButtonDisabled,
+  mcqSetRating,
   mcqTapRating,
+  parseMcqAnswers,
   shuffledMcqOptions,
 } from "../../src/study/mcqStudy";
+
+describe("parseMcqAnswers / encodeMcqAnswers", () => {
+  const options = ["Paris", "Rome", "Oslo", "Madrid"];
+
+  it("round-trips a single answer as a plain string", () => {
+    expect(encodeMcqAnswers(["Rome"], options)).toBe("Rome");
+    expect(parseMcqAnswers("Rome", options)).toEqual(["Rome"]);
+  });
+
+  it("round-trips several answers in options order", () => {
+    const encoded = encodeMcqAnswers(["Madrid", "Paris"], options);
+    expect(parseMcqAnswers(encoded, options)).toEqual(["Paris", "Madrid"]);
+  });
+
+  it("grades multi-select as exact set match", () => {
+    expect(mcqSetRating(["Paris", "Madrid"], ["Paris", "Madrid"])).toBe(3);
+    expect(mcqSetRating(["Paris"], ["Paris", "Madrid"])).toBe(1);
+    expect(mcqSetRating(["Paris", "Rome"], ["Paris", "Madrid"])).toBe(1);
+  });
+});
 
 describe("mcqTapRating", () => {
   it("maps wrong tap to Again and correct tap to Good", () => {
