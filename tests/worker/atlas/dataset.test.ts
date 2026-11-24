@@ -635,7 +635,7 @@ describe("built-in parasite dataset", () => {
         }
         return paths
           .filter((file) => !existsSync(join(parasitesDir, file)))
-          .map((file) => `${e.key}/${file}`);
+          .map((file) => `${e.key}: ${file}`);
       }),
     );
     expect(missing).toEqual([]);
