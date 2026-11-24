@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aggregateSubjectRecall } from "../../src/study/subjectRecall";
+import { aggregateSubjectRecall } from "../../src/study/queue/subjectRecall";
 
 describe("aggregateSubjectRecall", () => {
   it("all null non-empty → avg 0, etk 0, count length", () => {

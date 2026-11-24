@@ -6,7 +6,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import StudyPacingSection from "../../src/settings/StudyPacingSection";
-import { DEFAULT_STUDY_PREFS } from "../../src/study/policyQueue";
+import { DEFAULT_STUDY_PREFS } from "../../src/study/queue/policyQueue";
 import { theme } from "../../src/theme";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =

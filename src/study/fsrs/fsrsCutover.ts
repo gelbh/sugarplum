@@ -1,7 +1,7 @@
 import { Reschedule } from "ts-fsrs/reschedule";
 import { schedulerForPrefs, type FsrsPrefs } from "./fsrsFactory";
 import { ratingToGrade, type ReviewLogReplayRow } from "./fsrsReplay";
-import type { FsrsSchedulerCard } from "../retrievability";
+import type { FsrsSchedulerCard } from "./retrievability";
 
 export type CutoverMemory = {
   stability: number;

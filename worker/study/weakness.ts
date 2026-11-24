@@ -4,4 +4,4 @@ export {
   weaknessScore,
   type WeaknessCandidate,
   type WeaknessRow,
-} from "../../src/study/weakness";
+} from "../../src/study/queue/weakness";

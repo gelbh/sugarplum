@@ -7,8 +7,8 @@ import {
   resolveCardGesture,
   studyPointerAllowed,
   studySwipeVisual,
-} from "../../src/study/cardGestures";
-import { GRADE_LABELS } from "../../src/study/gradeLabels";
+} from "../../src/study/gestures/cardGestures";
+import { GRADE_LABELS } from "../../src/study/grading/gradeLabels";
 
 describe("gesturePassedSlop", () => {
   it("is false under slop and true at/above", () => {

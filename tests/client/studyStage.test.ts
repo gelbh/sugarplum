@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { studyStage } from "../../src/study/studyStage";
+import { studyStage } from "../../src/study/session/studyStage";
 
 describe("studyStage", () => {
   it("is true for desktop fullscreen even without a card", () => {

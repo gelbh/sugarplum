@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { CardFaceMcqBody } from "../../src/study/cardFaceMcq";
+import { CardFaceMcqBody } from "../../src/study/faces/cardFaceMcq";
 import { StudyNotesButton } from "../../src/study/notes/StudyNotesButton";
 
 (
@@ -24,12 +24,12 @@ describe("study notes placement (source)", () => {
   });
 
   it("CardFace does not keep Notes in the answer footer above Show question", () => {
-    const src = readFileSync(join(rootDir, "src/study/CardFace.tsx"), "utf8");
+    const src = readFileSync(join(rootDir, "src/study/faces/CardFace.tsx"), "utf8");
     expect(src).not.toMatch(/Notes[\s\S]{0,200}Show question/);
   });
 
   it("CardFace composes Notes trailing into MCQ and flip plates", () => {
-    const src = readFileSync(join(rootDir, "src/study/CardFace.tsx"), "utf8");
+    const src = readFileSync(join(rootDir, "src/study/faces/CardFace.tsx"), "utf8");
     expect(src).toMatch(/StudyNotesButton/);
     expect(src).toMatch(/overlineTrailing=\{notesTrailing\}/);
     const mcqBlock = src.slice(src.indexOf('type === "mcq"'));

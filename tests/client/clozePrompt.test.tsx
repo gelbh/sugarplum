@@ -2,9 +2,9 @@
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
-import ClozePrompt from "../../src/study/ClozePrompt";
-import ClozeReveal from "../../src/study/ClozeReveal";
-import { clozeSpoken } from "../../src/study/clozeFormat";
+import ClozePrompt from "../../src/study/faces/ClozePrompt";
+import ClozeReveal from "../../src/study/faces/ClozeReveal";
+import { clozeSpoken } from "../../src/study/faces/clozeFormat";
 
 describe("ClozePrompt", () => {
   let root: Root | null = null;

@@ -3,7 +3,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import GradeButtons from "../../src/study/GradeButtons";
+import GradeButtons from "../../src/study/grading/GradeButtons";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }

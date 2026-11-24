@@ -3,7 +3,7 @@ import {
   ZEN_STORAGE_KEY,
   loadZenPreference,
   saveZenPreference,
-} from "../../src/study/zenPreference";
+} from "../../src/study/session/zenPreference";
 
 function memoryStorage() {
   const store = new Map<string, string>();

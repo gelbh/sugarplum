@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it } from "vitest";
-import { applyStudySwipeFrame } from "../../src/study/useStudyCardGesture";
-import { studySwipeVisual } from "../../src/study/cardGestures";
+import { applyStudySwipeFrame } from "../../src/study/gestures/useStudyCardGesture";
+import { studySwipeVisual } from "../../src/study/gestures/cardGestures";
 
 describe("applyStudySwipeFrame", () => {
   it("writes transform and stamp chrome onto the plate", () => {

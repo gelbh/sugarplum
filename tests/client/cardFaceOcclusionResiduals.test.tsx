@@ -2,7 +2,7 @@
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import CardFace from "../../src/study/CardFace";
+import CardFace from "../../src/study/faces/CardFace";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }

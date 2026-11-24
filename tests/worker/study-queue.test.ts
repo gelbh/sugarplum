@@ -6,7 +6,7 @@ import {
   type QueueCandidate,
   type StudyPrefs,
 } from "../../worker/study/queue";
-import { DEFAULT_STUDY_PREFS } from "../../src/study/policyPrefs";
+import { DEFAULT_STUDY_PREFS } from "../../src/study/queue/policyPrefs";
 
 const NOW = new Date("2026-10-28T15:00:00.000Z");
 const LOCAL_DAY_START = "2026-10-28T00:00:00.000Z";
