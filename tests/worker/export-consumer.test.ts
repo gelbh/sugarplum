@@ -216,7 +216,6 @@ describe("handleExportQueue", () => {
 
 describe("export queue constants", () => {
   it("retry budget is positive relative to stale window", () => {
-    // Host wrangler.jsonc sync lives in wrangler-queue-sync.test.ts (Node).
     expect(
       EXPORT_QUEUE_MAX_RETRIES * EXPORT_QUEUE_RETRY_DELAY_SEC * 1000,
     ).toBeGreaterThanOrEqual(EXPORT_RUNNING_STALE_MS);

@@ -532,7 +532,6 @@ describe("processGenerateJob free path", () => {
   });
 
   it("queue retry budget covers RUNNING_JOB_STALE_MS", () => {
-    // Host wrangler.jsonc sync lives in wrangler-queue-sync.test.ts (Node).
     expect(
       GENERATE_QUEUE_MAX_RETRIES * GENERATE_QUEUE_RETRY_DELAY_SEC * 1000,
     ).toBeGreaterThanOrEqual(RUNNING_JOB_STALE_MS);
