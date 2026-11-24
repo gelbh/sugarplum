@@ -18,6 +18,18 @@ export {
   default as DeckHubCreateView,
   type DeckHubCreateViewProps,
 } from "./DeckHubCreateView";
+export {
+  default as DeckHubWorkshopView,
+  type DeckHubWorkshopViewProps,
+} from "./DeckHubWorkshopView";
+export {
+  default as DeckHubHubView,
+  type DeckHubHubViewProps,
+} from "./DeckHubHubView";
+export {
+  default as DeckHubDialogs,
+  type DeckHubDialogsProps,
+} from "./DeckHubDialogs";
 export { default as EmptyNext } from "./EmptyNext";
 export {
   default as ClaimCoverageFilmstrip,

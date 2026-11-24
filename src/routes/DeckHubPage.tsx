@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {
-  CompositionSpark,
   diyOcclusionNotice,
   freePathImageHelperText,
   isImageUploadContentType,
@@ -17,38 +13,29 @@ import {
   runConsentedPdfSplitUpload,
   runConsentedPptxSplitUpload,
 } from "../materials";
-import { CoverPickerDialog } from "../deckHub";
+import {
+  DeckHubCreateView,
+  DeckHubDialogs,
+  DeckHubHubView,
+  DeckHubWorkshopView,
+  collectDeckImageKeys,
+  createDeckHubWorkshopOpeners,
+  useAddMaterialWorkshop,
+  useCardsWorkshop,
+  useCreateCardController,
+  useDeckHubCardMutations,
+  useDeckHubDeckLifecycle,
+  useDeckHubDraftPicker,
+  useDeckHubExport,
+  useDeckHubLoad,
+  useDeckHubMaterialDelete,
+  useDeckHubWorkshopNav,
+  useStudyReadySheet,
+  type ClaimJumpTarget,
+  type WorkshopFrame,
+} from "../deckHub";
 import { useShellBackOverride } from "../app/shell/ShellBackOverride";
-import { CardsWorkshop } from "../deckHub";
-import { ClaimCoverageFilmstrip, type ClaimJumpTarget } from "../deckHub";
-import { DeckHygienePanel } from "../deckHub";
-import { createDeckHubWorkshopOpeners } from "../deckHub";
-import { DeckHubCreateView } from "../deckHub";
-import { DeckHubDeleteDialog } from "../deckHub";
-import { DeckHubDeleteMaterialDialog } from "../deckHub";
-import { DeckHubDraftPickerDialog } from "../deckHub";
-import { DeckHubEditCardDialog } from "../deckHub";
-import { DeckHubMoveCardDialog } from "../deckHub";
-import { DeckHubRenameDialog } from "../deckHub";
-import { DeckHubResetScheduleDialog } from "../deckHub";
-import { DeckHubTitleHeader } from "../deckHub";
-import { MaterialsWorkshop } from "../deckHub";
-import { MissionBoard } from "../deckHub";
-import { StudyReadySheet } from "../deckHub";
-import { WorkshopShell } from "../deckHub";
-import { type WorkshopFrame } from "../deckHub";
 import { navigate } from "../shared/nav/navigate";
-import { useCreateCardController } from "../deckHub";
-import { useAddMaterialWorkshop } from "../deckHub";
-import { useCardsWorkshop } from "../deckHub";
-import { useDeckHubCardMutations } from "../deckHub";
-import { useDeckHubDeckLifecycle } from "../deckHub";
-import { useDeckHubDraftPicker } from "../deckHub";
-import { useDeckHubExport } from "../deckHub";
-import { useDeckHubLoad } from "../deckHub";
-import { useDeckHubMaterialDelete } from "../deckHub";
-import { useDeckHubWorkshopNav } from "../deckHub";
-import { useStudyReadySheet } from "../deckHub";
 import "../deckHub/motion";
 import {
   listDeckCards,
@@ -61,7 +48,6 @@ import {
   type SubjectKnowledge,
 } from "../api/client";
 import { isGuest } from "../guest/session";
-import { collectDeckImageKeys } from "../deckHub";
 import { ANKI_EXPORT_BUSY_LABEL } from "../export";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
@@ -103,38 +89,7 @@ export default function DeckHubPage({ deckId }: Props) {
     return () => setShellBack(null);
   }, [subject, setShellBack]);
 
-  const {
-    editCard,
-    setEditCard,
-    editBusy,
-    editError,
-    cardRegenBusy,
-    editDialogBusy,
-    openEdit,
-    onEditChange,
-    saveEdit,
-    onRegenEditCard,
-    confirmReset,
-    setConfirmReset,
-    resetBusy,
-    confirmResetSchedule,
-    moveTarget,
-    setMoveTarget,
-    moveAsBatch,
-    setMoveAsBatch,
-    moveSubjects,
-    moveDecks,
-    moveSubjectId,
-    moveDeckId,
-    setMoveDeckId,
-    moveBusy,
-    moveError,
-    moveDeckChoices,
-    openMove,
-    onMoveSubjectChange,
-    openBatchMove,
-    confirmMoveCard,
-  } = useDeckHubCardMutations({
+  const cardMut = useDeckHubCardMutations({
     deckId,
     guest,
     subject,
@@ -149,29 +104,14 @@ export default function DeckHubPage({ deckId }: Props) {
     setAcceptedCount,
     setError,
     setNotice,
-    editCard,
-    setEditCard,
+    editCard: cardMut.editCard,
+    setEditCard: cardMut.setEditCard,
   });
-  const {
-    showArchived,
-    onShowArchivedChange,
-    archiveBusyId,
-    selectedCardIds,
-    batchBusy,
-    clearSelection,
-    onToggleSelect,
-    onSelectAll,
-    pruneSelection,
-    onArchiveCard,
-    onRestoreCard,
-    onBatchArchive,
-    onBatchRestore,
-  } = cardsWorkshop;
 
   const create = useCreateCardController({
     deckId,
     guest,
-    showArchived,
+    showArchived: cardsWorkshop.showArchived,
     setCards,
     setAcceptedCount,
   });
@@ -183,29 +123,7 @@ export default function DeckHubPage({ deckId }: Props) {
     ANKI_EXPORT_BUSY_LABEL,
   );
 
-  const {
-    deckCover,
-    refreshDeckCover,
-    coverPickerOpen,
-    openCoverPicker,
-    closeCoverPicker,
-    onCoverSaved,
-    onCoverClear,
-    renameOpen,
-    setRenameOpen,
-    renameValue,
-    setRenameValue,
-    renameBusy,
-    renameError,
-    openRename,
-    onRenameSubmit,
-    deleteStats,
-    deleteBusy,
-    confirmDelete,
-    setConfirmDelete,
-    openDelete,
-    confirmDeleteDeck,
-  } = useDeckHubDeckLifecycle({
+  const life = useDeckHubDeckLifecycle({
     deckId,
     guest,
     deck,
@@ -217,11 +135,11 @@ export default function DeckHubPage({ deckId }: Props) {
   const { refreshCards, refreshDraftJobs, refreshMaterials } = useDeckHubLoad({
     deckId,
     guest,
-    showArchived,
+    showArchived: cardsWorkshop.showArchived,
     ready,
     deck,
     endLoad,
-    refreshDeckCover,
+    refreshDeckCover: life.refreshDeckCover,
     setDeck,
     setSubject,
     setCards,
@@ -234,12 +152,7 @@ export default function DeckHubPage({ deckId }: Props) {
     setReady,
   });
 
-  const {
-    deleteMaterialTarget,
-    setDeleteMaterialTarget,
-    deleteMaterialBusy,
-    confirmDeleteMaterial,
-  } = useDeckHubMaterialDelete({
+  const materialDelete = useDeckHubMaterialDelete({
     refreshMaterials,
     refreshDraftJobs,
     setError,
@@ -269,36 +182,23 @@ export default function DeckHubPage({ deckId }: Props) {
   });
 
   const study = useStudyReadySheet();
+  const drafts = useDeckHubDraftPicker({ draftJobs });
 
-  const {
-    draftPickerOpen,
-    setDraftPickerOpen,
-    openFullDraftReview,
-    openDraftJob,
-  } = useDeckHubDraftPicker({ draftJobs });
-
-  const {
-    topWorkshop,
-    workshopTitle,
-    workshopOpen,
-    creatingFlashcards,
-    openWorkshop,
-    onWorkshopBack,
-  } = useDeckHubWorkshopNav({
+  const nav = useDeckHubWorkshopNav({
     workshopStack,
     setWorkshopStack,
     resetMaterialMessages: material.resetMaterialMessages,
     loadStudySummary: study.loadStudySummary,
-    clearSelection,
+    clearSelection: cardsWorkshop.clearSelection,
     refreshMaterials,
-    onOpenDrafts: openFullDraftReview,
+    onOpenDrafts: drafts.openFullDraftReview,
     deck,
     acceptedCount,
   });
 
   // Method steps: TopChrome Back matches footer Back (chooser / leave stack).
   useEffect(() => {
-    if (!creatingFlashcards || topWorkshop?.tab == null) {
+    if (!nav.creatingFlashcards || nav.topWorkshop?.tab == null) {
       setShellBackHandler(null);
       return;
     }
@@ -306,15 +206,15 @@ export default function DeckHubPage({ deckId }: Props) {
     const onTabChange = material.onTabChange;
     setShellBackHandler(() => {
       if (returnToChooser) onTabChange(null);
-      else onWorkshopBack();
+      else nav.onWorkshopBack();
     });
     return () => setShellBackHandler(null);
   }, [
-    creatingFlashcards,
     material.onTabChange,
-    onWorkshopBack,
+    nav.creatingFlashcards,
+    nav.onWorkshopBack,
+    nav.topWorkshop?.tab,
     setShellBackHandler,
-    topWorkshop?.tab,
     workshopStack.length,
   ]);
 
@@ -327,8 +227,8 @@ export default function DeckHubPage({ deckId }: Props) {
         }
         if (target.cardStatus !== "accepted") return;
         let card = cards.find((c) => c.id === target.cardId);
-        if (!card && showArchived) {
-          onShowArchivedChange(false);
+        if (!card && cardsWorkshop.showArchived) {
+          cardsWorkshop.onShowArchivedChange(false);
           try {
             const accepted = await listDeckCards(deckId);
             setCards(accepted);
@@ -339,19 +239,17 @@ export default function DeckHubPage({ deckId }: Props) {
           }
         }
         if (!card) return;
-        openWorkshop("cards");
-        openEdit(card);
+        nav.openWorkshop("cards");
+        cardMut.openEdit(card);
       })();
     },
     [
+      cardMut.openEdit,
       cards,
+      cardsWorkshop.onShowArchivedChange,
+      cardsWorkshop.showArchived,
       deckId,
-      onShowArchivedChange,
-      openEdit,
-      openWorkshop,
-      setAcceptedCount,
-      setCards,
-      showArchived,
+      nav.openWorkshop,
     ],
   );
 
@@ -371,18 +269,12 @@ export default function DeckHubPage({ deckId }: Props) {
       setWorkshopStack,
     });
 
-  const sortedMaterials = useMemo(
-    () =>
-      [...materials].sort((a, b) => b.created_at.localeCompare(a.created_at)),
-    [materials],
-  );
-
   return (
     <Container
-      maxWidth={creatingFlashcards ? "lg" : "md"}
+      maxWidth={nav.creatingFlashcards ? "lg" : "md"}
       sx={{
         py: {
-          xs: creatingFlashcards ? 1 : 2,
+          xs: nav.creatingFlashcards ? 1 : 2,
           md: 3,
         },
         display: "flex",
@@ -392,351 +284,203 @@ export default function DeckHubPage({ deckId }: Props) {
       }}
     >
       {!ready ? (
-        <Typography
-          sx={{
-            color: "text.secondary",
-          }}
-        >
-          Loading deck…
-        </Typography>
+        <Typography sx={{ color: "text.secondary" }}>Loading deck…</Typography>
       ) : (
         <Stack
-          spacing={creatingFlashcards || workshopOpen ? 0 : 2}
+          spacing={nav.creatingFlashcards || nav.workshopOpen ? 0 : 2}
           sx={{ flex: 1, minHeight: 0 }}
         >
-          {creatingFlashcards ? (
+          {nav.creatingFlashcards ? (
             <DeckHubCreateView
               guest={guest}
-              tab={topWorkshop.tab ?? null}
+              tab={nav.topWorkshop?.tab ?? null}
               onTabChange={material.onTabChange}
-              onCancel={onWorkshopBack}
+              onCancel={nav.onWorkshopBack}
               material={material}
               create={create}
               deckImageKeys={deckImageKeys}
             />
-          ) : workshopOpen ? (
-            <WorkshopShell
-              open
-              title={workshopTitle}
-              subtitle={
-                topWorkshop?.id === "cards"
-                  ? "Select, edit, move, or create cards in this deck."
-                  : topWorkshop?.id === "materials"
-                    ? "Download or remove files used to generate cards."
-                    : topWorkshop?.id === "study"
-                      ? "See what is due, then start a session."
-                      : undefined
-              }
+          ) : nav.workshopOpen ? (
+            <DeckHubWorkshopView
+              title={nav.workshopTitle}
               closeMode={workshopStack.length <= 1}
-              onBack={onWorkshopBack}
-            >
-              {topWorkshop?.id === "study" && deck ? (
-                <StudyReadySheet
-                  deckId={deck.id}
-                  acceptedCount={acceptedCount}
-                  summary={study.studySummary}
-                  loading={study.studySummaryLoading}
-                  error={study.studySummaryError}
-                />
-              ) : null}
-
-              {topWorkshop?.id === "cards" ? (
-                <>
-                  {!isGuest() ? (
-                    <DeckHygienePanel
-                      deckId={deckId}
-                      resolveCard={(id) =>
-                        cards.find((card) => card.id === id) ?? null
-                      }
-                      onEdit={openEdit}
-                      onChanged={() => {
-                        void refreshCards();
-                      }}
-                    />
-                  ) : null}
-                  <CardsWorkshop
-                    cards={cards}
-                    showArchived={showArchived}
-                    onShowArchivedChange={onShowArchivedChange}
-                    selectedIds={selectedCardIds}
-                    onToggleSelect={onToggleSelect}
-                    onSelectAll={onSelectAll}
-                    onClearSelection={clearSelection}
-                    onPruneSelection={pruneSelection}
-                    archiveBusyId={archiveBusyId}
-                    batchBusy={batchBusy}
-                    onBatchArchive={() => {
-                      void onBatchArchive();
-                    }}
-                    onBatchRestore={() => {
-                      void onBatchRestore();
-                    }}
-                    onBatchMove={() => {
-                      void openBatchMove(selectedCardIds);
-                    }}
-                    onEdit={openEdit}
-                    onMove={(card) => {
-                      void openMove(card);
-                    }}
-                    onArchive={(card) => {
-                      void onArchiveCard(card);
-                    }}
-                    onRestore={(card) => {
-                      void onRestoreCard(card);
-                    }}
-                    onCreateCard={openDiyFromCards}
-                  />
-                </>
-              ) : null}
-
-              {topWorkshop?.id === "materials" ? (
-                <MaterialsWorkshop
-                  materials={sortedMaterials}
-                  busyId={
-                    deleteMaterialBusy
-                      ? (deleteMaterialTarget?.id ?? null)
-                      : null
-                  }
-                  guest={guest}
-                  onUpload={openUploadFromMaterials}
-                  onDelete={(row) => setDeleteMaterialTarget(row)}
-                />
-              ) : null}
-            </WorkshopShell>
+              onBack={nav.onWorkshopBack}
+              topId={nav.topWorkshop?.id}
+              deckId={deckId}
+              deck={deck}
+              guest={guest}
+              acceptedCount={acceptedCount}
+              study={{
+                summary: study.studySummary,
+                loading: study.studySummaryLoading,
+                error: study.studySummaryError,
+              }}
+              cards={cards}
+              cardsUi={{
+                showArchived: cardsWorkshop.showArchived,
+                onShowArchivedChange: cardsWorkshop.onShowArchivedChange,
+                selectedIds: cardsWorkshop.selectedCardIds,
+                onToggleSelect: cardsWorkshop.onToggleSelect,
+                onSelectAll: cardsWorkshop.onSelectAll,
+                onClearSelection: cardsWorkshop.clearSelection,
+                onPruneSelection: cardsWorkshop.pruneSelection,
+                archiveBusyId: cardsWorkshop.archiveBusyId,
+                batchBusy: cardsWorkshop.batchBusy,
+                onBatchArchive: () => {
+                  void cardsWorkshop.onBatchArchive();
+                },
+                onBatchRestore: () => {
+                  void cardsWorkshop.onBatchRestore();
+                },
+                onBatchMove: () => {
+                  void cardMut.openBatchMove(cardsWorkshop.selectedCardIds);
+                },
+                onEdit: cardMut.openEdit,
+                onMove: (card) => {
+                  void cardMut.openMove(card);
+                },
+                onArchive: (card) => {
+                  void cardsWorkshop.onArchiveCard(card);
+                },
+                onRestore: (card) => {
+                  void cardsWorkshop.onRestoreCard(card);
+                },
+                onCreateCard: openDiyFromCards,
+                refreshCards,
+              }}
+              materials={{
+                materials,
+                deleteBusy: materialDelete.deleteMaterialBusy,
+                deleteTarget: materialDelete.deleteMaterialTarget,
+                onUpload: openUploadFromMaterials,
+                onDelete: (row) =>
+                  materialDelete.setDeleteMaterialTarget(row),
+              }}
+            />
           ) : (
-            <>
-              <Box sx={{ flexShrink: 0 }}>
-                {deck ? (
-                  <DeckHubTitleHeader
-                    title={deck.title}
-                    cover={deckCover}
-                    coverKey={deck.id}
-                    guest={guest}
-                    crumbs={[
-                      { label: "Library", href: "/library" },
-                      ...(subject
-                        ? [
-                            {
-                              label: subject.title,
-                              href: `/library/subjects/${encodeURIComponent(subject.id)}`,
-                            },
-                          ]
-                        : []),
-                    ]}
-                    metaLine={[
-                      acceptedCount > 0
-                        ? acceptedCount === 1
-                          ? "1 accepted card"
-                          : `${acceptedCount} accepted cards`
-                        : null,
-                      draftJobs.length > 0
-                        ? `${draftJobs.length} draft job${draftJobs.length === 1 ? "" : "s"}`
-                        : null,
-                      claimCoverage != null && claimCoverage.summary.total > 0
-                        ? `${claimCoverage.summary.linked}/${claimCoverage.summary.total} claims`
-                        : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                    spark={
-                      (composition != null && composition.total > 0) ||
-                      (claimCoverage != null &&
-                        claimCoverage.summary.total > 0) ? (
-                        <Stack spacing={0} sx={{ alignItems: "flex-start" }}>
-                          {composition != null && composition.total > 0 ? (
-                            <CompositionSpark
-                              new={composition.new}
-                              learning={composition.learning}
-                              young={composition.young}
-                              mature={composition.mature}
-                              total={composition.total}
-                            />
-                          ) : null}
-                          <ClaimCoverageFilmstrip
-                            coverage={claimCoverage}
-                            onJumpToCard={onJumpToClaimCard}
-                          />
-                        </Stack>
-                      ) : null
-                    }
-                    exportBusy={exportBusy}
-                    exportDisabled={acceptedCount === 0}
-                    onExportAnki={() => {
-                      void onExportAnki();
-                    }}
-                    onRename={openRename}
-                    onDelete={openDelete}
-                    onChangeCover={openCoverPicker}
-                    onStudy={
-                      acceptedCount > 0
-                        ? () => openWorkshop("study")
-                        : undefined
-                    }
-                  />
-                ) : (
-                  <Typography
-                    variant="h3"
-                    component="h1"
-                    sx={{
-                      m: 0,
-                      fontFamily:
-                        '"Alice", "Georgia", "Times New Roman", serif',
-                      fontWeight: 400,
-                      letterSpacing: "0.02em",
-                      lineHeight: 1.1,
-                    }}
-                  >
-                    Deck
-                  </Typography>
-                )}
-              </Box>
-
-              {error ? <Alert severity="error">{error}</Alert> : null}
-              {notice ? (
-                <Alert severity="success" onClose={() => setNotice(null)}>
-                  {notice}
-                </Alert>
-              ) : null}
-              {exportWarning ? (
-                <Alert
-                  severity="warning"
-                  onClose={() => setExportWarning(null)}
-                >
-                  {exportWarning}
-                </Alert>
-              ) : null}
-
-              {deck ? (
-                <Box
-                  sx={{
-                    flex: 1,
-                    minHeight: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                    animation:
-                      "deckHubBoardIn 280ms cubic-bezier(0.2, 0, 0, 1)",
-                    "@keyframes deckHubBoardIn": {
-                      from: { opacity: 0, transform: "translateX(-24px)" },
-                      to: { opacity: 1, transform: "translateX(0)" },
-                    },
-                    "@media (prefers-reduced-motion: reduce)": {
-                      animation: "none",
-                    },
-                  }}
-                >
-                  <MissionBoard
-                    draftCount={draftJobs.length}
-                    cardCount={acceptedCount}
-                    materialCount={materials.length}
-                    emptyDeck={acceptedCount === 0 && draftJobs.length === 0}
-                    onOpen={openWorkshop}
-                  />
-                </Box>
-              ) : null}
-            </>
+            <DeckHubHubView
+              deck={deck}
+              subject={subject}
+              cover={life.deckCover}
+              guest={guest}
+              acceptedCount={acceptedCount}
+              draftJobCount={draftJobs.length}
+              materialCount={materials.length}
+              composition={composition}
+              claimCoverage={claimCoverage}
+              error={error}
+              notice={notice}
+              exportWarning={exportWarning}
+              onClearNotice={() => setNotice(null)}
+              onClearExportWarning={() => setExportWarning(null)}
+              exportBusy={exportBusy}
+              onExportAnki={() => {
+                void onExportAnki();
+              }}
+              onRename={life.openRename}
+              onDelete={life.openDelete}
+              onChangeCover={life.openCoverPicker}
+              onOpenWorkshop={nav.openWorkshop}
+              onJumpToClaimCard={onJumpToClaimCard}
+            />
           )}
         </Stack>
       )}
 
-      <DeckHubDraftPickerDialog
-        open={draftPickerOpen}
-        jobs={draftJobs}
-        onClose={() => setDraftPickerOpen(false)}
-        onPickJob={openDraftJob}
-      />
-
-      <DeckHubRenameDialog
-        open={renameOpen}
-        busy={renameBusy}
-        error={renameError}
-        value={renameValue}
-        onValueChange={setRenameValue}
-        onClose={() => !renameBusy && setRenameOpen(false)}
-        onSubmit={onRenameSubmit}
-      />
-      <DeckHubDeleteDialog
-        open={confirmDelete}
-        busy={deleteBusy}
-        title={deck?.title ?? null}
-        stats={deleteStats}
-        onClose={() => !deleteBusy && setConfirmDelete(false)}
-        onConfirm={confirmDeleteDeck}
-      />
-
-      <DeckHubEditCardDialog
-        card={editCard}
-        busy={editDialogBusy}
-        saveBusy={editBusy}
-        error={editError}
+      <DeckHubDialogs
         guest={guest}
-        cardRegenBusy={cardRegenBusy}
-        onClose={() => !editDialogBusy && setEditCard(null)}
-        onChange={onEditChange}
-        onSave={saveEdit}
-        onMove={() => {
-          if (editCard) void openMove(editCard);
+        deck={deck}
+        draftPicker={{
+          open: drafts.draftPickerOpen,
+          jobs: draftJobs,
+          onClose: () => drafts.setDraftPickerOpen(false),
+          onPickJob: drafts.openDraftJob,
         }}
-        onRequestReset={() => setConfirmReset(true)}
-        onRegen={() => {
-          void onRegenEditCard();
+        rename={{
+          open: life.renameOpen,
+          busy: life.renameBusy,
+          error: life.renameError,
+          value: life.renameValue,
+          onValueChange: life.setRenameValue,
+          onClose: () => !life.renameBusy && life.setRenameOpen(false),
+          onSubmit: life.onRenameSubmit,
+        }}
+        deleteDeck={{
+          open: life.confirmDelete,
+          busy: life.deleteBusy,
+          stats: life.deleteStats,
+          onClose: () => !life.deleteBusy && life.setConfirmDelete(false),
+          onConfirm: life.confirmDeleteDeck,
+        }}
+        edit={{
+          card: cardMut.editCard,
+          busy: cardMut.editDialogBusy,
+          saveBusy: cardMut.editBusy,
+          error: cardMut.editError,
+          cardRegenBusy: cardMut.cardRegenBusy,
+          onClose: () =>
+            !cardMut.editDialogBusy && cardMut.setEditCard(null),
+          onChange: cardMut.onEditChange,
+          onSave: cardMut.saveEdit,
+          onMove: () => {
+            if (cardMut.editCard) void cardMut.openMove(cardMut.editCard);
+          },
+          onRequestReset: () => cardMut.setConfirmReset(true),
+          onRegen: () => {
+            void cardMut.onRegenEditCard();
+          },
+        }}
+        move={{
+          open: cardMut.moveTarget !== null,
+          batch: cardMut.moveAsBatch,
+          selectedCount: cardsWorkshop.selectedCardIds.size,
+          error: cardMut.moveError,
+          busy: cardMut.moveBusy,
+          subjects: cardMut.moveSubjects,
+          decks: cardMut.moveDecks,
+          deckChoices: cardMut.moveDeckChoices,
+          subjectId: cardMut.moveSubjectId,
+          deckId: cardMut.moveDeckId,
+          onSubjectChange: cardMut.onMoveSubjectChange,
+          onDeckChange: cardMut.setMoveDeckId,
+          onClose: () => {
+            if (!cardMut.moveBusy) {
+              cardMut.setMoveTarget(null);
+              cardMut.setMoveAsBatch(false);
+            }
+          },
+          onConfirm: () => {
+            void cardMut.confirmMoveCard({
+              selectedCardIds: cardsWorkshop.selectedCardIds,
+              showArchived: cardsWorkshop.showArchived,
+              clearSelection: cardsWorkshop.clearSelection,
+            });
+          },
+        }}
+        resetSchedule={{
+          open: cardMut.confirmReset,
+          busy: cardMut.resetBusy,
+          onClose: () =>
+            !cardMut.resetBusy && cardMut.setConfirmReset(false),
+          onConfirm: cardMut.confirmResetSchedule,
+        }}
+        deleteMaterial={{
+          target: materialDelete.deleteMaterialTarget,
+          busy: materialDelete.deleteMaterialBusy,
+          onClose: () =>
+            !materialDelete.deleteMaterialBusy &&
+            materialDelete.setDeleteMaterialTarget(null),
+          onConfirm: () => {
+            void materialDelete.confirmDeleteMaterial();
+          },
+        }}
+        cover={{
+          open: life.coverPickerOpen,
+          onClose: life.closeCoverPicker,
+          onSaved: life.onCoverSaved,
+          onClear: life.onCoverClear,
         }}
       />
-
-      <DeckHubMoveCardDialog
-        open={moveTarget !== null}
-        batch={moveAsBatch}
-        selectedCount={selectedCardIds.size}
-        error={moveError}
-        busy={moveBusy}
-        subjects={moveSubjects}
-        decks={moveDecks}
-        deckChoices={moveDeckChoices}
-        subjectId={moveSubjectId}
-        deckId={moveDeckId}
-        onSubjectChange={onMoveSubjectChange}
-        onDeckChange={setMoveDeckId}
-        onClose={() => {
-          if (!moveBusy) {
-            setMoveTarget(null);
-            setMoveAsBatch(false);
-          }
-        }}
-        onConfirm={() => {
-          void confirmMoveCard({
-            selectedCardIds,
-            showArchived,
-            clearSelection,
-          });
-        }}
-      />
-
-      <DeckHubResetScheduleDialog
-        open={confirmReset}
-        busy={resetBusy}
-        onClose={() => !resetBusy && setConfirmReset(false)}
-        onConfirm={confirmResetSchedule}
-      />
-      <DeckHubDeleteMaterialDialog
-        target={deleteMaterialTarget}
-        busy={deleteMaterialBusy}
-        onClose={() => !deleteMaterialBusy && setDeleteMaterialTarget(null)}
-        onConfirm={() => {
-          void confirmDeleteMaterial();
-        }}
-      />
-
-      {!guest && deck ? (
-        <CoverPickerDialog
-          key={deck.id}
-          open={coverPickerOpen}
-          title={deck.title}
-          ownerKind="deck"
-          ownerId={deck.id}
-          onClose={closeCoverPicker}
-          onSaved={onCoverSaved}
-          onClear={onCoverClear}
-        />
-      ) : null}
     </Container>
   );
 }
