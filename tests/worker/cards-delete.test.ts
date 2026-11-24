@@ -7,11 +7,11 @@ import {
   getSchedules,
   resetTestDb,
   seedCard,
-  seedDeck,
   seedR2,
   seedReviewLog,
   seedSchedule,
   seedSession,
+  seedSessionOwner,
   seedUser,
 } from "./harness";
 import { afterEach, describe, it, expect } from "vitest";
@@ -23,24 +23,6 @@ afterEach(async () => {
 });
 
 const PAST_DUE = "2020-01-01T00:00:00.000Z";
-
-async function seedOwner(env: Bindings) {
-  await seedUser(env, {
-    id: "user-a",
-    email: "a@example.com",
-    password_hash: null,
-    oauth_subject: null,
-    created_at: "2026-01-01T00:00:00.000Z",
-  });
-  await seedDeck(env, {
-    id: "deck-a",
-    user_id: "user-a",
-    title: "Bio",
-    subject_hint: null,
-    created_at: "2026-01-01T00:00:00.000Z",
-  });
-  await seedSession(env, "sess-a", "user-a");
-}
 
 async function seedCardFixture(
   env: Bindings,
@@ -79,7 +61,7 @@ function del(
 describe("DELETE /api/cards/:id", () => {
   it("removes an accepted card, its schedule, and its review logs", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, {
       id: "card-1",
       status: "accepted",
@@ -119,7 +101,7 @@ describe("DELETE /api/cards/:id", () => {
 
   it("returns 400 for an archived card and keeps its history", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "card-arch", status: "archived" });
     await seedSchedule(env, {
       card_id: "card-arch",
@@ -154,7 +136,7 @@ describe("DELETE /api/cards/:id", () => {
 
   it("returns 400 for a draft", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "card-draft", status: "draft" });
     const res = await del(env, "card-draft");
     expect(res.status).toBe(400);
@@ -163,7 +145,7 @@ describe("DELETE /api/cards/:id", () => {
 
   it("returns 404 for another user's card", async () => {
     const env = cfEnv;
-    await seedOwner(env);
+    await seedSessionOwner(env);
     await seedCardFixture(env, { id: "card-1", status: "accepted" });
     await seedUser(env, {
       id: "user-b",

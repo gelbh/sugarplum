@@ -8,6 +8,7 @@ import {
   seedDeck,
   seedSchedule,
   seedSession,
+  seedSessionOwner,
   seedUser,
 } from "./harness";
 import { afterEach, describe, it, expect } from "vitest";
@@ -19,20 +20,7 @@ afterEach(async () => {
 });
 
 async function seedOwner(env: Bindings) {
-  await seedUser(env, {
-    id: "user-a",
-    email: "a@example.com",
-    password_hash: null,
-    oauth_subject: null,
-    created_at: "2026-01-01T00:00:00.000Z",
-  });
-  await seedDeck(env, {
-    id: "deck-a",
-    user_id: "user-a",
-    title: "Bio",
-    subject_hint: null,
-    created_at: "2026-01-01T00:00:00.000Z",
-  });
+  await seedSessionOwner(env);
   await seedDeck(env, {
     id: "deck-b",
     user_id: "user-a",
@@ -40,7 +28,6 @@ async function seedOwner(env: Bindings) {
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  await seedSession(env, "sess-a", "user-a");
 }
 
 async function seedAcceptedCard(
