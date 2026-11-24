@@ -54,7 +54,7 @@ export {
   clozeExtraSubtitle,
   composeClozeFront,
   parseClozeDiyFields,
-  hasSingleClozeBlank,
+  hasClozeBlank,
   assertSingleCloze,
   CLOZE_BLANK_MAX,
   CLOZE_EXTRA_LABEL,

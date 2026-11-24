@@ -31,7 +31,7 @@ export {
   clozeExtraSubtitle,
   composeClozeFront,
   parseClozeDiyFields,
-  hasSingleClozeBlank,
+  hasClozeBlank,
   CLOZE_BLANK_MAX,
   CLOZE_EXTRA_LABEL,
 } from "./faces/clozeFormat";

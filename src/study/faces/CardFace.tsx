@@ -65,9 +65,6 @@ type Props = {
   onOpenNotes?: () => void;
 };
 
-export { FaceOverline } from "./faceOverline";
-export { FlipCardPlate, StudyCardPlate } from "./cardPlates";
-
 /** Physical study card: 3D Y-flip, or instant swap when prefers-reduced-motion. */
 export default function CardFace({
   front,
