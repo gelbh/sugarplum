@@ -18,6 +18,7 @@ import {
   seedUser,
   seedUserSecret,
   seedUserStudyDay,
+  installSqlMarkerCounter,
   withTestBindings,
 } from "./harness";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -558,6 +559,27 @@ describe("GET /api/admin/users (allowlisted)", () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as { users: unknown[] };
     expect(body.users).toHaveLength(50);
+  });
+
+  it("chunks metrics queries when limit exceeds 12", async () => {
+    let metricsPrepares = 0;
+    const env = installSqlMarkerCounter(
+      withTestBindings(cfEnv, { adminEmails: "ops@example.com" }),
+      "sugarplum:admin-list-metrics",
+      () => {
+        metricsPrepares += 1;
+      },
+    );
+    await seedManyListUsers(env, 13);
+    const res = await app.request(
+      "/api/admin/users?limit=13",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { users: unknown[] };
+    expect(body.users).toHaveLength(13);
+    expect(metricsPrepares).toBe(2);
   });
 });
 
