@@ -31,7 +31,6 @@ type Props = {
   face?: DraftPreviewFace;
   action?: ReactNode;
   variant?: "editor" | "tile";
-  /** Grow the preview chrome to fill remaining column height (DIY mobile). */
   fillHeight?: boolean;
 };
 
@@ -326,7 +325,6 @@ export default function DiyCardPreview({
             mx: isTile ? 0 : "auto",
             // Tile slot already owns aspect-ratio; nested ratio letterboxes the face.
             aspectRatio: isTile ? undefined : "var(--sp-card-aspect)",
-            // fillHeight: size from available height so the face reads large on phone.
             ...(isTile
               ? {
                   width: "100%",

@@ -1,9 +1,9 @@
 import type { StudyRating } from "../api/client";
 
-/** Joins several correct MCQ answers in `back` (forbidden inside option text). */
+/** Unit separator in `back` for several correct answers (forbidden in option text). */
 export const MCQ_ANSWER_SEP = "\u001f";
 
-/** Correct answers from `back`, ordered as in `options`. Legacy single-answer backs stay one entry. */
+/** Correct answers from `back`, ordered as in `options`. */
 export function parseMcqAnswers(back: string, options: string[]): string[] {
   const optionSet = new Set(options.map((o) => o.trim()).filter(Boolean));
   const raw = back.includes(MCQ_ANSWER_SEP)
@@ -17,7 +17,7 @@ export function parseMcqAnswers(back: string, options: string[]): string[] {
     .filter((o) => o.length > 0 && selected.has(o));
 }
 
-/** Encode correct answers in options order. One answer → plain string (legacy shape). */
+/** Encode correct answers in options order (single answer stays a plain string). */
 export function encodeMcqAnswers(
   correctOptions: string[],
   options: string[],
@@ -44,7 +44,6 @@ export function mcqAnswersEqual(
   return true;
 }
 
-/** Multi-select Check → FSRS Again (1) or Good (3). */
 export function mcqSetRating(
   selected: string[],
   correct: string[],

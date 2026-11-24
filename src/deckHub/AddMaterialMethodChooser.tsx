@@ -65,7 +65,6 @@ export function StepHeader({
 }: {
   heading: string;
   blurb: string;
-  /** Tighter mobile chrome (DIY write-card one-screen). */
   compact?: boolean;
 }) {
   return (

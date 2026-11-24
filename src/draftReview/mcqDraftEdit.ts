@@ -5,9 +5,8 @@ export const MCQ_MAX = 5;
 
 export type McqDraft = {
   options: string[];
-  /** Indices into `options` that are correct (unique, ascending). */
   correctIndices: number[];
-  /** When false, UI is single-radio and at most one index is kept. */
+  /** Several-correct mode: checkboxes instead of a single radio. */
   allowMultiple: boolean;
 };
 

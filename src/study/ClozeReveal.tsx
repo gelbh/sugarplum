@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { clozeParts } from "./clozeFormat";
 
-/** Plum mark on ivory faces: wash + weight so blanks read at a glance. */
+/** Plum wash chip so cloze answers read on ivory faces. */
 const ANSWER_STYLE = {
   color: "#5B2C6F",
   fontWeight: 700,
@@ -14,7 +14,6 @@ const ANSWER_STYLE = {
   boxShadow: "inset 0 -0.12em 0 rgba(91, 44, 111, 0.35)",
 } as const;
 
-/** Cloze back: full sentence with hidden words emphasized. */
 export default function ClozeReveal({ front }: { front: string }) {
   const nodes: ReactNode[] = [];
   let blank = 0;

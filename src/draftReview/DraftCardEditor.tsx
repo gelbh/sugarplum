@@ -69,9 +69,7 @@ export type DraftCardEditorProps = {
   onPreviewFaceChange?: (face: DraftPreviewFace) => void;
   /** Hub DIY: sits under the type picker (e.g. Replace image). */
   afterTypePicker?: ReactNode;
-  /** Shorter Front/Back fields (hub DIY one-screen mobile). */
   dense?: boolean;
-  /** Parent already shows the no-image upload empty (hub DIY). */
   suppressOcclusionImageEmpty?: boolean;
   /** Optional single-card regen control rendered next to the type Select. */
   regenAction?: {
