@@ -17,3 +17,4 @@ export * from "./harness/inspect";
 export * from "./harness/reset";
 export * from "./harness/cards";
 export * from "./harness/admin";
+export * from "./harness/focus";
