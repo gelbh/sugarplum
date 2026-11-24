@@ -213,7 +213,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "linguatula-serrata/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Reginald Innes Pocock",
@@ -389,7 +389,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "ctenocephalides-felis/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Andybrookestar at English Wikipedia",
@@ -554,7 +554,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "ctenocephalides-canis/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Herms, William Brodbeck (1876-1949)",
@@ -719,7 +719,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "pulex-irritans/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Anagoria",
@@ -900,7 +900,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "ixodes-ricinus/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Zerrin Uzum, Dmitry Ershov, Michael J. Pavia, Adeline Mallet, Olivier Gorgette, Olivier Plantard, Davide Sassera, Fabriz",
@@ -1063,7 +1063,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "ixodes-hexagonus/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "AJC1",
@@ -1246,7 +1246,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "dermacentor-reticulatus/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "NobbiP",
@@ -1411,7 +1411,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "rhipicephalus-sanguineus/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "(Latreille)",
@@ -1604,7 +1604,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "haemaphysalis-punctata/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Laura Carrera-Faja",
@@ -1785,7 +1785,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "sarcoptes-scabiei/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Joel Mills",
@@ -1939,7 +1939,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "psoroptes-ovis/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": "Psoroptes mite of sheep",
           "credit": "Alan R Walker",
@@ -1949,7 +1949,7 @@
         },
         {
           "id": "lifecycle",
-          "file": "psoroptes-ovis/lifecycle.webp",
+          "file": "lifecycle.webp",
           "role": "lifecycle_diagram",
           "caption": null,
           "credit": "Daktaridudu",
@@ -2099,7 +2099,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "otodectes-cynotis/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Wikimedia Commons",
@@ -2248,7 +2248,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "demodex-canis/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Stanley Hirst (1883–1930)",
@@ -2428,7 +2428,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "cheyletiella-spp/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": "Cheyletiella sp. (likely C. yasguri) from a dog",
           "credit": "Joel Mills",
@@ -2574,7 +2574,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "chorioptes-bovis/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Alan R Walker",
@@ -2732,7 +2732,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "dermanyssus-gallinae/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Daktaridudu",
@@ -2879,7 +2879,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "trichodectes-canis/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Adam Cuerden",
@@ -3019,7 +3019,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "felicola-subrostratus/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Jana Bulantová",
@@ -3192,7 +3192,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "bovicola-ovis/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Franz von Paula Schrank",
@@ -3495,7 +3495,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "linognathus-vituli/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Alan R Walker",
@@ -3685,7 +3685,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "lucilia-sericata/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": "Adult female (left) and male (right)",
           "credit": "Charles J. Sharp",
@@ -3866,7 +3866,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "hypoderma-bovis/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Wikimedia Commons",
@@ -4039,7 +4039,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "oestrus-ovis/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Unknown authorUnknown author",
@@ -4215,7 +4215,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "gasterophilus-intestinalis/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Janet Graham",
@@ -4417,7 +4417,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "culicoides-spp/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": "Adult female Culicoides imicola",
           "credit": "Alan R Walker",
@@ -4591,7 +4591,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "stomoxys-calcitrans/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Frédéric Baldacchino, Coline Tramut, Ali Salem, Emmanuel Liénard, Émilie Delétré, Michel Franc, Thibaud Martin, Gérard D",
@@ -4791,7 +4791,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "haematobia-irritans/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": "Adult horn flies",
           "credit": "Scott Bauer / USDA ARS",
@@ -4973,7 +4973,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "musca-autumnalis/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "James K. Lindsey",

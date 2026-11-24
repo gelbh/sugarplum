@@ -163,7 +163,7 @@ describe("overlayAtlas", () => {
       images: [
         {
           id: "ds-img",
-          file: "fasciola-hepatica/hero.webp",
+          file: "hero.webp",
           role: "adult",
           caption: null,
           credit: "CDC",
