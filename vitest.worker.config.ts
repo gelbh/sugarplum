@@ -1,6 +1,7 @@
 import path from "node:path";
 import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-plugin";
 import { defineConfig } from "vitest/config";
+import { NODE_ONLY_WORKER_TESTS } from "./tests/worker/node-only-globs.ts";
 
 export default defineConfig({
   plugins: [
@@ -36,19 +37,6 @@ export default defineConfig({
     setupFiles: ["./tests/worker/apply-migrations.ts"],
     include: ["tests/worker/**/*.test.ts"],
     // Host fs / node:sqlite tests stay on the Node project (workerd cannot).
-    exclude: [
-      "tests/worker/atlas/backfill-field-overrides-sqlite.test.ts",
-      "tests/worker/atlas/dataset.test.ts",
-      "tests/worker/atlas/fixtures.test.ts",
-      "tests/worker/atlas/focus-override-sqlite.test.ts",
-      "tests/worker/atlas/migration.test.ts",
-      "tests/worker/d1-reads-hygiene.test.ts",
-      "tests/worker/gamification/schema.test.ts",
-      "tests/worker/patch-sqljs-plugin.test.ts",
-      "tests/worker/pdf-ocr-study-buffer.test.ts",
-      "tests/worker/quota-sql.test.ts",
-      "tests/worker/unique-violation.test.ts",
-      "tests/worker/view-as-route-annotations.test.ts",
-    ],
+    exclude: [...NODE_ONLY_WORKER_TESTS],
   },
 });

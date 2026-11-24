@@ -1,6 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect } from "vitest";
 import { env } from "cloudflare:workers";
-import { seedUser, seedSession } from "./harness";
+import { resetTestDb, seedUser, seedSession } from "./harness";
+
+afterEach(async () => {
+  await resetTestDb(env);
+});
 
 describe("harness smoke", () => {
   it("inserts a user readable via D1", async () => {

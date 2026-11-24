@@ -17,8 +17,6 @@ import {
   EXPORT_QUEUE_RETRY_DELAY_SEC,
   EXPORT_RUNNING_STALE_MS,
 } from "../../worker/export/stale";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 
 
 afterEach(async () => {
@@ -216,21 +214,11 @@ describe("handleExportQueue", () => {
   });
 });
 
-describe("export queue wrangler sync", () => {
-  it("keeps sugarplum-export max_retries in sync with stale window", () => {
-    let wrangler = "";
-    try {
-      wrangler = readFileSync(resolve(process.cwd(), "wrangler.jsonc"), "utf8");
-    } catch {
-      // workerd cannot read host wrangler.jsonc; constants asserted below.
-      expect(EXPORT_QUEUE_MAX_RETRIES * EXPORT_QUEUE_RETRY_DELAY_SEC * 1000).toBeGreaterThanOrEqual(
-        0,
-      );
-      return;
-    }
-    expect(wrangler).toContain(`"max_retries": ${EXPORT_QUEUE_MAX_RETRIES}`);
-    expect(wrangler).toContain(
-      `"retry_delay": ${EXPORT_QUEUE_RETRY_DELAY_SEC}`,
-    );
+describe("export queue constants", () => {
+  it("retry budget is positive relative to stale window", () => {
+    // Host wrangler.jsonc sync lives in wrangler-queue-sync.test.ts (Node).
+    expect(
+      EXPORT_QUEUE_MAX_RETRIES * EXPORT_QUEUE_RETRY_DELAY_SEC * 1000,
+    ).toBeGreaterThanOrEqual(EXPORT_RUNNING_STALE_MS);
   });
 });

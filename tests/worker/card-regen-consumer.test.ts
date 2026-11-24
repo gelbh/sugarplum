@@ -5,6 +5,7 @@ import {
   getQueueMessages,
   getWorkflowCreates,
   installQueueRecorders,
+  installWorkflowRecorders,
   resetTestDb,
   seedCard,
   seedDeck,
@@ -15,8 +16,6 @@ import {
   seedUser,
 } from "./harness";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import {
@@ -62,34 +61,15 @@ function mockBatch(body: CardRegenQueueMessage) {
 }
 
 describe("handleCardRegenQueue", () => {
-  it("omits max_concurrency and syncs retry budget in wrangler", () => {
-    let wrangler = "";
-    try {
-      wrangler = readFileSync(resolve(process.cwd(), "wrangler.jsonc"), "utf8");
-    } catch {
-      expect(
-        CARD_REGEN_QUEUE_MAX_RETRIES * CARD_REGEN_QUEUE_RETRY_DELAY_SEC * 1000,
-      ).toBeGreaterThanOrEqual(RUNNING_JOB_STALE_MS);
-      return;
-    }
-    expect(wrangler).toContain(`"max_retries": ${CARD_REGEN_QUEUE_MAX_RETRIES}`);
-    expect(wrangler).toContain(
-      `"retry_delay": ${CARD_REGEN_QUEUE_RETRY_DELAY_SEC}`,
-    );
-    const consumer = wrangler.match(
-      new RegExp(
-        `\\{\\s*"queue": "sugarplum-card-regen",[\\s\\S]*?"retry_delay": ${CARD_REGEN_QUEUE_RETRY_DELAY_SEC}\\s*,?\\s*\\}`,
-      ),
-    )?.[0];
-    expect(consumer).toBeTruthy();
-    expect(consumer).not.toMatch(/"max_concurrency"/);
+  it("queue retry budget covers RUNNING_JOB_STALE_MS", () => {
+    // Host wrangler.jsonc sync lives in wrangler-queue-sync.test.ts (Node).
     expect(
       CARD_REGEN_QUEUE_MAX_RETRIES * CARD_REGEN_QUEUE_RETRY_DELAY_SEC * 1000,
     ).toBeGreaterThanOrEqual(RUNNING_JOB_STALE_MS);
   });
 
   it("handleGenerateQueue still drains legacy cardRegen on GENERATE_QUEUE", async () => {
-    const env = installQueueRecorders(cfEnv);
+    const env = installWorkflowRecorders(installQueueRecorders(cfEnv));
     const ack = vi.fn();
     const retry = vi.fn();
     await handleGenerateQueue(

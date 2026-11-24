@@ -26,8 +26,6 @@ import {
   insertDraftCards,
   processGenerateJob,
 } from "../../worker/generation/consumer";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import {
   GENERATE_QUEUE_MAX_RETRIES,
   GENERATE_QUEUE_RETRY_DELAY_SEC,
@@ -534,20 +532,7 @@ describe("processGenerateJob free path", () => {
   });
 
   it("queue retry budget covers RUNNING_JOB_STALE_MS", () => {
-    // workerd vitest cannot read host wrangler.jsonc; assert constants only here.
-    let wrangler = "";
-    try {
-      wrangler = readFileSync(resolve(process.cwd(), "wrangler.jsonc"), "utf8");
-    } catch {
-      expect(
-        GENERATE_QUEUE_MAX_RETRIES * GENERATE_QUEUE_RETRY_DELAY_SEC * 1000,
-      ).toBeGreaterThanOrEqual(RUNNING_JOB_STALE_MS);
-      return;
-    }
-    expect(wrangler).toContain(`"max_retries": ${GENERATE_QUEUE_MAX_RETRIES}`);
-    expect(wrangler).toContain(
-      `"retry_delay": ${GENERATE_QUEUE_RETRY_DELAY_SEC}`,
-    );
+    // Host wrangler.jsonc sync lives in wrangler-queue-sync.test.ts (Node).
     expect(
       GENERATE_QUEUE_MAX_RETRIES * GENERATE_QUEUE_RETRY_DELAY_SEC * 1000,
     ).toBeGreaterThanOrEqual(RUNNING_JOB_STALE_MS);

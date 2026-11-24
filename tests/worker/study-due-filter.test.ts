@@ -1,10 +1,10 @@
 import { afterEach, describe, it, expect } from "vitest";
-import { applyD1Migrations, reset } from "cloudflare:test";
 import { env } from "cloudflare:workers";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import {
   getSchedules,
+  resetTestDb,
   seedCard,
   seedDeck,
   seedSchedule,
@@ -16,8 +16,7 @@ import {
 } from "./harness";
 
 afterEach(async () => {
-  await reset();
-  await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
+  await resetTestDb(env);
 });
 
 const PAST_DUE = "2020-01-01T00:00:00.000Z";

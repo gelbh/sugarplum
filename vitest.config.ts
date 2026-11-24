@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config";
 import { resolve } from "node:path";
+import { NODE_ONLY_WORKER_TESTS } from "./tests/worker/node-only-globs.ts";
 
 export default defineConfig({
   oxc: {
@@ -26,19 +27,7 @@ export default defineConfig({
       "tests/scripts/**/*.test.ts",
       "tests/shell/**/*.test.ts",
       "tests/src/**/*.test.ts",
-      // Node-only worker tests (host fs / node:sqlite); excluded from worker project
-      "tests/worker/atlas/backfill-field-overrides-sqlite.test.ts",
-      "tests/worker/atlas/dataset.test.ts",
-      "tests/worker/atlas/fixtures.test.ts",
-      "tests/worker/atlas/focus-override-sqlite.test.ts",
-      "tests/worker/atlas/migration.test.ts",
-      "tests/worker/d1-reads-hygiene.test.ts",
-      "tests/worker/gamification/schema.test.ts",
-      "tests/worker/patch-sqljs-plugin.test.ts",
-      "tests/worker/pdf-ocr-study-buffer.test.ts",
-      "tests/worker/quota-sql.test.ts",
-      "tests/worker/unique-violation.test.ts",
-      "tests/worker/view-as-route-annotations.test.ts",
+      ...NODE_ONLY_WORKER_TESTS,
     ],
   },
 });

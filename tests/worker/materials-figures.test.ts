@@ -206,7 +206,6 @@ describe("PDF figure crop materials", () => {
       page_count: null,
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
-      body_text: "notes",
     });
 
     const res = await app.request(
