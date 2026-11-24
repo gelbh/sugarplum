@@ -3,7 +3,7 @@ import {
   hashCardId,
   occlusionRevealAnswer,
   pickOcclusionRegion,
-} from "../../src/study/pickOcclusionRegion";
+} from "../../src/study/faces/pickOcclusionRegion";
 
 const regions = [
   { id: "r1", label: "aorta" },

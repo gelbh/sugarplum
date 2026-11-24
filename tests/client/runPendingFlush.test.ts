@@ -6,8 +6,8 @@ import {
   isNetworkGradeError,
   mergeFlushRemaining,
   runPendingFlush,
-} from "../../src/study/runPendingFlush";
-import type { PendingGrade } from "../../src/study/pendingGrades";
+} from "../../src/study/grading/runPendingFlush";
+import type { PendingGrade } from "../../src/study/grading/pendingGrades";
 import { ApiError } from "../../src/api/client";
 
 function grade(cardId: string, rating: 1 | 2 | 3 | 4): PendingGrade {

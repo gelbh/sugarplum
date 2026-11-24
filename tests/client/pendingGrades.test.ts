@@ -6,7 +6,7 @@ import {
   listPendingGrades,
   pendingCardIdSet,
   replacePendingGrades,
-} from "../../src/study/pendingGrades";
+} from "../../src/study/grading/pendingGrades";
 
 function installMemoryLocalStorage(opts?: { throwOnSet?: boolean }) {
   const store = new Map<string, string>();

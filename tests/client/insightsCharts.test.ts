@@ -12,7 +12,7 @@ import HourlySuccessChart from "../../src/insights/HourlySuccessChart";
 import GradeMixByMaturityChart from "../../src/insights/GradeMixByMaturityChart";
 import GradeMixChart from "../../src/insights/GradeMixChart";
 import ReviewsPerDayChart from "../../src/insights/ReviewsPerDayChart";
-import { gradeChartFill } from "../../src/study/gradeColors";
+import { gradeChartFill } from "../../src/study/grading/gradeColors";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;

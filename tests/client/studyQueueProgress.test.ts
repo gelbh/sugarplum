@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { studyQueueProgress } from "../../src/study/studyQueueProgress";
+import { studyQueueProgress } from "../../src/study/queue/studyQueueProgress";
 
 describe("studyQueueProgress", () => {
   it("returns 0 when the queue total is empty", () => {

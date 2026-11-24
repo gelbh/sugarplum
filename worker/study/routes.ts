@@ -28,7 +28,7 @@ import {
   parseProvenanceJson,
 } from "../../src/study/regenSource";
 import { onReviewGraded } from "../gamification/onStudyEvent";
-import { applyLoadBalance } from "../../src/study/loadBalance";
+import { applyLoadBalance } from "../../src/study/queue/loadBalance";
 import { loadDueHistogram } from "./dueHistogram";
 import { loadStudyPrefs } from "./prefs";
 import {

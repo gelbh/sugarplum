@@ -5,7 +5,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { navigate } from "../../src/shared/nav/navigate";
-import TodayDueBreakdown from "../../src/study/TodayDueBreakdown";
+import TodayDueBreakdown from "../../src/study/session/TodayDueBreakdown";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;

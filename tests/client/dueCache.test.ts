@@ -7,7 +7,7 @@ import {
   loadDueCache,
   pruneDueCacheCard,
   saveDueCache,
-} from "../../src/study/dueCache";
+} from "../../src/study/queue/dueCache";
 import type { CardDraftView } from "../../src/api/client";
 
 const sample: CardDraftView = {

@@ -8,7 +8,7 @@ import {
   extractClozeAnswer,
   parseClozeDiyFields,
   revealClozeFront,
-} from "../../src/study/clozeFormat";
+} from "../../src/study/faces/clozeFormat";
 
 describe("blankClozeFront", () => {
   it("replaces Anki cloze with ellipsis blank and hides answer", () => {

@@ -2,8 +2,8 @@ import {
   clampStudyPrefs,
   DEFAULT_STUDY_PREFS,
   type StudyPrefs,
-} from "../../src/study/policyPrefs";
-import { clampEasyDays, DEFAULT_EASY_DAYS } from "../../src/study/loadBalance";
+} from "../../src/study/queue/policyPrefs";
+import { clampEasyDays, DEFAULT_EASY_DAYS } from "../../src/study/queue/loadBalance";
 import {
   isLegacyFsrs6W,
   parseFsrsWJson,
