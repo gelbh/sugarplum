@@ -41,12 +41,22 @@ import { CardsWorkshop } from "../deckHub";
 import { ClaimCoverageFilmstrip, type ClaimJumpTarget } from "../deckHub";
 import { DeckHygienePanel } from "../deckHub";
 import { createDeckHubWorkshopOpeners } from "../deckHub";
+import { DeckHubDeleteMaterialDialog } from "../deckHub";
+import { DeckHubDraftPickerDialog } from "../deckHub";
+import { DeckHubResetScheduleDialog } from "../deckHub";
 import { DeckHubTitleHeader } from "../deckHub";
 import { MaterialsWorkshop } from "../deckHub";
 import { MissionBoard } from "../deckHub";
 import { StudyReadySheet } from "../deckHub";
 import { WorkshopShell } from "../deckHub";
 import { type WorkshopFrame } from "../deckHub";
+import {
+  DIALOG_CANCEL_SX,
+  DIALOG_PAPER_SX,
+  DIALOG_TITLE_SX,
+  GHOST_PILL_SX,
+  PRIMARY_PILL_SX,
+} from "../deckHub";
 import { navigate } from "../shared/nav/navigate";
 import { useCreateCardController } from "../deckHub";
 import { useAddMaterialWorkshop } from "../deckHub";
@@ -82,54 +92,6 @@ import { shouldAutoFocusText } from "../shared/lib/autoFocusText";
 type Props = {
   deckId: string;
 };
-
-const DIALOG_PAPER_SX = {
-  borderRadius: 2,
-  overflow: "hidden",
-  bgcolor: "background.paper",
-} as const;
-
-const DIALOG_TITLE_SX = {
-  p: 0,
-  fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
-  fontWeight: 400,
-  letterSpacing: "0.02em",
-  lineHeight: 1.2,
-  fontSize: "1.65rem",
-} as const;
-
-const DIALOG_CANCEL_SX = {
-  color: "text.secondary",
-  textTransform: "none",
-  fontWeight: 500,
-  "&:hover": { color: "text.primary", bgcolor: "transparent" },
-} as const;
-
-const PRIMARY_PILL_SX = {
-  minWidth: 112,
-  px: 2.25,
-  py: 0.95,
-  borderRadius: 999,
-  textTransform: "none",
-  fontWeight: 600,
-  boxShadow: "none",
-  "&:hover": { boxShadow: "none" },
-} as const;
-
-const GHOST_PILL_SX = {
-  ...PRIMARY_PILL_SX,
-  minWidth: 0,
-  px: 1.5,
-  border: "1px solid",
-  borderColor: "rgba(232, 216, 199, 0.22)",
-  color: "rgba(232, 216, 199, 0.82)",
-  bgcolor: "transparent",
-  "&:hover": {
-    boxShadow: "none",
-    borderColor: "rgba(232, 216, 199, 0.4)",
-    bgcolor: "rgba(91, 44, 111, 0.18)",
-  },
-} as const;
 
 export default function DeckHubPage({ deckId }: Props) {
   const guest = isGuest();
@@ -792,66 +754,12 @@ export default function DeckHubPage({ deckId }: Props) {
         </Stack>
       )}
 
-      <Dialog
+      <DeckHubDraftPickerDialog
         open={draftPickerOpen}
+        jobs={draftJobs}
         onClose={() => setDraftPickerOpen(false)}
-        fullWidth
-        maxWidth="xs"
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 2,
-              overflow: "hidden",
-              bgcolor: "background.paper",
-            },
-          },
-        }}
-      >
-        <DialogEyebrow label="Drafts" />
-        <DialogTitle sx={DIALOG_TITLE_SX}>Choose a draft job</DialogTitle>
-        <DialogContent sx={{ px: 3, pt: 1, pb: 1 }}>
-          <Stack spacing={1}>
-            {draftJobs.map((job) => (
-              <Button
-                key={job.id}
-                variant="outlined"
-                onClick={() => openDraftJob(job.id)}
-                sx={{
-                  justifyContent: "flex-start",
-                  textTransform: "none",
-                  borderRadius: 2,
-                  py: 1.25,
-                }}
-              >
-                <Stack
-                  spacing={0.25}
-                  sx={{
-                    alignItems: "flex-start",
-                    minWidth: 0,
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {job.filename?.trim() || job.deck_title || "Draft job"}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "text.secondary",
-                    }}
-                  >
-                    {job.draft_count} draft
-                    {job.draft_count === 1 ? "" : "s"} ·{" "}
-                    {new Date(job.created_at).toLocaleString()}
-                  </Typography>
-                </Stack>
-              </Button>
-            ))}
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setDraftPickerOpen(false)}>Cancel</Button>
-        </DialogActions>
-      </Dialog>
+        onPickJob={openDraftJob}
+      />
 
       <Dialog
         open={renameOpen}
@@ -1248,112 +1156,20 @@ export default function DeckHubPage({ deckId }: Props) {
         </DialogActions>
       </Dialog>
 
-      <Dialog
+      <DeckHubResetScheduleDialog
         open={confirmReset}
+        busy={resetBusy}
         onClose={() => !resetBusy && setConfirmReset(false)}
-        fullWidth
-        maxWidth="xs"
-        slotProps={{
-          paper: { sx: DIALOG_PAPER_SX },
-        }}
-      >
-        <Box
-          sx={{
-            px: 3,
-            pt: 2.5,
-            pb: 1.5,
-            borderBottom: 1,
-            borderColor: "divider",
-            background:
-              "linear-gradient(180deg, rgba(196, 165, 116, 0.12) 0%, transparent 100%)",
-          }}
-        >
-          <DialogEyebrow label="Schedule" tone="warning" />
-          <DialogTitle sx={DIALOG_TITLE_SX}>Reset schedule?</DialogTitle>
-        </Box>
-        <DialogContent sx={{ px: 3, pt: 2.5, pb: 1 }}>
-          <DialogContentText
-            sx={{ color: "text.secondary", lineHeight: 1.55, m: 0 }}
-          >
-            This sets the card’s FSRS schedule back to a new card (due now).
-            Your card text is unchanged.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-          <Button
-            onClick={() => setConfirmReset(false)}
-            disabled={resetBusy}
-            sx={DIALOG_CANCEL_SX}
-          >
-            Cancel
-          </Button>
-          <Button
-            color="warning"
-            variant="contained"
-            disabled={resetBusy}
-            onClick={confirmResetSchedule}
-            sx={PRIMARY_PILL_SX}
-          >
-            {resetBusy ? "Resetting…" : "Reset schedule"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={deleteMaterialTarget !== null}
+        onConfirm={confirmResetSchedule}
+      />
+      <DeckHubDeleteMaterialDialog
+        target={deleteMaterialTarget}
+        busy={deleteMaterialBusy}
         onClose={() => !deleteMaterialBusy && setDeleteMaterialTarget(null)}
-        fullWidth
-        maxWidth="xs"
-        slotProps={{
-          paper: { sx: DIALOG_PAPER_SX },
+        onConfirm={() => {
+          void confirmDeleteMaterial();
         }}
-      >
-        <Box
-          sx={{
-            px: 3,
-            pt: 2.5,
-            pb: 1.5,
-            borderBottom: 1,
-            borderColor: "divider",
-            background:
-              "linear-gradient(180deg, rgba(196, 165, 116, 0.12) 0%, transparent 100%)",
-          }}
-        >
-          <DialogEyebrow label="Files" tone="warning" />
-          <DialogTitle sx={DIALOG_TITLE_SX}>Delete file?</DialogTitle>
-        </Box>
-        <DialogContent sx={{ px: 3, pt: 2.5, pb: 1 }}>
-          <DialogContentText
-            sx={{ color: "text.secondary", lineHeight: 1.55, m: 0 }}
-          >
-            {deleteMaterialTarget
-              ? `Remove “${
-                  deleteMaterialTarget.filename?.trim() || "this file"
-                }” from the deck. Cards already created stay.`
-              : null}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-          <Button
-            onClick={() => setDeleteMaterialTarget(null)}
-            disabled={deleteMaterialBusy}
-            sx={DIALOG_CANCEL_SX}
-          >
-            Cancel
-          </Button>
-          <Button
-            color="warning"
-            variant="contained"
-            disabled={deleteMaterialBusy}
-            onClick={() => {
-              void confirmDeleteMaterial();
-            }}
-            sx={PRIMARY_PILL_SX}
-          >
-            {deleteMaterialBusy ? "Deleting…" : "Delete file"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      />
 
       {!guest && deck ? (
         <CoverPickerDialog
