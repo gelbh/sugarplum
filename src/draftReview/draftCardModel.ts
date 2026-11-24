@@ -6,7 +6,7 @@ import type {
 import {
   MCQ_MAX,
   MCQ_MIN,
-  correctIndexFor,
+  correctIndicesFor,
   pickCorrect,
   type McqDraft,
 } from "./mcqDraftEdit";
@@ -129,9 +129,11 @@ export function defaultMcqOptions(card: CardDraftView): string[] {
 
 export function mcqDraftFromCard(card: CardDraftView): McqDraft {
   const options = card.options ?? defaultMcqOptions(card);
+  const correctIndices = correctIndicesFor(options, backAnswer(card.back));
   return {
     options,
-    correctIndex: correctIndexFor(options, backAnswer(card.back)),
+    correctIndices,
+    allowMultiple: correctIndices.length > 1,
   };
 }
 

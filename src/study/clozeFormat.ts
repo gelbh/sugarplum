@@ -11,8 +11,7 @@ export const CLOZE_BLANK_MAX = 8;
 
 export type ClozePart =
   | { kind: "text"; value: string }
-  | { kind: "hint"; value: string }
-  | { kind: "blank" };
+  | { kind: "blank"; answer: string; hint?: string };
 
 /**
  * Cloze fronts need 1–CLOZE_BLANK_MAX blanks (Anki `{{cN::…}}` or `___`).
@@ -42,12 +41,13 @@ export function clozeParts(front: string): ClozePart[] {
     if (index > cursor) {
       parts.push({ kind: "text", value: front.slice(cursor, index) });
     }
+    const answer = (match[1] ?? "").trim();
     const hint = match[2];
-    if (hint !== undefined && hint.length > 0) {
-      parts.push({ kind: "hint", value: hint });
-    } else {
-      parts.push({ kind: "blank" });
-    }
+    parts.push(
+      hint !== undefined && hint.length > 0
+        ? { kind: "blank", answer, hint }
+        : { kind: "blank", answer },
+    );
     cursor = index + match[0].length;
   }
   if (cursor < front.length) {
@@ -59,7 +59,7 @@ export function clozeParts(front: string): ClozePart[] {
 export function clozeSpoken(front: string): string {
   return clozeParts(front)
     .map((part) => {
-      if (part.kind === "blank") return "blank";
+      if (part.kind === "blank") return part.hint?.trim() ? part.hint : "blank";
       return part.value;
     })
     .join("");
@@ -68,7 +68,7 @@ export function clozeSpoken(front: string): string {
 export function blankClozeFront(front: string): string {
   return clozeParts(front)
     .map((part) => {
-      if (part.kind === "blank") return "[…]";
+      if (part.kind === "blank") return part.hint?.trim() ? part.hint : "[…]";
       return part.value;
     })
     .join("");
@@ -105,7 +105,8 @@ export function clozeExtraSubtitle(back: string): string | null {
 export const CLOZE_EXTRA_LABEL = "Extra (optional)";
 
 export type ComposeClozeResult =
-  { ok: true; front: string } | { ok: false; error: string };
+  | { ok: true; front: string }
+  | { ok: false; error: string; blankIndex?: number };
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -136,19 +137,18 @@ export function composeClozeFront(
   sentence: string,
   blankOrBlanks: string | string[],
 ): ComposeClozeResult {
-  const blanks = (
-    Array.isArray(blankOrBlanks) ? blankOrBlanks : [blankOrBlanks]
-  )
-    .map((b) => b.trim())
-    .filter(Boolean);
+  const raw = Array.isArray(blankOrBlanks) ? blankOrBlanks : [blankOrBlanks];
+  const entries = raw
+    .map((text, index) => ({ text: text.trim(), index }))
+    .filter((entry) => entry.text.length > 0);
 
   if (!sentence.trim()) {
     return { ok: false, error: "Sentence is required" };
   }
-  if (blanks.length === 0) {
-    return { ok: false, error: "Add at least one blank" };
+  if (entries.length === 0) {
+    return { ok: false, error: "Add at least one blank", blankIndex: 0 };
   }
-  if (blanks.length > CLOZE_BLANK_MAX) {
+  if (entries.length > CLOZE_BLANK_MAX) {
     return {
       ok: false,
       error: `At most ${CLOZE_BLANK_MAX} blanks`,
@@ -158,17 +158,25 @@ export function composeClozeFront(
   type Hit = { index: number; length: number; text: string; n: number };
   const hits: Hit[] = [];
   let searchFrom = 0;
-  for (let i = 0; i < blanks.length; i++) {
-    const blank = blanks[i]!;
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i]!;
+    const blank = entry.text;
     if (blank.includes("}}") || blank.includes("::")) {
-      return { ok: false, error: "Blank cannot contain :: or }}" };
+      return {
+        ok: false,
+        error: "Blank cannot contain :: or }}",
+        blankIndex: entry.index,
+      };
     }
     const local = findClozeBlankIndex(sentence.slice(searchFrom), blank);
     if (local < 0) {
+      const alreadyUsed = findClozeBlankIndex(sentence, blank) >= 0;
       return {
         ok: false,
-        error:
-          blanks.length === 1
+        blankIndex: entry.index,
+        error: alreadyUsed
+          ? `“${blank}” is already used as a blank.`
+          : entries.length === 1
             ? "Put the blank text inside the sentence."
             : `Put “${blank}” inside the sentence.`,
       };

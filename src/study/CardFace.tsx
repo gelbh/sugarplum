@@ -16,6 +16,7 @@ import {
   clozeSpoken,
   extractClozeAnswer,
   extractClozeAnswers,
+  revealClozeFront,
 } from "./clozeFormat";
 import {
   occlusionMaskScrollTop,
@@ -23,6 +24,7 @@ import {
 } from "../deckHub/kernel";
 import { CardFaceMcqBody } from "./cardFaceMcq";
 import ClozePrompt from "./ClozePrompt";
+import ClozeReveal from "./ClozeReveal";
 import { FaceOverline } from "./faceOverline";
 import KeyChip from "./KeyChip";
 import { StudyNotesButton } from "./notes/StudyNotesButton";
@@ -425,7 +427,9 @@ export default function CardFace({
   const clozeExtra = isCloze ? clozeExtraSubtitle(back) : null;
   const clozeAnswers = isCloze ? extractClozeAnswers(front) : [];
   const answerText = isCloze
-    ? clozeAnswers.join(" · ") || (extractClozeAnswer(front) ?? "")
+    ? revealClozeFront(front) ||
+      clozeAnswers.join(" · ") ||
+      (extractClozeAnswer(front) ?? "")
     : back;
   const imageKey = occlusion?.imageKey ?? mediaR2Keys[0];
   const canReveal = !revealed && !disabled;
@@ -561,7 +565,11 @@ export default function CardFace({
             }}
           >
             <Typography component="p" sx={FACE_ANSWER_TEXT_SX}>
-              {answerText}
+              {isCloze && front.trim() ? (
+                <ClozeReveal front={front} />
+              ) : (
+                answerText
+              )}
             </Typography>
             {clozeExtra ? (
               <Typography component="p" sx={FACE_HINT_TEXT_SX}>

@@ -3,12 +3,11 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-import { FOOTER_BTN_SX, PRIMARY_PILL_SX } from "./AddMaterialMethodChooser";
+import { PRIMARY_PILL_SX } from "./AddMaterialMethodChooser";
 
 type Props = {
   guest: boolean;
   materialBusy: boolean;
-  createBusy: boolean;
   pasteText: string;
   onPasteTextChange: (value: string) => void;
   pasteFilename: string;
@@ -17,13 +16,11 @@ type Props = {
   onAlsoCoverChange: (value: string) => void;
   onGuestPaste: (e?: FormEvent) => void;
   onAccountPaste: (e?: FormEvent) => void;
-  onBack: () => void;
 };
 
 export default function AddMaterialPastePanel({
   guest,
   materialBusy,
-  createBusy,
   pasteText,
   onPasteTextChange,
   pasteFilename,
@@ -32,7 +29,6 @@ export default function AddMaterialPastePanel({
   onAlsoCoverChange,
   onGuestPaste,
   onAccountPaste,
-  onBack,
 }: Props) {
   return (
     <Box
@@ -73,24 +69,18 @@ export default function AddMaterialPastePanel({
             />
           ) : null}
         </Stack>
-        <Stack
-          direction="row"
-          spacing={1.5}
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            pt: 2,
-            borderTop: "1px solid",
-            borderColor: "rgba(232, 216, 199, 0.12)"
-          }}>
-          <Button
-            onClick={onBack}
-            disabled={materialBusy || createBusy}
-            sx={FOOTER_BTN_SX}
+        {pasteText.trim() ? (
+          <Stack
+            direction="row"
+            spacing={1.5}
+            sx={{
+              justifyContent: "flex-end",
+              alignItems: "center",
+              pt: 2,
+              borderTop: "1px solid",
+              borderColor: "rgba(232, 216, 199, 0.12)",
+            }}
           >
-            Back
-          </Button>
-          {pasteText.trim() ? (
             <Button
               type="submit"
               variant="contained"
@@ -99,8 +89,8 @@ export default function AddMaterialPastePanel({
             >
               {materialBusy ? "Saving…" : "Generate from paste"}
             </Button>
-          ) : null}
-        </Stack>
+          </Stack>
+        ) : null}
       </Stack>
     </Box>
   );

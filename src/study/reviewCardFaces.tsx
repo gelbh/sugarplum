@@ -19,7 +19,7 @@ import {
 import {
   CLOZE_EXTRA_LABEL,
   clozeSpoken,
-  extractClozeAnswers,
+  revealClozeFront,
 } from "./clozeFormat";
 import {
   backAnswer,
@@ -28,6 +28,7 @@ import {
 } from "../draftReview/kernel";
 import { FaceOverline, FlipCardPlate, StudyCardPlate } from "./CardFace";
 import ClozePrompt from "./ClozePrompt";
+import ClozeReveal from "./ClozeReveal";
 import {
   FACE_ANSWER_TEXT_SX,
   FACE_BODY_SX,
@@ -231,15 +232,21 @@ export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
             </Typography>
           ) : null}
           <Box sx={CONTENT_SX}>
-            {isCloze ? (
+            {isCloze && frontText.trim() ? (
               <Typography component="p" sx={FACE_ANSWER_TEXT_SX}>
-                {extractClozeAnswers(frontText).join(" · ")}
+                <ClozeReveal front={frontText} />
               </Typography>
             ) : null}
             <EditableText
               label={isCloze ? CLOZE_EXTRA_LABEL : "Back"}
               value={backText}
-              spoken={backText}
+              spoken={
+                isCloze
+                  ? [revealClozeFront(frontText), backText]
+                      .filter((part) => part.trim())
+                      .join(". ")
+                  : backText
+              }
               textSx={isCloze ? FACE_HINT_TEXT_SX : FACE_ANSWER_TEXT_SX}
               onChange={(back) => onChange({ front: frontText, back, type })}
               {...field("back")}

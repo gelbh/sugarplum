@@ -28,8 +28,8 @@ export const METHOD_META: Record<
     Icon: ContentPasteOutlinedIcon,
   },
   diy: {
-    label: "Write a card",
-    heading: "Write a card",
+    label: "Create a card",
+    heading: "Create a card",
     blurb: "Build one card by hand and add it to this deck.",
     Icon: EditNoteOutlinedIcon,
   },
@@ -61,9 +61,12 @@ export const PRIMARY_PILL_SX = {
 export function StepHeader({
   heading,
   blurb,
+  compact = false,
 }: {
   heading: string;
   blurb: string;
+  /** Tighter mobile chrome (DIY write-card one-screen). */
+  compact?: boolean;
 }) {
   return (
     <Box>
@@ -71,12 +74,13 @@ export function StepHeader({
         component="p"
         sx={{
           m: 0,
-          mb: 0.75,
+          mb: compact ? 0.35 : 0.75,
           fontSize: "0.6875rem",
           fontWeight: 500,
           letterSpacing: "0.22em",
           textTransform: "uppercase",
           color: "primary.main",
+          display: compact ? { xs: "none", md: "block" } : undefined,
         }}
       >
         Create flashcards
@@ -91,6 +95,9 @@ export function StepHeader({
           letterSpacing: "0.02em",
           lineHeight: 1.15,
           color: "text.primary",
+          ...(compact
+            ? { fontSize: { xs: "1.5rem", md: undefined } }
+            : {}),
         }}
       >
         {heading}
@@ -98,6 +105,7 @@ export function StepHeader({
       <Typography
         variant="body2"
         sx={{
+          display: compact ? { xs: "none", md: "block" } : undefined,
           color: "text.secondary",
           mt: 1,
           maxWidth: "40ch",
@@ -142,8 +150,8 @@ export default function AddMaterialMethodChooser({
           heading="How do you want to start?"
           blurb={
             guest
-              ? "Paste text or write a card. Sign in to upload files."
-              : "Upload notes, paste text, or write a card by hand."
+              ? "Paste text or create a card. Sign in to upload files."
+              : "Upload notes, paste text, or create a card by hand."
           }
         />
         {alerts}

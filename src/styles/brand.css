@@ -38,6 +38,13 @@ body,
   );
 }
 
+/* hideChrome immersion only: TopChrome gone; do not put this on plain .sp-stage
+   (Draft Review / study finish keep shell chrome and would double the inset). */
+.sp-stage--immersed {
+  padding-top: env(safe-area-inset-top, 0px);
+  touch-action: pan-x pan-y;
+}
+
 .sp-playing-card {
   aspect-ratio: var(--sp-card-aspect);
   background-color: var(--sp-card-face);

@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { formatLearningEta } from "./useLearningRequeue";
 
 export type StudyFreshEmptyProps = {
   title: string;
@@ -10,6 +12,8 @@ export type StudyFreshEmptyProps = {
   onAction: () => void;
   actionBusy?: boolean;
   actionVariant?: "contained" | "outlined";
+  /** Soonest future due; when set, show a live countdown. */
+  nextDueAt?: string | null;
 };
 
 const enterSx = {
@@ -28,9 +32,17 @@ const enterSx = {
 
 const alice = '"Alice", "Georgia", "Times New Roman", serif';
 const amber = "var(--sp-grade-hard-border, #c4a574)";
+const amberLit = "var(--sp-grade-hard-fg, #e8d0a8)";
 
 export default function StudyFreshEmpty(props: StudyFreshEmptyProps) {
   const variant = props.actionVariant ?? "contained";
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!props.nextDueAt) return;
+    const id = window.setInterval(() => setTick((n) => n + 1), 15_000);
+    return () => window.clearInterval(id);
+  }, [props.nextDueAt]);
+  const eta = props.nextDueAt ? formatLearningEta(props.nextDueAt) : null;
 
   return (
     <Box
@@ -88,6 +100,29 @@ export default function StudyFreshEmpty(props: StudyFreshEmptyProps) {
             boxShadow: `0 0 12px color-mix(in srgb, ${amber} 55%, transparent)`,
           }}
         />
+        {eta ? (
+          <Typography
+            sx={{
+              fontFamily: alice,
+              fontSize: { xs: "1.65rem", sm: "1.85rem" },
+              lineHeight: 1.2,
+              color: "var(--sp-ivory)",
+              m: 0,
+              mb: 1.5,
+            }}
+          >
+            Next cards in{" "}
+            <Box
+              component="span"
+              sx={{
+                color: amberLit,
+                textShadow: `0 0 24px color-mix(in srgb, ${amber} 45%, transparent)`,
+              }}
+            >
+              {eta}
+            </Box>
+          </Typography>
+        ) : null}
         <Typography
           variant="body2"
           sx={{

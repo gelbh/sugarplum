@@ -1532,6 +1532,40 @@ export function createTestEnv(opts?: {
             material_count,
           } as T;
         }
+        // GET /api/study/due meta.nextDueAt: MIN(s.due) where due > now
+        if (
+          normalized.includes("MIN(s.due)") &&
+          normalized.includes("FROM cards c") &&
+          normalized.includes("INNER JOIN card_schedules s") &&
+          normalized.includes("s.due >")
+        ) {
+          const userId = bound[0] as string;
+          const status = bound[1] as string;
+          const now = bound[2] as string;
+          const scopeBound = bound[3] as string | undefined;
+          const filterDeckId = normalized.includes("c.deck_id =")
+            ? scopeBound
+            : null;
+          const filterSubjectId = normalized.includes("d.subject_id =")
+            ? scopeBound
+            : null;
+          let nextDue: string | null = null;
+          for (const c of cards.values()) {
+            if (c.status !== status) continue;
+            const deck = decks.get(c.deck_id);
+            if (!deck || deck.user_id !== userId) continue;
+            if (filterDeckId && c.deck_id !== filterDeckId) continue;
+            if (filterSubjectId && deck.subject_id !== filterSubjectId) {
+              continue;
+            }
+            const schedule = schedules.get(c.id);
+            if (!schedule || schedule.due <= now) continue;
+            if (nextDue == null || schedule.due < nextDue) {
+              nextDue = schedule.due;
+            }
+          }
+          return { next_due: nextDue } as T;
+        }
         return null;
       },
       async all<T>(): Promise<{ results: T[] }> {

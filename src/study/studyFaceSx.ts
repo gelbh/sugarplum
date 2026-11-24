@@ -62,6 +62,8 @@ export const PROMPT_SX = {
   justifyContent: "center",
   textAlign: "center",
   minHeight: 0,
+  minWidth: 0,
+  width: "100%",
 } as const;
 
 export const FACE_PROMPT_TEXT_SX = {
@@ -70,6 +72,9 @@ export const FACE_PROMPT_TEXT_SX = {
   fontWeight: 400,
   lineHeight: 1.35,
   whiteSpace: "pre-wrap",
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+  maxWidth: "100%",
   color: "inherit",
 } as const;
 
@@ -79,6 +84,9 @@ export const FACE_ANSWER_TEXT_SX = {
   fontWeight: 400,
   lineHeight: 1.45,
   whiteSpace: "pre-wrap",
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+  maxWidth: "100%",
   color: "inherit",
 } as const;
 
@@ -88,6 +96,9 @@ export const FACE_FRONT_ECHO_SX = {
   fontWeight: 500,
   lineHeight: 1.35,
   whiteSpace: "pre-wrap",
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+  maxWidth: "100%",
   color: "inherit",
   opacity: 0.55,
   textAlign: "center",
@@ -101,6 +112,9 @@ export const FACE_HINT_TEXT_SX = {
   fontWeight: 400,
   lineHeight: 1.4,
   whiteSpace: "pre-wrap",
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+  maxWidth: "100%",
   color: "inherit",
   opacity: 0.6,
   mt: 1.5,

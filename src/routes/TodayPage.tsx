@@ -221,11 +221,12 @@ export default function TodayPage() {
     <Container
       maxWidth="sm"
       sx={(t) => ({
-        py: { xs: 6, sm: 8 },
-        minHeight: { sm: "100%" },
+        py: { xs: 4, sm: 8 },
+        minHeight: "100%",
         display: "flex",
         flexDirection: "column",
-        justifyContent: { sm: "center" },
+        justifyContent: "center",
+        boxSizing: "border-box",
         ...t.applyStyles("dark", {
           backgroundImage:
             "radial-gradient(ellipse 70% 55% at 50% 38%, var(--sp-lamp-glow, rgba(196, 165, 116, 0.28)) 0%, transparent 70%)",

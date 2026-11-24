@@ -1,10 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Box from "@mui/material/Box";
-import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { FlipCardPlate, StudyCardPlate } from "../study";
 import { CardFaceMcqBody } from "../study";
-import { ClozePrompt } from "../study";
+import { ClozePrompt, ClozeReveal } from "../study";
 import type { DraftPreviewFace } from "../draftReview";
 import {
   FACE_ANSWER_TEXT_SX,
@@ -32,6 +31,8 @@ type Props = {
   face?: DraftPreviewFace;
   action?: ReactNode;
   variant?: "editor" | "tile";
+  /** Grow the preview chrome to fill remaining column height (DIY mobile). */
+  fillHeight?: boolean;
 };
 
 function OcclusionFocusMedia({
@@ -208,6 +209,7 @@ export default function DiyCardPreview({
   face = "front",
   action,
   variant = "editor",
+  fillHeight = false,
 }: Props) {
   const [manualFace, setManualFace] = useState<DraftPreviewFace | null>(null);
   const parts = previewParts(card);
@@ -230,6 +232,8 @@ export default function DiyCardPreview({
     !parts.occlusion &&
     !parts.imageKey &&
     !(card.options ?? []).some((o) => o.trim());
+  // DIY editor: keep outer chrome when empty; hide face + Add until content exists.
+  const hideFaceWhileEmpty = empty && !isTile;
 
   function toggleFace() {
     setManualFace(revealed ? "front" : "back");
@@ -289,10 +293,12 @@ export default function DiyCardPreview({
       sx={{
         display: "flex",
         flexDirection: "column",
-        gap: isTile ? 0 : 1.25,
+        gap: isTile ? 0 : { xs: 0.75, md: 1.25 },
         width: "100%",
-        height: isTile ? "100%" : undefined,
-        p: isTile ? 0 : { xs: 1.5, md: 2 },
+        height: isTile || fillHeight ? "100%" : undefined,
+        flex: fillHeight ? 1 : undefined,
+        minHeight: fillHeight ? 0 : undefined,
+        p: isTile ? 0 : { xs: 1.25, md: 2 },
         borderRadius: isTile ? 0 : 2,
         border: isTile ? "none" : "1px solid",
         borderColor: isTile ? undefined : "rgba(232, 216, 199, 0.14)",
@@ -302,71 +308,62 @@ export default function DiyCardPreview({
         boxSizing: "border-box",
       }}
     >
-      {isTile ? null : (
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            alignItems: "center",
-            justifyContent: "space-between"
-          }}>
-          <Typography
-            component="p"
-            sx={{
-              m: 0,
-              fontSize: "0.6875rem",
-              fontWeight: 500,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "text.secondary",
-            }}
-          >
-            Live preview
-          </Typography>
-          <Typography
-            component="p"
-            sx={{
-              m: 0,
-              fontSize: "0.6875rem",
-              fontWeight: 600,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color: "primary.light",
-            }}
-          >
-            {shownFace}
-          </Typography>
-        </Stack>
-      )}
-
       <Box
         sx={{
           width: "100%",
-          maxWidth: isTile
-            ? "none"
-            : card.type === "mcq"
-              ? 280
-              : card.type === "occlusion"
-                ? 280
-                : 240,
-          mx: isTile ? 0 : "auto",
-          // Tile slot already owns aspect-ratio; nested ratio letterboxes the face.
-          aspectRatio: isTile ? undefined : "var(--sp-card-aspect)",
-          maxHeight: isTile
-            ? "none"
-            : card.type === "mcq"
-              ? 360
-              : card.type === "occlusion"
-                ? "min(420px, 70vh)"
-                : 300,
-          height: isTile ? "100%" : undefined,
+          // Tile + fillHeight must own height so FlipCardPlate's 100% resolves.
+          flex: isTile || fillHeight ? 1 : undefined,
+          height: isTile || fillHeight ? "100%" : undefined,
           minHeight: 0,
           minWidth: 0,
-          overflow: isTile ? "hidden" : undefined,
-          borderRadius: isTile ? 2 : undefined,
+          display: fillHeight && !isTile ? "flex" : undefined,
+          alignItems: fillHeight && !isTile ? "center" : undefined,
+          justifyContent: fillHeight && !isTile ? "center" : undefined,
         }}
       >
-        {empty ? (
+        <Box
+          sx={{
+            mx: isTile ? 0 : "auto",
+            // Tile slot already owns aspect-ratio; nested ratio letterboxes the face.
+            aspectRatio: isTile ? undefined : "var(--sp-card-aspect)",
+            // fillHeight: size from available height so the face reads large on phone.
+            ...(isTile
+              ? {
+                  width: "100%",
+                  height: "100%",
+                  maxHeight: "none",
+                  minHeight: 0,
+                  minWidth: 0,
+                  overflow: "hidden",
+                  borderRadius: 2,
+                }
+              : fillHeight
+                ? {
+                    height: "100%",
+                    width: "auto",
+                    maxWidth: "100%",
+                    maxHeight: "100%",
+                    minHeight: 0,
+                    minWidth: 0,
+                  }
+                : {
+                    width: "100%",
+                    maxWidth:
+                      card.type === "mcq" || card.type === "occlusion"
+                        ? { xs: 200, md: 280 }
+                        : { xs: 168, md: 240 },
+                    maxHeight:
+                      card.type === "mcq"
+                        ? { xs: 220, md: 360 }
+                        : card.type === "occlusion"
+                          ? { xs: "min(240px, 36vh)", md: "min(420px, 70vh)" }
+                          : { xs: 180, md: 300 },
+                    minHeight: 0,
+                    minWidth: 0,
+                  }),
+          }}
+        >
+        {hideFaceWhileEmpty ? null : empty ? (
           <Box
             sx={{
               width: "100%",
@@ -573,7 +570,11 @@ export default function DiyCardPreview({
                         component="p"
                         sx={isTile ? tileAnswerSx : FACE_ANSWER_TEXT_SX}
                       >
-                        {answerText.trim() || "Back"}
+                        {isCloze && parts.front.trim() ? (
+                          <ClozeReveal front={parts.front} />
+                        ) : (
+                          answerText.trim() || "Back"
+                        )}
                       </Typography>
                       {clozeExtra ? (
                         <Typography
@@ -594,22 +595,33 @@ export default function DiyCardPreview({
             }
           />
         )}
+        </Box>
       </Box>
 
-      {isTile ? null : (
+      {isTile || hideFaceWhileEmpty ? null : (
         <Typography
           variant="caption"
           sx={{
             color: "text.secondary",
-            textAlign: "center"
-          }}>
+            textAlign: "center",
+            display: { xs: "none", md: "block" },
+            flexShrink: 0,
+          }}
+        >
           {card.type === "mcq"
             ? "As it appears in study"
             : "Tap the card, or focus a field to flip"}
         </Typography>
       )}
-      {action ? (
-        <Box sx={{ pt: 0.5, display: "flex", justifyContent: "center" }}>
+      {action && !hideFaceWhileEmpty ? (
+        <Box
+          sx={{
+            pt: 0.5,
+            display: "flex",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
           {action}
         </Box>
       ) : null}

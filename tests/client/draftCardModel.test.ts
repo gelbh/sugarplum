@@ -126,12 +126,16 @@ describe("draftFaceKind", () => {
 });
 
 describe("mcqDraftFromCard", () => {
-  it("uses card options as-is and resolves correctIndex from the back", () => {
+  it("uses card options as-is and resolves correct indices from the back", () => {
     expect(
       mcqDraftFromCard(
         card({ type: "mcq", back: { answer: "b" }, options: ["a", "b"] }),
       ),
-    ).toEqual({ options: ["a", "b"], correctIndex: 1 });
+    ).toEqual({
+      options: ["a", "b"],
+      correctIndices: [1],
+      allowMultiple: false,
+    });
   });
 });
 

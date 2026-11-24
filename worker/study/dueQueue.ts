@@ -73,6 +73,36 @@ export async function loadDueCandidates(
   return results ?? [];
 }
 
+/** Soonest accepted schedule due strictly after now (scoped). */
+export async function loadNextDueAt(
+  db: D1Database,
+  userId: string,
+  nowIso: string,
+  scope: DueScope,
+): Promise<string | null> {
+  let sql = `SELECT MIN(s.due) AS next_due
+       FROM cards c
+       INNER JOIN card_schedules s ON s.card_id = c.id
+       INNER JOIN decks d ON d.id = c.deck_id
+       WHERE d.user_id = ? AND c.status = ? AND s.due > ?`;
+  const binds: unknown[] = [userId, "accepted", nowIso];
+
+  if (scope.deckId) {
+    sql += " AND c.deck_id = ?";
+    binds.push(scope.deckId);
+  } else if (scope.subjectId) {
+    sql += " AND d.subject_id = ?";
+    binds.push(scope.subjectId);
+  }
+
+  const row = await db
+    .prepare(sql)
+    .bind(...binds)
+    .first<{ next_due: string | null }>();
+  const next = row?.next_due;
+  return typeof next === "string" && next.length > 0 ? next : null;
+}
+
 export function rowsToCandidates(rows: DueSqlRow[]): QueueCandidate[] {
   return rows.map((row) => ({
     id: row.id,

@@ -12,11 +12,14 @@ import Container from "@mui/material/Container";
 import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
 import Link from "@mui/material/Link";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
 import { rememberIncomingUnlocks } from "../achievements/rememberUnlocks";
 import type { UnlockView } from "../achievements/wire";
@@ -42,7 +45,10 @@ import { LearningSoftWait } from "../study";
 import { StudyFreshEmpty } from "../study";
 import { SessionComplete } from "../study";
 import { SessionQuietEnd } from "../study";
-import { StudyCardActions } from "../study";
+import {
+  StudyCardActions,
+  type StudyCardActionsHandle,
+} from "../study";
 import {
   emptyTally,
   gradedTotal,
@@ -65,6 +71,8 @@ export default function StudyPage() {
   const [tally, setTally] = useState(emptyTally);
   const [unlocks, setUnlocks] = useState<readonly UnlockView[]>([]);
   const cardDialogOpenRef = useRef(false);
+  const cardActionsRef = useRef<StudyCardActionsHandle>(null);
+  const [cardMenuEl, setCardMenuEl] = useState<HTMLElement | null>(null);
   const onCardDialogOpen = useCallback((open: boolean) => {
     cardDialogOpenRef.current = open;
   }, []);
@@ -226,6 +234,9 @@ export default function StudyPage() {
   const current = queueHead;
   const notes = useStudyNotesOverlay(current);
   const queueFraction = studyQueueProgress(queueTotal, queue.length);
+  useEffect(() => {
+    setCardMenuEl(null);
+  }, [current?.id]);
   const cardHostRef = useRef<HTMLDivElement>(null);
   const [plateWidth, setPlateWidth] = useState<number | null>(null);
   const surface = sessionSurface(
@@ -368,13 +379,15 @@ export default function StudyPage() {
   }
 
   const finish = !current && surface === "complete";
-  // Full-height column so pause surfaces can vertically center.
-  const pauseFill =
+  // Stage-branded pause: complete, soft-wait, quiet, and fresh empty.
+  const brandedPause =
     !current &&
     (finish ||
       surface === "soft_wait" ||
       surface === "quiet" ||
       !hadCards);
+  // Full-height column so pause surfaces can vertically center.
+  const pauseFill = brandedPause;
   const fillColumn = pauseFill
     ? ({
         minHeight: "100%",
@@ -383,23 +396,28 @@ export default function StudyPage() {
         flexDirection: "column",
       } as const)
     : null;
+  const stageSkin = stage || brandedPause;
 
   return (
     <Box
-      className={stage || finish ? "sp-stage" : undefined}
+      className={
+        stageSkin
+          ? stage
+            ? "sp-stage sp-stage--immersed"
+            : "sp-stage"
+          : undefined
+      }
       sx={{
-        minHeight: stage || finish ? "100%" : fillColumn?.minHeight,
-        height: stage || finish ? "100%" : fillColumn?.height,
+        minHeight: stageSkin ? "100%" : fillColumn?.minHeight,
+        height: stageSkin ? "100%" : fillColumn?.height,
         display: fillColumn?.display,
         flexDirection: fillColumn?.flexDirection,
         boxSizing: "border-box",
-        ...(stage || finish
+        ...(stageSkin
           ? {
               color: "var(--sp-ivory)",
               "& .MuiIconButton-root": { color: "var(--sp-ivory)" },
-              ...(surface === "soft_wait" ||
-              surface === "complete" ||
-              !hadCards
+              ...(brandedPause
                 ? {
                     backgroundImage:
                       "radial-gradient(ellipse 75% 58% at 50% 42%, rgba(196, 165, 116, 0.38) 0%, transparent 72%)",
@@ -412,14 +430,14 @@ export default function StudyPage() {
       <Container
         maxWidth="sm"
         sx={{
-          py: stage || finish ? { xs: 1, sm: 3 } : 4,
-          height: stage || finish ? "100%" : fillColumn?.height,
-          maxHeight: stage || finish ? "100%" : undefined,
+          py: stageSkin ? { xs: 1, sm: 3 } : 4,
+          height: stageSkin ? "100%" : fillColumn?.height,
+          maxHeight: stageSkin ? "100%" : undefined,
           display: "flex",
           flexDirection: "column",
           position: "relative",
-          overflow: stage || finish ? "hidden" : undefined,
-          pb: stage || finish
+          overflow: stageSkin ? "hidden" : undefined,
+          pb: stageSkin
             ? { xs: "max(8px, env(safe-area-inset-bottom))", sm: 3 }
             : undefined,
         }}
@@ -441,7 +459,7 @@ export default function StudyPage() {
               position: "relative",
               flexShrink: 0
             }}>
-            {stage && !mobile ? (
+            {brandedPause || (stage && !mobile) ? (
               <Box sx={{ width: 44, height: 44, flexShrink: 0 }} aria-hidden />
             ) : (
               <IconButton
@@ -458,7 +476,7 @@ export default function StudyPage() {
                 )}
               </IconButton>
             )}
-            {stage || finish ? (
+            {stage ? (
               <Box
                 sx={{
                   position: "absolute",
@@ -493,7 +511,52 @@ export default function StudyPage() {
               </Box>
             ) : null}
             {mobile ? (
-              <Box sx={{ width: 44, height: 44, flexShrink: 0 }} aria-hidden />
+              current ? (
+                <>
+                  <IconButton
+                    aria-label="Card actions"
+                    aria-haspopup="menu"
+                    aria-expanded={cardMenuEl != null}
+                    aria-controls={
+                      cardMenuEl ? "study-card-actions-menu" : undefined
+                    }
+                    onClick={(ev) => setCardMenuEl(ev.currentTarget)}
+                    color="primary"
+                    size="small"
+                    disabled={busy || offlineCopy}
+                    sx={{ minWidth: 44, minHeight: 44 }}
+                  >
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
+                  <Menu
+                    id="study-card-actions-menu"
+                    anchorEl={cardMenuEl}
+                    open={cardMenuEl != null}
+                    onClose={() => setCardMenuEl(null)}
+                  >
+                    <MenuItem
+                      disabled={busy || offlineCopy}
+                      onClick={() => {
+                        setCardMenuEl(null);
+                        cardActionsRef.current?.openEdit();
+                      }}
+                    >
+                      Edit
+                    </MenuItem>
+                    <MenuItem
+                      disabled={busy || offlineCopy}
+                      onClick={() => {
+                        setCardMenuEl(null);
+                        cardActionsRef.current?.openDelete();
+                      }}
+                    >
+                      Delete
+                    </MenuItem>
+                  </Menu>
+                </>
+              ) : (
+                <Box sx={{ width: 44, height: 44, flexShrink: 0 }} aria-hidden />
+              )
             ) : (
               <IconButton
                 aria-label="Fullscreen"
@@ -575,6 +638,7 @@ export default function StudyPage() {
                   body="You can study held introductions early."
                   actionLabel={studyMoreBusy ? "Loading…" : "Study more"}
                   actionBusy={studyMoreBusy}
+                  nextDueAt={queueMeta?.nextDueAt ?? null}
                   onAction={() => void onStudyMore()}
                 />
               </Box>
@@ -591,8 +655,13 @@ export default function StudyPage() {
               >
                 <StudyFreshEmpty
                   title="Nothing due yet"
-                  body="Add material to create your first cards."
+                  body={
+                    queueMeta?.nextDueAt
+                      ? "Come back when these are ready, or add more in Library."
+                      : "Add material to create your first cards."
+                  }
                   actionLabel="Open Library"
+                  nextDueAt={queueMeta?.nextDueAt ?? null}
                   onAction={() => {
                     exitZen();
                     navigate("/library");
@@ -612,7 +681,7 @@ export default function StudyPage() {
               >
                 <LearningSoftWait
                   pendingCount={pendingLearning.length}
-                  nextDueAt={nextLearningDue}
+                  nextDueAt={nextLearningDue ?? queueMeta?.nextDueAt ?? null}
                   readyDueCount={readyDueCount}
                   onToday={leaveStudy}
                   onStartStudy={onStartStudyFromSoftWait}
@@ -634,6 +703,7 @@ export default function StudyPage() {
                   studyMoreBusy={studyMoreBusy}
                   onStudyMore={() => void onStudyMore()}
                   onToday={leaveStudy}
+                  nextDueAt={nextLearningDue ?? queueMeta?.nextDueAt ?? null}
                   scopeBack={
                     scopeBack
                       ? { ...scopeBack, onClick: () => openScopeBack(true) }
@@ -653,7 +723,7 @@ export default function StudyPage() {
                 }}
               >
                 <SessionComplete
-                  zen={stage || finish}
+                  zen={stageSkin}
                   tally={tally}
                   unlocks={unlocks}
                   showAchievements={!isGuest()}
@@ -676,6 +746,7 @@ export default function StudyPage() {
           ) : (
             <>
               <StudyCardActions
+                ref={cardActionsRef}
                 card={current}
                 hidden={stage}
                 gradeBusy={busy}

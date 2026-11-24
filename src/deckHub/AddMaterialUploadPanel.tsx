@@ -27,7 +27,6 @@ type Props = {
   onUploadFileChange: (file: File | null) => void;
   onFigureFilesChange: (files: File[]) => void;
   onUploadFile: (e?: FormEvent) => void;
-  onBack: () => void;
   offerLearningObjectives: boolean;
   submitLabel: "Continue" | "Start generation";
   submitDisabled?: boolean;
@@ -43,7 +42,6 @@ export default function AddMaterialUploadPanel({
   onUploadFileChange,
   onFigureFilesChange,
   onUploadFile,
-  onBack,
   offerLearningObjectives,
   submitLabel,
   submitDisabled = false,
@@ -271,20 +269,18 @@ export default function AddMaterialUploadPanel({
             {freePathImageHelper}
           </Typography>
         ) : null}
-        <Stack
-          direction="row"
-          spacing={1.5}
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            pt: 2,
-            borderTop: "1px solid",
-            borderColor: "rgba(232, 216, 199, 0.12)"
-          }}>
-          <Button onClick={onBack} disabled={materialBusy} sx={FOOTER_BTN_SX}>
-            Back
-          </Button>
-          {uploadFile ? (
+        {uploadFile ? (
+          <Stack
+            direction="row"
+            spacing={1.5}
+            sx={{
+              justifyContent: "flex-end",
+              alignItems: "center",
+              pt: 2,
+              borderTop: "1px solid",
+              borderColor: "rgba(232, 216, 199, 0.12)",
+            }}
+          >
             <Button
               type="submit"
               variant="contained"
@@ -297,8 +293,8 @@ export default function AddMaterialUploadPanel({
                   : "Uploading…"
                 : submitLabel}
             </Button>
-          ) : null}
-        </Stack>
+          </Stack>
+        ) : null}
       </Stack>
     </Box>
   );

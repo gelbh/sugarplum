@@ -14,7 +14,9 @@ import {
 import type { StudyRating } from "../api/client";
 import {
   mcqOptionButtonDisabled,
+  mcqSetRating,
   mcqTapRating,
+  parseMcqAnswers,
   shuffledMcqOptions,
 } from "./mcqStudy";
 import {
@@ -64,12 +66,26 @@ export function CardFaceMcqBody({
         : [],
     [cardId, options, preview],
   );
+  const correctAnswers = useMemo(
+    () => parseMcqAnswers(back, options ?? []),
+    [back, options],
+  );
+  const multi = correctAnswers.length > 1;
+  const correctSet = useMemo(
+    () => new Set(correctAnswers.map((a) => a.trim())),
+    [correctAnswers],
+  );
+
   const [picked, setPicked] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [checked, setChecked] = useState(false);
   const gradeSentRef = useRef(false);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     setPicked(null);
+    setSelected([]);
+    setChecked(false);
     gradeSentRef.current = false;
     return () => {
       if (timerRef.current !== null) {
@@ -81,10 +97,27 @@ export function CardFaceMcqBody({
 
   const unlock = () => {
     setPicked(null);
+    setSelected([]);
+    setChecked(false);
     gradeSentRef.current = false;
   };
 
-  const onPick = (option: string) => {
+  const finishGrade = (rating: StudyRating) => {
+    gradeSentRef.current = true;
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null;
+      void (async () => {
+        try {
+          const ok = await onGrade?.(rating);
+          if (!ok) unlock();
+        } catch {
+          unlock();
+        }
+      })();
+    }, FEEDBACK_MS);
+  };
+
+  const onPickSingle = (option: string) => {
     if (
       preview ||
       !onGrade ||
@@ -94,29 +127,51 @@ export function CardFaceMcqBody({
     )
       return;
     setPicked(option);
-    gradeSentRef.current = true;
-    const rating = mcqTapRating(option, back);
-    timerRef.current = window.setTimeout(() => {
-      timerRef.current = null;
-      void (async () => {
-        try {
-          const ok = await onGrade(rating);
-          if (!ok) unlock();
-        } catch {
-          unlock();
-        }
-      })();
-    }, FEEDBACK_MS);
+    finishGrade(mcqTapRating(option, back));
+  };
+
+  const onToggleMulti = (option: string) => {
+    if (preview || disabled || checked || gradeSentRef.current) return;
+    setSelected((prev) =>
+      prev.includes(option)
+        ? prev.filter((value) => value !== option)
+        : [...prev, option],
+    );
+  };
+
+  const onCheckMulti = () => {
+    if (
+      preview ||
+      !onGrade ||
+      disabled ||
+      checked ||
+      gradeSentRef.current ||
+      selected.length === 0
+    )
+      return;
+    setChecked(true);
+    finishGrade(mcqSetRating(selected, correctAnswers));
   };
 
   const onKey = useEffectEvent((e: KeyboardEvent) => {
     if (preview) return;
     const key = plainShortcutKey(e);
     if (key === null) return;
+    if (multi) {
+      if (key === " " || key === "Enter") {
+        if (checked) return;
+        e.preventDefault();
+        onCheckMulti();
+        return;
+      }
+    }
     const index = mcqOptionIndexForKey(key, choices.length);
     if (index === null) return;
     e.preventDefault();
-    onPick(choices[index]);
+    const option = choices[index];
+    if (!option) return;
+    if (multi) onToggleMulti(option);
+    else onPickSingle(option);
   });
 
   useEffect(() => {
@@ -124,6 +179,10 @@ export function CardFaceMcqBody({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [preview]);
+
+  const locked = multi
+    ? !preview && checked
+    : !preview && picked !== null;
 
   return (
     <Paper
@@ -159,6 +218,9 @@ export function CardFaceMcqBody({
             fontWeight: 400,
             lineHeight: 1.35,
             whiteSpace: "pre-wrap",
+            overflowWrap: "anywhere",
+            wordBreak: "break-word",
+            maxWidth: "100%",
             textAlign: "center",
             mb: 2,
             flexShrink: 0,
@@ -176,13 +238,19 @@ export function CardFaceMcqBody({
         ) : (
           <Stack spacing={1} sx={{ width: "100%", mt: "auto" }}>
             {choices.map((option, index) => {
-              const isPicked = !preview && picked === option;
-              const isCorrect = option.trim() === back.trim();
-              const locked = !preview && picked !== null;
+              const isPicked = multi
+                ? selected.includes(option)
+                : !preview && picked === option;
+              const isCorrect = correctSet.has(option.trim());
               const shortcut = mcqOptionKey(index);
               let borderColor = "currentColor";
               let bgcolor = "transparent";
               let opacity = 0.88;
+              if (multi && !locked && isPicked) {
+                borderColor = "#5B2C6F";
+                bgcolor = "rgba(91, 44, 111, 0.12)";
+                opacity = 1;
+              }
               if (locked) {
                 if (isCorrect) {
                   borderColor = "#5B2C6F";
@@ -204,11 +272,14 @@ export function CardFaceMcqBody({
                     preview ? true : mcqOptionButtonDisabled(disabled, locked)
                   }
                   aria-disabled={preview || disabled || locked}
+                  aria-pressed={multi ? isPicked : undefined}
                   tabIndex={preview || locked ? -1 : undefined}
                   aria-keyshortcuts={
                     preview ? undefined : (shortcut ?? undefined)
                   }
-                  onClick={() => onPick(option)}
+                  onClick={() =>
+                    multi ? onToggleMulti(option) : onPickSingle(option)
+                  }
                   sx={{
                     justifyContent: "flex-start",
                     textAlign: "left",
@@ -227,9 +298,11 @@ export function CardFaceMcqBody({
                     fontSize: "0.9375rem",
                     lineHeight: 1.35,
                     whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-word",
                     "&:hover": {
                       bgcolor:
-                        preview || picked !== null
+                        preview || locked
                           ? bgcolor
                           : "color-mix(in srgb, currentColor 10%, transparent)",
                     },
@@ -250,6 +323,30 @@ export function CardFaceMcqBody({
                 </Button>
               );
             })}
+            {multi && !preview ? (
+              <Button
+                variant="contained"
+                disabled={
+                  disabled ||
+                  locked ||
+                  selected.length === 0 ||
+                  gradeSentRef.current
+                }
+                onClick={onCheckMulti}
+                aria-keyshortcuts="Space"
+                sx={{
+                  mt: 0.5,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  borderRadius: 999,
+                  boxShadow: "none",
+                  "&:hover": { boxShadow: "none" },
+                }}
+              >
+                Check
+                <KeyChip label="Space" ml={1} />
+              </Button>
+            ) : null}
           </Stack>
         )}
       </Box>

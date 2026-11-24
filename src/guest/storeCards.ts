@@ -59,6 +59,8 @@ export function guestListDeckCards(
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
 }
 
+const MCQ_ANSWER_SEP = "\u001f";
+
 /** Mirror worker assertValidMcqOptions for guest hub create. */
 function guestAssertValidMcq(
   back: string,
@@ -74,6 +76,9 @@ function guestAssertValidMcq(
   if (trimmed.some((o) => o.length === 0)) {
     throw new Error("MCQ options must be non-empty");
   }
+  if (trimmed.some((o) => o.includes(MCQ_ANSWER_SEP))) {
+    throw new Error("MCQ options cannot contain the answer separator");
+  }
   const seen = new Set<string>();
   for (const o of trimmed) {
     if (seen.has(o)) {
@@ -81,11 +86,28 @@ function guestAssertValidMcq(
     }
     seen.add(o);
   }
-  const answer = back.trim();
-  if (!trimmed.includes(answer)) {
+  const rawAnswers = back.includes(MCQ_ANSWER_SEP)
+    ? back.split(MCQ_ANSWER_SEP)
+    : [back];
+  const answers = rawAnswers.map((part) => part.trim()).filter(Boolean);
+  if (answers.length === 0) {
     throw new Error("MCQ back must be one of the options");
   }
-  return { back: answer, options: trimmed };
+  const answerSeen = new Set<string>();
+  for (const answer of answers) {
+    if (!trimmed.includes(answer)) {
+      throw new Error("MCQ back must be one of the options");
+    }
+    if (answerSeen.has(answer)) {
+      throw new Error("MCQ correct answers must be unique");
+    }
+    answerSeen.add(answer);
+  }
+  const ordered = trimmed.filter((o) => answerSeen.has(o));
+  return {
+    back: ordered.join(MCQ_ANSWER_SEP),
+    options: trimmed,
+  };
 }
 
 /** Create an accepted hub card (qa|cloze|mcq) and prepend to due. */

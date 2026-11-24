@@ -426,6 +426,8 @@ export type StudyQueueMeta = {
   reviewBudget: number;
   heldIntroCount: number;
   deferredCount: number;
+  /** Soonest accepted-card due strictly after now; null/omit if none. */
+  nextDueAt?: string | null;
 };
 
 export type ListDueResult = {

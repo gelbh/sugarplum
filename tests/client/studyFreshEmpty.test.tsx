@@ -54,4 +54,28 @@ describe("StudyFreshEmpty", () => {
     });
     expect(onAction).toHaveBeenCalledTimes(1);
   });
+
+  it("renders next-cards countdown when nextDueAt is set", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    roots.push(root);
+    await act(async () => {
+      root.render(
+        createElement(
+          ThemeProvider,
+          { theme },
+          createElement(StudyFreshEmpty, {
+            title: "Nothing due yet",
+            body: "Come back when these are ready, or add more in Library.",
+            actionLabel: "Open Library",
+            onAction: () => {},
+            nextDueAt: new Date(Date.now() + 9 * 60_000).toISOString(),
+          }),
+        ),
+      );
+    });
+    expect(document.body.textContent).toMatch(/Next cards in/i);
+    expect(document.body.textContent).toMatch(/\d+m/);
+  });
 });
