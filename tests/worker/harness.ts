@@ -24,3 +24,4 @@ export {
 export * from "./harness/admin";
 export * from "./harness/focus";
 export * from "./harness/card-regen";
+export * from "./harness/guest-import";
