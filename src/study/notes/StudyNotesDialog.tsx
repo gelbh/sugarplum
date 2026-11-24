@@ -35,6 +35,12 @@ import {
   pagesToPersistAfterRescue,
   pagesToPersistAfterSearchHits,
 } from "./notesProvenanceWrite";
+import {
+  fetchMaterialBytes,
+  isAbort,
+  materialKindFromJobMaterial,
+  type MaterialKind,
+} from "./notesMaterialLoad";
 import { extractPptxSlides } from "./pptxSlideText";
 
 const NotesEmbedPdfStage = lazy(() =>
@@ -51,8 +57,6 @@ const NotesPptxStage = lazy(() =>
 
 const FILE_ERROR = "Could not open the file.";
 
-type MaterialKind = "pdf" | "pptx";
-
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -61,10 +65,6 @@ type Props = {
   jobId: string | null;
   cardId?: string | null;
 };
-
-function isAbort(err: unknown): boolean {
-  return err instanceof DOMException && err.name === "AbortError";
-}
 
 export default function StudyNotesDialog({
   open,
@@ -165,18 +165,12 @@ export default function StudyNotesDialog({
           return;
         }
         setTitle(material.filename || "Notes");
-        const kind =
-          material.kind === "pdf" || material.kind === "pptx"
-            ? material.kind
-            : null;
+        const kind = materialKindFromJobMaterial(material.kind);
         if (!kind || page === null) return;
-        const response = await fetch(downloadMaterialUrl(material.id), {
-          credentials: "include",
-          cache: "no-store",
-          signal: ac.signal,
-        });
-        if (!response.ok) throw new Error(String(response.status));
-        const bytes = new Uint8Array(await response.arrayBuffer());
+        const bytes = await fetchMaterialBytes(
+          downloadMaterialUrl(material.id),
+          ac.signal,
+        );
         if (cancelled) return;
         setMaterialKind(kind);
         setMaterialBytes(bytes);

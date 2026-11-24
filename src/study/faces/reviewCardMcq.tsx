@@ -24,7 +24,8 @@ import {
   withMcqOptionText,
   type McqDraft,
 } from "../../draftReview/kernel";
-import { FaceOverline, StudyCardPlate } from "./CardFace";
+import { StudyCardPlate } from "./cardPlates";
+import { FaceOverline } from "./faceOverline";
 import {
   FACE_BODY_SX,
   FACE_DISABLED_SX,

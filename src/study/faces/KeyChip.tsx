@@ -1,5 +1,5 @@
 import Box from "@mui/material/Box";
-import { FACE_SANS } from "../faces/studyFaceSx";
+import { FACE_SANS } from "./studyFaceSx";
 
 type Props = {
   label: string;
