@@ -2,6 +2,10 @@ import type { Bindings } from "./types";
 
 type WorkflowBinding = NonNullable<Env["GENERATION_WORKFLOW"]>;
 type WorkflowInstanceRow = { status: string; output?: unknown; params?: unknown };
+type PrepareHook = (
+  query: string,
+  stmt: D1PreparedStatement,
+) => D1PreparedStatement;
 
 const generateQueueMessages: unknown[] = [];
 const cardRegenQueueMessages: unknown[] = [];
@@ -9,30 +13,43 @@ const exportQueueMessages: unknown[] = [];
 const workflowCreates: unknown[] = [];
 const workflowTerminates: string[] = [];
 const workflowInstances = new Map<string, WorkflowInstanceRow>();
+
 function wrapQueue(
   queue: Queue | undefined,
   sink: unknown[],
+  opts: { forward?: boolean } = {},
 ): Queue | undefined {
-  if (!queue) return undefined;
+  const forward = opts.forward !== false;
+  if (!queue && forward) return undefined;
   return {
     send: async (body: unknown, options?: QueueSendOptions) => {
       sink.push(body);
-      return queue.send(body, options);
+      if (forward && queue) return queue.send(body, options);
     },
-    sendBatch: async (messages: Iterable<MessageSendRequest>, options?: QueueSendBatchOptions) => {
+    sendBatch: async (
+      messages: Iterable<MessageSendRequest>,
+      options?: QueueSendBatchOptions,
+    ) => {
       for (const m of messages) sink.push(m.body);
-      return queue.sendBatch(messages, options);
+      if (forward && queue) return queue.sendBatch(messages, options);
     },
   } as Queue;
 }
 
 /** Wrap env queue producers so getQueueMessages* can observe sends. */
-export function installQueueRecorders(env: Bindings): Bindings {
+export function installQueueRecorders(
+  env: Bindings,
+  opts: { forward?: boolean } = {},
+): Bindings {
   return {
     ...env,
-    GENERATE_QUEUE: wrapQueue(env.GENERATE_QUEUE, generateQueueMessages),
-    CARD_REGEN_QUEUE: wrapQueue(env.CARD_REGEN_QUEUE, cardRegenQueueMessages),
-    EXPORT_QUEUE: wrapQueue(env.EXPORT_QUEUE, exportQueueMessages),
+    GENERATE_QUEUE: wrapQueue(env.GENERATE_QUEUE, generateQueueMessages, opts),
+    CARD_REGEN_QUEUE: wrapQueue(
+      env.CARD_REGEN_QUEUE,
+      cardRegenQueueMessages,
+      opts,
+    ),
+    EXPORT_QUEUE: wrapQueue(env.EXPORT_QUEUE, exportQueueMessages, opts),
   };
 }
 
@@ -134,6 +151,20 @@ export function clearWorkflowMessages(): void {
   workflowInstances.clear();
 }
 
+function wrapDbPrepare(db: D1Database, onPrepare: PrepareHook): D1Database {
+  return new Proxy(db, {
+    get(target, prop, _receiver) {
+      if (prop === "prepare") {
+        return (query: string) => onPrepare(query, target.prepare(query));
+      }
+      const value = Reflect.get(target, prop, target);
+      return typeof value === "function"
+        ? (value as (...args: unknown[]) => unknown).bind(target)
+        : value;
+    },
+  });
+}
+
 let adminOverviewPrepareCount = 0;
 const progressWrites: string[] = [];
 
@@ -147,24 +178,13 @@ export function getAdminOverviewPrepareCount(): number {
 
 /** Count prepares whose SQL includes the admin-overview marker comment. */
 export function installAdminOverviewPrepareCounter(env: Bindings): Bindings {
-  const db = env.DB;
   return {
     ...env,
-    DB: new Proxy(db, {
-      get(target, prop, _receiver) {
-        if (prop === "prepare") {
-          return (query: string) => {
-            if (query.includes("sugarplum:admin-overview")) {
-              adminOverviewPrepareCount += 1;
-            }
-            return target.prepare(query);
-          };
-        }
-        const value = Reflect.get(target, prop, target);
-        return typeof value === "function"
-          ? (value as (...args: unknown[]) => unknown).bind(target)
-          : value;
-      },
+    DB: wrapDbPrepare(env.DB, (query, stmt) => {
+      if (query.includes("sugarplum:admin-overview")) {
+        adminOverviewPrepareCount += 1;
+      }
+      return stmt;
     }),
   };
 }
@@ -179,34 +199,18 @@ export function getProgressWrites(): string[] {
 
 /** Record achievement_progress UPSERT targets (evaluate write-discipline tests). */
 export function installProgressWriteRecorder(env: Bindings): Bindings {
-  const db = env.DB;
   return {
     ...env,
-    DB: new Proxy(db, {
-      get(target, prop, _receiver) {
-        if (prop === "prepare") {
-          return (query: string) => {
-            const stmt = target.prepare(query);
-            if (query.includes("INSERT INTO achievement_progress")) {
-              const originalBind = stmt.bind.bind(stmt);
-              (stmt as { bind: typeof stmt.bind }).bind = (
-                ...args: unknown[]
-              ) => {
-                // UPSERT_PROGRESS binds: user_id, achievement_id, current_value, threshold
-                if (typeof args[1] === "string") progressWrites.push(args[1]);
-                return originalBind(
-                  ...(args as Parameters<typeof stmt.bind>),
-                );
-              };
-            }
-            return stmt;
-          };
-        }
-        const value = Reflect.get(target, prop, target);
-        return typeof value === "function"
-          ? (value as (...args: unknown[]) => unknown).bind(target)
-          : value;
-      },
+    DB: wrapDbPrepare(env.DB, (query, stmt) => {
+      if (query.includes("INSERT INTO achievement_progress")) {
+        const originalBind = stmt.bind.bind(stmt);
+        (stmt as { bind: typeof stmt.bind }).bind = (...args: unknown[]) => {
+          // UPSERT_PROGRESS binds: user_id, achievement_id, current_value, threshold
+          if (typeof args[1] === "string") progressWrites.push(args[1]);
+          return originalBind(...(args as Parameters<typeof stmt.bind>));
+        };
+      }
+      return stmt;
     }),
   };
 }
