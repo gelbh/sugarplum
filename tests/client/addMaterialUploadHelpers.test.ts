@@ -5,7 +5,7 @@ import {
   isAllowedUploadFile,
   uploadKindLabel,
   UPLOAD_ACCEPT,
-} from "../../src/deckHub/addMaterialUploadHelpers";
+} from "../../src/deckHub/create/addMaterialUploadHelpers";
 
 function fakeFile(name: string, type: string, size = 10): File {
   return new File([new Uint8Array(size)], name, { type });

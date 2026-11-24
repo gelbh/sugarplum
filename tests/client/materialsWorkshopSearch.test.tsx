@@ -5,7 +5,7 @@ import { act, createElement, type ComponentProps } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { afterEach, describe, expect, it } from "vitest";
-import MaterialsWorkshop from "../../src/deckHub/MaterialsWorkshop";
+import MaterialsWorkshop from "../../src/deckHub/materials/MaterialsWorkshop";
 import type { MaterialListItem } from "../../src/api/client";
 import { theme } from "../../src/theme";
 

@@ -3,7 +3,7 @@ import type { CardDraftView } from "../../src/api/client";
 import {
   blankHubCreateCard,
   nextHubCreateCard,
-} from "../../src/deckHub/useCreateCardController";
+} from "../../src/deckHub/create/useCreateCardController";
 
 function card(partial: Partial<CardDraftView>): CardDraftView {
   return { ...blankHubCreateCard("deck-1"), ...partial };

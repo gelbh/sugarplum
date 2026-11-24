@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   DIY_OCCLUSION_FREE_PATH_NOTICE,
   openDiyOcclusionFromImageKey,
-} from "../../src/deckHub/openDiyOcclusion";
+} from "../../src/deckHub/diy/openDiyOcclusion";
 
 describe("openDiyOcclusionFromImageKey", () => {
   it("returns false for empty or whitespace keys without side effects", () => {

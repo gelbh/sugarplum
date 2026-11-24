@@ -6,7 +6,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, it } from "vitest";
 import ClaimCoverageFilmstrip, {
   CLAIM_COVERAGE_SEGMENT_COLORS,
-} from "../../src/deckHub/ClaimCoverageFilmstrip";
+} from "../../src/deckHub/hub/ClaimCoverageFilmstrip";
 import type { ClaimCoverage } from "../../src/api/client";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =

@@ -5,5 +5,5 @@
 export {
   occlusionMaskScrollTop,
   type OcclusionMaskBox,
-} from "./occlusionLayout";
-export { hubDiyTypes } from "./hubDiyTypes";
+} from "./diy/occlusionLayout";
+export { hubDiyTypes } from "./diy/hubDiyTypes";

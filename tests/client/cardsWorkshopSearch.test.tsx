@@ -12,9 +12,9 @@ import {
 import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { afterEach, describe, expect, it } from "vitest";
-import CardsWorkshop from "../../src/deckHub/CardsWorkshop";
+import CardsWorkshop from "../../src/deckHub/cards/CardsWorkshop";
 import type { CardDraftView } from "../../src/api/client";
-import { pruneIdsToVisible } from "../../src/deckHub/workshopSearch";
+import { pruneIdsToVisible } from "../../src/deckHub/workshop/workshopSearch";
 import { theme } from "../../src/theme";
 
 (
