@@ -203,6 +203,25 @@ export async function seedSession(
   });
 }
 
+/** user-a + deck-a + sess-a. Shared by cards move/delete/archive suites. */
+export async function seedSessionOwner(env: Bindings): Promise<void> {
+  await seedUser(env, {
+    id: "user-a",
+    email: "a@example.com",
+    password_hash: null,
+    oauth_subject: null,
+    created_at: "2026-01-01T00:00:00.000Z",
+  });
+  await seedDeck(env, {
+    id: "deck-a",
+    user_id: "user-a",
+    title: "Bio",
+    subject_hint: null,
+    created_at: "2026-01-01T00:00:00.000Z",
+  });
+  await seedSession(env, "sess-a", "user-a");
+}
+
 export async function seedSessionRecord(
   env: Bindings,
   id: string,
