@@ -169,34 +169,16 @@ describe("CardsWorkshop search", () => {
     expect(document.body.textContent).not.toMatch(/Beta fluke/);
   });
 
-  it("prunes selection to still-visible cards when query changes", async () => {
-    const snapshots: string[][] = [];
-    await renderTree(
-      createElement(SelectionHarness, {
-        cards: [card("1", "Alpha worm"), card("2", "Beta fluke")],
-        initialSelected: ["1", "2"],
-        onSelectedChange: (ids) => {
-          snapshots.push(ids);
-        },
-      }),
-    );
-
-    await setSearchValue("alpha");
-
-    expect(snapshots.at(-1)).toEqual(["1"]);
-    expect(document.body.textContent).toMatch(/Alpha worm/);
-    expect(document.body.textContent).not.toMatch(/Beta fluke/);
-  });
-
-  it("keeps still-visible selections when refining the query", async () => {
+  it("prunes selection on filter and keeps still-visible ids when refining", async () => {
     const snapshots: string[][] = [];
     await renderTree(
       createElement(SelectionHarness, {
         cards: [
           card("1", "Alpha worm life"),
           card("2", "Alpha fluke"),
+          card("3", "Beta fluke"),
         ],
-        initialSelected: ["1", "2"],
+        initialSelected: ["1", "2", "3"],
         onSelectedChange: (ids) => {
           snapshots.push(ids);
         },
@@ -204,7 +186,9 @@ describe("CardsWorkshop search", () => {
     );
 
     await setSearchValue("alpha");
-    expect(snapshots.at(-1)).toEqual(["1", "2"]);
+    expect(snapshots.at(-1)?.slice().sort()).toEqual(["1", "2"]);
+    expect(document.body.textContent).toMatch(/Alpha worm life/);
+    expect(document.body.textContent).not.toMatch(/Beta fluke/);
 
     await setSearchValue("alpha worm");
     expect(snapshots.at(-1)).toEqual(["1"]);
