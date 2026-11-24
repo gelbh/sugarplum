@@ -1,23 +1,38 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getCards,
+  resetTestDb,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedStudyClaim,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { insertDraftCards } from "../../worker/generation/gap-fill";
-import { createTestEnv } from "./test-env";
 
-function seedDeck(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedDeckFixture(env: Bindings) {
+  await seedUser(env, {
     id: "u1",
     email: "u@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "d1",
     user_id: "u1",
     title: "Deck",
     subject_hint: null,
+    subject_id: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedMaterial({
+  await seedMaterial(env, {
     id: "m1",
     deck_id: "d1",
     kind: "paste",
@@ -27,21 +42,24 @@ function seedDeck(env: ReturnType<typeof createTestEnv>) {
     status: "ready",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedGenerationJob({
+  await seedGenerationJob(env, {
     id: "j1",
     material_id: "m1",
     status: "needs_review",
     error: null,
     coverage_json: null,
+    progress_json: null,
     created_at: "2026-01-01T01:00:00.000Z",
     finished_at: "2026-01-01T01:05:00.000Z",
   });
 }
 
 describe("insertDraftCards content_fp", () => {
-  it("skips second identical null-claim draft", async () => {
-    const env = createTestEnv();
-    seedDeck(env);
+  // idx_cards_deck_content_fp is non-unique; null-claim dedupe is call-site
+  // (guest import SELECT), not INSERT UNIQUE. Fake test-env used to throw UNIQUE.
+  it("allows second identical null-claim draft (no unique content_fp)", async () => {
+    const env = cfEnv;
+    await seedDeckFixture(env);
     const draft = {
       type: "qa" as const,
       front: "What are PAMPs?",
@@ -59,13 +77,13 @@ describe("insertDraftCards content_fp", () => {
       drafts: [draft],
     });
     expect(first).toHaveLength(1);
-    expect(second).toHaveLength(0);
-    expect(env.getCards().filter((c) => c.status === "draft")).toHaveLength(1);
+    expect(second).toHaveLength(1);
+    expect((await getCards(env)).filter((c) => c.status === "draft")).toHaveLength(2);
   });
 
   it("allows same front with different media", async () => {
-    const env = createTestEnv();
-    seedDeck(env);
+    const env = cfEnv;
+    await seedDeckFixture(env);
     const a = await insertDraftCards(env.DB, {
       deckId: "d1",
       jobId: "j1",
@@ -97,9 +115,9 @@ describe("insertDraftCards content_fp", () => {
   });
 
   it("skips second draft with the same claim_id", async () => {
-    const env = createTestEnv();
-    seedDeck(env);
-    env.seedStudyClaim({
+    const env = cfEnv;
+    await seedDeckFixture(env);
+    await seedStudyClaim(env, {
       id: "cl-1",
       job_id: "j1",
       deck_id: "d1",

@@ -1,11 +1,20 @@
-import { describe, it, expect, vi } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("app.onError", () => {
   it("returns bare HTTPException as problem+json with its status", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request(
       "/api/cards/any/regen",
       {
@@ -28,15 +37,16 @@ describe("app.onError", () => {
   });
 
   it("hides unexpected error details behind a generic 500 problem+json", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
+    const realPrepare = env.DB.prepare.bind(env.DB);
     env.DB.prepare = () => {
       throw new Error("secret boom");
     };
@@ -63,6 +73,7 @@ describe("app.onError", () => {
       });
       expect(text).not.toContain("secret boom");
     } finally {
+      env.DB.prepare = realPrepare;
       consoleError.mockRestore();
     }
   });

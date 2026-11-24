@@ -1,28 +1,43 @@
-import { describe, expect, it, vi } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getCards,
+  getGenerationJobs,
+  resetTestDb,
+  seedDeck,
+  seedMaterial,
+  seedR2,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { enqueueGeneration } from "../../worker/generation/enqueue";
 import {
   processGenerateJob,
 } from "../../worker/generation/consumer";
 import type { LlmAdapter } from "../../worker/generation/llm";
-import { createTestEnv } from "./test-env";
 import { minimalPdfWithText } from "./pdf-fixture";
 
-function seedPdf(env: ReturnType<typeof createTestEnv>, withFigure = false) {
-  env.seedUser({
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedPdf(env: Bindings, withFigure = false) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: "user-a",
     title: "Bio",
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedMaterial({
+  await seedMaterial(env, {
     id: "mat-pdf",
     deck_id: "deck-a",
     kind: "pdf",
@@ -32,12 +47,12 @@ function seedPdf(env: ReturnType<typeof createTestEnv>, withFigure = false) {
     status: "ready",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedR2(
+  await seedR2(env, 
     "materials/deck-a/mat-pdf.pdf",
     new TextDecoder().decode(minimalPdfWithText("Mitochondria produce ATP")),
   );
   if (withFigure) {
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "figure-1",
       deck_id: "deck-a",
       kind: "image",
@@ -47,7 +62,7 @@ function seedPdf(env: ReturnType<typeof createTestEnv>, withFigure = false) {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedR2("materials/deck-a/figures/mat-pdf/0.png", "figure-bytes");
+    await seedR2(env, "materials/deck-a/figures/mat-pdf/0.png", "figure-bytes");
   }
 }
 
@@ -131,8 +146,8 @@ function mockDoclingCropFetch(onCall?: () => void) {
 
 describe("PDF consumer figure stage", () => {
   it("fast mode does not call Docling even when DOCLING_URL is set", async () => {
-    const env = createTestEnv();
-    seedPdf(env);
+    const env = cfEnv;
+    await seedPdf(env);
     env.DOCLING_URL = "http://docling.test";
     env.DOCLING_API_KEY = "test-key";
     const fetchFn = vi.fn(async () => new Response("{}", { status: 200 }));
@@ -151,9 +166,9 @@ describe("PDF consumer figure stage", () => {
       );
 
       expect(fetchFn).not.toHaveBeenCalled();
-      expect(env.getGenerationJobs()[0]?.status).toBe("needs_review");
+      expect((await getGenerationJobs(env))[0]?.status).toBe("needs_review");
       expect(
-        env.getCards().every((card) => card.media_r2_keys_json === null),
+        (await getCards(env)).every((card) => card.media_r2_keys_json === null),
       ).toBe(true);
     } finally {
       globalThis.fetch = oldFetch;
@@ -161,8 +176,8 @@ describe("PDF consumer figure stage", () => {
   });
 
   it("accurate mode calls Docling and stores crop media keys", async () => {
-    const env = createTestEnv();
-    seedPdf(env);
+    const env = cfEnv;
+    await seedPdf(env);
     env.DOCLING_URL = "http://docling.test";
     env.DOCLING_API_KEY = "test-key";
     const oldFetch = globalThis.fetch;
@@ -183,19 +198,18 @@ describe("PDF consumer figure stage", () => {
 
       expect(globalThis.fetch).toHaveBeenCalled();
       expect(
-        env.getGenerationJobs()[0]?.status,
-        env.getGenerationJobs()[0]?.error ?? "",
+        (await getGenerationJobs(env))[0]?.status,
+        (await getGenerationJobs(env))[0]?.error ?? "",
       ).toBe("needs_review");
-      expect(env.getCards().some((card) => card.type === "image_label")).toBe(
+      expect((await getCards(env)).some((card) => card.type === "image_label")).toBe(
         true,
       );
       expect(
-        env
-          .getCards()
+        (await getCards(env))
           .map((card) => card.media_r2_keys_json)
           .filter(Boolean),
       ).toContain(JSON.stringify(["materials/deck-a/figures/mat-pdf/0.png"]));
-      expect(JSON.parse(env.getGenerationJobs()[0]!.progress_json!).stage).toBe(
+      expect(JSON.parse((await getGenerationJobs(env))[0]!.progress_json!).stage).toBe(
         "persist",
       );
     } finally {
@@ -204,14 +218,14 @@ describe("PDF consumer figure stage", () => {
   });
 
   it("accurate mode emits indeterminate figures progress before Docling returns", async () => {
-    const env = createTestEnv();
-    seedPdf(env);
+    const env = cfEnv;
+    await seedPdf(env);
     env.DOCLING_URL = "http://docling.test";
     env.DOCLING_API_KEY = "test-key";
     const seen: Array<{ stage: string; total: number; label: string }> = [];
     const oldFetch = globalThis.fetch;
-    globalThis.fetch = mockDoclingCropFetch(() => {
-      const job = env.getGenerationJobs()[0];
+    globalThis.fetch = mockDoclingCropFetch(async () => {
+      const job = (await getGenerationJobs(env))[0];
       if (job?.progress_json) {
         seen.push(JSON.parse(job.progress_json));
       }
@@ -244,8 +258,8 @@ describe("PDF consumer figure stage", () => {
   });
 
   it("keeps text generation working when Docling fails", async () => {
-    const env = createTestEnv();
-    seedPdf(env);
+    const env = cfEnv;
+    await seedPdf(env);
     env.DOCLING_URL = "http://docling.test";
     env.DOCLING_API_KEY = "test-key";
     const oldFetch = globalThis.fetch;
@@ -264,11 +278,11 @@ describe("PDF consumer figure stage", () => {
       );
 
       expect(
-        env.getGenerationJobs()[0]?.status,
-        env.getGenerationJobs()[0]?.error ?? "",
+        (await getGenerationJobs(env))[0]?.status,
+        (await getGenerationJobs(env))[0]?.error ?? "",
       ).toBe("needs_review");
-      expect(env.getCards().length).toBeGreaterThan(0);
-      expect(env.getCards().every((card) => card.media_r2_keys_json === null)).toBe(
+      expect((await getCards(env)).length).toBeGreaterThan(0);
+      expect((await getCards(env)).every((card) => card.media_r2_keys_json === null)).toBe(
         true,
       );
     } finally {
@@ -277,8 +291,8 @@ describe("PDF consumer figure stage", () => {
   });
 
   it("uses pre-uploaded figure keys without Docling", async () => {
-    const env = createTestEnv();
-    seedPdf(env, true);
+    const env = cfEnv;
+    await seedPdf(env, true);
     const jobId = await enqueueGeneration(env, {
       materialId: "mat-pdf",
       deckId: "deck-a",
@@ -294,12 +308,12 @@ describe("PDF consumer figure stage", () => {
     expect(llm.generateDrafts).toHaveBeenCalledWith(
       expect.objectContaining({ image: expect.any(Object) }),
     );
-    expect(env.getCards().some((card) => card.media_r2_keys_json)).toBe(true);
+    expect((await getCards(env)).some((card) => card.media_r2_keys_json)).toBe(true);
   });
 
   it("accurate mode skips Docling when client ready crops win", async () => {
-    const env = createTestEnv();
-    seedPdf(env, true);
+    const env = cfEnv;
+    await seedPdf(env, true);
     env.DOCLING_URL = "http://docling.test";
     env.DOCLING_API_KEY = "test-key";
     const fetchFn = vi.fn(async () => new Response("{}", { status: 200 }));
@@ -319,16 +333,16 @@ describe("PDF consumer figure stage", () => {
       );
 
       expect(fetchFn).not.toHaveBeenCalled();
-      expect(env.getCards().some((card) => card.media_r2_keys_json)).toBe(true);
+      expect((await getCards(env)).some((card) => card.media_r2_keys_json)).toBe(true);
     } finally {
       globalThis.fetch = oldFetch;
     }
   });
 
   it("allows figure-only generation when PDF text is empty", async () => {
-    const env = createTestEnv();
-    seedPdf(env, true);
-    env.seedR2("materials/deck-a/mat-pdf.pdf", "%PDF-1.1\n%%EOF");
+    const env = cfEnv;
+    await seedPdf(env, true);
+    await seedR2(env, "materials/deck-a/mat-pdf.pdf", "%PDF-1.1\n%%EOF");
     const jobId = await enqueueGeneration(env, {
       materialId: "mat-pdf",
       deckId: "deck-a",
@@ -340,20 +354,20 @@ describe("PDF consumer figure stage", () => {
       { llm: visionLlm() },
     );
 
-    expect(env.getGenerationJobs()[0]?.status).toBe("needs_review");
-    expect(env.getCards().some((card) => card.media_r2_keys_json)).toBe(true);
+    expect((await getGenerationJobs(env))[0]?.status).toBe("needs_review");
+    expect((await getCards(env)).some((card) => card.media_r2_keys_json)).toBe(true);
     const progress = JSON.parse(
-      env.getGenerationJobs()[0]!.progress_json!,
+      (await getGenerationJobs(env))[0]!.progress_json!,
     ) as { stage: string; percent: number };
     expect(progress.stage).toBe("persist");
     expect(progress.percent).toBe(100);
   });
 
   it("skips Docling when figure children are still uploading", async () => {
-    const env = createTestEnv();
-    seedPdf(env);
+    const env = cfEnv;
+    await seedPdf(env);
     env.DOCLING_URL = "http://docling.test";
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "figure-uploading",
       deck_id: "deck-a",
       kind: "image",
@@ -380,9 +394,9 @@ describe("PDF consumer figure stage", () => {
       );
 
       expect(fetchFn).not.toHaveBeenCalled();
-      expect(env.getGenerationJobs()[0]?.status).toBe("needs_review");
+      expect((await getGenerationJobs(env))[0]?.status).toBe("needs_review");
       expect(
-        env.getCards().every((card) => card.media_r2_keys_json === null),
+        (await getCards(env)).every((card) => card.media_r2_keys_json === null),
       ).toBe(true);
     } finally {
       globalThis.fetch = oldFetch;
@@ -390,9 +404,9 @@ describe("PDF consumer figure stage", () => {
   });
 
   it("writes window_resume before an empty pdf job fails", async () => {
-    const env = createTestEnv();
-    seedPdf(env);
-    env.seedR2(
+    const env = cfEnv;
+    await seedPdf(env);
+    await seedR2(env, 
       "materials/deck-a/mat-pdf.pdf",
       new TextDecoder().decode(minimalPdfWithText("")),
     );
@@ -407,7 +421,7 @@ describe("PDF consumer figure stage", () => {
       { llm: visionLlm() },
     );
 
-    const job = env.getGenerationJobs().find((row) => row.id === jobId);
+    const job = (await getGenerationJobs(env)).find((row) => row.id === jobId);
     expect(job?.status).toBe("failed");
     expect(job?.error).toMatch(/Extracted material text is empty/);
     expect(JSON.parse(job?.coverage_json ?? "{}").window_resume).toEqual({

@@ -1,22 +1,36 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getCards,
+  getSchedules,
+  resetTestDb,
+  seedDeck,
+  seedSession,
+  seedSubject,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
 }
 
 describe("POST /api/guest/import", () => {
   it("returns 401 without session", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
 
     const res = await app.request(
       "/api/guest/import",
@@ -32,8 +46,8 @@ describe("POST /api/guest/import", () => {
   });
 
   it("imports accepted qa cards with schedules for owner", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const res = await app.request(
       "/api/guest/import",
@@ -61,7 +75,7 @@ describe("POST /api/guest/import", () => {
     const body = (await res.json()) as { deckCount: number; cardCount: number };
     expect(body).toEqual({ deckCount: 1, cardCount: 1 });
 
-    const cards = env.getCards();
+    const cards = (await getCards(env));
     expect(cards).toHaveLength(1);
     expect(cards[0].status).toBe("accepted");
     expect(cards[0].type).toBe("qa");
@@ -73,7 +87,7 @@ describe("POST /api/guest/import", () => {
       source: "paste",
     });
 
-    const schedules = env.getSchedules();
+    const schedules = (await getSchedules(env));
     expect(schedules).toHaveLength(1);
     expect(schedules[0].card_id).toBe(cards[0].id);
 
@@ -89,8 +103,8 @@ describe("POST /api/guest/import", () => {
   });
 
   it("returns 200 with zeros for empty decks and cards", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const res = await app.request(
       "/api/guest/import",
@@ -107,7 +121,7 @@ describe("POST /api/guest/import", () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ deckCount: 0, cardCount: 0 });
-    expect(env.getCards()).toHaveLength(0);
+    expect((await getCards(env))).toHaveLength(0);
 
     const { results: subjects } = await env.DB.prepare(
       "SELECT id, title, created_at FROM subjects WHERE user_id = ? ORDER BY created_at ASC",
@@ -118,15 +132,15 @@ describe("POST /api/guest/import", () => {
   });
 
   it("merges import into existing deck by folded title", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "subj-anatomy",
       user_id: "user-a",
       title: "Science",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-anatomy",
       user_id: "user-a",
       title: "Anatomy",
@@ -169,15 +183,15 @@ describe("POST /api/guest/import", () => {
     expect(decks![0].id).toBe("deck-anatomy");
     expect(decks![0].subject_id).toBe("subj-anatomy");
 
-    const cards = env.getCards();
+    const cards = (await getCards(env));
     expect(cards).toHaveLength(1);
     expect(cards[0].deck_id).toBe("deck-anatomy");
   });
 
   it("places miss decks under existing Unfiled subject", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "subj-unfiled",
       user_id: "user-a",
       title: "Unfiled",
@@ -227,15 +241,15 @@ describe("POST /api/guest/import", () => {
   });
 
   it("matches duplicate folded titles to the oldest deck", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "subj-bio",
       user_id: "user-a",
       title: "Science",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-bio-old",
       user_id: "user-a",
       title: "Bio",
@@ -243,7 +257,7 @@ describe("POST /api/guest/import", () => {
       subject_id: "subj-bio",
       created_at: "2026-01-02T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-bio-new",
       user_id: "user-a",
       title: "bio",
@@ -275,21 +289,21 @@ describe("POST /api/guest/import", () => {
     );
 
     expect(res.status).toBe(200);
-    const cards = env.getCards();
+    const cards = (await getCards(env));
     expect(cards).toHaveLength(1);
     expect(cards[0].deck_id).toBe("deck-bio-old");
   });
 
   it("skips duplicate content_fp on sequential imports into the same deck", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "subj-a",
       user_id: "user-a",
       title: "Science",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Anatomy",
@@ -341,20 +355,20 @@ describe("POST /api/guest/import", () => {
     const secondBody = (await second.json()) as { cardCount: number };
     expect(secondBody.cardCount).toBe(0);
 
-    const cards = env.getCards();
+    const cards = (await getCards(env));
     expect(cards).toHaveLength(1);
   });
 
   it("appends a different stem on a later import into the same deck", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "subj-a",
       user_id: "user-a",
       title: "Science",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Anatomy",
@@ -409,14 +423,14 @@ describe("POST /api/guest/import", () => {
     );
     expect(second.status).toBe(200);
 
-    const cards = env.getCards();
+    const cards = (await getCards(env));
     expect(cards).toHaveLength(2);
     expect(cards.every((c) => c.deck_id === "deck-a")).toBe(true);
   });
 
   it("coalesces same-payload fold-equal miss decks into one", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const res = await app.request(
       "/api/guest/import",
@@ -458,21 +472,21 @@ describe("POST /api/guest/import", () => {
       .all<{ id: string }>();
     expect(decks).toHaveLength(1);
 
-    const cards = env.getCards();
+    const cards = (await getCards(env));
     expect(cards).toHaveLength(2);
     expect(cards.every((c) => c.deck_id === decks![0].id)).toBe(true);
   });
 
   it("places miss decks under the oldest Unfiled subject", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "subj-unfiled-old",
       user_id: "user-a",
       title: "Unfiled",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSubject({
+    await seedSubject(env, {
       id: "subj-unfiled-new",
       user_id: "user-a",
       title: "Unfiled",
@@ -513,8 +527,8 @@ describe("POST /api/guest/import", () => {
   });
 
   it("returns 400 when cards exceed 200", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const cards = Array.from({ length: 201 }, (_, i) => ({
       clientDeckId: "guest-deck-1",
@@ -539,12 +553,12 @@ describe("POST /api/guest/import", () => {
     );
 
     expect(res.status).toBe(400);
-    expect(env.getCards()).toHaveLength(0);
+    expect((await getCards(env))).toHaveLength(0);
   });
 
   it("returns 400 when clientDeckId is unknown", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const res = await app.request(
       "/api/guest/import",
@@ -569,12 +583,12 @@ describe("POST /api/guest/import", () => {
     );
 
     expect(res.status).toBe(400);
-    expect(env.getCards()).toHaveLength(0);
+    expect((await getCards(env))).toHaveLength(0);
   });
 
   it("returns 400 when decks repeat clientId", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const res = await app.request(
       "/api/guest/import",
@@ -602,13 +616,13 @@ describe("POST /api/guest/import", () => {
     );
 
     expect(res.status).toBe(400);
-    expect(env.getCards()).toHaveLength(0);
+    expect((await getCards(env))).toHaveLength(0);
   });
 
   it("matches import subjects by folded title to existing", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "subj-science",
       user_id: "user-a",
       title: "Science",
@@ -666,8 +680,8 @@ describe("POST /api/guest/import", () => {
   });
 
   it("creates a new subject on fold miss", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const res = await app.request(
       "/api/guest/import",
@@ -710,7 +724,7 @@ describe("POST /api/guest/import", () => {
     expect(subjects).toHaveLength(1);
     expect(subjects![0].title).toBe("Biology");
 
-    const cards = env.getCards();
+    const cards = (await getCards(env));
     expect(JSON.parse(cards[0].provenance_json!)).toEqual({
       guest_import: true,
       source: "hub",
@@ -718,21 +732,21 @@ describe("POST /api/guest/import", () => {
   });
 
   it("does not reparent a deck when title matches but clientSubjectId differs", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "subj-anatomy",
       user_id: "user-a",
       title: "Anatomy",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSubject({
+    await seedSubject(env, {
       id: "subj-biology",
       user_id: "user-a",
       title: "Biology",
       created_at: "2026-01-02T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-anatomy",
       user_id: "user-a",
       title: "Heart",
@@ -785,8 +799,8 @@ describe("POST /api/guest/import", () => {
   });
 
   it("imports cloze with multiple blanks", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const res = await app.request(
       "/api/guest/import",
@@ -820,13 +834,13 @@ describe("POST /api/guest/import", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(env.getCards()).toHaveLength(1);
-    expect(env.getCards()[0]?.type).toBe("cloze");
+    expect((await getCards(env))).toHaveLength(1);
+    expect((await getCards(env))[0]?.type).toBe("cloze");
   });
 
   it("imports cloze with empty back", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const res = await app.request(
       "/api/guest/import",
@@ -860,14 +874,14 @@ describe("POST /api/guest/import", () => {
     );
 
     expect(res.status).toBe(200);
-    const cards = env.getCards();
+    const cards = (await getCards(env));
     expect(cards[0].type).toBe("cloze");
     expect(cards[0].back_json).toBe(JSON.stringify(""));
   });
 
   it("imports mcq with validated options", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const res = await app.request(
       "/api/guest/import",
@@ -902,7 +916,7 @@ describe("POST /api/guest/import", () => {
     );
 
     expect(res.status).toBe(200);
-    const cards = env.getCards();
+    const cards = (await getCards(env));
     expect(cards[0].type).toBe("mcq");
     expect(JSON.parse(cards[0].back_json!)).toEqual({
       answer: "B",
@@ -911,8 +925,8 @@ describe("POST /api/guest/import", () => {
   });
 
   it("returns 400 for mcq without valid options", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const res = await app.request(
       "/api/guest/import",
@@ -947,12 +961,12 @@ describe("POST /api/guest/import", () => {
     );
 
     expect(res.status).toBe(400);
-    expect(env.getCards()).toHaveLength(0);
+    expect((await getCards(env))).toHaveLength(0);
   });
 
   it("places new decks under Unfiled when clientSubjectId is unknown", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const res = await app.request(
       "/api/guest/import",
@@ -1005,8 +1019,8 @@ describe("POST /api/guest/import", () => {
   });
 
   it("returns 400 for invalid card source", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const res = await app.request(
       "/api/guest/import",
@@ -1040,6 +1054,6 @@ describe("POST /api/guest/import", () => {
     );
 
     expect(res.status).toBe(400);
-    expect(env.getCards()).toHaveLength(0);
+    expect((await getCards(env))).toHaveLength(0);
   });
 });

@@ -1,4 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  getWorkflowCreates,
+  installWorkflowRecorders,
+  resetTestDb,
+  setWorkflowInstance,
+} from "./harness";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   fillAllInstanceId,
   getFillAllWorkflowStatus,
@@ -7,7 +14,10 @@ import {
 } from "../../worker/generation/fillAllLifecycle";
 import { executeFillAllChunks } from "../../worker/generation/fillAllWorkflow";
 import { FILL_ALL_REQUEST_CAP } from "../../worker/generation/claim-orphan-fill";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("fillAllLifecycle", () => {
   it("uses deterministic instance id", () => {
@@ -15,12 +25,12 @@ describe("fillAllLifecycle", () => {
   });
 
   it("start returns already when instance is in-flight", async () => {
-    const env = createTestEnv();
+    const env = installWorkflowRecorders(cfEnv);
     const params = { jobId: "job-a", userId: "user-a" };
     expect(await startFillAllWorkflow(env, params)).toBe("started");
     expect(await startFillAllWorkflow(env, params)).toBe("already");
     expect(
-      env.getWorkflowCreates().filter((c) => {
+      getWorkflowCreates().filter((c) => {
         const id = (c as { id?: string }).id;
         return id === "fill-all-job-a";
       }),
@@ -28,7 +38,7 @@ describe("fillAllLifecycle", () => {
   });
 
   it("getFillAllWorkflowStatus returns idle when not found", async () => {
-    const env = createTestEnv();
+    const env = installWorkflowRecorders(cfEnv);
     const status = await getFillAllWorkflowStatus(env, "missing");
     expect(status).toEqual({
       runId: "fill-all-missing",
@@ -38,7 +48,7 @@ describe("fillAllLifecycle", () => {
   });
 
   it("getFillAllWorkflowStatus treats instance.not_found as idle", async () => {
-    const env = createTestEnv();
+    const env = installWorkflowRecorders(cfEnv);
     env.FILL_ALL_WORKFLOW = {
       create: async () => {
         throw new Error("unreachable");
@@ -52,7 +62,7 @@ describe("fillAllLifecycle", () => {
   });
 
   it("getFillAllWorkflowStatus returns complete output", async () => {
-    const env = createTestEnv();
+    const env = installWorkflowRecorders(cfEnv);
     await startFillAllWorkflow(env, { jobId: "job-a", userId: "user-a" });
     const output = {
       attempted: 8,
@@ -61,7 +71,7 @@ describe("fillAllLifecycle", () => {
       remaining: 0,
       stopReason: "complete" as const,
     };
-    env.setWorkflowInstance("fill-all-job-a", {
+    setWorkflowInstance("fill-all-job-a", {
       status: "complete",
       output,
     });
@@ -71,7 +81,7 @@ describe("fillAllLifecycle", () => {
   });
 
   it("terminateFillAllWorkflow stops an in-flight run", async () => {
-    const env = createTestEnv();
+    const env = installWorkflowRecorders(cfEnv);
     await startFillAllWorkflow(env, { jobId: "job-a", userId: "user-a" });
     expect((await getFillAllWorkflowStatus(env, "job-a")).status).toBe(
       "running",
@@ -83,7 +93,7 @@ describe("fillAllLifecycle", () => {
   });
 
   it("terminateFillAllWorkflow is a no-op when idle", async () => {
-    const env = createTestEnv();
+    const env = installWorkflowRecorders(cfEnv);
     await expect(
       terminateFillAllWorkflow(env, "missing"),
     ).resolves.toBeUndefined();

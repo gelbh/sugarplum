@@ -1,9 +1,28 @@
-import { describe, expect, it, vi } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getCards,
+  getWorkflowCreates,
+  installWorkflowRecorders,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedSession,
+  seedStudyClaim,
+  seedUser,
+  setWorkflowInstance,
+} from "./harness";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { getFreeGenUsage } from "../../worker/generation/quota";
 import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/claim-card-fallback";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const VALID_QA = JSON.stringify({
   cards: [
@@ -28,22 +47,22 @@ const COMPOUND_QA = JSON.stringify({
   ],
 });
 
-function seedOwnerNeedsReview(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+async function seedOwnerNeedsReview(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: "user-a",
     title: "Bio",
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedMaterial({
+  await seedMaterial(env, {
     id: "mat-a",
     deck_id: "deck-a",
     kind: "paste",
@@ -53,7 +72,7 @@ function seedOwnerNeedsReview(env: ReturnType<typeof createTestEnv>) {
     status: "ready",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedGenerationJob({
+  await seedGenerationJob(env, {
     id: "job-a",
     material_id: "mat-a",
     status: "needs_review",
@@ -62,11 +81,11 @@ function seedOwnerNeedsReview(env: ReturnType<typeof createTestEnv>) {
     created_at: "2026-01-01T01:00:00.000Z",
     finished_at: "2026-01-01T01:05:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
 }
 
-function seedOrphanClaim(env: ReturnType<typeof createTestEnv>) {
-  env.seedStudyClaim({
+async function seedOrphanClaim(env: Bindings) {
+  await seedStudyClaim(env, {
     id: "cl-orphan",
     job_id: "job-a",
     deck_id: "deck-a",
@@ -80,7 +99,7 @@ function seedOrphanClaim(env: ReturnType<typeof createTestEnv>) {
   });
 }
 
-function stubWriteOnlyQa(env: ReturnType<typeof createTestEnv>, content = VALID_QA) {
+function stubWriteOnlyQa(env: Bindings, content = VALID_QA) {
   const run = vi.fn(async (_model: string, input: unknown) => {
     expect(_model).toBe(WORKERS_AI_CLAIM_CARD_MODEL);
     const messages = (
@@ -106,9 +125,9 @@ function stubWriteOnlyQa(env: ReturnType<typeof createTestEnv>, content = VALID_
 
 describe("POST /api/jobs/:id/claims/:claimId/generate", () => {
   it("creates a draft from an orphan claim without extract", async () => {
-    const env = createTestEnv();
-    seedOwnerNeedsReview(env);
-    seedOrphanClaim(env);
+    const env = cfEnv;
+    await seedOwnerNeedsReview(env);
+    await seedOrphanClaim(env);
     const run = stubWriteOnlyQa(env);
 
     const res = await app.request(
@@ -138,7 +157,7 @@ describe("POST /api/jobs/:id/claims/:claimId/generate", () => {
       status: "draft",
       job_id: "job-a",
     });
-    const inserted = env.getCards().find((c) => c.id === body.id);
+    const inserted = (await getCards(env)).find((c) => c.id === body.id);
     expect(inserted?.claim_id).toBe("cl-orphan");
     expect(JSON.parse(inserted!.provenance_json!).excerpt).toBe(
       "IgA protects mucosa",
@@ -159,10 +178,10 @@ describe("POST /api/jobs/:id/claims/:claimId/generate", () => {
   });
 
   it("returns 409 when the claim already has a card", async () => {
-    const env = createTestEnv();
-    seedOwnerNeedsReview(env);
-    seedOrphanClaim(env);
-    env.seedCard({
+    const env = cfEnv;
+    await seedOwnerNeedsReview(env);
+    await seedOrphanClaim(env);
+    await seedCard(env, {
       id: "card-existing",
       deck_id: "deck-a",
       job_id: "job-a",
@@ -178,7 +197,7 @@ describe("POST /api/jobs/:id/claims/:claimId/generate", () => {
     });
     stubWriteOnlyQa(env);
 
-    const before = env.getCards().length;
+    const before = (await getCards(env)).length;
     const res = await app.request(
       "/api/jobs/job-a/claims/cl-orphan/generate",
       {
@@ -192,13 +211,13 @@ describe("POST /api/jobs/:id/claims/:claimId/generate", () => {
       env,
     );
     expect(res.status).toBe(409);
-    expect(env.getCards().length).toBe(before);
+    expect((await getCards(env)).length).toBe(before);
   });
 
   it("returns 422 when Layer-1 rejects after reask and does not insert", async () => {
-    const env = createTestEnv();
-    seedOwnerNeedsReview(env);
-    seedOrphanClaim(env);
+    const env = cfEnv;
+    await seedOwnerNeedsReview(env);
+    await seedOrphanClaim(env);
     let i = 0;
     const run = vi.fn(async () => {
       i += 1;
@@ -218,7 +237,7 @@ describe("POST /api/jobs/:id/claims/:claimId/generate", () => {
     });
     env.AI = { run } as unknown as Ai;
 
-    const before = env.getCards().length;
+    const before = (await getCards(env)).length;
     const res = await app.request(
       "/api/jobs/job-a/claims/cl-orphan/generate",
       {
@@ -233,22 +252,22 @@ describe("POST /api/jobs/:id/claims/:claimId/generate", () => {
     );
     expect(res.status).toBe(422);
     expect(i).toBeGreaterThanOrEqual(2);
-    expect(env.getCards().length).toBe(before);
+    expect((await getCards(env)).length).toBe(before);
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(0);
   });
 
   it("returns 404 for missing claim or non-owner", async () => {
-    const env = createTestEnv();
-    seedOwnerNeedsReview(env);
-    seedOrphanClaim(env);
-    env.seedUser({
+    const env = cfEnv;
+    await seedOwnerNeedsReview(env);
+    await seedOrphanClaim(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-b", "user-b");
+    await seedSession(env, "sess-b", "user-b");
 
     const missing = await app.request(
       "/api/jobs/job-a/claims/no-such/generate",
@@ -282,10 +301,10 @@ describe("POST /api/jobs/:id/claims/:claimId/generate", () => {
 
 describe("POST /api/jobs/:id/claims/fill-orphans", () => {
   it("starts Fill-all Workflow and returns 202", async () => {
-    const env = createTestEnv();
-    seedOwnerNeedsReview(env);
-    seedOrphanClaim(env);
-    env.seedStudyClaim({
+    const env = installWorkflowRecorders(cfEnv);
+    await seedOwnerNeedsReview(env);
+    await seedOrphanClaim(env);
+    await seedStudyClaim(env, {
       id: "cl-2",
       job_id: "job-a",
       deck_id: "deck-a",
@@ -316,7 +335,7 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
       orphanTotal: 2,
       status: "running",
     });
-    expect(env.getWorkflowCreates()).toEqual([
+    expect(getWorkflowCreates()).toEqual([
       {
         id: "fill-all-job-a",
         params: { jobId: "job-a", userId: "user-a", type: "qa" },
@@ -325,9 +344,9 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
   });
 
   it("returns 409 when Fill-all already in progress", async () => {
-    const env = createTestEnv();
-    seedOwnerNeedsReview(env);
-    seedOrphanClaim(env);
+    const env = installWorkflowRecorders(cfEnv);
+    await seedOwnerNeedsReview(env);
+    await seedOrphanClaim(env);
 
     const headers = {
       "content-type": "application/json",
@@ -348,8 +367,8 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
   });
 
   it("returns zeros when no orphans", async () => {
-    const env = createTestEnv();
-    seedOwnerNeedsReview(env);
+    const env = installWorkflowRecorders(cfEnv);
+    await seedOwnerNeedsReview(env);
     stubWriteOnlyQa(env);
 
     const res = await app.request(
@@ -371,13 +390,13 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
       remaining: 0,
       cards: [],
     });
-    expect(env.getWorkflowCreates()).toEqual([]);
+    expect(getWorkflowCreates()).toEqual([]);
   });
 
   it("GET status is idle then running", async () => {
-    const env = createTestEnv();
-    seedOwnerNeedsReview(env);
-    seedOrphanClaim(env);
+    const env = installWorkflowRecorders(cfEnv);
+    await seedOwnerNeedsReview(env);
+    await seedOrphanClaim(env);
 
     const idle = await app.request(
       "/api/jobs/job-a/claims/fill-orphans",
@@ -414,17 +433,17 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
   });
 
   it("returns 404 for non-owner", async () => {
-    const env = createTestEnv();
-    seedOwnerNeedsReview(env);
-    seedOrphanClaim(env);
-    env.seedUser({
+    const env = installWorkflowRecorders(cfEnv);
+    await seedOwnerNeedsReview(env);
+    await seedOrphanClaim(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-b", "user-b");
+    await seedSession(env, "sess-b", "user-b");
 
     const res = await app.request(
       "/api/jobs/job-a/claims/fill-orphans",
@@ -442,10 +461,10 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
   });
 
   it("returns 409 when job is not needs_review", async () => {
-    const env = createTestEnv();
-    seedOwnerNeedsReview(env);
-    seedOrphanClaim(env);
-    env.seedGenerationJob({
+    const env = installWorkflowRecorders(cfEnv);
+    await seedOwnerNeedsReview(env);
+    await seedOrphanClaim(env);
+    await seedGenerationJob(env, {
       id: "job-a",
       material_id: "mat-a",
       status: "done",
@@ -472,9 +491,9 @@ describe("POST /api/jobs/:id/claims/fill-orphans", () => {
   });
 
   it("DELETE terminates an in-flight Fill-all", async () => {
-    const env = createTestEnv();
-    seedOwnerNeedsReview(env);
-    seedOrphanClaim(env);
+    const env = installWorkflowRecorders(cfEnv);
+    await seedOwnerNeedsReview(env);
+    await seedOrphanClaim(env);
     const headers = {
       "content-type": "application/json",
       cookie: `${SESSION_COOKIE}=sess-a`,

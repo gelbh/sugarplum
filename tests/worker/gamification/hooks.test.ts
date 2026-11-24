@@ -1,26 +1,41 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedSchedule,
+  seedSession,
+  seedUser,
+} from "../harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
-import { createTestEnv } from "../test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const NOW = "2026-01-01T12:00:00.000Z";
 
-function seedAuthedUser(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+async function seedAuthedUser(env: Bindings) {
+  await seedUser(env, {
     id: "user-hooks",
     email: "hooks@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: NOW,
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-hooks",
     user_id: "user-hooks",
     title: "Hooks deck",
     subject_hint: null,
     created_at: NOW,
   });
-  env.seedSession("sess-hooks", "user-hooks");
+  await seedSession(env, "sess-hooks", "user-hooks");
 }
 
 const authedHeaders = {
@@ -30,9 +45,9 @@ const authedHeaders = {
 
 describe("gamification route hooks", () => {
   it("POST /api/study/review unlocks reviews_1 on first review", async () => {
-    const env = createTestEnv();
-    seedAuthedUser(env);
-    env.seedCard({
+    const env = cfEnv;
+    await seedAuthedUser(env);
+    await seedCard(env, {
       id: "card-review",
       deck_id: "deck-hooks",
       job_id: null,
@@ -45,7 +60,7 @@ describe("gamification route hooks", () => {
       created_at: NOW,
       updated_at: NOW,
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "card-review",
       due: "2020-01-01T00:00:00.000Z",
       stability: 0,
@@ -79,9 +94,29 @@ describe("gamification route hooks", () => {
   });
 
   it("POST /api/cards/:id/accept unlocks accepts_1 on first accept", async () => {
-    const env = createTestEnv();
-    seedAuthedUser(env);
-    env.seedCard({
+    const env = cfEnv;
+    await seedAuthedUser(env);
+    await seedMaterial(env, {
+      id: "mat-hooks",
+      deck_id: "deck-hooks",
+      kind: "paste",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: NOW,
+    });
+    await seedGenerationJob(env, {
+      id: "job-hooks",
+      material_id: "mat-hooks",
+      status: "needs_review",
+      error: null,
+      coverage_json: null,
+      progress_json: null,
+      created_at: NOW,
+      finished_at: null,
+    });
+    await seedCard(env, {
       id: "card-accept",
       deck_id: "deck-hooks",
       job_id: "job-hooks",

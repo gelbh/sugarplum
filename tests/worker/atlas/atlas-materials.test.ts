@@ -1,9 +1,25 @@
-import { describe, expect, it, vi } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getAtlasMaterials,
+  getGenerationJobs,
+  getMaterials,
+  resetTestDb,
+  seedDeck,
+  seedR2,
+  seedSession,
+  seedUser,
+} from "../harness";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import JSZip from "jszip";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
-import { createTestEnv } from "../test-env";
 import type { AtlasEntryView } from "../../../src/atlas/types";
+
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 async function minimalPptx(slideXml: string): Promise<ArrayBuffer> {
   const zip = new JSZip();
@@ -15,15 +31,15 @@ async function minimalPptx(slideXml: string): Promise<ArrayBuffer> {
   return zip.generateAsync({ type: "arraybuffer" });
 }
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+async function seedOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
 }
 
 function authHeaders(json = false): HeadersInit {
@@ -33,7 +49,7 @@ function authHeaders(json = false): HeadersInit {
   };
 }
 
-async function createAtlas(env: ReturnType<typeof createTestEnv>) {
+async function createAtlas(env: Bindings) {
   const created = await app.request(
     "/api/atlas",
     { method: "POST", headers: authHeaders() },
@@ -45,8 +61,8 @@ async function createAtlas(env: ReturnType<typeof createTestEnv>) {
 
 describe("atlas course pack materials API", () => {
   it("paste creates ready row, refreshes Focus, never enqueues a job", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlas = await createAtlas(env);
 
     const paste = await app.request(
@@ -74,7 +90,7 @@ describe("atlas course pack materials API", () => {
       kind: "paste",
     });
     expect(material.jobId).toBeUndefined();
-    expect(env.getGenerationJobs()).toHaveLength(0);
+    expect((await getGenerationJobs(env))).toHaveLength(0);
 
     const list = await app.request(
       `/api/atlas/${atlas.id}/entries`,
@@ -91,8 +107,8 @@ describe("atlas course pack materials API", () => {
   });
 
   it("complete pptx extracts slide text into Focus (not filename-only)", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlas = await createAtlas(env);
 
     const upload = await app.request(
@@ -133,7 +149,7 @@ describe("atlas course pack materials API", () => {
       page_count: 1,
       jobId: null,
     });
-    expect(env.getGenerationJobs()).toHaveLength(0);
+    expect((await getGenerationJobs(env))).toHaveLength(0);
 
     const list = await app.request(
       `/api/atlas/${atlas.id}/entries`,
@@ -150,8 +166,8 @@ describe("atlas course pack materials API", () => {
   });
 
   it("complete pdf returns jobId null and leaves generation_jobs empty", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlas = await createAtlas(env);
 
     const upload = await app.request(
@@ -173,7 +189,7 @@ describe("atlas course pack materials API", () => {
       materialId: string;
       r2Key: string;
     };
-    env.seedR2(r2Key, "%PDF-fake");
+    await seedR2(env, r2Key, "%PDF-fake");
 
     const complete = await app.request(
       `/api/atlas/materials/${materialId}/complete`,
@@ -192,7 +208,7 @@ describe("atlas course pack materials API", () => {
       status: "ready",
       jobId: null,
     });
-    expect(env.getGenerationJobs()).toHaveLength(0);
+    expect((await getGenerationJobs(env))).toHaveLength(0);
 
     const list = await app.request(
       `/api/atlas/${atlas.id}/entries`,
@@ -218,8 +234,8 @@ describe("atlas course pack materials API", () => {
         pageEnd: 1,
       });
     try {
-      const env = createTestEnv();
-      seedOwner(env);
+      const env = cfEnv;
+      await seedOwner(env);
       const atlas = await createAtlas(env);
 
       const upload = await app.request(
@@ -241,7 +257,7 @@ describe("atlas course pack materials API", () => {
         materialId: string;
         r2Key: string;
       };
-      env.seedR2(r2Key, "%PDF-fake");
+      await seedR2(env, r2Key, "%PDF-fake");
 
       const complete = await app.request(
         `/api/atlas/materials/${materialId}/complete`,
@@ -254,7 +270,7 @@ describe("atlas course pack materials API", () => {
         status: "ready",
         jobId: null,
       });
-      expect(env.getGenerationJobs()).toHaveLength(0);
+      expect((await getGenerationJobs(env))).toHaveLength(0);
       expect(spy).toHaveBeenCalled();
 
       const list = await app.request(
@@ -275,8 +291,8 @@ describe("atlas course pack materials API", () => {
   });
 
   it("delete pack material drops Focus contribution on refresh", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlas = await createAtlas(env);
 
     const paste = await app.request(
@@ -326,9 +342,9 @@ describe("atlas course pack materials API", () => {
   });
 
   it("promote copies pack file into deck materials without enqueueing a job", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedDeck({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Cards",
@@ -356,7 +372,7 @@ describe("atlas course pack materials API", () => {
       r2_key: string;
     };
 
-    const jobsBefore = env.getGenerationJobs().length;
+    const jobsBefore = (await getGenerationJobs(env)).length;
     const promote = await app.request(
       `/api/atlas/materials/${packMaterial.id}/promote`,
       {
@@ -383,17 +399,17 @@ describe("atlas course pack materials API", () => {
     });
     expect(deckMaterial.id).not.toBe(packMaterial.id);
     expect(deckMaterial.r2_key).not.toBe(packMaterial.r2_key);
-    expect(env.getGenerationJobs()).toHaveLength(jobsBefore);
-    expect(env.getMaterials().some((m) => m.id === deckMaterial.id)).toBe(true);
-    expect(env.getAtlasMaterials().some((m) => m.id === packMaterial.id)).toBe(
+    expect((await getGenerationJobs(env))).toHaveLength(jobsBefore);
+    expect((await getMaterials(env)).some((m) => m.id === deckMaterial.id)).toBe(true);
+    expect((await getAtlasMaterials(env)).some((m) => m.id === packMaterial.id)).toBe(
       true,
     );
     expect(await env.MATERIALS.get(deckMaterial.r2_key)).not.toBeNull();
   });
 
   it("lists and patches source_role", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const atlas = await createAtlas(env);
 
     const paste = await app.request(

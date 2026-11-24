@@ -1,4 +1,15 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedSchedule,
+  seedSession,
+  seedSubject,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { State } from "ts-fsrs";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
@@ -7,27 +18,31 @@ import {
   recomputeSubjectKnowledgeSummary,
   compositionJsonFromSummary,
 } from "../../worker/subjects/knowledgeSummary";
-import { createTestEnv } from "./test-env";
 import { getDb } from "../../worker/db/client";
+
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const NOW = new Date("2026-11-01T12:00:00.000Z");
 
-function seedBase(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+async function seedBase(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
-  env.seedSubject({
+  await seedSession(env, "sess-a", "user-a");
+  await seedSubject(env, {
     id: "sub-1",
     user_id: "user-a",
     title: "Anatomy",
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-1",
     user_id: "user-a",
     title: "Bones",
@@ -35,7 +50,7 @@ function seedBase(env: ReturnType<typeof createTestEnv>) {
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedCard({
+  await seedCard(env, {
     id: "c-new",
     deck_id: "deck-1",
     job_id: null,
@@ -48,7 +63,7 @@ function seedBase(env: ReturnType<typeof createTestEnv>) {
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedCard({
+  await seedCard(env, {
     id: "c-young",
     deck_id: "deck-1",
     job_id: null,
@@ -61,7 +76,7 @@ function seedBase(env: ReturnType<typeof createTestEnv>) {
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSchedule({
+  await seedSchedule(env, {
     card_id: "c-young",
     due: "2026-01-02T00:00:00.000Z",
     stability: 20,
@@ -78,8 +93,8 @@ function seedBase(env: ReturnType<typeof createTestEnv>) {
 
 describe("subject knowledge summaries", () => {
   it("recompute buckets match composeSubjectKnowledge", async () => {
-    const env = createTestEnv();
-    seedBase(env);
+    const env = cfEnv;
+    await seedBase(env);
     const db = getDb(env);
 
     const summary = await recomputeSubjectKnowledgeSummary(
@@ -141,8 +156,8 @@ describe("subject knowledge summaries", () => {
   });
 
   it("composition-summaries lazy-backfills then serves warm rows", async () => {
-    const env = createTestEnv();
-    seedBase(env);
+    const env = cfEnv;
+    await seedBase(env);
 
     const cold = await app.request(
       "/api/subjects/composition-summaries",
@@ -165,7 +180,7 @@ describe("subject knowledge summaries", () => {
       }),
     ]);
 
-    env.seedCard({
+    await seedCard(env, {
       id: "c-late",
       deck_id: "deck-1",
       job_id: null,
@@ -191,8 +206,8 @@ describe("subject knowledge summaries", () => {
   });
 
   it("archive refreshes summary buckets", async () => {
-    const env = createTestEnv();
-    seedBase(env);
+    const env = cfEnv;
+    await seedBase(env);
     const db = getDb(env);
     await recomputeSubjectKnowledgeSummary(db, "user-a", "sub-1", NOW);
 
@@ -221,8 +236,8 @@ describe("subject knowledge summaries", () => {
   });
 
   it("undo-review refreshes summary after un-accept", async () => {
-    const env = createTestEnv();
-    seedBase(env);
+    const env = cfEnv;
+    await seedBase(env);
     const db = getDb(env);
     await recomputeSubjectKnowledgeSummary(db, "user-a", "sub-1", NOW);
 

@@ -1,8 +1,20 @@
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedSession,
+  seedSubject,
+  seedUser,
+  TEST_SECRETS_WRAP_KEY,
+} from "./harness";
 import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { encryptSecret } from "../../worker/crypto/secrets";
-import { TEST_SECRETS_WRAP_KEY, createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const originalFetch = globalThis.fetch;
 
@@ -10,15 +22,15 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
 });
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+async function seedOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
 }
 
 function authHeaders(json = false): HeadersInit {
@@ -29,7 +41,7 @@ function authHeaders(json = false): HeadersInit {
 }
 
 async function seedConnection(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
   scopes: string,
 ) {
   const refresh = await encryptSecret("refresh-test-token", TEST_SECRETS_WRAP_KEY);
@@ -70,14 +82,14 @@ function stubCourseCalendar() {
 
 describe("calendar routes", () => {
   it("rejects GET /api/calendar with no cookie", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request("/api/calendar", {}, env);
     expect(res.status).toBe(401);
   });
 
   it("returns an empty status when the account has no connection", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const res = await app.request("/api/calendar", { headers: authHeaders() }, env);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
@@ -89,8 +101,8 @@ describe("calendar routes", () => {
   });
 
   it("redirects connect to calendar scopes without openid", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const res = await app.request(
       "/api/calendar/connect",
       { headers: authHeaders() },
@@ -106,8 +118,8 @@ describe("calendar routes", () => {
   });
 
   it("returns empty suggestions when there is no connection", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const res = await app.request(
       "/api/calendar/suggestions",
       { headers: authHeaders() },
@@ -118,15 +130,15 @@ describe("calendar routes", () => {
   });
 
   it("links GEP AB2 and does not link Parasitology", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "sub-para",
       user_id: "user-a",
       title: "Parasitology",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSubject({
+    await seedSubject(env, {
       id: "sub-gep",
       user_id: "user-a",
       title: "GEP AB2",
@@ -159,9 +171,9 @@ describe("calendar routes", () => {
   });
 
   it("omits a dismissed cluster", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "sub-gep",
       user_id: "user-a",
       title: "GEP AB2",
@@ -195,9 +207,9 @@ describe("calendar routes", () => {
   });
 
   it("disconnects and keeps the subject", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "sub-gep",
       user_id: "user-a",
       title: "GEP AB2",

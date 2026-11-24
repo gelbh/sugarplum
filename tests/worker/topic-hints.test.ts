@@ -1,3 +1,19 @@
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getCards,
+  getGenerationJobs,
+  getQueueMessages,
+  installQueueRecorders,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedR2,
+  seedSession,
+  seedUser,
+} from "./harness";
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
@@ -15,30 +31,33 @@ import {
 } from "../../worker/generation/feedback-hints";
 import { generateUserPrompt } from "../../worker/generation/prompts";
 import { mergeTopicHints } from "../../worker/generation/topic-hints";
-import { createTestEnv } from "./test-env";
 
-function seedPasteOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedPasteOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "deck-a",
     user_id: "user-a",
     title: "Owner deck",
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
 }
 
 describe("topicHints on paste", () => {
   it("persists topicHints on the generation job as JSON", async () => {
-    const env = createTestEnv();
-    seedPasteOwner(env);
+    const env = installQueueRecorders(cfEnv);
+    await seedPasteOwner(env);
 
     const res = await app.request(
       "/api/decks/deck-a/materials/paste",
@@ -57,15 +76,15 @@ describe("topicHints on paste", () => {
     );
 
     expect(res.status).toBe(201);
-    expect(env.getGenerationJobs()).toHaveLength(1);
-    const raw = env.getGenerationJobs()[0]?.topic_hints_json;
+    expect((await getGenerationJobs(env))).toHaveLength(1);
+    const raw = (await getGenerationJobs(env))[0]?.topic_hints_json;
     expect(raw).toBeTruthy();
     expect(JSON.parse(raw as string)).toEqual(["cranial nerves"]);
   });
 
   it("strips empties and rejects over-cap or over-length topicHints", async () => {
-    const env = createTestEnv();
-    seedPasteOwner(env);
+    const env = installQueueRecorders(cfEnv);
+    await seedPasteOwner(env);
 
     const tooMany = await app.request(
       "/api/decks/deck-a/materials/paste",
@@ -83,7 +102,7 @@ describe("topicHints on paste", () => {
       env,
     );
     expect(tooMany.status).toBe(400);
-    expect(env.getGenerationJobs()).toHaveLength(0);
+    expect((await getGenerationJobs(env))).toHaveLength(0);
 
     const tooLong = await app.request(
       "/api/decks/deck-a/materials/paste",
@@ -142,9 +161,9 @@ describe("topicHints prompt suffix", () => {
 });
 
 describe("POST /api/decks/:id/topic-generate", () => {
-  function seedDeckWithMaterialAndCards(env: ReturnType<typeof createTestEnv>) {
-    seedPasteOwner(env);
-    env.seedMaterial({
+  async function seedDeckWithMaterialAndCards(env: Bindings) {
+    await seedPasteOwner(env);
+    await seedMaterial(env, {
       id: "mat-a",
       deck_id: "deck-a",
       kind: "paste",
@@ -154,7 +173,7 @@ describe("POST /api/decks/:id/topic-generate", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "job-old",
       material_id: "mat-a",
       status: "needs_review",
@@ -164,7 +183,7 @@ describe("POST /api/decks/:id/topic-generate", () => {
       created_at: "2026-01-01T01:00:00.000Z",
       finished_at: "2026-01-01T01:05:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-keep-1",
       deck_id: "deck-a",
       job_id: "job-old",
@@ -177,7 +196,7 @@ describe("POST /api/decks/:id/topic-generate", () => {
       created_at: "2026-01-01T01:06:00.000Z",
       updated_at: "2026-01-01T01:06:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-keep-2",
       deck_id: "deck-a",
       job_id: "job-old",
@@ -193,9 +212,9 @@ describe("POST /api/decks/:id/topic-generate", () => {
   }
 
   it("queues a new job with topic hint and leaves existing cards intact", async () => {
-    const env = createTestEnv();
-    seedDeckWithMaterialAndCards(env);
-    const cardsBefore = env.getCards().length;
+    const env = installQueueRecorders(cfEnv);
+    await seedDeckWithMaterialAndCards(env);
+    const cardsBefore = (await getCards(env)).length;
 
     const res = await app.request(
       "/api/decks/deck-a/topic-generate",
@@ -215,15 +234,14 @@ describe("POST /api/decks/:id/topic-generate", () => {
     expect(body.jobId).toBeTruthy();
     expect(body.jobId).not.toBe("job-old");
 
-    expect(env.getCards()).toHaveLength(cardsBefore);
+    expect((await getCards(env))).toHaveLength(cardsBefore);
     expect(
-      env
-        .getCards()
+      (await getCards(env))
         .map((c) => c.id)
         .sort(),
     ).toEqual(["c-keep-1", "c-keep-2"]);
 
-    const jobs = env.getGenerationJobs();
+    const jobs = (await getGenerationJobs(env));
     expect(jobs).toHaveLength(2);
     const created = jobs.find((j) => j.id === body.jobId);
     expect(created).toMatchObject({
@@ -234,7 +252,7 @@ describe("POST /api/decks/:id/topic-generate", () => {
       "cranial nerves",
     ]);
 
-    const queued = env.getQueueMessages() as {
+    const queued = getQueueMessages() as {
       jobId: string;
       materialId: string;
       deckId: string;
@@ -243,8 +261,8 @@ describe("POST /api/decks/:id/topic-generate", () => {
   });
 
   it("returns 400 for an empty topic", async () => {
-    const env = createTestEnv();
-    seedDeckWithMaterialAndCards(env);
+    const env = installQueueRecorders(cfEnv);
+    await seedDeckWithMaterialAndCards(env);
 
     const res = await app.request(
       "/api/decks/deck-a/topic-generate",
@@ -260,20 +278,20 @@ describe("POST /api/decks/:id/topic-generate", () => {
     );
 
     expect(res.status).toBe(400);
-    expect(env.getGenerationJobs()).toHaveLength(1);
+    expect((await getGenerationJobs(env))).toHaveLength(1);
   });
 
   it("returns 404 for another user's deck", async () => {
-    const env = createTestEnv();
-    seedDeckWithMaterialAndCards(env);
-    env.seedUser({
+    const env = installQueueRecorders(cfEnv);
+    await seedDeckWithMaterialAndCards(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-b", "user-b");
+    await seedSession(env, "sess-b", "user-b");
 
     const res = await app.request(
       "/api/decks/deck-a/topic-generate",
@@ -289,13 +307,13 @@ describe("POST /api/decks/:id/topic-generate", () => {
     );
 
     expect(res.status).toBe(404);
-    expect(env.getGenerationJobs()).toHaveLength(1);
-    expect(env.getCards()).toHaveLength(2);
+    expect((await getGenerationJobs(env))).toHaveLength(1);
+    expect((await getCards(env))).toHaveLength(2);
   });
 
   it("returns 422 when the deck has no paste/pdf material", async () => {
-    const env = createTestEnv();
-    seedPasteOwner(env);
+    const env = installQueueRecorders(cfEnv);
+    await seedPasteOwner(env);
 
     const res = await app.request(
       "/api/decks/deck-a/topic-generate",
@@ -311,13 +329,13 @@ describe("POST /api/decks/:id/topic-generate", () => {
     );
 
     expect(res.status).toBe(422);
-    expect(env.getGenerationJobs()).toHaveLength(0);
+    expect((await getGenerationJobs(env))).toHaveLength(0);
   });
 
   it("rejects free-path image generate with DIY occlusion guidance", async () => {
-    const env = createTestEnv();
-    seedPasteOwner(env);
-    env.seedMaterial({
+    const env = installQueueRecorders(cfEnv);
+    await seedPasteOwner(env);
+    await seedMaterial(env, {
       id: "mat-img",
       deck_id: "deck-a",
       kind: "image",
@@ -348,7 +366,7 @@ describe("POST /api/decks/:id/topic-generate", () => {
     const body = (await res.json()) as { error?: string; message?: string };
     const msg = body.error ?? body.message ?? JSON.stringify(body);
     expect(msg).toMatch(/Occlusion|suggested automatically|API key/i);
-    expect(env.getGenerationJobs()).toHaveLength(0);
+    expect((await getGenerationJobs(env))).toHaveLength(0);
   });
 });
 
@@ -358,9 +376,9 @@ describe("topicHints consumer injection", () => {
   });
 
   it("passes job topic hints into claim extract", async () => {
-    const env = createTestEnv();
-    seedPasteOwner(env);
-    env.seedMaterial({
+    const env = installQueueRecorders(cfEnv);
+    await seedPasteOwner(env);
+    await seedMaterial(env, {
       id: "mat-hints",
       deck_id: "deck-a",
       kind: "paste",
@@ -370,7 +388,7 @@ describe("topicHints consumer injection", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedR2(
+    await seedR2(env, 
       "materials/deck-a/mat-hints.txt",
       "The brainstem contains cranial nerve nuclei that innervate the head.",
     );
@@ -403,9 +421,9 @@ describe("topicHints consumer injection", () => {
   });
 
   it("merges this run's topic hints ahead of job hints", async () => {
-    const env = createTestEnv();
-    seedPasteOwner(env);
-    env.seedMaterial({
+    const env = installQueueRecorders(cfEnv);
+    await seedPasteOwner(env);
+    await seedMaterial(env, {
       id: "mat-run",
       deck_id: "deck-a",
       kind: "paste",
@@ -415,7 +433,7 @@ describe("topicHints consumer injection", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedR2(
+    await seedR2(env, 
       "materials/deck-a/mat-run.txt",
       "The brainstem contains cranial nerve nuclei that innervate the head.",
     );
@@ -424,8 +442,8 @@ describe("topicHints consumer injection", () => {
       deckId: "deck-a",
       topicHints: ["cranial nerves"],
     });
-    const job0 = env.getGenerationJobs().find((j) => j.id === jobId)!;
-    env.seedGenerationJob({
+    const job0 = (await getGenerationJobs(env)).find((j) => j.id === jobId)!;
+    await seedGenerationJob(env, {
       ...job0,
       run_topic_hints_json: JSON.stringify(["nuclei of the head"]),
     });
@@ -453,7 +471,7 @@ describe("topicHints consumer injection", () => {
         u.includes("- nuclei of the head\n- cranial nerves"),
       ),
     ).toBe(true);
-    const job = env.getGenerationJobs().find((j) => j.id === jobId)!;
+    const job = (await getGenerationJobs(env)).find((j) => j.id === jobId)!;
     expect(job.topic_hints_json).toBe(JSON.stringify(["cranial nerves"]));
   });
 
@@ -518,9 +536,9 @@ describe("avoidPatterns prompt wiring", () => {
   });
 
   it("passes job avoid patterns into write/critique", async () => {
-    const env = createTestEnv();
-    seedPasteOwner(env);
-    env.seedMaterial({
+    const env = installQueueRecorders(cfEnv);
+    await seedPasteOwner(env);
+    await seedMaterial(env, {
       id: "mat-avoid",
       deck_id: "deck-a",
       kind: "paste",
@@ -530,7 +548,7 @@ describe("avoidPatterns prompt wiring", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedR2(
+    await seedR2(env, 
       "materials/deck-a/mat-avoid.txt",
       "The brainstem contains cranial nerve nuclei that innervate the head.",
     );
@@ -538,8 +556,8 @@ describe("avoidPatterns prompt wiring", () => {
       materialId: "mat-avoid",
       deckId: "deck-a",
     });
-    const job = env.getGenerationJobs().find((j) => j.id === jobId)!;
-    env.seedGenerationJob({
+    const job = (await getGenerationJobs(env)).find((j) => j.id === jobId)!;
+    await seedGenerationJob(env, {
       ...job,
       avoid_patterns_json: JSON.stringify(["Rejected stem about CN III"]),
     });

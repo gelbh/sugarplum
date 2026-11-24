@@ -1,4 +1,15 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+  seedDeck,
+  seedGenerationJob,
+  seedMaterial,
+  seedSession,
+  seedUsageEvent,
+  seedUser,
+  withTestBindings,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import {
@@ -6,8 +17,12 @@ import {
   recordGenerationUsageEventForJob,
   usageFieldsFromProgress,
 } from "../../worker/generation/usage";
-import { createTestEnv } from "./test-env";
 import { getDb } from "../../worker/db/client";
+
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("usageFieldsFromProgress", () => {
   it("parses tokens and path", () => {
@@ -46,8 +61,8 @@ describe("usageFieldsFromProgress", () => {
 
 describe("recordGenerationUsageEvent", () => {
   it("inserts once per job_id", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedUser(env, {
       id: "u1",
       email: "ops@example.com",
       password_hash: null,
@@ -74,22 +89,22 @@ describe("recordGenerationUsageEvent", () => {
   });
 
   it("recordGenerationUsageEventForJob resolves user via joins", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u1",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "d1",
       user_id: "u1",
       title: "Deck",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "m1",
       deck_id: "d1",
       kind: "paste",
@@ -99,7 +114,7 @@ describe("recordGenerationUsageEvent", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedGenerationJob({
+    await seedGenerationJob(env, {
       id: "job-2",
       material_id: "m1",
       status: "needs_review",
@@ -111,28 +126,28 @@ describe("recordGenerationUsageEvent", () => {
     });
     await recordGenerationUsageEventForJob(getDb(env), "job-2");
     await recordGenerationUsageEventForJob(getDb(env), "job-2");
-    env.seedSession("s1", "u1");
+    await seedSession(env, "s1", "u1");
   });
 });
 
 describe("GET /api/admin/overview usage", () => {
   it("includes token aggregates from usage_events", async () => {
-    const env = createTestEnv({ adminEmails: "ops@example.com" });
-    env.seedUser({
+    const env = withTestBindings(cfEnv, { adminEmails: "ops@example.com" });
+    await seedUser(env, {
       id: "u-ops",
       email: "ops@example.com",
       password_hash: null,
       oauth_subject: "g",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedUser({
+    await seedUser(env, {
       id: "u-learner",
       email: "learner@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-02T00:00:00.000Z",
     });
-    env.seedUsageEvent({
+    await seedUsageEvent(env, {
       id: "ue1",
       user_id: "u-learner",
       job_id: "j1",
@@ -144,7 +159,7 @@ describe("GET /api/admin/overview usage", () => {
       tokens_total: 100,
       created_at: new Date().toISOString(),
     });
-    env.seedSession("s1", "u-ops");
+    await seedSession(env, "s1", "u-ops");
     const res = await app.request(
       "/api/admin/overview",
       { headers: { cookie: `${SESSION_COOKIE}=s1` } },

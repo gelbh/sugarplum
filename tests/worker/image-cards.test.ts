@@ -1,4 +1,17 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  getCards,
+  getGenerationJobs,
+  getMaterials,
+  getSchedules,
+  resetTestDb,
+  seedDeck,
+  seedMaterial,
+  seedR2,
+  seedSession,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { processGenerateJob } from "../../worker/generation/consumer";
@@ -8,7 +21,10 @@ import {
   parseCardDrafts,
   type OcclusionFront,
 } from "../../worker/generation/schema";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("image / diagram card drafts", () => {
   it("parses image_label and diagram drafts", () => {
@@ -99,15 +115,15 @@ describe("image / diagram card drafts", () => {
   });
 
   it("image generate persists occlusion draft and accept creates schedule", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "A",
@@ -115,7 +131,7 @@ describe("image / diagram card drafts", () => {
       created_at: "2026-01-01T00:00:00.000Z",
     });
     const imageKey = "materials/deck-a/mat-img.png";
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-img",
       deck_id: "deck-a",
       kind: "image",
@@ -125,8 +141,8 @@ describe("image / diagram card drafts", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedR2(imageKey, "fakepng");
-    env.seedSession("sess-a", "user-a");
+    await seedR2(env, imageKey, "fakepng");
+    await seedSession(env, "sess-a", "user-a");
 
     const jobId = await enqueueGeneration(env, {
       materialId: "mat-img",
@@ -138,10 +154,10 @@ describe("image / diagram card drafts", () => {
       { llm: mockLlmAdapter() },
     );
 
-    const job = env.getGenerationJobs().find((j) => j.id === jobId);
+    const job = (await getGenerationJobs(env)).find((j) => j.id === jobId);
     expect(job?.status).toBe("needs_review");
 
-    const cards = env.getCards();
+    const cards = (await getCards(env));
     const occlusion = cards.find((c) => c.type === "occlusion");
     expect(occlusion).toBeTruthy();
     expect(occlusion!.status).toBe("draft");
@@ -173,36 +189,36 @@ describe("image / diagram card drafts", () => {
     );
     expect(acceptRes.status).toBe(200);
 
-    const accepted = env.getCards().find((c) => c.id === occlusion!.id);
+    const accepted = (await getCards(env)).find((c) => c.id === occlusion!.id);
     expect(accepted?.status).toBe("accepted");
-    const schedules = env.getSchedules();
+    const schedules = (await getSchedules(env));
     expect(schedules.some((s) => s.card_id === occlusion!.id)).toBe(true);
   });
 
   it("serves owned media and 404s for others", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedUser({
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "A",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-img",
       deck_id: "deck-a",
       kind: "image",
@@ -212,9 +228,9 @@ describe("image / diagram card drafts", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedR2("materials/deck-a/mat-img.png", "fakepng");
-    env.seedSession("sess-a", "user-a");
-    env.seedSession("sess-b", "user-b");
+    await seedR2(env, "materials/deck-a/mat-img.png", "fakepng");
+    await seedSession(env, "sess-a", "user-a");
+    await seedSession(env, "sess-b", "user-b");
 
     const ok = await app.request(
       "/api/materials/media?key=materials%2Fdeck-a%2Fmat-img.png",
@@ -234,22 +250,22 @@ describe("image / diagram card drafts", () => {
   });
 
   it("accepts image upload-url metadata", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "A",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
 
     const res = await app.request(
       "/api/decks/deck-a/materials/upload-url",
@@ -268,6 +284,6 @@ describe("image / diagram card drafts", () => {
       env,
     );
     expect(res.status).toBe(200);
-    expect(env.getMaterials()[0]?.kind).toBe("image");
+    expect((await getMaterials(env))[0]?.kind).toBe("image");
   });
 });

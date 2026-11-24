@@ -1,5 +1,22 @@
-import { describe, it, expect } from "vitest";
-import { createTestEnv } from "../test-env";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getAchievementCompletions,
+  getProgressWrites,
+  getSchedules,
+  getUserGamification,
+  getXpLedger,
+  installProgressWriteRecorder,
+  resetTestDb,
+  seedAchievementDef,
+  seedCard,
+  seedDeck,
+  seedReviewLog,
+  seedSchedule,
+  seedUser,
+  seedUserGamification,
+} from "../harness";
+import { afterEach, describe, it, expect } from "vitest";
 import {
   compositeParts,
   evaluateAfterAccept,
@@ -20,20 +37,25 @@ import {
   type AchievementDefSeed,
 } from "../gamification-seeds";
 
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
 const NOW = "2026-10-29T12:00:00.000Z";
 const LATEST_VERSION = Math.max(
   ...ACHIEVEMENT_DEF_SEEDS.map((d) => d.catalog_version),
 );
 
-function seedStudyUser(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+async function seedStudyUser(env: Bindings) {
+  await seedUser(env, {
     id: "u1",
     email: "u1@test.com",
     password_hash: null,
     oauth_subject: null,
     created_at: NOW,
   });
-  env.seedDeck({
+  await seedDeck(env, {
     id: "d1",
     user_id: "u1",
     title: "Deck",
@@ -42,11 +64,11 @@ function seedStudyUser(env: ReturnType<typeof createTestEnv>) {
   });
 }
 
-function seedAcceptedCard(
-  env: ReturnType<typeof createTestEnv>,
+async function seedAcceptedCard(
+  env: Bindings,
   opts: { id: string; type?: string; due: string },
 ) {
-  env.seedCard({
+  await seedCard(env, {
     id: opts.id,
     deck_id: "d1",
     job_id: null,
@@ -59,7 +81,7 @@ function seedAcceptedCard(
     created_at: NOW,
     updated_at: NOW,
   });
-  env.seedSchedule({
+  await seedSchedule(env, {
     card_id: opts.id,
     due: opts.due,
     stability: 1,
@@ -76,10 +98,10 @@ function seedAcceptedCard(
 
 describe("evaluateAfterReview", () => {
   it("unlocks reviews_1 on first review and is idempotent", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: "2026-11-01T00:00:00.000Z" });
-    env.seedReviewLog({
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: "2026-11-01T00:00:00.000Z" });
+    await seedReviewLog(env, {
       id: "rl1",
       card_id: "c1",
       rating: 3,
@@ -104,22 +126,20 @@ describe("evaluateAfterReview", () => {
     const second = await evaluateAfterReview(db, "u1", args);
     expect(second.unlocks).toEqual([]);
 
-    const completions = env
-      .getAchievementCompletions()
+    const completions = (await getAchievementCompletions(env))
       .filter((c) => c.achievement_id === "reviews_1");
     expect(completions).toHaveLength(1);
 
-    const unlockXp = env
-      .getXpLedger()
+    const unlockXp = (await getXpLedger(env))
       .filter((e) => e.idempotency_key === "unlock:reviews_1");
     expect(unlockXp).toHaveLength(1);
   });
 
   it("does not unlock plum_scholar after a single review", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: "2026-11-01T00:00:00.000Z" });
-    env.seedReviewLog({
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: "2026-11-01T00:00:00.000Z" });
+    await seedReviewLog(env, {
       id: "rl1",
       card_id: "c1",
       rating: 3,
@@ -139,9 +159,9 @@ describe("evaluateAfterReview", () => {
 
 describe("evaluateAfterAccept", () => {
   it("unlocks accepts_1 on first accept", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: "2026-11-01T00:00:00.000Z" });
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: "2026-11-01T00:00:00.000Z" });
 
     const { unlocks } = await evaluateAfterAccept(env.DB, "u1", {
       cardId: "c1",
@@ -153,10 +173,10 @@ describe("evaluateAfterAccept", () => {
 
 describe("onStudyEvent facade", () => {
   it("onReviewGraded awards review XP and returns unlocks", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: "2026-11-01T00:00:00.000Z" });
-    env.seedReviewLog({
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: "2026-11-01T00:00:00.000Z" });
+    await seedReviewLog(env, {
       id: "rl1",
       card_id: "c1",
       rating: 3,
@@ -172,14 +192,14 @@ describe("onStudyEvent facade", () => {
     });
     expect(unlocks.map((u) => u.id)).toContain("reviews_1");
 
-    const keys = new Set(env.getXpLedger().map((e) => e.idempotency_key));
+    const keys = new Set((await getXpLedger(env)).map((e) => e.idempotency_key));
     expect(keys.has("review_day:2026-10-29")).toBe(true);
     expect(keys.has("review:rl1")).toBe(true);
   });
 
   it("concurrent reviews never push review XP past the daily cap", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
     for (let i = 0; i < 19; i++) {
       await creditXp(env.DB, "u1", XP.perReview, "review", `review:pre${i}`);
     }
@@ -189,23 +209,21 @@ describe("onStudyEvent facade", () => {
         onReviewGraded(env.DB, "u1", { reviewLogId: id, reviewedAt: at }),
       ),
     );
-    const reviewXp = env
-      .getXpLedger()
+    const reviewXp = (await getXpLedger(env))
       .filter((e) => e.idempotency_key.startsWith("review:"))
       .reduce((sum, e) => sum + e.amount, 0);
     expect(reviewXp).toBe(XP.reviewDailyCap);
   });
 
   it("onCardAccepted awards accept XP once", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: "2026-11-01T00:00:00.000Z" });
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: "2026-11-01T00:00:00.000Z" });
 
     await onCardAccepted(env.DB, "u1", { cardId: "c1", cardType: "qa" });
     await onCardAccepted(env.DB, "u1", { cardId: "c1", cardType: "qa" });
 
-    const acceptXp = env
-      .getXpLedger()
+    const acceptXp = (await getXpLedger(env))
       .filter((e) => e.idempotency_key === "accept:c1");
     expect(acceptXp).toHaveLength(1);
   });
@@ -234,13 +252,13 @@ describe("compositeParts", () => {
 
 const FUTURE = "2026-11-01T00:00:00.000Z";
 
-function seedReview(
-  env: ReturnType<typeof createTestEnv>,
+async function seedReview(
+  env: Bindings,
   id: string,
   cardId: string,
   opts: { reviewedAt?: string; elapsedDays?: number } = {},
 ) {
-  env.seedReviewLog({
+  await seedReviewLog(env, {
     id,
     card_id: cardId,
     rating: 3,
@@ -279,11 +297,11 @@ describe("harder fruit ladder durability", () => {
   )!.threshold!;
 
   it("does not revoke a pre-seeded completion below the current threshold", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: FUTURE });
     const below = reviews25Threshold - 20;
-    for (let i = 0; i < below; i++) seedReview(env, `rl-keep-${i}`, "c1");
+    for (let i = 0; i < below; i++) await seedReview(env, `rl-keep-${i}`, "c1");
     await env.DB.prepare(
       `INSERT OR IGNORE INTO achievement_completions
          (user_id, achievement_id, completed_at, trigger_event_id, backdated)
@@ -298,23 +316,21 @@ describe("harder fruit ladder durability", () => {
     });
 
     expect(
-      env
-        .getAchievementCompletions()
+      (await getAchievementCompletions(env))
         .some((c) => c.achievement_id === "reviews_25"),
     ).toBe(true);
     expect(
-      env
-        .getAchievementCompletions()
+      (await getAchievementCompletions(env))
         .some((c) => c.achievement_id === "reviews_100"),
     ).toBe(false);
   });
 
   it("requires the live def threshold for incomplete medals", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: FUTURE });
     const below = reviews25Threshold - 10;
-    for (let i = 0; i < below; i++) seedReview(env, `rl-mid-${i}`, "c1");
+    for (let i = 0; i < below; i++) await seedReview(env, `rl-mid-${i}`, "c1");
 
     await evaluateAfterReview(env.DB, "u1", {
       reviewLogId: `rl-mid-${below - 1}`,
@@ -322,8 +338,7 @@ describe("harder fruit ladder durability", () => {
     });
 
     expect(
-      env
-        .getAchievementCompletions()
+      (await getAchievementCompletions(env))
         .some((c) => c.achievement_id === "reviews_25"),
     ).toBe(false);
     const mid = await env.DB.prepare(
@@ -343,7 +358,7 @@ describe("harder fruit ladder durability", () => {
     expect(reviews25?.threshold).toBe(reviews25Threshold);
 
     for (let i = below; i < reviews25Threshold; i++) {
-      seedReview(env, `rl-mid-${i}`, "c1");
+      await seedReview(env, `rl-mid-${i}`, "c1");
     }
     const unlocks = await evaluateAfterReview(env.DB, "u1", {
       reviewLogId: `rl-mid-${reviews25Threshold - 1}`,
@@ -355,26 +370,26 @@ describe("harder fruit ladder durability", () => {
 
 describe("evaluateAchievements write discipline", () => {
   it("skips completed defs and writes only changed progress", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: FUTURE });
-    seedReview(env, "rl1", "c1");
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    await seedReview(env, "rl1", "c1");
     const args = { reviewLogId: "rl1", reviewedAt: new Date(NOW) };
 
     await evaluateAfterReview(env.DB, "u1", args);
-    expect(env.getProgressWrites()).toContain("reviews_1");
+    expect(getProgressWrites()).toContain("reviews_1");
 
-    const afterFirst = env.getProgressWrites().length;
+    const afterFirst = getProgressWrites().length;
     await evaluateAfterReview(env.DB, "u1", args);
-    expect(env.getProgressWrites().slice(afterFirst)).toEqual([]);
+    expect(getProgressWrites().slice(afterFirst)).toEqual([]);
 
-    seedReview(env, "rl2", "c1");
-    const afterSecond = env.getProgressWrites().length;
+    await seedReview(env, "rl2", "c1");
+    const afterSecond = getProgressWrites().length;
     await evaluateAfterReview(env.DB, "u1", {
       reviewLogId: "rl2",
       reviewedAt: new Date(NOW),
     });
-    const writes = env.getProgressWrites().slice(afterSecond);
+    const writes = getProgressWrites().slice(afterSecond);
     expect(writes).toContain("reviews_25");
     expect(writes).not.toContain("reviews_1");
   });
@@ -382,10 +397,10 @@ describe("evaluateAchievements write discipline", () => {
 
 describe("clear-due day counter", () => {
   it("unlocks clear_due_1 when no due cards remain", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: "2026-11-01T00:00:00.000Z" });
-    env.seedReviewLog({
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: "2026-11-01T00:00:00.000Z" });
+    await seedReviewLog(env, {
       id: "rl1",
       card_id: "c1",
       rating: 3,
@@ -403,12 +418,12 @@ describe("clear-due day counter", () => {
   });
 
   it("counts at most one clear-due day per UTC day", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: FUTURE });
-    seedReview(env, "rl1", "c1");
-    seedReview(env, "rl2", "c1");
-    seedReview(env, "rl3", "c1", { reviewedAt: "2026-10-30T09:00:00.000Z" });
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    await seedReview(env, "rl1", "c1");
+    await seedReview(env, "rl2", "c1");
+    await seedReview(env, "rl3", "c1", { reviewedAt: "2026-10-30T09:00:00.000Z" });
 
     await onReviewGraded(env.DB, "u1", {
       reviewLogId: "rl1",
@@ -418,26 +433,26 @@ describe("clear-due day counter", () => {
       reviewLogId: "rl2",
       reviewedAt: new Date(NOW),
     });
-    expect(env.getUserGamification("u1")?.clear_due_days).toBe(1);
+    expect((await getUserGamification(env, "u1"))?.clear_due_days).toBe(1);
 
     await onReviewGraded(env.DB, "u1", {
       reviewLogId: "rl3",
       reviewedAt: new Date("2026-10-30T09:00:00.000Z"),
     });
-    expect(env.getUserGamification("u1")?.clear_due_days).toBe(2);
+    expect((await getUserGamification(env, "u1"))?.clear_due_days).toBe(2);
   });
 
   it("does not count a day while an accepted card is past due", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: "2026-10-28T00:00:00.000Z" });
-    seedReview(env, "rl1", "c1");
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: "2026-10-28T00:00:00.000Z" });
+    await seedReview(env, "rl1", "c1");
 
     const unlocks = await onReviewGraded(env.DB, "u1", {
       reviewLogId: "rl1",
       reviewedAt: new Date(NOW),
     });
-    expect(env.getUserGamification("u1")?.clear_due_days).toBe(0);
+    expect((await getUserGamification(env, "u1"))?.clear_due_days).toBe(0);
     expect(unlocks.map((u) => u.id)).not.toContain("clear_due_1");
   });
 });
@@ -454,15 +469,15 @@ describe("new trigger kinds", () => {
       kind: "long_reviews",
       threshold: 1,
       event: "review" as const,
-      arrange: (env: ReturnType<typeof createTestEnv>) =>
-        seedReview(env, "rl-long", "c1", { elapsedDays: 30 }),
+      arrange: async (env: Bindings) =>
+        await seedReview(env, "rl-long", "c1", { elapsedDays: 30 }),
     },
     {
       kind: "mature_cards",
       threshold: 1,
       event: "review" as const,
-      arrange: (env: ReturnType<typeof createTestEnv>) =>
-        env.seedSchedule({
+      arrange: async (env: Bindings) =>
+        await seedSchedule(env, {
           card_id: "c1",
           due: FUTURE,
           stability: 30,
@@ -480,14 +495,14 @@ describe("new trigger kinds", () => {
       kind: "level_reached",
       threshold: 2,
       event: "review" as const,
-      arrange: (env: ReturnType<typeof createTestEnv>) =>
+      arrange: async (env: Bindings) =>
         creditXp(env.DB, "u1", 100, "test", "test:level"),
     },
   ])("unlocks a $kind def from a minimal fixture", async (c) => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: FUTURE });
-    env.seedAchievementDef(testDef(`t_${c.kind}`, c.kind, c.threshold));
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    await seedAchievementDef(env, testDef(`t_${c.kind}`, c.kind, c.threshold));
     await c.arrange(env);
 
     const { unlocks } =
@@ -506,15 +521,15 @@ describe("new trigger kinds", () => {
 
 describe("catalog versions", () => {
   it("backdates defs newer than the user's version, keeps shipped defs live", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: FUTURE });
-    seedReview(env, "rl1", "c1");
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    await seedReview(env, "rl1", "c1");
     await ensureUserGamification(env.DB, "u1");
-    expect(env.getUserGamification("u1")?.catalog_version).toBe(LATEST_VERSION);
+    expect((await getUserGamification(env, "u1"))?.catalog_version).toBe(LATEST_VERSION);
     const next = LATEST_VERSION + 1;
-    env.seedAchievementDef(testDef("t_history", "reviews_total", 1, next));
-    env.seedAchievementDef(testDef("t_next", "reviews_total", 2, next));
+    await seedAchievementDef(env, testDef("t_history", "reviews_total", 1, next));
+    await seedAchievementDef(env, testDef("t_next", "reviews_total", 2, next));
 
     const first = await onReviewGraded(env.DB, "u1", {
       reviewLogId: "rl1",
@@ -522,16 +537,15 @@ describe("catalog versions", () => {
     });
     expect(first.map((u) => u.id)).toContain("reviews_1");
     expect(first.map((u) => u.id)).not.toContain("t_history");
-    const history = env
-      .getAchievementCompletions()
+    const history = (await getAchievementCompletions(env))
       .find((c) => c.achievement_id === "t_history");
     expect(history?.backdated).toBe(1);
     expect(
-      env.getXpLedger().some((e) => e.idempotency_key === "unlock:t_history"),
+      (await getXpLedger(env)).some((e) => e.idempotency_key === "unlock:t_history"),
     ).toBe(false);
-    expect(env.getUserGamification("u1")?.catalog_version).toBe(next);
+    expect((await getUserGamification(env, "u1"))?.catalog_version).toBe(next);
 
-    seedReview(env, "rl2", "c1");
+    await seedReview(env, "rl2", "c1");
     const second = await onReviewGraded(env.DB, "u1", {
       reviewLogId: "rl2",
       reviewedAt: new Date(NOW),
@@ -540,12 +554,12 @@ describe("catalog versions", () => {
   });
 
   it("creates a brand-new user at the latest version, so nothing is backdated", async () => {
-    const env = createTestEnv();
-    env.seedAchievementDef(testDef("t_v2", "reviews_total", 1, LATEST_VERSION));
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: FUTURE });
-    seedReview(env, "rl1", "c1");
-    expect(env.getUserGamification("u1")).toBeUndefined();
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedAchievementDef(env, testDef("t_v2", "reviews_total", 1, LATEST_VERSION));
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    await seedReview(env, "rl1", "c1");
+    expect(await getUserGamification(env, "u1")).toBeUndefined();
 
     const unlocks = await onReviewGraded(env.DB, "u1", {
       reviewLogId: "rl1",
@@ -554,25 +568,28 @@ describe("catalog versions", () => {
     expect(unlocks.map((u) => u.id)).toEqual(
       expect.arrayContaining(["reviews_1", "t_v2"]),
     );
-    expect(env.getUserGamification("u1")?.catalog_version).toBe(LATEST_VERSION);
+    expect((await getUserGamification(env, "u1"))?.catalog_version).toBe(LATEST_VERSION);
     expect(
-      env.getAchievementCompletions().filter((c) => c.backdated === 1),
+      (await getAchievementCompletions(env)).filter((c) => c.backdated === 1),
     ).toEqual([]);
   });
 
   it("backdates real v2 medals for a v1 user on their next review", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: FUTURE });
-    seedAcceptedCard(env, { id: "c2", due: FUTURE });
-    env.seedSchedule({
-      ...env.getSchedules().find((s) => s.card_id === "c2")!,
+    const env = installProgressWriteRecorder(cfEnv);
+    await seedStudyUser(env);
+    await seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    await seedAcceptedCard(env, { id: "c2", due: FUTURE });
+    await seedSchedule(env, {
+      ...(await getSchedules(env)).find((s) => s.card_id === "c2")!,
       scheduled_days: 21,
     });
-    seedReview(env, "rl0", "c1", { reviewedAt: "2026-10-28T12:00:00.000Z" });
-    seedReview(env, "rl1", "c2", { elapsedDays: 30 });
+    await seedReview(env, "rl0", "c1", { reviewedAt: "2026-10-28T12:00:00.000Z" });
+    await seedReview(env, "rl1", "c2", { elapsedDays: 30 });
     await ensureUserGamification(env.DB, "u1");
-    env.getUserGamification("u1")!.catalog_version = 1;
+    await seedUserGamification(env, {
+      ...(await getUserGamification(env, "u1"))!,
+      catalog_version: 1,
+    });
 
     const v2 = ["study_days_2", "long_reviews_1", "mature_1"];
     for (const id of v2) {
@@ -588,15 +605,14 @@ describe("catalog versions", () => {
     expect(unlocks.map((u) => u.id)).toContain("reviews_1");
     for (const id of v2) {
       expect(unlocks.map((u) => u.id)).not.toContain(id);
-      const completion = env
-        .getAchievementCompletions()
+      const completion = (await getAchievementCompletions(env))
         .find((c) => c.achievement_id === id);
       expect(completion?.backdated, id).toBe(1);
       expect(
-        env.getXpLedger().some((e) => e.idempotency_key === `unlock:${id}`),
+        (await getXpLedger(env)).some((e) => e.idempotency_key === `unlock:${id}`),
         id,
       ).toBe(false);
     }
-    expect(env.getUserGamification("u1")?.catalog_version).toBe(LATEST_VERSION);
+    expect((await getUserGamification(env, "u1"))?.catalog_version).toBe(LATEST_VERSION);
   });
 });

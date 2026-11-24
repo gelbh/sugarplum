@@ -1,13 +1,28 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedReviewLog,
+  seedSession,
+  seedUser,
+  seedUserStudyPrefs,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
 import {
   isOptimizeDue,
   markOptimizePendingBatch,
   saveFsrsWeights,
 } from "../../worker/study/fsrsOptimize";
 import { getDb } from "../../worker/db/client";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
 
 const fixtureW = Array.from({ length: 34 }, (_, i) => 0.1 + i * 0.01);
 
@@ -33,23 +48,23 @@ describe("isOptimizeDue", () => {
 });
 
 describe("FSRS optimize API", () => {
-  function seedUser(env: ReturnType<typeof createTestEnv>) {
-    env.seedUser({
+  async function seedUserFixture(env: Bindings) {
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedDeck({
+    await seedSession(env, "sess-a", "user-a");
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Deck",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "card-a",
       deck_id: "deck-a",
       job_id: null,
@@ -72,9 +87,9 @@ describe("FSRS optimize API", () => {
   }
 
   it("budget PUT leaves fsrs_w_json intact", async () => {
-    const env = createTestEnv();
-    seedUser(env);
-    env.seedUserStudyPrefs({
+    const env = cfEnv;
+    await seedUserFixture(env);
+    await seedUserStudyPrefs(env, {
       user_id: "user-a",
       intro_budget: 20,
       review_budget: 200,
@@ -116,10 +131,10 @@ describe("FSRS optimize API", () => {
   });
 
   it("reset clears custom w but keeps Run-now eligible with enough reviews", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = cfEnv;
+    await seedUserFixture(env);
     for (let i = 0; i < 400; i++) {
-      env.seedReviewLog({
+      await seedReviewLog(env, {
         id: `rl-reset-${i}`,
         card_id: "card-a",
         rating: 3,
@@ -129,7 +144,7 @@ describe("FSRS optimize API", () => {
         state_json: JSON.stringify({ state: 1 }),
       });
     }
-    env.seedUserStudyPrefs({
+    await seedUserStudyPrefs(env, {
       user_id: "user-a",
       intro_budget: 20,
       review_budget: 200,
@@ -162,8 +177,8 @@ describe("FSRS optimize API", () => {
   });
 
   it("PUT weights rejects invalid vectors and accepts 34 finites", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = cfEnv;
+    await seedUserFixture(env);
 
     const bad = await app.request(
       "/api/settings/study/fsrs-weights",
@@ -211,23 +226,23 @@ describe("FSRS optimize API", () => {
   });
 
   it("export returns only the authed user's rows", async () => {
-    const env = createTestEnv();
-    seedUser(env);
-    env.seedUser({
+    const env = cfEnv;
+    await seedUserFixture(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-b",
       user_id: "user-b",
       title: "Other",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "card-b",
       deck_id: "deck-b",
       job_id: null,
@@ -239,7 +254,7 @@ describe("FSRS optimize API", () => {
       status: "accepted",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedReviewLog({
+    await seedReviewLog(env, {
       id: "rl-a",
       card_id: "card-a",
       rating: 3,
@@ -248,7 +263,7 @@ describe("FSRS optimize API", () => {
       reviewed_at: "2026-02-01T00:00:00.000Z",
       state_json: JSON.stringify({ state: 1 }),
     });
-    env.seedReviewLog({
+    await seedReviewLog(env, {
       id: "rl-b",
       card_id: "card-b",
       rating: 2,
@@ -271,10 +286,10 @@ describe("FSRS optimize API", () => {
   });
 
   it("markOptimizePendingBatch marks due users and skips fresh ones", async () => {
-    const env = createTestEnv();
-    seedUser(env);
+    const env = cfEnv;
+    await seedUserFixture(env);
     for (let i = 0; i < 400; i++) {
-      env.seedReviewLog({
+      await seedReviewLog(env, {
         id: `rl-${i}`,
         card_id: "card-a",
         rating: 3,
@@ -284,7 +299,7 @@ describe("FSRS optimize API", () => {
         state_json: JSON.stringify({ state: 1 }),
       });
     }
-    env.seedUserStudyPrefs({
+    await seedUserStudyPrefs(env, {
       user_id: "user-a",
       intro_budget: 20,
       review_budget: 200,

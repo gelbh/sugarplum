@@ -1,3 +1,9 @@
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  resetTestDb,
+  seedSession,
+  seedUser,
+} from "./harness";
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { app } from "../../worker/index";
 import {
@@ -22,7 +28,10 @@ import {
   SESSION_COOKIE,
   sessionCookieSecure,
 } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 const SITEVERIFY_URL =
   "https://challenges.cloudflare.com/turnstile/v0/siteverify";
@@ -103,7 +112,7 @@ function stubGoogleTokenAndProfile(profile: {
 
 describe("auth register validation", () => {
   it("rejects short password", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request(
       "/api/auth/register",
       {
@@ -117,7 +126,7 @@ describe("auth register validation", () => {
   });
 
   it("rejects missing email", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request(
       "/api/auth/register",
       {
@@ -136,7 +145,7 @@ describe("auth register validation", () => {
 
 describe("auth turnstile", () => {
   it("GET /turnstile returns siteKey", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request("/api/auth/turnstile", { method: "GET" }, env);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
@@ -145,7 +154,7 @@ describe("auth turnstile", () => {
   });
 
   it("register without token returns 403", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     stubSiteverify();
     const res = await app.request(
       "/api/auth/register",
@@ -163,7 +172,7 @@ describe("auth turnstile", () => {
   });
 
   it("register with failed siteverify returns 403", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     stubSiteverify({ success: false });
     const res = await app.request(
       "/api/auth/register",
@@ -182,7 +191,7 @@ describe("auth turnstile", () => {
   });
 
   it("register succeeds when siteverify passes", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     stubSiteverify({ success: true, action: "register" });
     const res = await app.request(
       "/api/auth/register",
@@ -203,8 +212,8 @@ describe("auth turnstile", () => {
   });
 
   it("login without token returns 403", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "u1",
       email: "u@example.com",
       password_hash: await hashPassword("long-enough-password"),
@@ -228,7 +237,7 @@ describe("auth turnstile", () => {
   });
 
   it("register rejects success without matching action", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     stubSiteverify({ success: true });
     const res = await app.request(
       "/api/auth/register",
@@ -247,7 +256,7 @@ describe("auth turnstile", () => {
   });
 
   it("register accepts testing-key siteverify without action", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     stubSiteverify({ success: true, testingKey: true });
     const res = await app.request(
       "/api/auth/register",
@@ -312,7 +321,7 @@ describe("session helpers", () => {
 
 describe("Google OAuth", () => {
   it("start redirects to Google authorize URL", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request("/api/auth/google/start", { method: "GET" }, env);
     expect(res.status).toBe(302);
     const loc = res.headers.get("location");
@@ -323,15 +332,13 @@ describe("Google OAuth", () => {
   });
 
   it("start returns 503 when Google secrets are missing", async () => {
-    const env = createTestEnv();
-    env.GOOGLE_CLIENT_ID = "";
-    env.GOOGLE_CLIENT_SECRET = "";
+    const env = { ...cfEnv, GOOGLE_CLIENT_ID: "", GOOGLE_CLIENT_SECRET: "" };
     const res = await app.request("/api/auth/google/start", { method: "GET" }, env);
     expect(res.status).toBe(503);
   });
 
   it("callback redirects to /today and sets session", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const state = "state-new";
     await env.SESSIONS.put(
       `${OAUTH_KV_PREFIX}${state}`,
@@ -363,7 +370,7 @@ describe("Google OAuth", () => {
   });
 
   it("callback without oauth ctx cookie fails", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const state = "state-no-ctx";
     await env.SESSIONS.put(
       `${OAUTH_KV_PREFIX}${state}`,
@@ -389,7 +396,7 @@ describe("Google OAuth", () => {
   });
 
   it("duplicate callback with same code after success redirects to /today without error", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const state = "state-dup";
     await env.SESSIONS.put(
       `${OAUTH_KV_PREFIX}${state}`,
@@ -431,7 +438,7 @@ describe("Google OAuth", () => {
   });
 
   it("done replay without oauth ctx cookie does not mint a session", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const state = "state-naked";
     await env.SESSIONS.put(
       `${OAUTH_KV_PREFIX}${state}`,
@@ -465,7 +472,7 @@ describe("Google OAuth", () => {
   });
 
   it("done replay with matching session cookie redirects home without reminting", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const state = "state-sess-replay";
     await env.SESSIONS.put(
       `${OAUTH_KV_PREFIX}${state}`,
@@ -502,8 +509,8 @@ describe("Google OAuth", () => {
   });
 
   it("callback refuses to auto-link a password account (hijack guard)", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "link@example.com",
       password_hash: await hashPassword("long-enough-password"),
@@ -532,8 +539,8 @@ describe("Google OAuth", () => {
   });
 
   it("callback links Google onto an oauth-only email row", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-o2",
       email: "orphan@example.com",
       password_hash: null,
@@ -567,8 +574,8 @@ describe("Google OAuth", () => {
   });
 
   it("callback redirects when email has a different Google subject", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-b",
       email: "taken@example.com",
       password_hash: null,
@@ -597,7 +604,7 @@ describe("Google OAuth", () => {
   });
 
   it("callback rejects unverified Google email", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const state = "state-unverified";
     await env.SESSIONS.put(
       `${OAUTH_KV_PREFIX}${state}`,
@@ -621,8 +628,8 @@ describe("Google OAuth", () => {
   });
 
   it("password login rejects OAuth-only users", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-o",
       email: "only@example.com",
       password_hash: null,
@@ -647,7 +654,7 @@ describe("Google OAuth", () => {
   });
 
   it("link start returns 401 without session", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request(
       "/api/auth/google/start?intent=link",
       { method: "GET" },
@@ -657,15 +664,15 @@ describe("Google OAuth", () => {
   });
 
   it("link start redirects when authenticated", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-link",
       email: "pw@example.com",
       password_hash: await hashPassword("long-enough-password"),
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-link", "user-link");
+    await seedSession(env, "sess-link", "user-link");
     const res = await app.request(
       "/api/auth/google/start?intent=link",
       {
@@ -681,15 +688,15 @@ describe("Google OAuth", () => {
   });
 
   it("link callback sets oauth_subject when session and email match", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-pw",
       email: "pwlink@example.com",
       password_hash: await hashPassword("long-enough-password"),
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-pw", "user-pw");
+    await seedSession(env, "sess-pw", "user-pw");
     const state = "state-settings-link";
     await env.SESSIONS.put(
       `${OAUTH_KV_PREFIX}${state}`,
@@ -735,15 +742,15 @@ describe("Google OAuth", () => {
   });
 
   it("link callback rejects Google email mismatch", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-mm",
       email: "account@example.com",
       password_hash: await hashPassword("long-enough-password"),
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-mm", "user-mm");
+    await seedSession(env, "sess-mm", "user-mm");
     const state = "state-mismatch";
     await env.SESSIONS.put(
       `${OAUTH_KV_PREFIX}${state}`,
@@ -776,22 +783,22 @@ describe("Google OAuth", () => {
   });
 
   it("link callback rejects when Google subject belongs to another user", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-taken",
       email: "taken-g@example.com",
       password_hash: null,
       oauth_subject: googleOauthSubject("shared-sub"),
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedUser({
+    await seedUser(env, {
       id: "user-want",
       email: "want@example.com",
       password_hash: await hashPassword("long-enough-password"),
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-want", "user-want");
+    await seedSession(env, "sess-want", "user-want");
     const state = "state-subject-taken";
     await env.SESSIONS.put(
       `${OAUTH_KV_PREFIX}${state}`,
@@ -824,15 +831,15 @@ describe("Google OAuth", () => {
   });
 
   it("me reports google_linked false for password-only users", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-plain",
       email: "plain@example.com",
       password_hash: await hashPassword("long-enough-password"),
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-plain", "user-plain");
+    await seedSession(env, "sess-plain", "user-plain");
     const me = await app.request(
       "/api/auth/me",
       { headers: { cookie: `${SESSION_COOKIE}=sess-plain` } },

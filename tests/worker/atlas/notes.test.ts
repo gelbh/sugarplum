@@ -1,20 +1,32 @@
-import { describe, expect, it } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  resetTestDb,
+  seedSession,
+  seedSubject,
+  seedUser,
+} from "../harness";
+import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
-import { createTestEnv } from "../test-env";
 import { NOTE_MAX_CHARS } from "../../../worker/atlas/notes";
 import type { AtlasEntryView } from "../../../src/atlas/types";
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
+
+async function seedOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
-  env.seedSubject({
+  await seedSession(env, "sess-a", "user-a");
+  await seedSubject(env, {
     id: "sub-1",
     user_id: "user-a",
     title: "Parasitology",
@@ -29,7 +41,7 @@ function authHeaders(json = false): HeadersInit {
   };
 }
 
-async function createAtlas(env: ReturnType<typeof createTestEnv>) {
+async function createAtlas(env: Bindings) {
   const res = await app.request(
     "/api/atlas",
     { method: "POST", headers: authHeaders() },
@@ -41,8 +53,8 @@ async function createAtlas(env: ReturnType<typeof createTestEnv>) {
 
 describe("atlas entry personal notes", () => {
   it("PUT note on dataset entry does not create overlay; list returns personalNote", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
 
     const put = await app.request(
@@ -72,8 +84,8 @@ describe("atlas entry personal notes", () => {
   });
 
   it("Reset clears field edits but keeps personalNote", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
 
     await app.request(
@@ -121,8 +133,8 @@ describe("atlas entry personal notes", () => {
   });
 
   it("whitespace PUT and DELETE clear the note", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
 
     await app.request(
@@ -166,8 +178,8 @@ describe("atlas entry personal notes", () => {
   });
 
   it("rejects body over NOTE_MAX_CHARS", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const { id: atlasId } = await createAtlas(env);
 
     const tooLong = "x".repeat(NOTE_MAX_CHARS + 1);

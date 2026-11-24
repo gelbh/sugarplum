@@ -1,7 +1,22 @@
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  seedGenerationJob,
+  seedMaterial,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedReviewLog,
+  seedSchedule,
+  seedSession,
+  seedUser,
+} from "./harness";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 describe("GET /api/study/struggling", () => {
   beforeEach(() => {
@@ -13,44 +28,44 @@ describe("GET /api/study/struggling", () => {
   });
 
   it("returns 401 without session", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request("/api/study/struggling", {}, env);
     expect(res.status).toBe(401);
   });
 
   it("never returns another user’s cards", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedUser({
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Mine",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-b",
       user_id: "user-b",
       title: "Theirs",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedSession(env, "sess-a", "user-a");
 
-    env.seedCard({
+    await seedCard(env, {
       id: "mine",
       deck_id: "deck-a",
       job_id: null,
@@ -63,7 +78,7 @@ describe("GET /api/study/struggling", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "mine",
       due: "2026-10-01T00:00:00.000Z",
       stability: 1,
@@ -77,7 +92,7 @@ describe("GET /api/study/struggling", () => {
       last_review: "2026-10-20T00:00:00.000Z",
     });
 
-    env.seedCard({
+    await seedCard(env, {
       id: "theirs",
       deck_id: "deck-b",
       job_id: null,
@@ -90,7 +105,7 @@ describe("GET /api/study/struggling", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "theirs",
       due: "2026-10-01T00:00:00.000Z",
       stability: 1,
@@ -116,23 +131,23 @@ describe("GET /api/study/struggling", () => {
   });
 
   it("includes cards via again_14d from review_logs SQL", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Mine",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedCard({
+    await seedSession(env, "sess-a", "user-a");
+    await seedCard(env, {
       id: "again-card",
       deck_id: "deck-a",
       job_id: null,
@@ -145,7 +160,7 @@ describe("GET /api/study/struggling", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "again-card",
       due: "2026-11-01T00:00:00.000Z",
       stability: 1,
@@ -158,7 +173,7 @@ describe("GET /api/study/struggling", () => {
       state: 2,
       last_review: "2026-10-20T00:00:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "easy-card",
       deck_id: "deck-a",
       job_id: null,
@@ -172,7 +187,7 @@ describe("GET /api/study/struggling", () => {
       updated_at: "2026-01-01T00:00:00.000Z",
     });
     // Never-reviewed: R unavailable → weakness 0 so it stays off the list.
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "easy-card",
       due: "2026-11-01T00:00:00.000Z",
       stability: 0,
@@ -185,7 +200,7 @@ describe("GET /api/study/struggling", () => {
       state: 0,
       last_review: null,
     });
-    env.seedReviewLog({
+    await seedReviewLog(env, {
       id: "rl-1",
       card_id: "again-card",
       rating: 1,
@@ -194,7 +209,7 @@ describe("GET /api/study/struggling", () => {
       reviewed_at: "2026-10-25T00:00:00.000Z",
       state_json: "{}",
     });
-    env.seedReviewLog({
+    await seedReviewLog(env, {
       id: "rl-2",
       card_id: "again-card",
       rating: 1,
@@ -221,23 +236,23 @@ describe("GET /api/study/struggling", () => {
   });
 
   it("excludes never-reviewed zero-bad cards even with seeded stability", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Mine",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedCard({
+    await seedSession(env, "sess-a", "user-a");
+    await seedCard(env, {
       id: "fresh",
       deck_id: "deck-a",
       job_id: null,
@@ -250,7 +265,7 @@ describe("GET /api/study/struggling", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "fresh",
       due: "2026-11-01T00:00:00.000Z",
       stability: 50,
@@ -275,23 +290,23 @@ describe("GET /api/study/struggling", () => {
   });
 
   it("includes a card after a single Again (weakness > 0)", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Mine",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedCard({
+    await seedSession(env, "sess-a", "user-a");
+    await seedCard(env, {
       id: "once-again",
       deck_id: "deck-a",
       job_id: null,
@@ -304,7 +319,7 @@ describe("GET /api/study/struggling", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "once-again",
       due: "2026-11-01T00:00:00.000Z",
       stability: 1,
@@ -317,7 +332,7 @@ describe("GET /api/study/struggling", () => {
       state: 2,
       last_review: "2026-10-26T00:00:00.000Z",
     });
-    env.seedReviewLog({
+    await seedReviewLog(env, {
       id: "rl-once",
       card_id: "once-again",
       rating: 1,
@@ -346,23 +361,23 @@ describe("GET /api/study/struggling", () => {
   });
 
   it("includes card type on each struggling row", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Mine",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
-    env.seedCard({
+    await seedSession(env, "sess-a", "user-a");
+    await seedCard(env, {
       id: "typed-again",
       deck_id: "deck-a",
       job_id: null,
@@ -375,7 +390,7 @@ describe("GET /api/study/struggling", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "typed-again",
       due: "2026-11-01T00:00:00.000Z",
       stability: 1,
@@ -388,7 +403,7 @@ describe("GET /api/study/struggling", () => {
       state: 2,
       last_review: "2026-10-26T00:00:00.000Z",
     });
-    env.seedReviewLog({
+    await seedReviewLog(env, {
       id: "rl-typed",
       card_id: "typed-again",
       rating: 1,
@@ -410,28 +425,48 @@ describe("GET /api/study/struggling", () => {
   });
 
   it("flags rows by regen source (job, excerpt, none)", async () => {
-    const env = createTestEnv();
-    env.seedUser({
+    const env = cfEnv;
+    await seedUser(env, {
       id: "user-a",
       email: "a@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-a",
       user_id: "user-a",
       title: "Mine",
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSession("sess-a", "user-a");
+    await seedMaterial(env, {
+      id: "mat-a",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await seedGenerationJob(env, {
+      id: "job-1",
+      material_id: "mat-a",
+      status: "done",
+      error: null,
+      coverage_json: null,
+      progress_json: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+      finished_at: null,
+    });
+    await seedSession(env, "sess-a", "user-a");
     for (const [id, job_id, provenance_json] of [
       ["with-src", null, JSON.stringify({ pages: [1], excerpt: "ex" })],
       ["job-src", "job-1", null],
       ["no-src", null, null],
     ] as const) {
-      env.seedCard({
+      await seedCard(env, {
         id,
         deck_id: "deck-a",
         job_id,
@@ -444,7 +479,7 @@ describe("GET /api/study/struggling", () => {
         created_at: "2026-01-01T00:00:00.000Z",
         updated_at: "2026-01-01T00:00:00.000Z",
       });
-      env.seedSchedule({
+      await seedSchedule(env, {
         card_id: id,
         due: "2026-11-01T00:00:00.000Z",
         stability: 1,
@@ -457,7 +492,7 @@ describe("GET /api/study/struggling", () => {
         state: 2,
         last_review: "2026-10-26T00:00:00.000Z",
       });
-      env.seedReviewLog({
+      await seedReviewLog(env, {
         id: `rl-${id}`,
         card_id: id,
         rating: 1,

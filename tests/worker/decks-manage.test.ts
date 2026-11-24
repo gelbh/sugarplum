@@ -1,7 +1,27 @@
-import { describe, it, expect } from "vitest";
+import { env as cfEnv } from "cloudflare:workers";
+import {
+  type Bindings,
+  getCards,
+  getMaterials,
+  getR2Keys,
+  getSchedules,
+  resetTestDb,
+  seedCard,
+  seedDeck,
+  seedMaterial,
+  seedR2,
+  seedSchedule,
+  seedSession,
+  seedSubject,
+  seedUser,
+} from "./harness";
+import { afterEach, describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
-import { createTestEnv } from "./test-env";
+
+afterEach(async () => {
+  await resetTestDb(cfEnv);
+});
 
 type DeckBody = {
   id: string;
@@ -11,19 +31,19 @@ type DeckBody = {
   created_at: string;
 };
 
-function seedOwner(env: ReturnType<typeof createTestEnv>) {
-  env.seedUser({
+async function seedOwner(env: Bindings) {
+  await seedUser(env, {
     id: "user-a",
     email: "a@example.com",
     password_hash: null,
     oauth_subject: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
-  env.seedSession("sess-a", "user-a");
+  await seedSession(env, "sess-a", "user-a");
 }
 
 async function createSubject(
-  env: ReturnType<typeof createTestEnv>,
+  env: Bindings,
   title = "Anatomy",
 ): Promise<string> {
   const res = await app.request(
@@ -45,8 +65,8 @@ async function createSubject(
 
 describe("POST /api/decks requires subjectId", () => {
   it("returns 400 when subjectId is missing", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
 
     const res = await app.request(
       "/api/decks",
@@ -65,16 +85,16 @@ describe("POST /api/decks requires subjectId", () => {
   });
 
   it("returns 404 when subjectId is not owned by the user", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedUser({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSubject({
+    await seedSubject(env, {
       id: "sub-b",
       user_id: "user-b",
       title: "Theirs",
@@ -98,8 +118,8 @@ describe("POST /api/decks requires subjectId", () => {
   });
 
   it("creates a deck under an owned subject and returns subject_id", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
+    const env = cfEnv;
+    await seedOwner(env);
     const subjectId = await createSubject(env);
 
     const res = await app.request(
@@ -127,21 +147,21 @@ describe("POST /api/decks requires subjectId", () => {
 
 describe("GET /api/decks?subjectId=", () => {
   it("filters decks by subjectId", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "sub-1",
       user_id: "user-a",
       title: "A",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSubject({
+    await seedSubject(env, {
       id: "sub-2",
       user_id: "user-a",
       title: "B",
       created_at: "2026-01-02T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-1",
       user_id: "user-a",
       title: "In A",
@@ -149,7 +169,7 @@ describe("GET /api/decks?subjectId=", () => {
       subject_id: "sub-1",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-2",
       user_id: "user-a",
       title: "In B",
@@ -180,15 +200,15 @@ describe("GET /api/decks?subjectId=", () => {
 
 describe("PATCH /api/decks/:id", () => {
   it("renames an owned deck", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "sub-1",
       user_id: "user-a",
       title: "Anatomy",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-1",
       user_id: "user-a",
       title: "Old",
@@ -221,22 +241,22 @@ describe("PATCH /api/decks/:id", () => {
   });
 
   it("returns 404 when renaming another user's deck", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedUser({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSubject({
+    await seedSubject(env, {
       id: "sub-b",
       user_id: "user-b",
       title: "Theirs",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-b",
       user_id: "user-b",
       title: "Secret",
@@ -264,15 +284,15 @@ describe("PATCH /api/decks/:id", () => {
 
 describe("GET /api/decks/:id/stats", () => {
   it("returns accepted, draft, archived, and materials counts", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "sub-1",
       user_id: "user-a",
       title: "Anatomy",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-1",
       user_id: "user-a",
       title: "Bones",
@@ -280,7 +300,7 @@ describe("GET /api/decks/:id/stats", () => {
       subject_id: "sub-1",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-acc",
       deck_id: "deck-1",
       job_id: null,
@@ -293,7 +313,7 @@ describe("GET /api/decks/:id/stats", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-draft",
       deck_id: "deck-1",
       job_id: null,
@@ -306,7 +326,7 @@ describe("GET /api/decks/:id/stats", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-arch",
       deck_id: "deck-1",
       job_id: null,
@@ -319,7 +339,7 @@ describe("GET /api/decks/:id/stats", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-1",
       deck_id: "deck-1",
       kind: "paste",
@@ -348,22 +368,22 @@ describe("GET /api/decks/:id/stats", () => {
 
 describe("GET /api/decks/:id/composition", () => {
   it("401 when unauthenticated", async () => {
-    const env = createTestEnv();
+    const env = cfEnv;
     const res = await app.request("/api/decks/deck-1/composition", {}, env);
     expect(res.status).toBe(401);
   });
 
   it("404 for another user's deck", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedUser({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-b",
       user_id: "user-b",
       title: "Other",
@@ -380,15 +400,15 @@ describe("GET /api/decks/:id/composition", () => {
   });
 
   it("returns composition for accepted cards only", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "sub-1",
       user_id: "user-a",
       title: "Anatomy",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-1",
       user_id: "user-a",
       title: "Bones",
@@ -396,7 +416,7 @@ describe("GET /api/decks/:id/composition", () => {
       subject_id: "sub-1",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-new",
       deck_id: "deck-1",
       job_id: null,
@@ -409,7 +429,7 @@ describe("GET /api/decks/:id/composition", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-young",
       deck_id: "deck-1",
       job_id: null,
@@ -422,7 +442,7 @@ describe("GET /api/decks/:id/composition", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "c-young",
       due: "2026-01-02T00:00:00.000Z",
       stability: 20,
@@ -435,7 +455,7 @@ describe("GET /api/decks/:id/composition", () => {
       state: 2,
       last_review: "2026-01-01T12:00:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "c-draft",
       deck_id: "deck-1",
       job_id: null,
@@ -470,15 +490,15 @@ describe("GET /api/decks/:id/composition", () => {
 
 describe("DELETE /api/decks/:id", () => {
   it("deletes an owned deck and cascades cards and schedules", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "sub-1",
       user_id: "user-a",
       title: "Anatomy",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-1",
       user_id: "user-a",
       title: "Bones",
@@ -486,7 +506,7 @@ describe("DELETE /api/decks/:id", () => {
       subject_id: "sub-1",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "card-1",
       deck_id: "deck-1",
       job_id: null,
@@ -499,7 +519,7 @@ describe("DELETE /api/decks/:id", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSchedule({
+    await seedSchedule(env, {
       card_id: "card-1",
       due: "2026-01-02T00:00:00.000Z",
       stability: 1,
@@ -512,7 +532,7 @@ describe("DELETE /api/decks/:id", () => {
       state: 0,
       last_review: null,
     });
-    env.seedMaterial({
+    await seedMaterial(env, {
       id: "mat-1",
       deck_id: "deck-1",
       kind: "paste",
@@ -533,9 +553,9 @@ describe("DELETE /api/decks/:id", () => {
     );
 
     expect(res.status).toBe(204);
-    expect(env.getCards()).toHaveLength(0);
-    expect(env.getSchedules()).toHaveLength(0);
-    expect(env.getMaterials()).toHaveLength(0);
+    expect((await getCards(env))).toHaveLength(0);
+    expect((await getSchedules(env))).toHaveLength(0);
+    expect((await getMaterials(env))).toHaveLength(0);
 
     const listRes = await app.request(
       "/api/decks",
@@ -546,15 +566,15 @@ describe("DELETE /api/decks/:id", () => {
   });
 
   it("deletes R2 keys for materials and card media before cascading", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "sub-1",
       user_id: "user-a",
       title: "Anatomy",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-r2",
       user_id: "user-a",
       title: "Bones",
@@ -564,10 +584,10 @@ describe("DELETE /api/decks/:id", () => {
     });
     const materialKey = "materials/deck-r2/mat-1.pdf";
     const mediaKey = "materials/deck-r2/figures/0.png";
-    env.seedR2(materialKey, "pdf-bytes");
-    env.seedR2(mediaKey, "png-bytes");
-    env.seedR2("materials/other-deck/keep.pdf", "keep");
-    env.seedMaterial({
+    await seedR2(env, materialKey, "pdf-bytes");
+    await seedR2(env, mediaKey, "png-bytes");
+    await seedR2(env, "materials/other-deck/keep.pdf", "keep");
+    await seedMaterial(env, {
       id: "mat-r2",
       deck_id: "deck-r2",
       kind: "pdf",
@@ -577,7 +597,7 @@ describe("DELETE /api/decks/:id", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedCard({
+    await seedCard(env, {
       id: "card-r2",
       deck_id: "deck-r2",
       job_id: null,
@@ -601,21 +621,21 @@ describe("DELETE /api/decks/:id", () => {
     );
 
     expect(res.status).toBe(204);
-    expect(env.getR2Keys()).toEqual(["materials/other-deck/keep.pdf"]);
-    expect(env.getMaterials()).toHaveLength(0);
-    expect(env.getCards()).toHaveLength(0);
+    expect((await getR2Keys(env))).toEqual(["materials/other-deck/keep.pdf"]);
+    expect((await getMaterials(env))).toHaveLength(0);
+    expect((await getCards(env))).toHaveLength(0);
   });
 
   it("deletes R2-only figure crops under figures/{pdfId}/ with no materials row", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedSubject({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedSubject(env, {
       id: "sub-1",
       user_id: "user-a",
       title: "Anatomy",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-fig",
       user_id: "user-a",
       title: "Bones",
@@ -625,10 +645,10 @@ describe("DELETE /api/decks/:id", () => {
     });
     const materialKey = "materials/deck-fig/mat-pdf.pdf";
     const figureKey = "materials/deck-fig/figures/mat-pdf/0.png";
-    env.seedR2(materialKey, "pdf-bytes");
-    env.seedR2(figureKey, "png-bytes");
-    env.seedR2("materials/other-deck/keep.pdf", "keep");
-    env.seedMaterial({
+    await seedR2(env, materialKey, "pdf-bytes");
+    await seedR2(env, figureKey, "png-bytes");
+    await seedR2(env, "materials/other-deck/keep.pdf", "keep");
+    await seedMaterial(env, {
       id: "mat-pdf",
       deck_id: "deck-fig",
       kind: "pdf",
@@ -649,27 +669,27 @@ describe("DELETE /api/decks/:id", () => {
     );
 
     expect(res.status).toBe(204);
-    expect(env.getR2Keys()).toEqual(["materials/other-deck/keep.pdf"]);
-    expect(env.getMaterials()).toHaveLength(0);
+    expect((await getR2Keys(env))).toEqual(["materials/other-deck/keep.pdf"]);
+    expect((await getMaterials(env))).toHaveLength(0);
   });
 
   it("returns 404 when deleting another user's deck", async () => {
-    const env = createTestEnv();
-    seedOwner(env);
-    env.seedUser({
+    const env = cfEnv;
+    await seedOwner(env);
+    await seedUser(env, {
       id: "user-b",
       email: "b@example.com",
       password_hash: null,
       oauth_subject: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedSubject({
+    await seedSubject(env, {
       id: "sub-b",
       user_id: "user-b",
       title: "Theirs",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedDeck({
+    await seedDeck(env, {
       id: "deck-b",
       user_id: "user-b",
       title: "Secret",
