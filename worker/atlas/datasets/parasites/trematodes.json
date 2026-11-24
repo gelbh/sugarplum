@@ -179,7 +179,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "fasciola-hepatica-hero.webp",
+          "file": "fasciola-hepatica/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Alan R Walker",
@@ -189,7 +189,7 @@
         },
         {
           "id": "fasciola-hepatica-lifecycle",
-          "file": "fasciola-hepatica-lifecycle.webp",
+          "file": "fasciola-hepatica/lifecycle.webp",
           "role": "lifecycle_diagram",
           "caption": "Linear host-band lifecycle (pilot diagram)",
           "credit": "Sugarplum",
@@ -363,7 +363,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "fasciola-gigantica-hero.webp",
+          "file": "fasciola-gigantica/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Thomas Spencer Cobbold (1828–1886)",
@@ -523,7 +523,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "fascioloides-magna-hero.webp",
+          "file": "fascioloides-magna/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Flukeman",
@@ -704,7 +704,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "dicrocoelium-dendriticum-hero.webp",
+          "file": "dicrocoelium-dendriticum/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Alan R Walker",
@@ -1087,7 +1087,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "fasciolopsis-buski-hero.webp",
+          "file": "fasciolopsis-buski/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Ashish K Jha, Sharad K Jha",
@@ -1232,7 +1232,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "clonorchis-sinensis-hero.webp",
+          "file": "clonorchis-sinensis/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Sarah J. Wu",
@@ -1385,7 +1385,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "opisthorchis-felineus-hero.webp",
+          "file": "opisthorchis-felineus/hero.webp",
           "role": "adult",
           "caption": "Adult Opisthorchis felineus",
           "credit": "Web Atlas of Medical Parasitology / Korean Society for Parasitology",
@@ -1547,7 +1547,7 @@
       "images": [
         {
           "id": "lifecycle",
-          "file": "schistosoma-spp-lifecycle.webp",
+          "file": "schistosoma-spp/lifecycle.webp",
           "role": "lifecycle_diagram",
           "caption": null,
           "credit": "Centers for Disease Control and Prevention",
@@ -1557,7 +1557,7 @@
         },
         {
           "id": "hero",
-          "file": "schistosoma-spp-hero.webp",
+          "file": "schistosoma-spp/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "CDC",

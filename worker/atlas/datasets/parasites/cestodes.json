@@ -145,7 +145,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "anoplocephala-perfoliata-hero.webp",
+          "file": "anoplocephala-perfoliata/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Krzysztof Tomczuk, Krzysztof Kostro, Klaudiusz Oktawian Szczepaniak, Maciej Grzybek, Maria Studzińska, Marta Demkowska-K",
@@ -304,7 +304,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "dipylidium-caninum-hero.webp",
+          "file": "dipylidium-caninum/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
@@ -444,7 +444,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "davainea-proglottina-hero.webp",
+          "file": "davainea-proglottina/hero.webp",
           "role": "larva",
           "caption": "Davainea proglottina developmental figure (1897 plate fig. 199)",
           "credit": "Pearson, Leonard; Warren, Benjamin Harry",
@@ -600,7 +600,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "raillietina-spp-hero.webp",
+          "file": "raillietina-spp/hero.webp",
           "role": "adult",
           "caption": "Raillietina echinobothrida",
           "credit": "K. Lalchhandama / Chhandama",
@@ -731,7 +731,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "moniezia-expansa-hero.webp",
+          "file": "moniezia-expansa/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Lucyin",
@@ -895,7 +895,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "taenia-hydatigena-hero.webp",
+          "file": "taenia-hydatigena/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Wikimedia Commons",
@@ -1045,7 +1045,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "taenia-ovis-hero.webp",
+          "file": "taenia-ovis/hero.webp",
           "role": "adult",
           "caption": "Taenia ovis (sheep tapeworm)",
           "credit": "Tony Rebelo",
@@ -1247,7 +1247,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "taenia-multiceps-hero.webp",
+          "file": "taenia-multiceps/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Wikimedia Commons",
@@ -1442,7 +1442,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "taenia-saginata-hero.webp",
+          "file": "taenia-saginata/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Wikimedia Commons",
@@ -1452,7 +1452,7 @@
         },
         {
           "id": "taenia-saginata-lifecycle",
-          "file": "taenia-saginata-lifecycle.webp",
+          "file": "taenia-saginata/lifecycle.webp",
           "role": "lifecycle_diagram",
           "caption": "Linear host-band lifecycle (pilot diagram)",
           "credit": "Sugarplum",
@@ -1669,7 +1669,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "taenia-solium-hero.webp",
+          "file": "taenia-solium/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
@@ -1860,7 +1860,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "echinococcus-granulosus-hero.webp",
+          "file": "echinococcus-granulosus/hero.webp",
           "role": "larva",
           "caption": "Protoscolex from hydatid cyst",
           "credit": "CDC / Dr. L.L.A. Moore, Jr",
@@ -1870,7 +1870,7 @@
         },
         {
           "id": "lifecycle",
-          "file": "echinococcus-granulosus-lifecycle.webp",
+          "file": "echinococcus-granulosus/lifecycle.webp",
           "role": "lifecycle_diagram",
           "caption": null,
           "credit": "Besnoitjm",
@@ -2067,7 +2067,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "echinococcus-multilocularis-hero.webp",
+          "file": "echinococcus-multilocularis/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Epp Moks et al",
@@ -2262,7 +2262,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "diphyllobothrium-latum-hero.webp",
+          "file": "diphyllobothrium-latum/hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "The Other 95%",
