@@ -18,3 +18,4 @@ export * from "./harness/reset";
 export { seedCardsReviewOwner, seedCardsReviewDraftJob } from "./harness/cards";
 export * from "./harness/admin";
 export * from "./harness/focus";
+export * from "./harness/card-regen";
