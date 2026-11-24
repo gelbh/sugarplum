@@ -13,7 +13,6 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
@@ -41,8 +40,10 @@ import { CardsWorkshop } from "../deckHub";
 import { ClaimCoverageFilmstrip, type ClaimJumpTarget } from "../deckHub";
 import { DeckHygienePanel } from "../deckHub";
 import { createDeckHubWorkshopOpeners } from "../deckHub";
+import { DeckHubDeleteDialog } from "../deckHub";
 import { DeckHubDeleteMaterialDialog } from "../deckHub";
 import { DeckHubDraftPickerDialog } from "../deckHub";
+import { DeckHubRenameDialog } from "../deckHub";
 import { DeckHubResetScheduleDialog } from "../deckHub";
 import { DeckHubTitleHeader } from "../deckHub";
 import { MaterialsWorkshop } from "../deckHub";
@@ -87,7 +88,6 @@ import { isGuest } from "../guest/session";
 import { collectDeckImageKeys, hubDiyTypes } from "../deckHub";
 import { ANKI_EXPORT_BUSY_LABEL } from "../export";
 import { useTrackedOp } from "../progress/useTrackedOp";
-import { shouldAutoFocusText } from "../shared/lib/autoFocusText";
 
 type Props = {
   deckId: string;
@@ -761,179 +761,23 @@ export default function DeckHubPage({ deckId }: Props) {
         onPickJob={openDraftJob}
       />
 
-      <Dialog
+      <DeckHubRenameDialog
         open={renameOpen}
+        busy={renameBusy}
+        error={renameError}
+        value={renameValue}
+        onValueChange={setRenameValue}
         onClose={() => !renameBusy && setRenameOpen(false)}
-        fullWidth
-        maxWidth="xs"
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 2,
-              overflow: "hidden",
-              bgcolor: "background.paper",
-            },
-          },
-        }}
-      >
-        <Box component="form" onSubmit={onRenameSubmit} noValidate>
-          <Box
-            sx={{
-              px: 3,
-              pt: 2.5,
-              pb: 1.5,
-              borderBottom: 1,
-              borderColor: "divider",
-              background:
-                "linear-gradient(180deg, rgba(91, 44, 111, 0.12) 0%, transparent 100%)",
-            }}
-          >
-            <DialogEyebrow label="Rename" />
-            <DialogTitle
-              sx={{
-                p: 0,
-                fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
-                fontWeight: 400,
-                letterSpacing: "0.02em",
-                lineHeight: 1.15,
-                fontSize: "1.75rem",
-              }}
-            >
-              Update the deck name
-            </DialogTitle>
-            <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-                mt: 1,
-                maxWidth: "36ch",
-              }}
-            >
-              Shown on the hub header and in your Library.
-            </Typography>
-          </Box>
-          <DialogContent sx={{ px: 3, pt: 2.5, pb: 1 }}>
-            {renameError ? (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {renameError}
-              </Alert>
-            ) : null}
-            <TextField
-              autoFocus={shouldAutoFocusText()}
-              margin="none"
-              label="Deck name"
-              placeholder="e.g. Upper limb"
-              value={renameValue}
-              onChange={(ev) => setRenameValue(ev.target.value)}
-              required
-              fullWidth
-              helperText={`${renameValue.trim().length}/80`}
-              slotProps={{
-                htmlInput: { maxLength: 80, "aria-label": "Deck name" },
-                formHelperText: { sx: { textAlign: "right", mx: 0 } },
-              }}
-            />
-          </DialogContent>
-          <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-            <Button
-              onClick={() => setRenameOpen(false)}
-              disabled={renameBusy}
-              sx={{ color: "text.secondary" }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={renameBusy || !renameValue.trim()}
-              sx={{ minWidth: 112 }}
-            >
-              {renameBusy ? "Saving…" : "Save"}
-            </Button>
-          </DialogActions>
-        </Box>
-      </Dialog>
-
-      <Dialog
+        onSubmit={onRenameSubmit}
+      />
+      <DeckHubDeleteDialog
         open={confirmDelete}
+        busy={deleteBusy}
+        title={deck?.title ?? null}
+        stats={deleteStats}
         onClose={() => !deleteBusy && setConfirmDelete(false)}
-        fullWidth
-        maxWidth="xs"
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 2,
-              overflow: "hidden",
-              bgcolor: "background.paper",
-            },
-          },
-        }}
-      >
-        <Box
-          sx={{
-            px: 3,
-            pt: 2.5,
-            pb: 1.5,
-            borderBottom: 1,
-            borderColor: "divider",
-            background:
-              "linear-gradient(180deg, rgba(183, 28, 28, 0.1) 0%, transparent 100%)",
-          }}
-        >
-          <DialogEyebrow label="Delete" tone="error" />
-          <DialogTitle
-            sx={{
-              p: 0,
-              fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
-              fontWeight: 400,
-              letterSpacing: "0.02em",
-              lineHeight: 1.15,
-              fontSize: "1.75rem",
-            }}
-          >
-            Remove this deck?
-          </DialogTitle>
-        </Box>
-        <DialogContent sx={{ px: 3, pt: 2.5, pb: 1 }}>
-          <DialogContentText sx={{ color: "text.secondary" }}>
-            {deck && deleteStats ? (
-              <>
-                Delete{" "}
-                <Box component="strong" sx={{ color: "text.primary" }}>
-                  {deck.title}
-                </Box>
-                ? This removes {deleteStats.accepted} accepted card
-                {deleteStats.accepted === 1 ? "" : "s"}, {deleteStats.draft}{" "}
-                draft{deleteStats.draft === 1 ? "" : "s"},{" "}
-                {deleteStats.archived} archived card
-                {deleteStats.archived === 1 ? "" : "s"}, and{" "}
-                {deleteStats.materials} material
-                {deleteStats.materials === 1 ? "" : "s"}.
-              </>
-            ) : deck ? (
-              <>Loading counts for {deck.title}…</>
-            ) : null}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-          <Button
-            onClick={() => setConfirmDelete(false)}
-            disabled={deleteBusy}
-            sx={{ color: "text.secondary" }}
-          >
-            Cancel
-          </Button>
-          <Button
-            color="error"
-            variant="contained"
-            disabled={deleteBusy || !deleteStats}
-            onClick={confirmDeleteDeck}
-            sx={{ minWidth: 112 }}
-          >
-            {deleteBusy ? "Deleting…" : "Delete"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={confirmDeleteDeck}
+      />
 
       <Dialog
         open={editCard !== null}

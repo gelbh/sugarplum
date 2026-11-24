@@ -10,6 +10,8 @@ export {
 export { default as DeckHubDraftPickerDialog } from "./DeckHubDraftPickerDialog";
 export { default as DeckHubDeleteMaterialDialog } from "./DeckHubDeleteMaterialDialog";
 export { default as DeckHubResetScheduleDialog } from "./DeckHubResetScheduleDialog";
+export { default as DeckHubRenameDialog } from "./DeckHubRenameDialog";
+export { default as DeckHubDeleteDialog } from "./DeckHubDeleteDialog";
 export { default as EmptyNext } from "./EmptyNext";
 export {
   default as ClaimCoverageFilmstrip,
