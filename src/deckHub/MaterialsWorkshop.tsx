@@ -25,9 +25,17 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import type { MaterialListItem } from "../api/client";
 import { downloadMaterialUrl, mediaUrl } from "../api/client";
 import EmptyNext from "./EmptyNext";
+import WorkshopSearchField from "./WorkshopSearchField";
+import {
+  materialMatchesWorkshopQuery,
+  normalizeWorkshopQuery,
+  workshopMaterialKindLabel,
+  workshopMaterialTitle,
+} from "./workshopSearch";
 import {
   PILL_BTN,
   ROW_ACTION,
+  WORKSHOP_SURFACE,
   createWorkshopViewPref,
   type WorkshopViewMode,
 } from "./workshopChrome";
@@ -38,22 +46,6 @@ const { readViewMode, writeViewMode } = createWorkshopViewPref(
 
 type ViewMode = WorkshopViewMode;
 
-const SURFACE = {
-  borderRadius: 2,
-  border: "1px solid",
-  borderColor: "rgba(232, 216, 199, 0.12)",
-  bgcolor: "rgba(18, 7, 15, 0.28)",
-} as const;
-
-function kindLabel(kind: string): string {
-  if (kind === "pdf") return "PDF";
-  if (kind === "pptx") return "PPTX";
-  if (kind === "image") return "Image";
-  if (kind === "text" || kind === "paste") return "Text";
-  if (kind === "topic") return "Topic";
-  return kind;
-}
-
 function formatCreatedAt(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
@@ -62,10 +54,6 @@ function formatCreatedAt(iso: string): string {
     day: "numeric",
     year: "numeric",
   });
-}
-
-function materialTitle(material: MaterialListItem): string {
-  return material.filename?.trim() || `${kindLabel(material.kind)} material`;
 }
 
 function canOpenFile(material: MaterialListItem): boolean {
@@ -137,14 +125,21 @@ export default function MaterialsWorkshop({
   onDelete,
 }: Props) {
   const [view, setView] = useState<ViewMode>(() => readViewMode());
+  const [query, setQuery] = useState("");
   const [preview, setPreview] = useState<MaterialListItem | null>(null);
   const busy = busyId !== null;
+  const visible = materials.filter((m) =>
+    materialMatchesWorkshopQuery(m, query),
+  );
+  const searching = normalizeWorkshopQuery(query) !== "";
   const countLabel =
     materials.length === 0
       ? "No files yet"
-      : materials.length === 1
-        ? "1 file"
-        : `${materials.length} files`;
+      : searching
+        ? `${visible.length} of ${materials.length} files`
+        : materials.length === 1
+          ? "1 file"
+          : `${materials.length} files`;
 
   function onViewChange(_: unknown, next: ViewMode | null) {
     if (!next) return;
@@ -161,11 +156,17 @@ export default function MaterialsWorkshop({
           alignItems: "center",
           justifyContent: "space-between",
           flexWrap: "wrap",
-          gap: 1.25
-        }}>
-        <Stack direction="row" spacing={1.25} useFlexGap sx={{
-          alignItems: "center"
-        }}>
+          gap: 1.25,
+        }}
+      >
+        <Stack
+          direction="row"
+          spacing={1.25}
+          useFlexGap
+          sx={{
+            alignItems: "center",
+          }}
+        >
           <Button
             variant="contained"
             size="small"
@@ -190,6 +191,15 @@ export default function MaterialsWorkshop({
           >
             {countLabel}
           </Typography>
+          {materials.length > 0 ? (
+            <WorkshopSearchField
+              value={query}
+              onChange={setQuery}
+              placeholder="Search files…"
+              ariaLabel="Search files"
+              ariaControls="materials-workshop-results"
+            />
+          ) : null}
         </Stack>
 
         {materials.length > 0 ? (
@@ -224,10 +234,13 @@ export default function MaterialsWorkshop({
 
       {materials.length === 0 ? (
         guest ? (
-          <Box sx={{ ...SURFACE, px: 2.25, py: 2.5 }}>
-            <Typography variant="body2" sx={{
-              color: "text.secondary"
-            }}>
+          <Box sx={{ ...WORKSHOP_SURFACE, px: 2.25, py: 2.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               Sign in to upload and browse study files for this deck.
             </Typography>
           </Box>
@@ -238,8 +251,22 @@ export default function MaterialsWorkshop({
             primary={{ label: "Upload file", onClick: onUpload }}
           />
         )
+      ) : searching && visible.length === 0 ? (
+        <Box
+          id="materials-workshop-results"
+          sx={{
+            ...WORKSHOP_SURFACE,
+            px: 2.25,
+            py: 2.5,
+          }}
+        >
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            {`No files match "${query.trim()}"`}
+          </Typography>
+        </Box>
       ) : view === "icons" ? (
         <Box
+          id="materials-workshop-results"
           component="ul"
           sx={{
             m: 0,
@@ -250,8 +277,8 @@ export default function MaterialsWorkshop({
             gap: 1.25,
           }}
         >
-          {materials.map((material) => {
-            const title = materialTitle(material);
+          {visible.map((material) => {
+            const title = workshopMaterialTitle(material);
             const rowBusy = busyId === material.id;
             const openable = canOpenFile(material);
             return (
@@ -259,7 +286,7 @@ export default function MaterialsWorkshop({
                 component="li"
                 key={material.id}
                 sx={{
-                  ...SURFACE,
+                  ...WORKSHOP_SURFACE,
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
@@ -306,7 +333,7 @@ export default function MaterialsWorkshop({
                     variant="caption"
                     sx={{ color: "rgba(232, 216, 199, 0.55)" }}
                   >
-                    {kindLabel(material.kind)}
+                    {workshopMaterialKindLabel(material.kind)}
                     {material.page_count != null
                       ? ` · ${material.page_count}p`
                       : ""}
@@ -320,8 +347,9 @@ export default function MaterialsWorkshop({
                     px: 0.5,
                     pb: 0.5,
                     opacity: { xs: 1, sm: 0.55 },
-                    transition: "opacity 140ms ease"
-                  }}>
+                    transition: "opacity 140ms ease",
+                  }}
+                >
                   <FileActions
                     material={material}
                     title={title}
@@ -338,14 +366,15 @@ export default function MaterialsWorkshop({
         </Box>
       ) : (
         <Stack
+          id="materials-workshop-results"
           component="ul"
           spacing={0.75}
           sx={{ m: 0, p: 0, listStyle: "none" }}
         >
-          {materials.map((material) => {
-            const title = materialTitle(material);
+          {visible.map((material) => {
+            const title = workshopMaterialTitle(material);
             const metaParts = [
-              kindLabel(material.kind),
+              workshopMaterialKindLabel(material.kind),
               material.page_count != null
                 ? `${material.page_count} page${material.page_count === 1 ? "" : "s"}`
                 : null,
@@ -365,7 +394,7 @@ export default function MaterialsWorkshop({
                   gap: 1,
                   px: 1.25,
                   py: 0.85,
-                  ...SURFACE,
+                  ...WORKSHOP_SURFACE,
                   transition:
                     "background-color 140ms ease, border-color 140ms ease",
                   "&:hover": {
@@ -420,8 +449,9 @@ export default function MaterialsWorkshop({
                     useFlexGap
                     sx={{
                       flexWrap: "wrap",
-                      mt: 0.55
-                    }}>
+                      mt: 0.55,
+                    }}
+                  >
                     <Box
                       component="span"
                       sx={{
@@ -439,7 +469,7 @@ export default function MaterialsWorkshop({
                         color: "rgba(232, 216, 199, 0.62)",
                       }}
                     >
-                      {kindLabel(material.kind)}
+                      {workshopMaterialKindLabel(material.kind)}
                     </Box>
                     {metaParts.slice(1).map((part) => (
                       <Typography
@@ -646,7 +676,7 @@ function MaterialPreviewDialog({
   }, [material, guest]);
 
   const open = material !== null;
-  const title = material ? materialTitle(material) : "File";
+  const title = material ? workshopMaterialTitle(material) : "File";
 
   return (
     <Dialog
@@ -663,7 +693,7 @@ function MaterialPreviewDialog({
             border: "1px solid rgba(232, 216, 199, 0.14)",
             minHeight: material?.kind === "pdf" ? "70vh" : undefined,
           },
-        }
+        },
       }}
     >
       <DialogTitle
@@ -742,9 +772,12 @@ function MaterialPreviewDialog({
           </Box>
         ) : material ? (
           <Stack spacing={1.25} sx={{ py: 2 }}>
-            <Typography variant="body2" sx={{
-              color: "text.secondary"
-            }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               {material.kind === "pptx"
                 ? "PowerPoint files open via download. Preview is not available in the browser."
                 : "This file cannot be previewed here."}

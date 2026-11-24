@@ -21,9 +21,16 @@ import EmptyNext from "./EmptyNext";
 import type { CardDraftView } from "../api/client";
 import { cardFrontPreview } from "../draftReview";
 import DiyCardPreview from "./DiyCardPreview";
+import WorkshopSearchField from "./WorkshopSearchField";
+import {
+  cardMatchesWorkshopQuery,
+  normalizeWorkshopQuery,
+  workshopCardTypeLabel,
+} from "./workshopSearch";
 import {
   PILL_BTN,
   ROW_ACTION,
+  WORKSHOP_SURFACE,
   createWorkshopViewPref,
   type WorkshopViewMode,
 } from "./workshopChrome";
@@ -33,15 +40,6 @@ const { readViewMode, writeViewMode } = createWorkshopViewPref(
 );
 
 type ViewMode = WorkshopViewMode;
-
-function cardTypeLabel(type: CardDraftView["type"]): string {
-  if (type === "cloze") return "Cloze";
-  if (type === "mcq") return "MCQ";
-  if (type === "occlusion") return "Occlusion";
-  if (type === "image_label") return "Image label";
-  if (type === "diagram") return "Diagram";
-  return "Q&A";
-}
 
 const TOOL_LINK = {
   minWidth: 0,
@@ -91,7 +89,7 @@ type Props = {
   onShowArchivedChange: (checked: boolean) => void;
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
-  onSelectAll: () => void;
+  onSelectAll: (cards: CardDraftView[]) => void;
   onClearSelection: () => void;
   archiveBusyId: string | null;
   batchBusy: boolean;
@@ -125,19 +123,25 @@ export default function CardsWorkshop({
   onCreateCard,
 }: Props) {
   const [view, setView] = useState<ViewMode>(() => readViewMode());
+  const [query, setQuery] = useState("");
   const busy = archiveBusyId !== null || batchBusy;
   const selectedCount = selectedIds.size;
+  const visible = cards.filter((c) => cardMatchesWorkshopQuery(c, query));
+  const searching = normalizeWorkshopQuery(query) !== "";
   const allSelected =
-    cards.length > 0 && cards.every((card) => selectedIds.has(card.id));
-  const someSelected = selectedCount > 0 && !allSelected;
+    visible.length > 0 && visible.every((card) => selectedIds.has(card.id));
+  const someSelected =
+    visible.some((card) => selectedIds.has(card.id)) && !allSelected;
   const cardCountLabel =
     cards.length === 0
       ? showArchived
         ? "No archived cards"
         : "No cards yet"
-      : cards.length === 1
-        ? "1 card"
-        : `${cards.length} cards`;
+      : searching
+        ? `${visible.length} of ${cards.length} cards`
+        : cards.length === 1
+          ? "1 card"
+          : `${cards.length} cards`;
 
   function onViewChange(_: unknown, next: ViewMode | null) {
     if (!next) return;
@@ -154,11 +158,17 @@ export default function CardsWorkshop({
           alignItems: "center",
           justifyContent: "space-between",
           flexWrap: "wrap",
-          gap: 1.25
-        }}>
-        <Stack direction="row" spacing={1.25} useFlexGap sx={{
-          alignItems: "center"
-        }}>
+          gap: 1.25,
+        }}
+      >
+        <Stack
+          direction="row"
+          spacing={1.25}
+          useFlexGap
+          sx={{
+            alignItems: "center",
+          }}
+        >
           <Button
             variant="contained"
             size="small"
@@ -182,10 +192,24 @@ export default function CardsWorkshop({
           >
             {cardCountLabel}
           </Typography>
+          {cards.length > 0 ? (
+            <WorkshopSearchField
+              value={query}
+              onChange={setQuery}
+              placeholder="Search cards…"
+              ariaLabel="Search cards"
+              ariaControls="cards-workshop-results"
+            />
+          ) : null}
         </Stack>
-        <Stack direction="row" spacing={1} useFlexGap sx={{
-          alignItems: "center"
-        }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          useFlexGap
+          sx={{
+            alignItems: "center",
+          }}
+        >
           {cards.length > 0 ? (
             <ToggleButtonGroup
               size="small"
@@ -254,9 +278,12 @@ export default function CardsWorkshop({
               py: 2.5,
             }}
           >
-            <Typography variant="body2" sx={{
-              color: "text.secondary"
-            }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               No archived cards in this deck.
             </Typography>
           </Box>
@@ -292,8 +319,9 @@ export default function CardsWorkshop({
               bgcolor:
                 selectedCount > 0
                   ? "rgba(91, 44, 111, 0.28)"
-                  : "rgba(18, 7, 15, 0.35)"
-            }}>
+                  : "rgba(18, 7, 15, 0.35)",
+            }}
+          >
             <FormControlLabel
               control={
                 <Checkbox
@@ -301,11 +329,11 @@ export default function CardsWorkshop({
                   disableRipple
                   checked={allSelected}
                   indeterminate={someSelected}
-                  disabled={busy || cards.length === 0}
-                  onChange={() => onSelectAll()}
+                  disabled={busy || visible.length === 0}
+                  onChange={() => onSelectAll(visible)}
                   sx={SELECT_CHECKBOX_SX}
                   slotProps={{
-                    input: { "aria-label": "Select all cards" }
+                    input: { "aria-label": "Select all cards" },
                   }}
                 />
               }
@@ -398,8 +426,22 @@ export default function CardsWorkshop({
             ) : null}
           </Stack>
 
-          {view === "icons" ? (
+          {searching && visible.length === 0 ? (
             <Box
+              id="cards-workshop-results"
+              sx={{
+                ...WORKSHOP_SURFACE,
+                px: 2.25,
+                py: 2.5,
+              }}
+            >
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                {`No cards match "${query.trim()}"`}
+              </Typography>
+            </Box>
+          ) : view === "icons" ? (
+            <Box
+              id="cards-workshop-results"
               component="ul"
               sx={{
                 m: 0,
@@ -410,7 +452,7 @@ export default function CardsWorkshop({
                 gap: 1.5,
               }}
             >
-              {cards.map((card) => {
+              {visible.map((card) => {
                 const checked = selectedIds.has(card.id);
                 return (
                   <Box
@@ -461,7 +503,7 @@ export default function CardsWorkshop({
                       slotProps={{
                         input: {
                           "aria-label": `Select ${cardFrontPreview(card)}`,
-                        }
+                        },
                       }}
                     />
                     <Box
@@ -499,8 +541,9 @@ export default function CardsWorkshop({
                         py: 0.75,
                         borderTop: "1px solid",
                         borderColor: "rgba(232, 216, 199, 0.1)",
-                        bgcolor: "rgba(18, 7, 15, 0.22)"
-                      }}>
+                        bgcolor: "rgba(18, 7, 15, 0.22)",
+                      }}
+                    >
                       <Box
                         component="span"
                         sx={{
@@ -518,7 +561,7 @@ export default function CardsWorkshop({
                           color: "rgba(232, 216, 199, 0.82)",
                         }}
                       >
-                        {cardTypeLabel(card.type)}
+                        {workshopCardTypeLabel(card.type)}
                       </Box>
                       <Stack
                         className="sp-card-tile-actions"
@@ -551,11 +594,12 @@ export default function CardsWorkshop({
             </Box>
           ) : (
             <Stack
+              id="cards-workshop-results"
               component="ul"
               spacing={0.75}
               sx={{ m: 0, p: 0, listStyle: "none" }}
             >
-              {cards.map((card) => {
+              {visible.map((card) => {
                 const checked = selectedIds.has(card.id);
                 return (
                   <Box
@@ -600,7 +644,7 @@ export default function CardsWorkshop({
                       slotProps={{
                         input: {
                           "aria-label": `Select ${cardFrontPreview(card)}`,
-                        }
+                        },
                       }}
                     />
                     <Box sx={{ flex: 1, minWidth: 0, py: 0.25 }}>
@@ -633,7 +677,7 @@ export default function CardsWorkshop({
                           color: "rgba(232, 216, 199, 0.62)",
                         }}
                       >
-                        {cardTypeLabel(card.type)}
+                        {workshopCardTypeLabel(card.type)}
                       </Box>
                     </Box>
                     <Stack

@@ -16,6 +16,13 @@ export const ROW_ACTION = {
   },
 } as const;
 
+export const WORKSHOP_SURFACE = {
+  borderRadius: 2,
+  border: "1px solid",
+  borderColor: "rgba(232, 216, 199, 0.12)",
+  bgcolor: "rgba(18, 7, 15, 0.28)",
+} as const;
+
 export function createWorkshopViewPref(storageKey: string) {
   function readViewMode(): WorkshopViewMode {
     try {
