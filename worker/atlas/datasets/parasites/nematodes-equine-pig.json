@@ -145,7 +145,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "parascaris-equorum/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "eXtensionHorses",
@@ -307,7 +307,7 @@
       "images": [
         {
           "id": "lifecycle",
-          "file": "strongyloides-westeri/lifecycle.webp",
+          "file": "lifecycle.webp",
           "role": "lifecycle_diagram",
           "caption": null,
           "credit": "LeChFr",
@@ -625,7 +625,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "strongylus-equinus/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Imes, Schwartz, Wright (USDA); illustration from Looss, 1901",
@@ -783,7 +783,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "strongylus-edentatus/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Imes, Schwartz, Wright (USDA); illustration from Looss, 1901",
@@ -941,7 +941,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "strongylus-vulgaris/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": "Buccal capsule, lateral DIC",
           "credit": "Vitaliy Kharchenko",
@@ -1100,7 +1100,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "oxyuris-equi/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Imes, Marion.; Schwartz, Benjamin; Wright, Willard H.",
@@ -1319,7 +1319,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "habronema-spp/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": "Habronema muscae adult males and females (USDA BAI Bulletin 163 fig. 24)",
           "credit": "Brayton Howard Ransom / USDA Bureau of Animal Industry Bulletin 163",
@@ -2621,7 +2621,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "ascaris-suum/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "VlaminckJ",
@@ -2927,7 +2927,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "trichuris-suis/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": "Adult Trichuris suis",
           "credit": "Universidad de Córdoba",
@@ -3128,7 +3128,7 @@
       "images": [
         {
           "id": "hero",
-          "file": "trichinella-spiralis/hero.webp",
+          "file": "hero.webp",
           "role": "adult",
           "caption": null,
           "credit": "Izvora",
