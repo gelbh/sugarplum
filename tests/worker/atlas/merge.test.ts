@@ -163,7 +163,7 @@ describe("overlayAtlas", () => {
       images: [
         {
           id: "ds-img",
-          file: "fasciola.webp",
+          file: "fasciola-hepatica/hero.webp",
           role: "adult",
           caption: null,
           credit: "CDC",
@@ -208,11 +208,11 @@ describe("overlayAtlas", () => {
       { field: "family", citation: "Learner note", url: null, note: null },
     ]);
     expect(views[0].images.map((i) => i.src)).toEqual([
-      "/atlas/parasites/fasciola.webp",
+      "/atlas/parasites/fasciola-hepatica/hero.webp",
       "https://cdn.example/hero.webp",
     ]);
     expect(views[0].images[0].placeholderSrc).toBe(
-      "/atlas/parasites/fasciola-blur.webp",
+      "/atlas/parasites/fasciola-hepatica/hero-blur.webp",
     );
     expect(views[0].images[1].placeholderSrc).toBeUndefined();
   });

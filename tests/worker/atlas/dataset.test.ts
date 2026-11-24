@@ -305,7 +305,7 @@ describe("dataset schema", () => {
         images: [
           {
             id: "adult",
-            file: "adult.webp",
+            file: "fasciola-hepatica/adult.webp",
             role: "adult",
             credit: "CDC",
             license: "Public domain",
@@ -321,7 +321,7 @@ describe("dataset schema", () => {
         images: [
           {
             id: "adult",
-            file: "adult.webp",
+            file: "fasciola-hepatica/adult.webp",
             role: "adult",
             credit: "CDC",
             license: "Public domain",
@@ -330,7 +330,7 @@ describe("dataset schema", () => {
           },
           {
             id: "egg",
-            file: "egg.webp",
+            file: "fasciola-hepatica/egg.webp",
             role: "egg_oocyst",
             credit: "CDC",
             license: "Public domain",
@@ -347,7 +347,7 @@ describe("dataset schema", () => {
         images: [
           {
             id: "lifecycle",
-            file: "lifecycle.webp",
+            file: "fasciola-hepatica/lifecycle.webp",
             role: "lifecycle_diagram",
             credit: "CDC",
             license: "Public domain",
@@ -364,7 +364,7 @@ describe("dataset schema", () => {
         images: [
           {
             id: "adult",
-            file: "adult.webp",
+            file: "fasciola-hepatica/adult.webp",
             role: "adult",
             credit: "CDC",
             license: "Public domain",
@@ -372,11 +372,45 @@ describe("dataset schema", () => {
           },
           {
             id: "adult",
-            file: "adult-2.webp",
+            file: "fasciola-hepatica/adult-2.webp",
             role: "adult",
             credit: "CDC",
             license: "Public domain",
             sourceUrl: "https://example.org/adult-2.jpg",
+          },
+        ],
+      },
+    ],
+    [
+      "flat image file basename",
+      {
+        ...minimal,
+        images: [
+          {
+            id: "hero",
+            file: "fasciola-hepatica-hero.webp",
+            role: "adult",
+            credit: "CDC",
+            license: "Public domain",
+            sourceUrl: "https://example.org/hero.jpg",
+            isHero: true,
+          },
+        ],
+      },
+    ],
+    [
+      "image file under wrong entry key",
+      {
+        ...minimal,
+        images: [
+          {
+            id: "hero",
+            file: "other-key/hero.webp",
+            role: "adult",
+            credit: "CDC",
+            license: "Public domain",
+            sourceUrl: "https://example.org/hero.jpg",
+            isHero: true,
           },
         ],
       },
@@ -391,7 +425,7 @@ describe("dataset schema", () => {
       images: [
         {
           id: "adult",
-          file: "fasciola-hepatica-adult.webp",
+          file: "fasciola-hepatica/hero.webp",
           role: "adult",
           credit: "CDC / DPDx",
           license: "Public domain",
@@ -403,8 +437,8 @@ describe("dataset schema", () => {
     expect(toEntryView(e).images).toEqual([
       {
         id: "adult",
-        src: "/atlas/parasites/fasciola-hepatica-adult.webp",
-        placeholderSrc: "/atlas/parasites/fasciola-hepatica-adult-blur.webp",
+        src: "/atlas/parasites/fasciola-hepatica/hero.webp",
+        placeholderSrc: "/atlas/parasites/fasciola-hepatica/hero-blur.webp",
         role: "adult",
         caption: null,
         credit: "CDC / DPDx",
@@ -601,7 +635,7 @@ describe("built-in parasite dataset", () => {
         }
         return paths
           .filter((file) => !existsSync(join(parasitesDir, file)))
-          .map((file) => `${e.key}/${file}`);
+          .map((file) => `${e.key}: ${file}`);
       }),
     );
     expect(missing).toEqual([]);
