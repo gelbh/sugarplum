@@ -10,22 +10,22 @@ import {
   seedGenerationJob,
   seedPasteJob,
   spyLlm,
-} from "./harness";
+} from "../harness";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   handleGenerateQueue,
   processGenerateJob,
-} from "../../worker/generation/consumer";
+} from "../../../worker/generation/consumer";
 import {
   GENERATE_QUEUE_MAX_RETRIES,
   GENERATE_QUEUE_RETRY_DELAY_SEC,
   RUNNING_JOB_STALE_MS,
-} from "../../worker/generation/progress";
-import { mockLlmAdapter } from "../../worker/generation/llm";
+} from "../../../worker/generation/progress";
+import { mockLlmAdapter } from "../../../worker/generation/llm";
 import {
   consumeFreeGenSlot,
   getFreeGenUsage,
-} from "../../worker/generation/quota";
+} from "../../../worker/generation/quota";
 
 afterEach(async () => {
   await resetTestDb(cfEnv);

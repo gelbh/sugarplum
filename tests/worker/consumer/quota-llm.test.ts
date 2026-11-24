@@ -8,18 +8,18 @@ import {
   seedConsumerOwner,
   seedPasteJob,
   spyLlm,
-} from "./harness";
+} from "../harness";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { app } from "../../worker/index";
-import { SESSION_COOKIE } from "../../worker/auth/session";
-import { processGenerateJob } from "../../worker/generation/consumer";
-import { mockLlmAdapter, type LlmAdapter } from "../../worker/generation/llm";
+import { app } from "../../../worker/index";
+import { SESSION_COOKIE } from "../../../worker/auth/session";
+import { processGenerateJob } from "../../../worker/generation/consumer";
+import { mockLlmAdapter, type LlmAdapter } from "../../../worker/generation/llm";
 import {
   FREE_GEN_DAILY_CAP,
   consumeFreeGenSlot,
   getFreeGenUsage,
-} from "../../worker/generation/quota";
-import { type CardDraft } from "../../worker/generation/schema";
+} from "../../../worker/generation/quota";
+import { type CardDraft } from "../../../worker/generation/schema";
 
 afterEach(async () => {
   await resetTestDb(cfEnv);

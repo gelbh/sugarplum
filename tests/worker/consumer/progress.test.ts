@@ -7,16 +7,16 @@ import {
   seedGenerationJob,
   seedMaterial,
   seedPasteJob,
-} from "./harness";
+} from "../harness";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   handleGenerateQueue,
   processGenerateJob,
-} from "../../worker/generation/consumer";
-import { RUNNING_JOB_STALE_MS } from "../../worker/generation/progress";
-import { STALE_RUNNING_FAIL_ERROR } from "../../worker/generation/staleFail";
-import { mockLlmAdapter, type LlmAdapter } from "../../worker/generation/llm";
-import { CHUNK_CHAR_LIMIT } from "../../worker/generation/pipeline";
+} from "../../../worker/generation/consumer";
+import { RUNNING_JOB_STALE_MS } from "../../../worker/generation/progress";
+import { STALE_RUNNING_FAIL_ERROR } from "../../../worker/generation/staleFail";
+import { mockLlmAdapter, type LlmAdapter } from "../../../worker/generation/llm";
+import { CHUNK_CHAR_LIMIT } from "../../../worker/generation/pipeline";
 
 afterEach(async () => {
   await resetTestDb(cfEnv);

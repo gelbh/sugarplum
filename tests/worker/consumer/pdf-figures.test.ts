@@ -8,14 +8,14 @@ import {
   seedMaterial,
   seedR2,
   seedUser,
-} from "./harness";
+} from "../harness";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { enqueueGeneration } from "../../worker/generation/enqueue";
+import { enqueueGeneration } from "../../../worker/generation/enqueue";
 import {
   processGenerateJob,
-} from "../../worker/generation/consumer";
-import type { LlmAdapter } from "../../worker/generation/llm";
-import { minimalPdfWithText } from "./pdf-fixture";
+} from "../../../worker/generation/consumer";
+import type { LlmAdapter } from "../../../worker/generation/llm";
+import { minimalPdfWithText } from "../pdf-fixture";
 
 
 afterEach(async () => {
