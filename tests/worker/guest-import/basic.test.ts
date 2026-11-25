@@ -4,10 +4,10 @@ import {
   getSchedules,
   resetTestDb,
   seedGuestImportOwner,
-} from "./harness";
+} from "../harness";
 import { afterEach, describe, it, expect } from "vitest";
-import { app } from "../../worker/index";
-import { SESSION_COOKIE } from "../../worker/auth/session";
+import { app } from "../../../worker/index";
+import { SESSION_COOKIE } from "../../../worker/auth/session";
 
 afterEach(async () => {
   await resetTestDb(cfEnv);
