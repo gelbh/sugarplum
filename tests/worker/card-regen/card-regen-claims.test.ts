@@ -31,26 +31,26 @@ import {
   seedUser,
   stubWorkersAiMcq,
   stubWorkersAiSequence,
-} from "./harness";
+} from "../harness";
 import { afterEach, describe, it, expect, vi } from "vitest";
-import { app } from "../../worker/index";
-import { SESSION_COOKIE } from "../../worker/auth/session";
-import { capRegenSourceText } from "../../worker/generation/card-regen";
+import { app } from "../../../worker/index";
+import { SESSION_COOKIE } from "../../../worker/auth/session";
+import { capRegenSourceText } from "../../../worker/generation/card-regen";
 import {
   failStaleCardRegenOps,
   processCardRegenOp,
   STALE_CARD_REGEN_FAIL_ERROR,
-} from "../../worker/generation/card-regen-op";
-import { studyStrugglePromptSuffix } from "../../worker/generation/feedback-hints";
-import { CHUNK_CHAR_LIMIT } from "../../worker/generation/pipeline";
-import { RUNNING_JOB_STALE_MS } from "../../worker/generation/progress";
+} from "../../../worker/generation/card-regen-op";
+import { studyStrugglePromptSuffix } from "../../../worker/generation/feedback-hints";
+import { CHUNK_CHAR_LIMIT } from "../../../worker/generation/pipeline";
+import { RUNNING_JOB_STALE_MS } from "../../../worker/generation/progress";
 import {
   FREE_GEN_DAILY_CAP,
   consumeFreeGenSlot,
   getFreeGenUsage,
-} from "../../worker/generation/quota";
-import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/claim-card-fallback";
-import { WORKERS_AI_MODEL } from "../../worker/generation/workers-ai";
+} from "../../../worker/generation/quota";
+import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../../worker/generation/claim-card-fallback";
+import { WORKERS_AI_MODEL } from "../../../worker/generation/workers-ai";
 
 afterEach(async () => {
   await resetTestDb(cfEnv);

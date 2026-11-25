@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { resolveRegenCorpus } from "../../worker/generation/card-regen";
-import { CHUNK_CHAR_LIMIT } from "../../worker/generation/pipeline";
+import { resolveRegenCorpus } from "../../../worker/generation/card-regen";
+import { CHUNK_CHAR_LIMIT } from "../../../worker/generation/pipeline";
 
 describe("resolveRegenCorpus", () => {
   it("prefers a non-empty excerpt over material text", () => {
