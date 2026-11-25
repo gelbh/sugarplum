@@ -54,6 +54,9 @@ describe("admin view-as impersonation", () => {
     const env = withTestBindings(cfEnv, { adminEmails: ADMIN_EMAIL });
     await seedAdminAndLearner(env);
     const usersBefore = (await getUsers(env)).length;
+    const beforeRec = parseSessionRecord((await env.SESSIONS.get("s-admin"))!);
+    const expiresAt = beforeRec?.expiresAt;
+    expect(expiresAt).toEqual(expect.any(Number));
 
     const start = await app.request(
       "/api/admin/users/u-alice/impersonate",
@@ -83,6 +86,7 @@ describe("admin view-as impersonation", () => {
     expect(whileRec?.userId).toBe("u-alice");
     expect(whileRec?.actorUserId).toBe("admin-u");
     expect(whileRec?.impersonation?.sourceUserId).toBe("u-alice");
+    expect(whileRec?.expiresAt).toBe(expiresAt);
 
     const exit = await app.request(
       "/api/admin/impersonation/exit",
@@ -96,6 +100,7 @@ describe("admin view-as impersonation", () => {
     expect(afterRec?.userId).toBe("admin-u");
     expect(afterRec?.actorUserId).toBeUndefined();
     expect(afterRec?.impersonation).toBeUndefined();
+    expect(afterRec?.expiresAt).toBe(expiresAt);
   });
 
   it("/me returns source identity, actor is_admin, and impersonation block", async () => {

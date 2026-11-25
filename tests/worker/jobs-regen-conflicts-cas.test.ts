@@ -188,7 +188,7 @@ describe("POST /api/jobs/:id/regen", () => {
     expect(getQueueMessages()).toHaveLength(0);
   });
 
-  it("second concurrent regen loses CAS and returns 409 without double enqueue", async () => {
+  it("repeated regen returns 409 without double enqueue", async () => {
     const env = installQueueRecorders(cfEnv);
     await seedOwner(env);
     await seedNeedsReviewJob(env);

@@ -45,7 +45,7 @@ describe("complete upload sidecar", () => {
       status: "uploading",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    void env.MATERIALS.put("materials/deck-a/mat-1.pdf", "pdf-bytes");
+    await env.MATERIALS.put("materials/deck-a/mat-1.pdf", "pdf-bytes");
 
     const res = await app.request(
       "/api/materials/mat-1/complete",

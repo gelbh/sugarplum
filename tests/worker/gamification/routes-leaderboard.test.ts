@@ -5,11 +5,12 @@ import {
   seedSession,
   seedUser,
 } from "../harness";
-import { afterEach, describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { app } from "../../../worker/index";
 import { SESSION_COOKIE } from "../../../worker/auth/session";
 
 afterEach(async () => {
+  vi.useRealTimers();
   await resetTestDb(cfEnv);
 });
 
@@ -56,6 +57,8 @@ describe("gamification read APIs", () => {
 
   it("GET /api/leaderboard/weekly uses ISO week key and opt-in only", async () => {
     const env = cfEnv;
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(NOW));
     const a = await seedAuthedUser(env, {
       id: "user-a",
       email: "a@example.com",
@@ -166,8 +169,11 @@ describe("gamification read APIs", () => {
     );
     expect(res.status).toBe(200);
     const body = (await res.json()) as LeaderboardBody;
-    expect(body.weekKey).toMatch(/^\d{4}-W\d{2}$/);
-    // When "now" is wall clock, week may not be 2026-W02. Assert shape + privacy.
+    expect(body.weekKey).toBe("2026-W02");
+    expect(body.entries.map((e) => [e.userId, e.xp])).toEqual([
+      ["user-a", 100],
+      ["user-b", 50],
+    ]);
     expect(body.entries.every((e) => !("email" in e))).toBe(true);
     const raw = JSON.stringify(body);
     expect(raw).not.toContain("@example.com");

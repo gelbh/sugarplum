@@ -110,6 +110,10 @@ describe("admin view-as impersonation", () => {
       env,
     );
     expect(res.status).toBe(401);
+    const midRec = parseSessionRecord((await env.SESSIONS.get("s-admin"))!);
+    expect(midRec?.userId).toBe("u-alice");
+    expect(midRec?.actorUserId).toBe("admin-u");
+    expect(midRec?.impersonation?.sourceUserId).toBe("u-alice");
   });
 
   it("expired view-as TTL restores actor before RO middleware", async () => {

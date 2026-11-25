@@ -216,9 +216,9 @@ describe("computePipelineBandPercent", () => {
     const stages = [...FULL_STAGES];
     const n = 2;
     // Old model rewound here; band model stays at critique-done of chunk 0 (= 2 half-steps)
-    const afterCritiqueChunk0 = computePipelineBandPercent(2, n, stages);
+    // base 0.15 + band 0.65 * (2/4) = 0.475 → 47.5%
     const generateChunk1Start = computePipelineBandPercent(2, n, stages);
-    expect(generateChunk1Start).toBe(afterCritiqueChunk0);
+    expect(generateChunk1Start).toBeCloseTo(47.5, 5);
     expect(generateChunk1Start).toBeGreaterThan(
       computePercent("generate", 1, 2, stages),
     );
