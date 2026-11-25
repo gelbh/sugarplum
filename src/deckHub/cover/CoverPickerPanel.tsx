@@ -2,21 +2,20 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import ButtonBase from "@mui/material/ButtonBase";
-import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import {
   ApiError,
   searchCovers,
-  setCover,
   uploadCoverFile,
   type CoverFields,
   type CoverOwnerKind,
   type StoredCoverRow,
 } from "../../api/client";
 import { CreateFlowNotice } from "../../library/CreateFlowNotice";
+import CoverPosterGrid from "./CoverPosterGrid";
+import CoverUploadTile from "./CoverUploadTile";
 
 type Props = {
   active: boolean;
@@ -138,201 +137,22 @@ export default function CoverPickerPanel({
       .finally(() => setUploading(false));
   }
 
-  const cellSx = (fillHeight: boolean) => ({
-    position: "relative" as const,
-    ...(fillHeight
-      ? { minHeight: 0, height: "100%" }
-      : { aspectRatio: "3 / 4" }),
-    borderRadius: 1.5,
-    overflow: "hidden" as const,
-  });
-
-  const uploadTile = (fillHeight: boolean) => (
-    <ButtonBase
-      component="label"
-      focusRipple
-      disabled={busy}
-      aria-label={uploading ? "Uploading cover" : "Upload your own cover"}
-      sx={{
-        ...cellSx(fillHeight),
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 0.75,
-        px: 1,
-        border: "1px dashed",
-        borderColor: "rgba(91, 44, 111, 0.55)",
-        bgcolor: "rgba(91, 44, 111, 0.14)",
-        boxShadow: "none",
-        transition: "transform 180ms ease, border-color 180ms ease",
-        "@media (prefers-reduced-motion: reduce)": {
-          transition: "none",
-        },
-        "&:hover, &:focus-visible": {
-          transform: busy ? "none" : "translateY(-1px) scale(1.015)",
-          borderColor: "primary.main",
-          zIndex: 1,
-        },
-      }}
-    >
-      <Typography
-        component="span"
-        sx={{
-          fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
-          fontSize: "1.75rem",
-          lineHeight: 1,
-          color: "primary.light",
-        }}
-      >
-        +
-      </Typography>
-      <Typography
-        variant="caption"
-        sx={{
-          color: "primary.light",
-          fontWeight: 600,
-          letterSpacing: "0.04em",
-          textAlign: "center",
-          lineHeight: 1.25,
-        }}
-      >
-        {uploading ? "Uploading…" : "Upload your own"}
-      </Typography>
-      <input
-        hidden
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        onChange={onFileChange}
-      />
-    </ButtonBase>
-  );
-
   function renderPosterGrid(fillHeight: boolean) {
-    const photoTiles = searching
-      ? [0, 1, 2, 3, 4].map((key) => (
-          <Skeleton
-            key={key}
-            variant="rounded"
-            sx={{
-              ...cellSx(fillHeight),
-              width: "100%",
-              bgcolor: "rgba(91, 44, 111, 0.18)",
-            }}
-          />
-        ))
-      : photos.slice(0, 5).map((photo) => {
-          const picking = pickingId === photo.photoId;
-          return (
-            <ButtonBase
-              key={photo.photoId}
-              focusRipple
-              disabled={busy}
-              aria-label={`Photo by ${photo.photographerName}`}
-              onClick={() => {
-                setPickingId(photo.photoId);
-                run(async () => {
-                  try {
-                    const row = await setCover(
-                      ownerKind,
-                      ownerId,
-                      photo.photoId,
-                    );
-                    onSaved(row);
-                  } finally {
-                    setPickingId(null);
-                  }
-                });
-              }}
-              sx={{
-                ...cellSx(fillHeight),
-                border: 1,
-                borderColor: "rgba(232, 216, 199, 0.16)",
-                bgcolor: "#1a0b18",
-                boxShadow: fillHeight
-                  ? "0 6px 18px rgba(0,0,0,0.28)"
-                  : "0 10px 28px rgba(0,0,0,0.28)",
-                opacity: pickingId && !picking ? 0.45 : 1,
-                transition:
-                  "transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease",
-                "@media (prefers-reduced-motion: reduce)": {
-                  transition: "none",
-                },
-                "&:hover, &:focus-visible": {
-                  transform: busy ? "none" : "translateY(-1px) scale(1.015)",
-                  boxShadow: "0 12px 28px rgba(0,0,0,0.4)",
-                  zIndex: 1,
-                },
-              }}
-            >
-              <Box
-                component="img"
-                src={photo.imageUrl}
-                alt=""
-                sx={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  display: "block",
-                }}
-              />
-              <Box
-                aria-hidden
-                sx={{
-                  position: "absolute",
-                  inset: 0,
-                  background:
-                    "linear-gradient(180deg, transparent 50%, rgba(15, 5, 14, 0.9) 100%)",
-                  pointerEvents: "none",
-                }}
-              />
-              <Typography
-                variant="caption"
-                sx={{
-                  position: "absolute",
-                  left: 8,
-                  right: 8,
-                  bottom: 8,
-                  zIndex: 1,
-                  color: "rgba(245,245,245,0.78)",
-                  textAlign: "left",
-                  lineHeight: 1.25,
-                  fontSize: "0.6875rem",
-                }}
-              >
-                {picking ? "Saving…" : photo.photographerName}
-              </Typography>
-            </ButtonBase>
-          );
-        });
-
     return (
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "repeat(2, minmax(0, 1fr))",
-            sm: "repeat(3, minmax(0, 1fr))",
-          },
-          ...(fillHeight
-            ? {
-                gridTemplateRows: {
-                  xs: "repeat(3, minmax(0, 1fr))",
-                  sm: "repeat(2, minmax(0, 1fr))",
-                },
-                flex: 1,
-                minHeight: 0,
-                height: "100%",
-              }
-            : {}),
-          gap: fillHeight ? 1 : { xs: 1.25, sm: 1.5 },
-        }}
-      >
-        {uploadTile(fillHeight)}
-        {photoTiles}
-      </Box>
+      <CoverPosterGrid
+        fillHeight={fillHeight}
+        busy={busy}
+        searching={searching}
+        uploading={uploading}
+        photos={photos}
+        pickingId={pickingId}
+        ownerKind={ownerKind}
+        ownerId={ownerId}
+        onFileChange={onFileChange}
+        run={run}
+        setPickingId={setPickingId}
+        onSaved={onSaved}
+      />
     );
   }
 
@@ -446,7 +266,12 @@ export default function CoverPickerPanel({
                 maxWidth: { xs: "50%", sm: "33%" },
               }}
             >
-              {uploadTile(false)}
+              <CoverUploadTile
+                fillHeight={false}
+                busy={busy}
+                uploading={uploading}
+                onFileChange={onFileChange}
+              />
             </Box>
             <Typography variant="body2" sx={{
               color: "text.secondary"
@@ -581,7 +406,12 @@ export default function CoverPickerPanel({
             }}
           >
             <Box sx={{ width: "100%", maxWidth: 160, aspectRatio: "3 / 4" }}>
-              {uploadTile(true)}
+              <CoverUploadTile
+                fillHeight={true}
+                busy={busy}
+                uploading={uploading}
+                onFileChange={onFileChange}
+              />
             </Box>
             <Typography
               variant="body2"
