@@ -62,7 +62,8 @@ const ENRICH_POLL_MS = 1_500;
 
 export default function DraftReviewPage() {
   const theme = useTheme();
-  const fillCard = useMediaQuery(theme.breakpoints.up("md"));
+  const fillCard = useMediaQuery(theme.breakpoints.up("md"), { noSsr: true });
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const jobId = jobIdFromPath();
   const [drafts, setDrafts] = useState<CardDraftView[]>([]);
   const [regenNonce, setRegenNonce] = useState(0);
@@ -282,12 +283,15 @@ export default function DraftReviewPage() {
   ): Promise<boolean> => {
     const ok = await onDecide(...args);
     if (!ok || fillCard) return ok;
-    // After reload, stage focus uses preventScroll; bring the next card into view.
+    // After reload, stage focus uses preventScroll; reset the scroll leaf so the
+    // next card's top is visible (nearest fails when the card is taller than the viewport).
     requestAnimationFrame(() => {
-      const host = scrollLeafRef.current?.querySelector<HTMLElement>(
-        "[data-card-id]",
-      );
-      host?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+      const leaf = scrollLeafRef.current;
+      if (!leaf) return;
+      leaf.scrollTo({
+        top: 0,
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
     });
     return ok;
   };
