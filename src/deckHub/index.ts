@@ -27,7 +27,7 @@ export {
 export {
   default as DeckHubWorkshopView,
   type DeckHubWorkshopViewProps,
-} from "./workshop/DeckHubWorkshopView";
+} from "./page/DeckHubWorkshopView";
 export {
   default as DeckHubHubView,
   type DeckHubHubViewProps,
@@ -36,7 +36,7 @@ export {
   default as DeckHubDialogs,
   type DeckHubDialogsProps,
 } from "./dialogs/DeckHubDialogs";
-export { default as EmptyNext } from "./hub/EmptyNext";
+export { default as EmptyNext } from "./workshop/EmptyNext";
 export {
   default as ClaimCoverageFilmstrip,
   type ClaimJumpTarget,
