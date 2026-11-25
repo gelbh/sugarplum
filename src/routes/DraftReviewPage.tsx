@@ -275,6 +275,23 @@ export default function DraftReviewPage() {
     setUndoBusy,
   });
 
+  const scrollLeafRef = useRef<HTMLDivElement | null>(null);
+
+  const onDecideAndReveal = async (
+    ...args: Parameters<typeof onDecide>
+  ): Promise<boolean> => {
+    const ok = await onDecide(...args);
+    if (!ok || fillCard) return ok;
+    // After reload, stage focus uses preventScroll; bring the next card into view.
+    requestAnimationFrame(() => {
+      const host = scrollLeafRef.current?.querySelector<HTMLElement>(
+        "[data-card-id]",
+      );
+      host?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+    });
+    return ok;
+  };
+
   const { onAcceptAll, onRejectRemainingDrafts } = createDraftReviewBatch({
     jobId,
     current,
@@ -391,6 +408,7 @@ export default function DraftReviewPage() {
     <Box className="sp-stage" sx={stageShellSx}>
       <Container maxWidth="sm" sx={pageSx}>
         <Stack
+          ref={scrollLeafRef}
           spacing={1}
           sx={{
             width: "100%",
@@ -731,7 +749,7 @@ export default function DraftReviewPage() {
                     fillHeight={fillCard}
                     disabled={busy || cardRegenBusy}
                     onChange={onEditorChange}
-                    onDecide={onDecide}
+                    onDecide={onDecideAndReveal}
                     renderOcclusionRegionEditor={({ front, onChange }) => (
                       <OcclusionRegionEditor front={front} onChange={onChange} />
                     )}
