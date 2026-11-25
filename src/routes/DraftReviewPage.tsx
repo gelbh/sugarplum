@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -278,6 +278,16 @@ export default function DraftReviewPage() {
 
   const scrollLeafRef = useRef<HTMLDivElement | null>(null);
 
+  const onClaimCoverageExpanded = useCallback(
+    (expanded: boolean) => {
+      if (fillCard || !expanded) return;
+      requestAnimationFrame(() => {
+        scrollLeafRef.current?.scrollTo({ top: 0, behavior: "auto" });
+      });
+    },
+    [fillCard],
+  );
+
   const onDecideAndReveal = async (
     ...args: Parameters<typeof onDecide>
   ): Promise<boolean> => {
@@ -413,7 +423,7 @@ export default function DraftReviewPage() {
       <Container maxWidth="sm" sx={pageSx}>
         <Stack
           ref={scrollLeafRef}
-          spacing={1}
+          spacing={0}
           sx={{
             width: "100%",
             flex: 1,
@@ -421,8 +431,17 @@ export default function DraftReviewPage() {
             overflow: fillCard ? "hidden" : "auto",
           }}
         >
+          <Stack
+            spacing={1}
+            sx={{
+              width: "100%",
+              flexShrink: 0,
+              // Centers short phone layouts; overflowing expand collapses margins and scrolls from top.
+              my: fillCard ? 0 : "auto",
+            }}
+          >
           <Stack spacing={0.75} sx={{ flexShrink: 0 }}>
-            <StageBreadcrumbs crumbs={crumbs} />
+            {fillCard ? <StageBreadcrumbs crumbs={crumbs} /> : null}
             <Box>
               <Typography
                 variant="h4"
@@ -438,18 +457,20 @@ export default function DraftReviewPage() {
               >
                 Draft review
               </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  mt: 0.75,
-                  maxWidth: "42ch",
-                  lineHeight: 1.45,
-                  color: "rgba(232, 216, 199, 0.72)",
-                }}
-              >
-                Edit before cards enter study. Drafts never appear in due until
-                accepted.
-              </Typography>
+              {fillCard ? (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mt: 0.75,
+                    maxWidth: "42ch",
+                    lineHeight: 1.45,
+                    color: "rgba(232, 216, 199, 0.72)",
+                  }}
+                >
+                  Edit before cards enter study. Drafts never appear in due until
+                  accepted.
+                </Typography>
+              ) : null}
             </Box>
           </Stack>
 
@@ -495,6 +516,8 @@ export default function DraftReviewPage() {
                 coverage={claimCoverage}
                 drafts={drafts}
                 claimSpanGaps={claimSpanGaps}
+                defaultCollapsed={!fillCard}
+                onExpandedChange={onClaimCoverageExpanded}
                 onJumpToDraft={jumpToDraft}
                 onGenerateOrphan={(claimId) => {
                   void onGenerateOrphan(claimId);
@@ -713,6 +736,8 @@ export default function DraftReviewPage() {
                     coverage={claimCoverage}
                     drafts={drafts}
                     claimSpanGaps={claimSpanGaps}
+                    defaultCollapsed={!fillCard}
+                    onExpandedChange={onClaimCoverageExpanded}
                     onJumpToDraft={jumpToDraft}
                     onGenerateOrphan={(claimId) => {
                       void onGenerateOrphan(claimId);
@@ -874,6 +899,7 @@ export default function DraftReviewPage() {
               </Stack>
             </>
           )}
+          </Stack>
 
           <Dialog
             open={confirmAll}

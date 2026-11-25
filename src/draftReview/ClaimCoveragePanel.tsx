@@ -20,6 +20,9 @@ type Props = {
   generatingClaimId?: string | null;
   fillAllBusy?: boolean;
   generateDisabled?: boolean;
+  /** Below md: start collapsed so the resting review surface can fit. */
+  defaultCollapsed?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
 };
 
 function claimLabel(row: ClaimCoverage["claims"][number]): string {
@@ -52,12 +55,19 @@ export default function ClaimCoveragePanel({
   generatingClaimId = null,
   fillAllBusy = false,
   generateDisabled = false,
+  defaultCollapsed = false,
+  onExpandedChange,
 }: Props) {
   const { linked, orphan, total } = coverage.summary;
   const shownGaps = claimSpanGaps.slice(0, CLAIM_SPAN_GAP_DISPLAY_CAP);
   const moreGaps = Math.max(0, claimSpanGaps.length - shownGaps.length);
 
   const [baselineOrphan, setBaselineOrphan] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState(!defaultCollapsed);
+  function setExpandedAndNotify(next: boolean) {
+    setExpanded(next);
+    onExpandedChange?.(next);
+  }
   useEffect(() => {
     if (!fillAllBusy) {
       setBaselineOrphan(null);
@@ -65,6 +75,12 @@ export default function ClaimCoveragePanel({
     }
     setBaselineOrphan((prev) => prev ?? Math.max(orphan, 1));
   }, [fillAllBusy, orphan]);
+  // Expand while Fill all runs so progress/list stay visible.
+  useEffect(() => {
+    if (!fillAllBusy) return;
+    setExpanded(true);
+    onExpandedChange?.(true);
+  }, [fillAllBusy, onExpandedChange]);
 
   if (total === 0 && claimSpanGaps.length === 0) return null;
 
@@ -110,21 +126,36 @@ export default function ClaimCoveragePanel({
         sx={{
           alignItems: "baseline",
           justifyContent: "space-between",
-          mb: 0.75,
+          mb: expanded ? 0.75 : 0,
         }}
       >
-        <Typography
-          variant="subtitle2"
+        <ButtonBase
+          onClick={() => setExpandedAndNotify(!expanded)}
+          aria-expanded={expanded}
+          aria-label={
+            expanded ? "Collapse claim coverage" : "Expand claim coverage"
+          }
           sx={{
-            m: 0,
-            fontWeight: 600,
-            letterSpacing: "0.02em",
-            color: "var(--sp-ivory)",
-            lineHeight: 1.3,
+            borderRadius: 1,
+            textAlign: "left",
+            px: 0.25,
+            py: 0.15,
+            minWidth: 0,
           }}
         >
-          Claim coverage
-        </Typography>
+          <Typography
+            variant="subtitle2"
+            sx={{
+              m: 0,
+              fontWeight: 600,
+              letterSpacing: "0.02em",
+              color: "var(--sp-ivory)",
+              lineHeight: 1.3,
+            }}
+          >
+            Claim coverage{expanded ? " ▾" : " ▸"}
+          </Typography>
+        </ButtonBase>
         <Stack
           direction="row"
           spacing={1}
@@ -178,129 +209,143 @@ export default function ClaimCoveragePanel({
           </Typography>
         </Stack>
       </Stack>
-      {fillAllBusy ? (
-        <LinearProgress
-          variant={baselineOrphan != null ? "determinate" : "indeterminate"}
-          value={baselineOrphan != null ? fillPercent : undefined}
-          aria-label={fillProgressLabel}
-          sx={{
-            mb: 0.75,
-            height: 3,
-            borderRadius: 1,
-            bgcolor: "rgba(232, 216, 199, 0.12)",
-            "& .MuiLinearProgress-bar": {
-              bgcolor: "rgba(232, 216, 199, 0.72)",
-            },
-          }}
-        />
-      ) : null}
-      <Stack
-        spacing={0.5}
-        sx={{
-          maxHeight: "min(18vh, 7.5rem)",
-          overflow: "auto",
-          pr: 0.25,
-        }}
-      >
-        {coverage.claims.map((row) => {
-          const isOrphan = row.card_id == null;
-          const cardId = row.card_id;
-          const interactive =
-            cardId != null && draftIds.has(cardId) && onJumpToDraft != null;
-          const label = claimLabel(row);
-          const rowBusy = generatingClaimId === row.id;
-          const body = (
-            <Typography
-              variant="body2"
-              sx={{ lineHeight: 1.3, flex: 1, minWidth: 0 }}
-            >
-              {label}
-            </Typography>
-          );
-          if (interactive && cardId) {
-            return (
-              <ButtonBase
-                key={row.id}
-                onClick={() => onJumpToDraft(cardId)}
-                sx={rowSx(true)}
-              >
-                {body}
-              </ButtonBase>
-            );
-          }
-          return (
-            <Box
-              key={row.id}
+      {expanded ? (
+        <>
+          {fillAllBusy ? (
+            <LinearProgress
+              variant={
+                baselineOrphan != null ? "determinate" : "indeterminate"
+              }
+              value={baselineOrphan != null ? fillPercent : undefined}
+              aria-label={fillProgressLabel}
               sx={{
-                ...rowSx(false),
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
+                mb: 0.75,
+                height: 3,
+                borderRadius: 1,
+                bgcolor: "rgba(232, 216, 199, 0.12)",
+                "& .MuiLinearProgress-bar": {
+                  bgcolor: "rgba(232, 216, 199, 0.72)",
+                },
               }}
-            >
-              {body}
-              {isOrphan && onGenerateOrphan ? (
-                <Button
-                  size="small"
-                  variant="outlined"
-                  disabled={orphanBusy}
-                  onClick={() => onGenerateOrphan(row.id)}
-                  sx={{
-                    flexShrink: 0,
-                    textTransform: "none",
-                    borderColor: "rgba(232, 216, 199, 0.35)",
-                    color: "var(--sp-ivory)",
-                    py: 0.25,
-                    px: 1,
-                    minWidth: 0,
-                  }}
-                >
-                  {rowBusy ? "…" : "Generate"}
-                </Button>
-              ) : null}
-            </Box>
-          );
-        })}
-      </Stack>
-      {claimSpanGaps.length > 0 ? (
-        <Box sx={{ mt: 1, pt: 1, borderTop: "1px solid rgba(232, 216, 199, 0.14)" }}>
-          <Typography
-            variant="caption"
+            />
+          ) : null}
+          <Stack
+            spacing={0.5}
             sx={{
-              m: 0,
-              mb: 0.5,
-              display: "block",
-              color: "rgba(232, 216, 199, 0.72)",
-              lineHeight: 1.3,
+              maxHeight: "min(18vh, 7.5rem)",
+              overflow: "auto",
+              pr: 0.25,
             }}
           >
-            Unclaimed note lines ({claimSpanGaps.length})
-          </Typography>
-          <Stack spacing={0.35}>
-            {shownGaps.map((line) => (
-              <Typography
-                key={line}
-                variant="body2"
-                sx={{
-                  m: 0,
-                  color: "text.secondary",
-                  lineHeight: 1.3,
-                  fontSize: "0.8rem",
-                }}
-              >
-                {line}
-              </Typography>
-            ))}
-            {moreGaps > 0 ? (
+            {coverage.claims.map((row) => {
+              const isOrphan = row.card_id == null;
+              const cardId = row.card_id;
+              const interactive =
+                cardId != null &&
+                draftIds.has(cardId) &&
+                onJumpToDraft != null;
+              const label = claimLabel(row);
+              const rowBusy = generatingClaimId === row.id;
+              const body = (
+                <Typography
+                  variant="body2"
+                  sx={{ lineHeight: 1.3, flex: 1, minWidth: 0 }}
+                >
+                  {label}
+                </Typography>
+              );
+              if (interactive && cardId) {
+                return (
+                  <ButtonBase
+                    key={row.id}
+                    onClick={() => onJumpToDraft(cardId)}
+                    sx={rowSx(true)}
+                  >
+                    {body}
+                  </ButtonBase>
+                );
+              }
+              return (
+                <Box
+                  key={row.id}
+                  sx={{
+                    ...rowSx(false),
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  {body}
+                  {isOrphan && onGenerateOrphan ? (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      disabled={orphanBusy}
+                      onClick={() => onGenerateOrphan(row.id)}
+                      sx={{
+                        flexShrink: 0,
+                        textTransform: "none",
+                        borderColor: "rgba(232, 216, 199, 0.35)",
+                        color: "var(--sp-ivory)",
+                        py: 0.25,
+                        px: 1,
+                        minWidth: 0,
+                      }}
+                    >
+                      {rowBusy ? "…" : "Generate"}
+                    </Button>
+                  ) : null}
+                </Box>
+              );
+            })}
+          </Stack>
+          {claimSpanGaps.length > 0 ? (
+            <Box
+              sx={{
+                mt: 1,
+                pt: 1,
+                borderTop: "1px solid rgba(232, 216, 199, 0.14)",
+              }}
+            >
               <Typography
                 variant="caption"
-                sx={{ m: 0, color: "rgba(232, 216, 199, 0.55)" }}
+                sx={{
+                  m: 0,
+                  mb: 0.5,
+                  display: "block",
+                  color: "rgba(232, 216, 199, 0.72)",
+                  lineHeight: 1.3,
+                }}
               >
-                +{moreGaps} more
+                Unclaimed note lines ({claimSpanGaps.length})
               </Typography>
-            ) : null}
-          </Stack>
-        </Box>
+              <Stack spacing={0.35}>
+                {shownGaps.map((line) => (
+                  <Typography
+                    key={line}
+                    variant="body2"
+                    sx={{
+                      m: 0,
+                      color: "text.secondary",
+                      lineHeight: 1.3,
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    {line}
+                  </Typography>
+                ))}
+                {moreGaps > 0 ? (
+                  <Typography
+                    variant="caption"
+                    sx={{ m: 0, color: "rgba(232, 216, 199, 0.55)" }}
+                  >
+                    +{moreGaps} more
+                  </Typography>
+                ) : null}
+              </Stack>
+            </Box>
+          ) : null}
+        </>
       ) : null}
     </Box>
   );
