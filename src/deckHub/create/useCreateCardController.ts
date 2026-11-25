@@ -18,7 +18,7 @@ import {
 import type { DraftEditorChange } from "../../draftReview";
 import { isOcclusionFront, starterOcclusionFront } from "../../draftReview";
 import { hubDiyTypes, validateHubCreateCard } from "./hubDiyCreate";
-import { MAX_IMAGE_BYTES } from "../cover/pdfPageRender";
+import { MAX_IMAGE_BYTES } from "../../materials/kernel";
 
 const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 

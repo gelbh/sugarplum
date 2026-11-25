@@ -56,10 +56,13 @@ function Harness({ initialTab, clips: clipList }: HarnessProps) {
   });
 }
 
+const liveRoots: Array<ReturnType<typeof createRoot>> = [];
+
 async function renderSheet(tab: AnatomySheetTab, clipList?: AnatomyClip[]) {
   const host = document.createElement("div");
   document.body.appendChild(host);
   const root = createRoot(host);
+  liveRoots.push(root);
   await act(async () => {
     root.render(
       createElement(
@@ -76,7 +79,13 @@ async function renderSheet(tab: AnatomySheetTab, clipList?: AnatomyClip[]) {
 }
 
 describe("AnatomyMobileSheet", () => {
-  afterEach(() => {
+  afterEach(async () => {
+    // Unmount before tearing down the DOM so deferred React work does not
+    // hit "window is not defined" after the jsdom environment is gone.
+    await act(async () => {
+      for (const root of liveRoots) root.unmount();
+    });
+    liveRoots.length = 0;
     document.body.replaceChildren();
   });
 

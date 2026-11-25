@@ -3,8 +3,8 @@ import CardsWorkshop from "../cards/CardsWorkshop";
 import DeckHygienePanel from "../hygiene/DeckHygienePanel";
 import MaterialsWorkshop from "../materials/MaterialsWorkshop";
 import StudyReadySheet, { type StudyReadySummary } from "../hub/StudyReadySheet";
-import WorkshopShell from "./WorkshopShell";
-import type { WorkshopId } from "./workshopStack";
+import WorkshopShell from "../workshop/WorkshopShell";
+import type { WorkshopId } from "../workshop/workshopStack";
 import type {
   CardDraftView,
   Deck,

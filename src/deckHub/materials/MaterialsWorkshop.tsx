@@ -24,7 +24,7 @@ import ViewListOutlinedIcon from "@mui/icons-material/ViewListOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import type { MaterialListItem } from "../../api/client";
 import { downloadMaterialUrl, mediaUrl } from "../../api/client";
-import EmptyNext from "../hub/EmptyNext";
+import EmptyNext from "../workshop/EmptyNext";
 import WorkshopSearchField from "../workshop/WorkshopSearchField";
 import {
   materialMatchesWorkshopQuery,
