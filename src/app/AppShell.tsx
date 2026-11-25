@@ -170,10 +170,12 @@ function AppShellChrome({ children }: AppShellProps) {
     () => `${window.location.pathname}${window.location.search}`,
   );
   const routeOverlay = useRouteLoadOverlay();
-  // Draft review owns progress via JobProgressPanel; skip the thin top bar there.
-  const hideGlobalProgress = /^\/jobs\/[^/]+\/drafts\/?$/.test(
+  // Draft review owns its chrome; skip global progress + gen strip ("Drafts ready").
+  const onDraftReview = /^\/jobs\/[^/]+\/drafts\/?$/.test(
     routeKey.split("?")[0] ?? "",
   );
+  const hideGlobalProgress = onDraftReview;
+  const stripGenStatus = onDraftReview ? null : genStatus;
   useMainScrollRestore(mainRef);
 
   useEffect(
@@ -246,7 +248,7 @@ function AppShellChrome({ children }: AppShellProps) {
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [showMobileChrome, genStatus]);
+  }, [showMobileChrome, stripGenStatus]);
 
   return (
     <Box
@@ -311,8 +313,8 @@ function AppShellChrome({ children }: AppShellProps) {
           }}
         >
           <TopChrome />
-          {genStatus ? (
-            <GenerationStatusStrip status={genStatus} dense />
+          {stripGenStatus ? (
+            <GenerationStatusStrip status={stripGenStatus} dense />
           ) : null}
         </Box>
       ) : null}
@@ -320,7 +322,7 @@ function AppShellChrome({ children }: AppShellProps) {
         <ShellNavRail
           drawerNav={drawerNav}
           active={active}
-          genStatus={genStatus}
+          genStatus={stripGenStatus}
           width={sideWidth}
         />
       ) : null}
@@ -328,7 +330,7 @@ function AppShellChrome({ children }: AppShellProps) {
         <DesktopDrawer
           drawerNav={drawerNav}
           active={active}
-          genStatus={genStatus}
+          genStatus={stripGenStatus}
           width={sideWidth}
         />
       ) : null}

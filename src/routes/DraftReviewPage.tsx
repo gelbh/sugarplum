@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -11,6 +11,8 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import AutorenewRoundedIcon from "@mui/icons-material/AutorenewRounded";
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded";
 import HighlightOffRoundedIcon from "@mui/icons-material/HighlightOffRounded";
@@ -59,6 +61,9 @@ import {
 const ENRICH_POLL_MS = 1_500;
 
 export default function DraftReviewPage() {
+  const theme = useTheme();
+  const fillCard = useMediaQuery(theme.breakpoints.up("md"), { noSsr: true });
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const jobId = jobIdFromPath();
   const [drafts, setDrafts] = useState<CardDraftView[]>([]);
   const [regenNonce, setRegenNonce] = useState(0);
@@ -271,6 +276,36 @@ export default function DraftReviewPage() {
     setUndoBusy,
   });
 
+  const scrollLeafRef = useRef<HTMLDivElement | null>(null);
+
+  const onClaimCoverageExpanded = useCallback(
+    (expanded: boolean) => {
+      if (fillCard || !expanded) return;
+      requestAnimationFrame(() => {
+        scrollLeafRef.current?.scrollTo({ top: 0, behavior: "auto" });
+      });
+    },
+    [fillCard],
+  );
+
+  const onDecideAndReveal = async (
+    ...args: Parameters<typeof onDecide>
+  ): Promise<boolean> => {
+    const ok = await onDecide(...args);
+    if (!ok || fillCard) return ok;
+    // After reload, stage focus uses preventScroll; reset the scroll leaf so the
+    // next card's top is visible (nearest fails when the card is taller than the viewport).
+    requestAnimationFrame(() => {
+      const leaf = scrollLeafRef.current;
+      if (!leaf) return;
+      leaf.scrollTo({
+        top: 0,
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
+    });
+    return ok;
+  };
+
   const { onAcceptAll, onRejectRemainingDrafts } = createDraftReviewBatch({
     jobId,
     current,
@@ -387,16 +422,26 @@ export default function DraftReviewPage() {
     <Box className="sp-stage" sx={stageShellSx}>
       <Container maxWidth="sm" sx={pageSx}>
         <Stack
-          spacing={1}
+          ref={scrollLeafRef}
+          spacing={0}
           sx={{
             width: "100%",
             flex: 1,
             minHeight: 0,
-            overflow: "hidden",
+            overflow: fillCard ? "hidden" : "auto",
           }}
         >
+          <Stack
+            spacing={1}
+            sx={{
+              width: "100%",
+              flexShrink: 0,
+              // Centers short phone layouts; overflowing expand collapses margins and scrolls from top.
+              my: fillCard ? 0 : "auto",
+            }}
+          >
           <Stack spacing={0.75} sx={{ flexShrink: 0 }}>
-            <StageBreadcrumbs crumbs={crumbs} />
+            {fillCard ? <StageBreadcrumbs crumbs={crumbs} /> : null}
             <Box>
               <Typography
                 variant="h4"
@@ -412,18 +457,20 @@ export default function DraftReviewPage() {
               >
                 Draft review
               </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  mt: 0.75,
-                  maxWidth: "42ch",
-                  lineHeight: 1.45,
-                  color: "rgba(232, 216, 199, 0.72)",
-                }}
-              >
-                Edit before cards enter study. Drafts never appear in due until
-                accepted.
-              </Typography>
+              {fillCard ? (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mt: 0.75,
+                    maxWidth: "42ch",
+                    lineHeight: 1.45,
+                    color: "rgba(232, 216, 199, 0.72)",
+                  }}
+                >
+                  Edit before cards enter study. Drafts never appear in due until
+                  accepted.
+                </Typography>
+              ) : null}
             </Box>
           </Stack>
 
@@ -469,6 +516,8 @@ export default function DraftReviewPage() {
                 coverage={claimCoverage}
                 drafts={drafts}
                 claimSpanGaps={claimSpanGaps}
+                defaultCollapsed={!fillCard}
+                onExpandedChange={onClaimCoverageExpanded}
                 onJumpToDraft={jumpToDraft}
                 onGenerateOrphan={(claimId) => {
                   void onGenerateOrphan(claimId);
@@ -671,11 +720,11 @@ export default function DraftReviewPage() {
             <>
               <Box
                 sx={{
-                  flex: 1,
-                  minHeight: 0,
+                  flex: fillCard ? 1 : "none",
+                  minHeight: fillCard ? 0 : undefined,
                   display: "flex",
                   flexDirection: "column",
-                  overflow: "hidden",
+                  overflow: fillCard ? "hidden" : "visible",
                   gap: 1,
                 }}
               >
@@ -687,6 +736,8 @@ export default function DraftReviewPage() {
                     coverage={claimCoverage}
                     drafts={drafts}
                     claimSpanGaps={claimSpanGaps}
+                    defaultCollapsed={!fillCard}
+                    onExpandedChange={onClaimCoverageExpanded}
                     onJumpToDraft={jumpToDraft}
                     onGenerateOrphan={(claimId) => {
                       void onGenerateOrphan(claimId);
@@ -711,8 +762,9 @@ export default function DraftReviewPage() {
                 <Box
                   data-card-id={current.id}
                   sx={{
-                    flex: 1,
-                    minHeight: 0,
+                    flex: fillCard ? 1 : "none",
+                    flexShrink: fillCard ? 1 : 0,
+                    minHeight: fillCard ? 0 : undefined,
                     width: "100%",
                     display: "flex",
                     flexDirection: "column",
@@ -723,10 +775,10 @@ export default function DraftReviewPage() {
                     card={current}
                     remaining={drafts.length}
                     stackBehind={drafts.length > 1}
-                    fillHeight
+                    fillHeight={fillCard}
                     disabled={busy || cardRegenBusy}
                     onChange={onEditorChange}
-                    onDecide={onDecide}
+                    onDecide={onDecideAndReveal}
                     renderOcclusionRegionEditor={({ front, onChange }) => (
                       <OcclusionRegionEditor front={front} onChange={onChange} />
                     )}
@@ -776,7 +828,7 @@ export default function DraftReviewPage() {
                   justifyContent: "center",
                   flexShrink: 0,
                   pt: 1.25,
-                  pb: 0.25,
+                  pb: fillCard ? 0.25 : 1.5,
                   borderTop: "1px solid",
                   borderColor: "rgba(232, 216, 199, 0.12)"
                 }}>
@@ -847,6 +899,7 @@ export default function DraftReviewPage() {
               </Stack>
             </>
           )}
+          </Stack>
 
           <Dialog
             open={confirmAll}
