@@ -1,17 +1,8 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import CloseIcon from "@mui/icons-material/Close";
 
 import {
   MAX_CLIENT_FIGURES,
@@ -28,13 +19,9 @@ import {
   detectFigureBoxesOnCanvas,
 } from "./layoutOnnx";
 import { cropCanvasToPngFile } from "./pdfPageRender";
-
-import {
-  normalizeDrag,
-  pointerToCss,
-  type DragRect,
-  type SuggestedBox,
-} from "./figureSuggestGeom";
+import FigureSuggestFilmstrip from "./FigureSuggestFilmstrip";
+import FigureSuggestPageStage from "./FigureSuggestPageStage";
+import { type SuggestedBox } from "./figureSuggestGeom";
 
 export type FigureSuggestPanelProps = {
   pdfFile: File;
@@ -45,7 +32,6 @@ export type FigureSuggestPanelProps = {
 };
 
 const PAGE_CSS_WIDTH = 560;
-const THUMB_CSS_WIDTH = 72;
 const MIN_DRAG_CSS = 8;
 
 /** PDF page strip + ONNX figure suggest overlays + manual drag crop. */
@@ -63,15 +49,14 @@ export function FigureSuggestPanel({
   const [activePage, setActivePage] = useState(0);
   const [thumbUrls, setThumbUrls] = useState<(string | null)[]>([]);
   const [suggestions, setSuggestions] = useState<SuggestedBox[]>([]);
-  const [drag, setDrag] = useState<DragRect | null>(null);
   const [cropNotice, setCropNotice] = useState<string | null>(null);
-  const [pageSize, setPageSize] = useState({ w: 0, h: 0 });
+  const [activeSource, setActiveSource] = useState<HTMLCanvasElement | null>(
+    null,
+  );
 
   const pdfRef = useRef<EmbedPdfDocument | null>(null);
   const pagesRef = useRef<EmbedPdfPageLayout[]>([]);
   const canvasesRef = useRef<Map<number, HTMLCanvasElement>>(new Map());
-  const pageViewRef = useRef<HTMLDivElement | null>(null);
-  const displayCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const cropSeqRef = useRef(0);
   const cropsRef = useRef(crops);
   const onCropsChangeRef = useRef(onCropsChange);
@@ -112,11 +97,10 @@ export function FigureSuggestPanel({
       setSessionError(null);
       setSuggestions([]);
       setCropNotice(null);
-      setDrag(null);
       setActivePage(0);
       setPageCount(0);
       setThumbUrls([]);
-      setPageSize({ w: 0, h: 0 });
+      setActiveSource(null);
       canvasesRef.current.clear();
       pdfRef.current = null;
       pagesRef.current = [];
@@ -155,9 +139,6 @@ export function FigureSuggestPanel({
             next[i] = url;
             return next;
           });
-          if (i === 0) {
-            setPageSize({ w: canvas.clientWidth, h: canvas.clientHeight });
-          }
         }
       } catch (err) {
         if (cancelled) return;
@@ -182,19 +163,7 @@ export function FigureSuggestPanel({
   }, [pdfFile, pushCrops]);
 
   useEffect(() => {
-    const source = canvasesRef.current.get(activePage);
-    const display = displayCanvasRef.current;
-    if (!source || !display) {
-      setPageSize({ w: 0, h: 0 });
-      return;
-    }
-    display.width = source.width;
-    display.height = source.height;
-    display.style.width = `${source.clientWidth}px`;
-    display.style.height = `${source.clientHeight}px`;
-    const ctx = display.getContext("2d");
-    if (ctx) ctx.drawImage(source, 0, 0);
-    setPageSize({ w: source.clientWidth, h: source.clientHeight });
+    setActiveSource(canvasesRef.current.get(activePage) ?? null);
   }, [activePage, thumbUrls]);
 
   async function onSuggestFigures() {
@@ -348,48 +317,17 @@ export function FigureSuggestPanel({
     }
   }
 
-  function onPointerDown(ev: ReactPointerEvent<HTMLDivElement>) {
-    if (disabled || busySuggest || busyAccept) return;
-    const el = pageViewRef.current;
-    if (!el) return;
-    el.setPointerCapture(ev.pointerId);
-    const p = pointerToCss(ev, el);
-    setDrag({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
-  }
-
-  function onPointerMove(ev: ReactPointerEvent<HTMLDivElement>) {
-    if (!drag) return;
-    const el = pageViewRef.current;
-    if (!el) return;
-    const p = pointerToCss(ev, el);
-    setDrag({ ...drag, x1: p.x, y1: p.y });
-  }
-
-  function onPointerUp(ev: ReactPointerEvent<HTMLDivElement>) {
-    if (!drag) return;
-    const el = pageViewRef.current;
-    if (el) {
-      try {
-        el.releasePointerCapture(ev.pointerId);
-      } catch {
-        /* already released */
-      }
-    }
-    const box = normalizeDrag(drag);
-    setDrag(null);
-    void appendManualCrop(box);
-  }
-
   const pageSuggestions = suggestions.filter((b) => b.pageIndex === activePage);
-  const dragNorm = drag ? normalizeDrag(drag) : null;
-  const { w: cssW, h: cssH } = pageSize;
 
   return (
     <Stack spacing={1.5}>
       <Typography variant="subtitle2">Figure crops from PDF</Typography>
-      <Typography variant="caption" sx={{
-        color: "text.secondary"
-      }}>
+      <Typography
+        variant="caption"
+        sx={{
+          color: "text.secondary",
+        }}
+      >
         Suggest figures on-device, or drag a rectangle on the page. Max{" "}
         {MAX_CLIENT_FIGURES} PNG crops.
       </Typography>
@@ -406,9 +344,14 @@ export function FigureSuggestPanel({
         </Alert>
       ) : null}
 
-      <Stack direction="row" spacing={1} useFlexGap sx={{
-        flexWrap: "wrap"
-      }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        useFlexGap
+        sx={{
+          flexWrap: "wrap",
+        }}
+      >
         <Button
           variant="outlined"
           size="small"
@@ -433,8 +376,9 @@ export function FigureSuggestPanel({
           variant="caption"
           sx={{
             color: "text.secondary",
-            alignSelf: "center"
-          }}>
+            alignSelf: "center",
+          }}
+        >
           {crops.length} / {MAX_CLIENT_FIGURES} accepted
           {scanCount < pageCount
             ? ` · scanning first ${scanCount} of ${pageCount} pages`
@@ -442,139 +386,26 @@ export function FigureSuggestPanel({
         </Typography>
       </Stack>
 
-      {scanCount > 0 ? (
-        <Stack direction="row" spacing={1} sx={{ overflowX: "auto", pb: 0.5 }}>
-          {Array.from({ length: scanCount }, (_, i) => (
-            <Box
-              key={i}
-              component="button"
-              type="button"
-              disabled={disabled}
-              onClick={() => setActivePage(i)}
-              sx={{
-                border: activePage === i ? "2px solid" : "1px solid",
-                borderColor: activePage === i ? "primary.main" : "divider",
-                borderRadius: 1,
-                p: 0.25,
-                bgcolor: "background.paper",
-                cursor: disabled ? "default" : "pointer",
-                flexShrink: 0,
-                lineHeight: 0,
-              }}
-            >
-              {thumbUrls[i] ? (
-                <Box
-                  component="img"
-                  src={thumbUrls[i]!}
-                  alt={`Page ${i + 1}`}
-                  sx={{ width: THUMB_CSS_WIDTH, display: "block" }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    width: THUMB_CSS_WIDTH,
-                    height: THUMB_CSS_WIDTH * 1.3,
-                    display: "grid",
-                    placeItems: "center",
-                  }}
-                >
-                  <Typography variant="caption">{i + 1}</Typography>
-                </Box>
-              )}
-            </Box>
-          ))}
-        </Stack>
-      ) : null}
+      <FigureSuggestFilmstrip
+        scanCount={scanCount}
+        activePage={activePage}
+        thumbUrls={thumbUrls}
+        disabled={disabled}
+        onSelectPage={setActivePage}
+      />
 
-      {scanCount > 0 ? (
-        <Box
-          ref={pageViewRef}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={() => setDrag(null)}
-          sx={{
-            position: "relative",
-            width: cssW || PAGE_CSS_WIDTH,
-            height: cssH || undefined,
-            minHeight: cssH ? undefined : 120,
-            maxWidth: "100%",
-            touchAction: "none",
-            userSelect: "none",
-            cursor: disabled ? "default" : "crosshair",
-            border: "1px solid",
-            borderColor: "divider",
-            overflow: "hidden",
-          }}
-        >
-          <Box
-            component="canvas"
-            ref={displayCanvasRef}
-            sx={{
-              display: "block",
-              width: cssW || "100%",
-              height: cssH || "auto",
-            }}
-          />
-          {pageSuggestions.map((box) => (
-            <Box
-              key={box.key}
-              sx={{
-                position: "absolute",
-                left: box.x,
-                top: box.y,
-                width: Math.max(0, box.w),
-                height: Math.max(0, box.h),
-                border: "2px solid",
-                borderColor: "primary.main",
-                bgcolor: "rgba(25, 118, 210, 0.15)",
-                boxSizing: "border-box",
-                pointerEvents: "auto",
-              }}
-              onPointerDown={(ev) => ev.stopPropagation()}
-            >
-              <IconButton
-                size="small"
-                aria-label="Reject figure"
-                disabled={disabled}
-                onClick={() => rejectBox(box.key)}
-                sx={{
-                  position: "absolute",
-                  top: 0,
-                  right: 0,
-                  p: 0.25,
-                  bgcolor: "background.paper",
-                  "&:hover": { bgcolor: "background.paper" },
-                }}
-              >
-                <CloseIcon fontSize="inherit" />
-              </IconButton>
-            </Box>
-          ))}
-          {dragNorm && dragNorm.w > 0 && dragNorm.h > 0 ? (
-            <Box
-              sx={{
-                position: "absolute",
-                left: dragNorm.x,
-                top: dragNorm.y,
-                width: dragNorm.w,
-                height: dragNorm.h,
-                border: "2px dashed",
-                borderColor: "secondary.main",
-                bgcolor: "rgba(156, 39, 176, 0.12)",
-                pointerEvents: "none",
-                boxSizing: "border-box",
-              }}
-            />
-          ) : null}
-        </Box>
-      ) : pageCount === 0 && !loadError ? (
-        <Typography variant="body2" sx={{
-          color: "text.secondary"
-        }}>
-          Rendering pages…
-        </Typography>
-      ) : null}
+      <FigureSuggestPageStage
+        scanCount={scanCount}
+        pageCount={pageCount}
+        loadError={loadError}
+        sourceCanvas={activeSource}
+        pageSuggestions={pageSuggestions}
+        disabled={disabled}
+        pointerBlocked={busySuggest || busyAccept}
+        pageCssWidth={PAGE_CSS_WIDTH}
+        onRejectBox={rejectBox}
+        onManualCrop={(box) => void appendManualCrop(box)}
+      />
     </Stack>
   );
 }
