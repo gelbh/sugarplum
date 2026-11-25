@@ -14,22 +14,22 @@ import {
   seedR2,
   seedSession,
   seedUser,
-} from "./harness";
+} from "../harness";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { app } from "../../worker/index";
-import { SESSION_COOKIE } from "../../worker/auth/session";
+import { app } from "../../../worker/index";
+import { SESSION_COOKIE } from "../../../worker/auth/session";
 import {
   CARD_REGEN_QUEUE_MAX_RETRIES,
   CARD_REGEN_QUEUE_RETRY_DELAY_SEC,
-} from "../../worker/generation/card-regen-op";
+} from "../../../worker/generation/card-regen-op";
 import {
   handleCardRegenQueue,
   handleGenerateQueue,
-} from "../../worker/generation/consumer";
-import type { CardRegenQueueMessage } from "../../worker/generation/enqueue";
-import { RUNNING_JOB_STALE_MS } from "../../worker/generation/progress";
-import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../worker/generation/claim-card-fallback";
-import { WORKERS_AI_MODEL } from "../../worker/generation/workers-ai";
+} from "../../../worker/generation/consumer";
+import type { CardRegenQueueMessage } from "../../../worker/generation/enqueue";
+import { RUNNING_JOB_STALE_MS } from "../../../worker/generation/progress";
+import { WORKERS_AI_CLAIM_CARD_MODEL } from "../../../worker/generation/claim-card-fallback";
+import { WORKERS_AI_MODEL } from "../../../worker/generation/workers-ai";
 
 afterEach(async () => {
   await resetTestDb(cfEnv);

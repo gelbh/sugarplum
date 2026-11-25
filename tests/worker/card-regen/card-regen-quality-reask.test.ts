@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
-import { regenerateClaimAwareCard } from "../../worker/generation/card-regen";
-import type { LlmAdapter } from "../../worker/generation/llm";
-import type { StudyClaim } from "../../worker/generation/claims";
+import { regenerateClaimAwareCard } from "../../../worker/generation/card-regen";
+import type { LlmAdapter } from "../../../worker/generation/llm";
+import type { StudyClaim } from "../../../worker/generation/claims";
 
 const VALID_MCQ = JSON.stringify({
   cards: [
