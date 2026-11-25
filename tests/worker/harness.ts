@@ -26,3 +26,4 @@ export * from "./harness/focus";
 export * from "./harness/card-regen";
 export * from "./harness/guest-import";
 export * from "./harness/consumer";
+export * from "./harness/entry-patch";
