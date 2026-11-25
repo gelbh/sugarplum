@@ -11,6 +11,8 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import AutorenewRoundedIcon from "@mui/icons-material/AutorenewRounded";
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded";
 import HighlightOffRoundedIcon from "@mui/icons-material/HighlightOffRounded";
@@ -59,6 +61,8 @@ import {
 const ENRICH_POLL_MS = 1_500;
 
 export default function DraftReviewPage() {
+  const theme = useTheme();
+  const fillCard = useMediaQuery(theme.breakpoints.up("md"));
   const jobId = jobIdFromPath();
   const [drafts, setDrafts] = useState<CardDraftView[]>([]);
   const [regenNonce, setRegenNonce] = useState(0);
@@ -392,7 +396,7 @@ export default function DraftReviewPage() {
             width: "100%",
             flex: 1,
             minHeight: 0,
-            overflow: "hidden",
+            overflow: fillCard ? "hidden" : "auto",
           }}
         >
           <Stack spacing={0.75} sx={{ flexShrink: 0 }}>
@@ -671,11 +675,11 @@ export default function DraftReviewPage() {
             <>
               <Box
                 sx={{
-                  flex: 1,
-                  minHeight: 0,
+                  flex: fillCard ? 1 : "none",
+                  minHeight: fillCard ? 0 : undefined,
                   display: "flex",
                   flexDirection: "column",
-                  overflow: "hidden",
+                  overflow: fillCard ? "hidden" : "visible",
                   gap: 1,
                 }}
               >
@@ -711,8 +715,9 @@ export default function DraftReviewPage() {
                 <Box
                   data-card-id={current.id}
                   sx={{
-                    flex: 1,
-                    minHeight: 0,
+                    flex: fillCard ? 1 : "none",
+                    flexShrink: fillCard ? 1 : 0,
+                    minHeight: fillCard ? 0 : undefined,
                     width: "100%",
                     display: "flex",
                     flexDirection: "column",
@@ -723,7 +728,7 @@ export default function DraftReviewPage() {
                     card={current}
                     remaining={drafts.length}
                     stackBehind={drafts.length > 1}
-                    fillHeight
+                    fillHeight={fillCard}
                     disabled={busy || cardRegenBusy}
                     onChange={onEditorChange}
                     onDecide={onDecide}
@@ -776,7 +781,7 @@ export default function DraftReviewPage() {
                   justifyContent: "center",
                   flexShrink: 0,
                   pt: 1.25,
-                  pb: 0.25,
+                  pb: fillCard ? 0.25 : 1.5,
                   borderTop: "1px solid",
                   borderColor: "rgba(232, 216, 199, 0.12)"
                 }}>
