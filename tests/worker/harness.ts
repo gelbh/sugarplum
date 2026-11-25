@@ -27,3 +27,4 @@ export * from "./harness/card-regen";
 export * from "./harness/guest-import";
 export * from "./harness/consumer";
 export * from "./harness/entry-patch";
+export * from "./harness/atlas-routes";
