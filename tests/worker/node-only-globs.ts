@@ -5,7 +5,9 @@
 export const NODE_ONLY_WORKER_TESTS = [
   "tests/worker/atlas/backfill-field-overrides-sqlite.test.ts",
   "tests/worker/atlas/corrections-sqlite.test.ts",
-  "tests/worker/atlas/dataset.test.ts",
+  "tests/worker/atlas/dataset-built-in-parasite.test.ts",
+  "tests/worker/atlas/dataset-schema.test.ts",
+  "tests/worker/atlas/dataset-vocabulary.test.ts",
   "tests/worker/atlas/fixtures.test.ts",
   "tests/worker/atlas/focus-override-sqlite.test.ts",
   "tests/worker/atlas/migration.test.ts",
