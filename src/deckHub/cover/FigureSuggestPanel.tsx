@@ -17,7 +17,6 @@ import {
   MAX_CLIENT_FIGURES,
   MAX_PAGES_TO_SCAN,
   clampBoxToPage,
-  type PageBox,
   listPdfPages,
   openPdfDocument,
   renderPageToCanvas,
@@ -30,6 +29,13 @@ import {
 } from "./layoutOnnx";
 import { cropCanvasToPngFile } from "./pdfPageRender";
 
+import {
+  normalizeDrag,
+  pointerToCss,
+  type DragRect,
+  type SuggestedBox,
+} from "./figureSuggestGeom";
+
 export type FigureSuggestPanelProps = {
   pdfFile: File;
   disabled?: boolean;
@@ -41,32 +47,6 @@ export type FigureSuggestPanelProps = {
 const PAGE_CSS_WIDTH = 560;
 const THUMB_CSS_WIDTH = 72;
 const MIN_DRAG_CSS = 8;
-
-type SuggestedBox = PageBox & { key: string };
-
-type DragRect = { x0: number; y0: number; x1: number; y1: number };
-
-function normalizeDrag(d: DragRect): {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-} {
-  const x = Math.min(d.x0, d.x1);
-  const y = Math.min(d.y0, d.y1);
-  return { x, y, w: Math.abs(d.x1 - d.x0), h: Math.abs(d.y1 - d.y0) };
-}
-
-function pointerToCss(
-  ev: ReactPointerEvent,
-  el: HTMLElement,
-): { x: number; y: number } {
-  const rect = el.getBoundingClientRect();
-  return {
-    x: ev.clientX - rect.left,
-    y: ev.clientY - rect.top,
-  };
-}
 
 /** PDF page strip + ONNX figure suggest overlays + manual drag crop. */
 export function FigureSuggestPanel({

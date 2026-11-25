@@ -28,6 +28,7 @@ export {
   default as DeckHubWorkshopView,
   type DeckHubWorkshopViewProps,
 } from "./page/DeckHubWorkshopView";
+export { default as DeckHubPage } from "./page/DeckHubPage";
 export {
   default as DeckHubHubView,
   type DeckHubHubViewProps,
@@ -71,7 +72,6 @@ export {
   type DetectFigureResult,
 } from "./cover/layoutOnnx";
 export {
-  MAX_IMAGE_BYTES,
   cssRectToSourceRect,
   assertWithinImageByteLimit,
   cropCanvasToPngFile,

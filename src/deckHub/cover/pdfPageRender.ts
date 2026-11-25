@@ -1,7 +1,5 @@
 import { canvasSourceScale } from "../../materials/clientKernel";
-
-/** Match server generate/figure crop limit (worker/materials/limits.ts). */
-export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+import { MAX_IMAGE_BYTES } from "../../materials/kernel";
 
 export function cssRectToSourceRect(
   css: { x: number; y: number; w: number; h: number },

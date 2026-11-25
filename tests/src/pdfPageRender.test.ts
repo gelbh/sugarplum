@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { MAX_IMAGE_BYTES } from "../../src/materials/kernel";
 import {
-  MAX_IMAGE_BYTES,
   assertWithinImageByteLimit,
   cssRectToSourceRect,
 } from "../../src/deckHub/cover/pdfPageRender";
