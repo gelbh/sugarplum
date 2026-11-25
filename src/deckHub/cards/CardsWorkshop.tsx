@@ -3,17 +3,14 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import ViewListOutlinedIcon from "@mui/icons-material/ViewListOutlined";
@@ -30,11 +27,11 @@ import {
 } from "../workshop/workshopSearch";
 import {
   PILL_BTN,
-  ROW_ACTION,
   WORKSHOP_SURFACE,
   createWorkshopViewPref,
   type WorkshopViewMode,
 } from "../workshop/workshopChrome";
+import CardRowActions from "./CardRowActions";
 
 const { readViewMode, writeViewMode } = createWorkshopViewPref(
   "sugarplum.cardsWorkshop.view",
@@ -779,91 +776,5 @@ export default function CardsWorkshop({
         onEdit={onEdit}
       />
     </Stack>
-  );
-}
-
-function CardRowActions({
-  card,
-  showArchived,
-  busy,
-  onEdit,
-  onMove,
-  onArchive,
-  onRestore,
-}: {
-  card: CardDraftView;
-  showArchived: boolean;
-  busy: boolean;
-  onEdit: (card: CardDraftView) => void;
-  onMove: (card: CardDraftView) => void;
-  onArchive: (card: CardDraftView) => void;
-  onRestore: (card: CardDraftView) => void;
-}) {
-  return (
-    <>
-      <Tooltip title="Move card">
-        <span>
-          <IconButton
-            size="small"
-            aria-label="Move card"
-            disabled={busy}
-            onClick={() => {
-              void onMove(card);
-            }}
-            sx={ROW_ACTION}
-          >
-            <DriveFileMoveOutlinedIcon fontSize="small" />
-          </IconButton>
-        </span>
-      </Tooltip>
-      {!showArchived && card.status !== "archived" ? (
-        <Tooltip title="Edit card">
-          <span>
-            <IconButton
-              size="small"
-              aria-label="Edit card"
-              disabled={busy}
-              onClick={() => onEdit(card)}
-              sx={ROW_ACTION}
-            >
-              <EditOutlinedIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-      ) : null}
-      {showArchived ? (
-        <Tooltip title="Restore card">
-          <span>
-            <IconButton
-              size="small"
-              aria-label="Restore card"
-              disabled={busy}
-              onClick={() => {
-                void onRestore(card);
-              }}
-              sx={ROW_ACTION}
-            >
-              <UnarchiveOutlinedIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-      ) : (
-        <Tooltip title="Archive card">
-          <span>
-            <IconButton
-              size="small"
-              aria-label="Archive card"
-              disabled={busy}
-              onClick={() => {
-                void onArchive(card);
-              }}
-              sx={ROW_ACTION}
-            >
-              <ArchiveOutlinedIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-      )}
-    </>
   );
 }

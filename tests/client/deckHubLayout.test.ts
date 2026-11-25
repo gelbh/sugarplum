@@ -10,6 +10,7 @@ const expected = [
   "workshop/workshopStack.ts",
   "workshop/EmptyNext.tsx",
   "page/DeckHubWorkshopView.tsx",
+  "page/DeckHubPage.tsx",
   "cards/CardsWorkshop.tsx",
   "materials/MaterialsWorkshop.tsx",
   "create/AddMaterialWorkshop.tsx",
