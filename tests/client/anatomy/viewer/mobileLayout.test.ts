@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   anatomyClipChrome,
   anatomyViewerMobile,
-} from "../../src/anatomy/viewer/viewerLayout";
+} from "../../../../src/anatomy/viewer/viewerLayout";
 
 describe("anatomyViewerMobile", () => {
   it("hides rail and shows sheet triggers on mobile", () => {

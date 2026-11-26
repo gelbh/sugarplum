@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { AnatomyRegion } from "../../src/anatomy/types";
+import type { AnatomyRegion } from "../../../src/anatomy/types";
 import {
   FAMILY_ORDER,
   groupRegionsByFamily,
   parseRegionDisplay,
   regionFamilyKey,
-} from "../../src/anatomy/structure/regionDisplay";
+} from "../../../src/anatomy/structure/regionDisplay";
 
 function region(id: string, label: string): AnatomyRegion {
   return { id, label };

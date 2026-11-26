@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   makeCardsStructureIds,
   structureToQaFields,
-} from "../../src/anatomy/structure/structureCard";
+} from "../../../../src/anatomy/structure/structureCard";
 
 describe("structureToQaFields", () => {
   it("uses label as front and summary + synonyms as back", () => {

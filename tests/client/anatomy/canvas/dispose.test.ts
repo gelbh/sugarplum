@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { BoxGeometry, Mesh, MeshBasicMaterial, Object3D } from "three";
-import { installAnatomyAcceleratedRaycast } from "../../src/anatomy/viewer/anatomyBvh";
+import { installAnatomyAcceleratedRaycast } from "../../../../src/anatomy/viewer/anatomyBvh";
 import {
   disposeMaterial,
   disposeObjectTree,
-} from "../../src/anatomy/viewer/anatomyCanvasDispose";
+} from "../../../../src/anatomy/viewer/anatomyCanvasDispose";
 
 describe("anatomyCanvasDispose", () => {
   it("disposeMaterial disposes the material", () => {
