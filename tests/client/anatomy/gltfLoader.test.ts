@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { configureAnatomyGltfLoader } from "../../src/anatomy/viewer/configureGltfLoader";
+import { configureAnatomyGltfLoader } from "../../../src/anatomy/viewer/configureGltfLoader";
 
 describe("configureAnatomyGltfLoader", () => {
   it("sets MeshoptDecoder on the loader", () => {

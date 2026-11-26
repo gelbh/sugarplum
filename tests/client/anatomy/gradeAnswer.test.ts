@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gradeAnswer, normalizeAnswer } from "../../src/anatomy/quiz/gradeAnswer";
+import { gradeAnswer, normalizeAnswer } from "../../../src/anatomy/quiz/gradeAnswer";
 
 describe("normalizeAnswer", () => {
   it("trims, lower-cases, and collapses whitespace", () => {

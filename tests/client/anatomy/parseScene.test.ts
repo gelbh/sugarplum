@@ -4,7 +4,7 @@ import {
   defaultActiveRegionIds,
   parseAnatomySceneManifest,
   safeAnatomyRelativeAsset,
-} from "../../src/anatomy/viewer/parseScene";
+} from "../../../src/anatomy/viewer/parseScene";
 
 describe("parseAnatomySceneManifest", () => {
   it("accepts a minimal single-asset manifest", () => {

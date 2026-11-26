@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { mapPoolSettled } from "../../src/anatomy/viewer/anatomyCanvasLoad";
+import { mapPoolSettled } from "../../../../src/anatomy/viewer/anatomyCanvasLoad";
 
 describe("mapPoolSettled", () => {
   it("settles all items and reports onItemDone per item", async () => {

@@ -14,7 +14,7 @@ import {
   ndcToCanvasCss,
   selectedStructureLabelText,
   shouldShowSelectedLabel,
-} from "../../src/anatomy/viewer/anatomyScreenLabel";
+} from "../../../src/anatomy/viewer/anatomyScreenLabel";
 
 describe("selectedStructureLabelText", () => {
   it("returns the real label when not masking", () => {

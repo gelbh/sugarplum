@@ -5,7 +5,7 @@ import {
   canonicalAnatomySceneId,
   matchAnatomyPath,
   regionsFromSearch,
-} from "../../src/anatomy/paths";
+} from "../../../src/anatomy/paths";
 
 describe("matchAnatomyPath", () => {
   it("matches hub", () => {

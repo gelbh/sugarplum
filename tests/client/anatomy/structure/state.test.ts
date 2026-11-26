@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createStructureUiState,
   structureUiReducer,
-} from "../../src/anatomy/structure/structureState";
+} from "../../../../src/anatomy/structure/structureState";
 
 describe("structureUiReducer", () => {
   it("isolates one structure and clears on showAll", () => {

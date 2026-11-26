@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   LOADER_DELAY_MS,
   shouldShowDelayed,
-} from "../../src/anatomy/viewer/delayedShow";
+} from "../../../src/anatomy/viewer/delayedShow";
 
 describe("shouldShowDelayed", () => {
   it("is false before delay", () => {
