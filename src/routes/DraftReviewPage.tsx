@@ -435,9 +435,14 @@ export default function DraftReviewPage() {
             spacing={1}
             sx={{
               width: "100%",
-              flexShrink: 0,
-              // Centers short phone layouts; overflowing expand collapses margins and scrolls from top.
-              my: fillCard ? 0 : "auto",
+              ...(fillCard
+                ? {
+                    flex: 1,
+                    minHeight: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                  }
+                : { flexShrink: 0, my: "auto" }),
             }}
           >
           <Stack spacing={0.75} sx={{ flexShrink: 0 }}>

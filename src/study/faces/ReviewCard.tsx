@@ -139,7 +139,7 @@ export default function ReviewCard({
         sx={{
           position: "relative",
           ...(fillHeight
-            ? { flex: 1, minHeight: 140 }
+            ? { flex: 1, minHeight: 140, overflow: "hidden" }
             : {
                 height: {
                   xs: "min(42dvh, 360px)",

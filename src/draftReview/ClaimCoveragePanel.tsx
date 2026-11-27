@@ -319,7 +319,14 @@ export default function ClaimCoveragePanel({
               >
                 Unclaimed note lines ({claimSpanGaps.length})
               </Typography>
-              <Stack spacing={0.35}>
+              <Stack
+                spacing={0.35}
+                sx={{
+                  maxHeight: "min(18vh, 7.5rem)",
+                  overflow: "auto",
+                  pr: 0.25,
+                }}
+              >
                 {shownGaps.map((line) => (
                   <Typography
                     key={line}

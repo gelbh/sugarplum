@@ -13,6 +13,11 @@ describe("DraftReviewPage mobile layout contract", () => {
       resolve(process.cwd(), "src/draftReview/ClaimCoveragePanel.tsx"),
       "utf8",
     );
+  const reviewCardSrc = () =>
+    readFileSync(
+      resolve(process.cwd(), "src/study/faces/ReviewCard.tsx"),
+      "utf8",
+    );
   const shellSrc = () =>
     readFileSync(resolve(process.cwd(), "src/app/AppShell.tsx"), "utf8");
 
@@ -33,9 +38,37 @@ describe("DraftReviewPage mobile layout contract", () => {
     const text = pageSrc();
     expect(text).toMatch(/defaultCollapsed=\{!fillCard\}/);
     expect(text).toMatch(/onExpandedChange=\{onClaimCoverageExpanded\}/);
-    expect(text).toMatch(/my:\s*fillCard\s*\?\s*0\s*:\s*["']auto["']/);
+    expect(text).toMatch(
+      /fillCard\s*\?\s*\{[\s\S]*?flex:\s*1[\s\S]*?minHeight:\s*0[\s\S]*?\}\s*:\s*\{[\s\S]*?flexShrink:\s*0[\s\S]*?my:\s*["']auto["']/,
+    );
     expect(text).toMatch(
       /onClaimCoverageExpanded[\s\S]*scrollTo\(\{\s*top:\s*0/,
+    );
+  });
+
+  it("uses flex fill wrap when fillCard instead of unconditional shrink", () => {
+    const text = pageSrc();
+    expect(text).toMatch(
+      /fillCard\s*\?\s*\{[\s\S]*?flex:\s*1[\s\S]*?minHeight:\s*0[\s\S]*?display:\s*["']flex["'][\s\S]*?flexDirection:\s*["']column["']/,
+    );
+    expect(text).not.toMatch(
+      /sx=\{\{\s*width:\s*["']100%["'],\s*flexShrink:\s*0,/,
+    );
+  });
+
+  it("caps unclaimed note lines with the same scroll band as claims", () => {
+    const text = panelSrc();
+    const unclaimed = text.match(
+      /Unclaimed note lines[\s\S]*?<Stack[\s\S]*?sx=\{\{([\s\S]*?)\}\}/,
+    );
+    expect(unclaimed?.[1]).toMatch(/maxHeight:\s*["']min\(18vh,\s*7\.5rem\)["']/);
+    expect(unclaimed?.[1]).toMatch(/overflow:\s*["']auto["']/);
+  });
+
+  it("clips the ReviewCard host when fillHeight", () => {
+    const text = reviewCardSrc();
+    expect(text).toMatch(
+      /position:\s*["']relative["'][\s\S]*?fillHeight[\s\S]*?overflow:\s*["']hidden["']/,
     );
   });
 
