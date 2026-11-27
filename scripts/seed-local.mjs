@@ -52,16 +52,16 @@ function parseTargets(argv) {
     .filter((part) => part.length > 0);
   if (parts.length === 0) failUnknown();
   if (parts.some((part) => !VALID.has(part))) failUnknown();
+  const baseline = catalog.baseline;
   if (parts.includes("all")) {
     if (parts.some((part) => part !== "all")) failUnknown();
-    return ALL_TARGETS;
+    return [baseline, ...ALL_TARGETS.filter((part) => part !== baseline)];
   }
 
   const unique = [];
   for (const part of parts) {
     if (!unique.includes(part)) unique.push(part);
   }
-  const baseline = catalog.baseline;
   if (unique[0] !== baseline) {
     return [baseline, ...unique.filter((part) => part !== baseline)];
   }

@@ -35,7 +35,7 @@ export function sqlLiteral(value) {
 
 export function run(cmd, args) {
   if (args.includes("d1")) {
-    if (args.includes("--remote")) {
+    if (args.some((a) => a === "--remote" || a.startsWith("--remote="))) {
       throw new Error("refusing --remote for d1 (local seed only)");
     }
     if (!args.includes("--local")) {
