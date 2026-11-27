@@ -1,21 +1,23 @@
-#!/usr/bin/env node
 /**
  * Local-only orchard FR seed: due cards + gamification state for Overview poke.
- * Idempotent for its own rows (ids prefixed seed-orchard-*).
- * Prerequisite: npm run db:seed:local (user + deck).
- * Usage: npm run db:seed:local:orchard
+ * Idempotent for its own rows (ids prefixed seed-orchard-* and seed-board-*).
+ * Row-id prefixes: seed-orchard- / seed-board-
+ * Prerequisite: base (user + deck).
+ * Usage: npm run db:seed:local -- --targets=orchard
  */
 
-import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 
-const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
-const DB_NAME = "sugarplum";
-const LOCAL_USER_ID = "00000000-0000-4000-8000-0000000000de";
-const LOCAL_DECK_ID = "00000000-0000-4000-8000-0000000000dd";
+import {
+  DB_NAME,
+  LOCAL_DECK_ID,
+  LOCAL_USER_ID,
+  run,
+  sqlLiteral,
+} from "./shared.mjs";
+
 const PREFIX = "seed-orchard-";
 const BOARD_PREFIX = "seed-board-";
 const BOARD_USER_PREFIX = "00000000-0000-4000-8000-00000000b0";
@@ -63,10 +65,6 @@ const LOCAL_WEEK_TODAY_XP = 100;
 const LOCAL_WEEK_EARLIER_XP = 200;
 const LOCAL_TOTAL_XP = 500;
 
-function sqlLiteral(value) {
-  return `'${String(value).replaceAll("'", "''")}'`;
-}
-
 function utcDay(d = new Date()) {
   return d.toISOString().slice(0, 10);
 }
@@ -86,21 +84,7 @@ function utcDaysAgo(day, days) {
   return dt.toISOString().slice(0, 10);
 }
 
-function run(cmd, args) {
-  const res = spawnSync(cmd, args, {
-    cwd: ROOT,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  if (res.status !== 0) {
-    console.error(res.stdout || "");
-    console.error(res.stderr || "");
-    throw new Error(`${cmd} ${args.join(" ")} failed (${res.status})`);
-  }
-  if (res.stdout?.trim()) console.log(res.stdout.trim());
-}
-
-function main() {
+export async function seed() {
   const now = new Date();
   const today = utcDay(now);
   const yesterday = utcPreviousDay(today);
@@ -383,11 +367,4 @@ function main() {
   );
   console.log(`  due cards:  ${CARD_COUNT} (${PREFIX}card-*)`);
   console.log("  Open /achievements and / (Today study queue).");
-}
-
-try {
-  main();
-} catch (err) {
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
 }

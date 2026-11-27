@@ -1,40 +1,19 @@
-#!/usr/bin/env node
 /**
  * Local-only: accepted cards that Deck Hub hygiene flags (essay back / compound front).
  * Idempotent for its own rows (ids prefixed seed-hygiene-*).
- * Prerequisite: npm run db:seed:local (user + deck).
- * Usage: npm run db:seed:local:hygiene
+ * Row-id prefix: seed-hygiene-
+ * Prerequisite: base (user + deck).
+ * Usage: npm run db:seed:local -- --targets=hygiene
  */
-import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 
-const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
-const DB_NAME = "sugarplum";
-const LOCAL_DECK_ID = "00000000-0000-4000-8000-0000000000dd";
+import { DB_NAME, LOCAL_DECK_ID, run, sqlLiteral } from "./shared.mjs";
+
 const PREFIX = "seed-hygiene-";
 
-function sqlLiteral(value) {
-  return `'${String(value).replaceAll("'", "''")}'`;
-}
-
-function run(cmd, args) {
-  const res = spawnSync(cmd, args, {
-    cwd: ROOT,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  if (res.status !== 0) {
-    console.error(res.stdout || "");
-    console.error(res.stderr || "");
-    throw new Error(`${cmd} ${args.join(" ")} failed (${res.status})`);
-  }
-  if (res.stdout?.trim()) console.log(res.stdout.trim());
-}
-
-function main() {
+export async function seed() {
   const now = new Date().toISOString();
   const essayBack = Array.from({ length: 30 }, (_, i) => `w${i}`).join(" ");
   const cards = [
@@ -103,11 +82,4 @@ function main() {
   console.log(`  flagged-ish: 4 (essay + compound; ids ${PREFIX}*)`);
   console.log(`  safe control: 1 (${PREFIX}safe-001)`);
   console.log("  Open Deck Hub → Hygiene / Cards workshop on Local Atlas FR.");
-}
-
-try {
-  main();
-} catch (err) {
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
 }

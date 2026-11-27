@@ -1,24 +1,26 @@
-#!/usr/bin/env node
 /**
  * Local-only: fill the seed-local-dev account with accepted cards, schedules,
  * and review history so Insights has something to render.
  *
  * Idempotent for its own rows (ids prefixed seed-insights-*).
+ * Row-id prefix: seed-insights-
  * Warning: each run resets desired_retention / r_floor on the seed user
  * (0.9 / 0.8), which overwrites local Settings experiments for that account.
- * Usage: npm run db:seed:local:insights
- * Prerequisite: npm run db:seed:local (user + deck).
+ * Usage: npm run db:seed:local -- --targets=insights
+ * Prerequisite: base (user + deck).
  */
-import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 
-const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
-const DB_NAME = "sugarplum";
-const LOCAL_USER_ID = "00000000-0000-4000-8000-0000000000de";
-const LOCAL_DECK_ID = "00000000-0000-4000-8000-0000000000dd";
+import {
+  DB_NAME,
+  LOCAL_DECK_ID,
+  LOCAL_USER_ID,
+  run,
+  sqlLiteral,
+} from "./shared.mjs";
+
 const SUBJECT_A = "seed-insights-subject-a";
 const SUBJECT_B = "seed-insights-subject-b";
 const DECK_B = "seed-insights-deck-b";
@@ -36,24 +38,6 @@ function mulberry32(seed) {
   };
 }
 
-function sqlLiteral(value) {
-  return `'${String(value).replaceAll("'", "''")}'`;
-}
-
-function run(cmd, args) {
-  const res = spawnSync(cmd, args, {
-    cwd: ROOT,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  if (res.status !== 0) {
-    console.error(res.stdout || "");
-    console.error(res.stderr || "");
-    throw new Error(`${cmd} ${args.join(" ")} failed (${res.status})`);
-  }
-  if (res.stdout?.trim()) console.log(res.stdout.trim());
-}
-
 function dayIso(now, daysAgo, hour, minute = 0) {
   const d = new Date(now);
   d.setUTCDate(d.getUTCDate() - daysAgo);
@@ -61,7 +45,7 @@ function dayIso(now, daysAgo, hour, minute = 0) {
   return d.toISOString();
 }
 
-function main() {
+export async function seed() {
   const rand = mulberry32(20261119);
   const now = new Date();
   const createdAt = now.toISOString();
@@ -245,11 +229,4 @@ function main() {
   console.log(`  cards:  ${CARD_COUNT} (ids ${PREFIX}card-*)`);
   console.log(`  logs:   ~${logN} review_logs`);
   console.log(`  decks:  Local Atlas FR + Local Insights FR`);
-}
-
-try {
-  main();
-} catch (err) {
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
 }
