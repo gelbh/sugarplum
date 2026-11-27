@@ -177,7 +177,7 @@ atlasItemRoutes.post("/make-cards", async (c) => {
     entries: merged,
   });
 
-  const prepared = prepareMakeCardsItems(entries, entryKeys);
+  const prepared = prepareMakeCardsItems(entries, entryKeys, atlas.id);
   const sandboxId = await sandboxWriteUserId(db, userId);
 
   const jobs: Array<{
@@ -250,12 +250,35 @@ atlasItemRoutes.post("/make-cards", async (c) => {
     }
 
     if (item.hasExtras) {
-      await requeueGeneration(c.env, {
-        jobId,
-        materialId,
-        deckId,
-        autoFollowup: true,
-      });
+      try {
+        await requeueGeneration(c.env, {
+          jobId,
+          materialId,
+          deckId,
+          autoFollowup: true,
+        });
+      } catch {
+        await db
+          .prepare("DELETE FROM study_claims WHERE job_id = ?")
+          .bind(jobId)
+          .run();
+        await db
+          .prepare("DELETE FROM cards WHERE job_id = ?")
+          .bind(jobId)
+          .run();
+        await db
+          .prepare("DELETE FROM generation_jobs WHERE id = ?")
+          .bind(jobId)
+          .run();
+        await db
+          .prepare("DELETE FROM materials WHERE id = ?")
+          .bind(materialId)
+          .run();
+        await c.env.MATERIALS.delete(r2Key);
+        throw new HTTPException(500, {
+          message: "Failed to enqueue atlas make-cards job",
+        });
+      }
     }
 
     jobs.push({ entryKey: item.entryKey, materialId, jobId });

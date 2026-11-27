@@ -15,7 +15,10 @@ import {
   type LlmAdapter,
 } from "./llm";
 import { buildExtraUserSuffix } from "./feedback-hints";
-import { emptyDraftError } from "./empty-draft-error";
+import {
+  EMPTY_DRAFTS_FOR_LEARNING_OBJECTIVES,
+  emptyDraftError,
+} from "./empty-draft-error";
 import {
   critiqueDraftsAgainstSource,
   MAX_PIPELINE_CHUNKS,
@@ -334,14 +337,20 @@ export async function markJobFailed(
   }
 }
 
-/** Atlas extras LLM empty but precraft drafts remain → needs_review, not failed. */
+const EMPTY_NOVEL_DRAFT_ERRORS = new Set([
+  "No flashcard drafts could be produced from this material.",
+  EMPTY_DRAFTS_FOR_LEARNING_OBJECTIVES,
+  "New cards repeated cards already in this deck.",
+]);
+
+/** Atlas empty-novel-drafts with precraft present → needs_review; other errors fail. */
 export async function markJobFailedOrAtlasSoftComplete(
   env: Env,
   jobId: string,
   error: string,
   atlasJob: boolean,
 ): Promise<void> {
-  if (atlasJob) {
+  if (atlasJob && EMPTY_NOVEL_DRAFT_ERRORS.has(error)) {
     const db = getDb(env);
     const countRow = await db
       .prepare("SELECT COUNT(*) AS n FROM cards WHERE job_id = ?")

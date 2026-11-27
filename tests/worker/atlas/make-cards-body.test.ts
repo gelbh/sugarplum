@@ -88,7 +88,12 @@ describe("prepareMakeCardsItems", () => {
         refs: [{ field: null, citation: "ref-a", url: null, note: null }],
       }),
     ];
-    const prepared = prepareMakeCardsItems(entries, ["toxocara-canis"]);
+    const prepared = prepareMakeCardsItems(
+      entries,
+      ["toxocara-canis"],
+      "atlas-1",
+    );
+    expect(prepared[0]?.atlasId).toBe("atlas-1");
     expect(prepared).toHaveLength(1);
     expect(prepared[0]?.entryKey).toBe("toxocara-canis");
     expect(prepared[0]?.text).toContain("Toxocara canis");
@@ -127,7 +132,11 @@ describe("prepareMakeCardsItems", () => {
         refs: [{ field: null, citation: "WCVM", url: null, note: null }],
       }),
     ];
-    const prepared = prepareMakeCardsItems(entries, ["ascaris-suum"]);
+    const prepared = prepareMakeCardsItems(
+      entries,
+      ["ascaris-suum"],
+      "atlas-1",
+    );
     expect(prepared).toHaveLength(1);
     const item = prepared[0]!;
     expect(item.hasExtras).toBe(true);
@@ -160,7 +169,7 @@ describe("prepareMakeCardsItems", () => {
         },
       }),
     ];
-    const prepared = prepareMakeCardsItems(entries, ["thin-1"]);
+    const prepared = prepareMakeCardsItems(entries, ["thin-1"], "atlas-1");
     expect(prepared).toHaveLength(1);
     expect(prepared[0]?.hasExtras).toBe(false);
     expect(prepared[0]?.text).toBe("Parasite: Thinus onlyus\n");
@@ -176,7 +185,7 @@ describe("prepareMakeCardsItems", () => {
 
   it("404s unknown keys", () => {
     try {
-      prepareMakeCardsItems([entry({ id: "a" })], ["missing"]);
+      prepareMakeCardsItems([entry({ id: "a" })], ["missing"], "atlas-1");
       expect.unreachable();
     } catch (err) {
       expect(err).toBeInstanceOf(HTTPException);

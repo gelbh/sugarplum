@@ -173,6 +173,21 @@ describe("atlas provenance helpers", () => {
       citations: [],
       hasExtras: false,
     });
+    expect(
+      parseAtlasJobProvenance(
+        JSON.stringify({
+          atlasEntryId: "toxocara-canis",
+          citations: [],
+          hasExtras: true,
+          atlasId: "atlas-xyz",
+        }),
+      ),
+    ).toEqual({
+      atlasEntryId: "toxocara-canis",
+      citations: [],
+      hasExtras: true,
+      atlasId: "atlas-xyz",
+    });
   });
 
   it("rewrites draft provenance for atlas jobs", () => {

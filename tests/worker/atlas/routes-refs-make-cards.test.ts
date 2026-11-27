@@ -117,10 +117,12 @@ describe("atlas refs and make-cards", () => {
       atlasEntryId: string;
       citations: string[];
       hasExtras?: boolean;
+      atlasId?: string;
     };
     expect(provenance.atlasEntryId).toBe("toxocara-canis");
     expect(Array.isArray(provenance.citations)).toBe(true);
     expect(provenance.hasExtras).toBe(true);
+    expect(provenance.atlasId).toBe(atlasId);
     expect(getQueueMessages().length).toBeGreaterThan(0);
 
     const cards = await getCards(env);

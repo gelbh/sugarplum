@@ -4,6 +4,7 @@ import {
   getGenerationJobs,
   getStudyClaims,
   resetTestDb,
+  seedAtlas,
   seedCard,
   seedDeck,
   seedGenerationJob,
@@ -14,12 +15,18 @@ import {
 } from "../harness";
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  AtlasPrecraftReseedError,
   atlasJobHasExtras,
   atlasLockedStubMaterial,
+  insertPrecraftDrafts,
+  precraftFrontMatchesAvoid,
   reseedAtlasAfterWipe,
   reseedAtlasPrecraftForJob,
+  resolveMergedAtlasEntryForReseed,
 } from "../../../worker/atlas/reseedPrecraft";
 import { parseAtlasJobProvenance } from "../../../worker/atlas/makeCardsSource";
+import { buildAtlasPrecraftDrafts } from "../../../worker/atlas/precraftDrafts";
+import { emptyParasiteFields } from "../../../worker/atlas/templates/parasite";
 import { insertDraftCards } from "../../../worker/generation/gap-fill";
 
 afterEach(async () => {
@@ -355,7 +362,7 @@ describe("atlasJobHasExtras", () => {
     ).toBe(true);
   });
 
-  it("missing hasExtras + full dump material → no LLM (stub_only)", () => {
+  it("missing hasExtras + full dump material → continue LLM (leftovers)", () => {
     const fullDump = [
       "Parasite: Ascaris suum",
       "Major organ: small intestine",
@@ -369,12 +376,12 @@ describe("atlasJobHasExtras", () => {
         materialText: fullDump,
         canonicalName: "Ascaris suum",
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 });
 
 describe("atlas precraft after full-dump wipe", () => {
-  it("reseeds then returns stub_only when hasExtras absent on full dump", async () => {
+  it("reseeds then continues with extras-only R2 when hasExtras absent on full dump", async () => {
     const env = cfEnv;
     const fullDump = [
       "Parasite: Ascaris suum",
@@ -397,8 +404,179 @@ describe("atlas precraft after full-dump wipe", () => {
       deckId: "deck-a",
       atlasProvenance: provenance,
       materialText: fullDump,
+      materialR2Key: "materials/deck-a/mat-atlas.txt",
     });
-    expect(decision).toBe("stub_only");
+    expect(decision).toBe("continue");
     expect((await getCards(env)).length).toBeGreaterThan(0);
+    const rewritten = await env.MATERIALS.get("materials/deck-a/mat-atlas.txt");
+    const body = (await rewritten!.text()) as string;
+    expect(body).not.toContain("Major organ:");
+    expect(body).not.toContain(
+      "Generate study cards covering hosts/family (MCQ)",
+    );
+  });
+});
+
+describe("precraft avoid-pattern filter", () => {
+  it("matches truncated avoid stems", () => {
+    expect(
+      precraftFrontMatchesAvoid("What is the major organ of Ascaris suum?", [
+        "What is the major organ of Ascaris suum?",
+      ]),
+    ).toBe(true);
+    expect(
+      precraftFrontMatchesAvoid("What is the major organ of Ascaris suum?", [
+        "What is the major organ of Ascaris suum? (reason: vague)",
+      ]),
+    ).toBe(true);
+    expect(
+      precraftFrontMatchesAvoid("What is the family of Ascaris suum?", [
+        "What is the major organ of Ascaris suum?",
+      ]),
+    ).toBe(false);
+  });
+
+  it("insertPrecraftDrafts skips avoided fronts", async () => {
+    const env = cfEnv;
+    await seedUser(env, {
+      id: "user-a",
+      email: "a@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await seedDeck(env, {
+      id: "deck-a",
+      user_id: "user-a",
+      title: "Atlas deck",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await seedMaterial(env, {
+      id: "mat-atlas",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await seedGenerationJob(env, {
+      id: "job-avoid",
+      material_id: "mat-atlas",
+      status: "running",
+      error: null,
+      coverage_json: null,
+      progress_json: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+      finished_at: null,
+      atlas_provenance_json: JSON.stringify({
+        atlasEntryId: "ascaris-suum",
+        citations: [],
+        hasExtras: false,
+      }),
+    });
+
+    const built = buildAtlasPrecraftDrafts({
+      entryKey: "ascaris-suum",
+      canonicalName: "Ascaris suum",
+      commonName: null,
+      aliases: [],
+      fields: {
+        ...emptyParasiteFields(),
+        group: "nematode",
+        majorOrgan: "small intestine",
+        family: "Ascarididae",
+      },
+    });
+    const organ = built.drafts.find(
+      (d) =>
+        typeof d.front === "string" &&
+        d.front.includes("Ascaris suum") &&
+        /major organ/i.test(d.front),
+    );
+    expect(organ).toBeDefined();
+
+    await insertPrecraftDrafts(env.DB, {
+      deckId: "deck-a",
+      jobId: "job-avoid",
+      claims: built.claims,
+      drafts: built.drafts,
+      atlasProvenance: {
+        atlasEntryId: "ascaris-suum",
+        citations: [],
+        hasExtras: false,
+      },
+      avoidPatterns: [organ!.front],
+    });
+
+    const cards = await getCards(env);
+    expect(
+      cards.some((c) => {
+        const front = JSON.parse(c.front_json) as string;
+        return front.includes("Ascaris suum") && /major organ/i.test(front);
+      }),
+    ).toBe(false);
+    expect(
+      cards.some((c) => {
+        const front = JSON.parse(c.front_json) as string;
+        return /family/i.test(front);
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("resolveMergedAtlasEntryForReseed atlasId", () => {
+  it("fails when scoped overlay is soft-deleted (no stock revive)", async () => {
+    const env = cfEnv;
+    await seedUser(env, {
+      id: "user-a",
+      email: "a@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await seedDeck(env, {
+      id: "deck-a",
+      user_id: "user-a",
+      title: "Atlas deck",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await seedAtlas(env, {
+      id: "atlas-a",
+      user_id: "user-a",
+      template_key: "parasite",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await env.DB.prepare(
+      `INSERT INTO atlas_entries (
+         id, atlas_id, canonical_name, common_name, fields_json, status,
+         created_at, updated_at, origin_key, origin_version, edited_at, deleted_at
+       ) VALUES (?, ?, ?, ?, ?, 'accepted', ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        "entry-ascaris",
+        "atlas-a",
+        "Ascaris suum",
+        null,
+        JSON.stringify(emptyParasiteFields()),
+        "2026-01-01T00:00:00.000Z",
+        "2026-01-01T00:00:00.000Z",
+        "ascaris-suum",
+        1,
+        "2026-01-01T00:00:00.000Z",
+        "2026-01-02T00:00:00.000Z",
+      )
+      .run();
+
+    await expect(
+      resolveMergedAtlasEntryForReseed(env.DB, {
+        deckId: "deck-a",
+        atlasEntryId: "ascaris-suum",
+        atlasId: "atlas-a",
+      }),
+    ).rejects.toBeInstanceOf(AtlasPrecraftReseedError);
   });
 });

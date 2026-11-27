@@ -211,6 +211,8 @@ export type AtlasJobProvenance = {
   citations: string[];
   /** Present on post-precraft make-cards jobs; absent on pre-migration rows. */
   hasExtras?: boolean;
+  /** Atlas that owned the entry at make-cards create; absent on legacy rows. */
+  atlasId?: string;
 };
 
 export function parseAtlasJobProvenance(
@@ -233,8 +235,12 @@ export function parseAtlasJobProvenance(
       .citations.filter((c): c is string => typeof c === "string" && c.trim().length > 0)
       .map((c) => c.trim());
     const hasExtrasRaw = (parsed as { hasExtras?: unknown }).hasExtras;
+    const atlasIdRaw = (parsed as { atlasId?: unknown }).atlasId;
     const out: AtlasJobProvenance = { atlasEntryId, citations };
     if (typeof hasExtrasRaw === "boolean") out.hasExtras = hasExtrasRaw;
+    if (typeof atlasIdRaw === "string" && atlasIdRaw.trim()) {
+      out.atlasId = atlasIdRaw.trim();
+    }
     return out;
   } catch {
     return null;

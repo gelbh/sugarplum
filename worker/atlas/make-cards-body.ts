@@ -24,6 +24,7 @@ export type PreparedMakeCardsItem = {
   canonicalName: string;
   claims: StudyClaim[];
   drafts: CardDraft[];
+  atlasId: string;
 };
 
 /** Parse deckId only so ownership can run before entryKeys validation. */
@@ -60,6 +61,7 @@ export function parseMakeCardsEntryKeys(body: {
 export function prepareMakeCardsItems(
   entries: AtlasEntryView[],
   entryKeys: string[],
+  atlasId: string,
 ): PreparedMakeCardsItem[] {
   const prepared: PreparedMakeCardsItem[] = [];
   for (const key of entryKeys) {
@@ -114,6 +116,7 @@ export function prepareMakeCardsItems(
       canonicalName: hit.canonicalName,
       claims: precraft.claims,
       drafts: precraft.drafts,
+      atlasId,
     });
   }
   return prepared;
@@ -137,6 +140,7 @@ export async function seedMakeCardsPrecraft(
       atlasEntryId: args.item.entryKey,
       citations: args.item.citations,
       hasExtras: args.item.hasExtras,
+      atlasId: args.item.atlasId,
     },
   });
 }
@@ -163,6 +167,7 @@ export async function createAtlasMakeCardsJob(
       (c) => typeof c === "string" && c.trim().length > 0,
     ),
     hasExtras: args.item.hasExtras,
+    atlasId: args.item.atlasId,
   });
   const db = getDb(env);
   await db

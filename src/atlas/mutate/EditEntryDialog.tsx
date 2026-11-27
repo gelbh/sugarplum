@@ -88,6 +88,16 @@ const ZOONOTIC_OPTIONS = [
 type SelectDraftKey = "group" | "zoonotic";
 type LifecycleTypeOption = (typeof LIFECYCLE_TYPE_OPTIONS)[number];
 
+function lifecycleTypeFromInput(input: string): string {
+  const trimmed = input.trim();
+  const byValue = LIFECYCLE_TYPE_OPTIONS.find((o) => o.value === trimmed);
+  if (byValue) return byValue.value;
+  const byLabel = LIFECYCLE_TYPE_OPTIONS.find(
+    (o) => o.label.toLowerCase() === trimmed.toLowerCase(),
+  );
+  return byLabel ? byLabel.value : input;
+}
+
 function Section({ id, children }: { id: EditSectionId; children: ReactNode }) {
   const title = EDIT_SECTION_TITLES[id];
   return (
@@ -409,11 +419,15 @@ export function EditEntryDialog({
             }
             update(
               "lifecycleType",
-              typeof next === "string" ? next : next.value,
+              typeof next === "string"
+                ? lifecycleTypeFromInput(next)
+                : next.value,
             );
           }}
           onInputChange={(_, input, reason) => {
-            if (reason === "input") update("lifecycleType", input);
+            if (reason === "input") {
+              update("lifecycleType", lifecycleTypeFromInput(input));
+            }
           }}
           disabled={busy}
           renderInput={(params) => (
