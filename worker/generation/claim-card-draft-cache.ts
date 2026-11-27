@@ -20,6 +20,20 @@ export const CLAIM_CARD_DRAFT_CACHE_PREFIX = "cache:claim-card:v1:" as const;
  */
 export const CLAIM_CARD_PROMPT_VERSION = "typed-claim-card-v1" as const;
 
+/**
+ * Atlas-job claim→card prompt slice (subject-on-front rule).
+ * Bump when the atlas subject-anchoring variant changes; leave default alone.
+ */
+export const CLAIM_CARD_ATLAS_PROMPT_VERSION =
+  "typed-claim-card-atlas-subject-v1" as const;
+
+export function claimCardPromptVersion(opts?: {
+  atlasSubjectAnchor?: boolean;
+}): string {
+  return opts?.atlasSubjectAnchor
+    ? CLAIM_CARD_ATLAS_PROMPT_VERSION
+    : CLAIM_CARD_PROMPT_VERSION;
+}
 /** Shared TTL for KV draft cache (seconds). */
 export const CLAIM_CARD_DRAFT_CACHE_TTL_SECONDS = 86400;
 

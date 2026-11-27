@@ -8,6 +8,11 @@ import Typography from "@mui/material/Typography";
 import type { CardDraftView, ClaimCoverage } from "../api/client";
 
 const CLAIM_SPAN_GAP_DISPLAY_CAP = 10;
+const BODY_SCROLL_SX = {
+  maxHeight: "min(22vh, 11rem)",
+  overflow: "auto" as const,
+  pr: 0.25,
+};
 
 type Props = {
   coverage: ClaimCoverage;
@@ -20,7 +25,6 @@ type Props = {
   generatingClaimId?: string | null;
   fillAllBusy?: boolean;
   generateDisabled?: boolean;
-  /** Below md: start collapsed so the resting review surface can fit. */
   defaultCollapsed?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
 };
@@ -30,19 +34,6 @@ function claimLabel(row: ClaimCoverage["claims"][number]): string {
   if (row.object) parts.push(row.object);
   return parts.join(" ");
 }
-
-const rowSx = (interactive: boolean) => ({
-  display: "block" as const,
-  width: "100%",
-  textAlign: "left" as const,
-  borderRadius: 1,
-  border: interactive
-    ? "1px solid rgba(232, 216, 199, 0.22)"
-    : "1px dashed rgba(232, 216, 199, 0.16)",
-  px: 1,
-  py: 0.5,
-  color: interactive ? "var(--sp-ivory)" : "text.secondary",
-});
 
 export default function ClaimCoveragePanel({
   coverage,
@@ -75,7 +66,6 @@ export default function ClaimCoveragePanel({
     }
     setBaselineOrphan((prev) => prev ?? Math.max(orphan, 1));
   }, [fillAllBusy, orphan]);
-  // Expand while Fill all runs so progress/list stay visible.
   useEffect(() => {
     if (!fillAllBusy) return;
     setExpanded(true);
@@ -110,23 +100,31 @@ export default function ClaimCoveragePanel({
       sx={{
         flexShrink: 0,
         width: "100%",
-        maxWidth: 560,
-        alignSelf: "center",
+        alignSelf: "stretch",
+        overflow: "visible",
         borderRadius: 2,
-        border: "1px solid rgba(232, 216, 199, 0.18)",
-        bgcolor: "rgba(18, 7, 15, 0.35)",
-        px: 1.5,
-        pt: 1,
-        pb: 1,
+        border: "1px solid",
+        borderColor: expanded
+          ? "rgba(232, 216, 199, 0.18)"
+          : "rgba(232, 216, 199, 0.12)",
+        bgcolor: expanded
+          ? "rgba(18, 7, 15, 0.35)"
+          : "rgba(18, 7, 15, 0.22)",
+        px: 1.25,
+        pt: expanded ? 0.85 : 0.55,
+        pb: expanded ? 0.85 : 0.55,
       }}
     >
       <Stack
         direction="row"
         spacing={1}
+        useFlexGap
         sx={{
-          alignItems: "baseline",
+          alignItems: "center",
           justifyContent: "space-between",
-          mb: expanded ? 0.75 : 0,
+          flexWrap: "wrap",
+          rowGap: 0.35,
+          mb: expanded ? 0.65 : 0,
         }}
       >
         <ButtonBase
@@ -139,7 +137,7 @@ export default function ClaimCoveragePanel({
             borderRadius: 1,
             textAlign: "left",
             px: 0.25,
-            py: 0.15,
+            py: 0.1,
             minWidth: 0,
           }}
         >
@@ -159,10 +157,29 @@ export default function ClaimCoveragePanel({
         <Stack
           direction="row"
           spacing={1}
+          useFlexGap
           sx={{
             alignItems: "center",
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
           }}
         >
+          <Typography
+            variant="caption"
+            aria-live="polite"
+            sx={{
+              m: 0,
+              color: fillAllBusy
+                ? "var(--sp-ivory)"
+                : "rgba(232, 216, 199, 0.72)",
+              whiteSpace: "nowrap",
+              lineHeight: 1.3,
+            }}
+          >
+            {fillAllBusy
+              ? `${filledSinceStart} filled · ${orphan} left · ${total} claims`
+              : `${linked} linked · ${orphan} orphan · ${total} claims`}
+          </Typography>
           {showFillControl ? (
             <Button
               size="small"
@@ -191,26 +208,10 @@ export default function ClaimCoveragePanel({
               {fillButtonLabel}
             </Button>
           ) : null}
-          <Typography
-            variant="caption"
-            aria-live="polite"
-            sx={{
-              m: 0,
-              color: fillAllBusy
-                ? "var(--sp-ivory)"
-                : "rgba(232, 216, 199, 0.72)",
-              whiteSpace: "nowrap",
-              lineHeight: 1.3,
-            }}
-          >
-            {fillAllBusy
-              ? `${filledSinceStart} filled · ${orphan} left · ${total} claims`
-              : `${linked} linked · ${orphan} orphan · ${total} claims`}
-          </Typography>
         </Stack>
       </Stack>
       {expanded ? (
-        <>
+        <Box sx={BODY_SCROLL_SX}>
           {fillAllBusy ? (
             <LinearProgress
               variant={
@@ -219,7 +220,7 @@ export default function ClaimCoveragePanel({
               value={baselineOrphan != null ? fillPercent : undefined}
               aria-label={fillProgressLabel}
               sx={{
-                mb: 0.75,
+                mb: 0.65,
                 height: 3,
                 borderRadius: 1,
                 bgcolor: "rgba(232, 216, 199, 0.12)",
@@ -229,14 +230,7 @@ export default function ClaimCoveragePanel({
               }}
             />
           ) : null}
-          <Stack
-            spacing={0.5}
-            sx={{
-              maxHeight: "min(18vh, 7.5rem)",
-              overflow: "auto",
-              pr: 0.25,
-            }}
-          >
+          <Stack spacing={0.35}>
             {coverage.claims.map((row) => {
               const isOrphan = row.card_id == null;
               const cardId = row.card_id;
@@ -249,7 +243,15 @@ export default function ClaimCoveragePanel({
               const body = (
                 <Typography
                   variant="body2"
-                  sx={{ lineHeight: 1.3, flex: 1, minWidth: 0 }}
+                  sx={{
+                    lineHeight: 1.35,
+                    flex: 1,
+                    minWidth: 0,
+                    fontSize: "0.8125rem",
+                    color: interactive
+                      ? "var(--sp-ivory)"
+                      : "rgba(232, 216, 199, 0.78)",
+                  }}
                 >
                   {label}
                 </Typography>
@@ -259,7 +261,16 @@ export default function ClaimCoveragePanel({
                   <ButtonBase
                     key={row.id}
                     onClick={() => onJumpToDraft(cardId)}
-                    sx={rowSx(true)}
+                    sx={{
+                      display: "block",
+                      width: "100%",
+                      textAlign: "left",
+                      borderRadius: 1,
+                      border: "1px solid rgba(232, 216, 199, 0.2)",
+                      px: 1,
+                      py: 0.45,
+                      color: "var(--sp-ivory)",
+                    }}
                   >
                     {body}
                   </ButtonBase>
@@ -269,27 +280,30 @@ export default function ClaimCoveragePanel({
                 <Box
                   key={row.id}
                   sx={{
-                    ...rowSx(false),
                     display: "flex",
+                    flexDirection: "row",
                     alignItems: "center",
                     gap: 1,
+                    px: 0.25,
+                    py: 0.35,
+                    borderBottom: "1px solid rgba(232, 216, 199, 0.08)",
                   }}
                 >
                   {body}
                   {isOrphan && onGenerateOrphan ? (
                     <Button
                       size="small"
-                      variant="outlined"
+                      variant="text"
                       disabled={orphanBusy}
                       onClick={() => onGenerateOrphan(row.id)}
                       sx={{
                         flexShrink: 0,
                         textTransform: "none",
-                        borderColor: "rgba(232, 216, 199, 0.35)",
-                        color: "var(--sp-ivory)",
-                        py: 0.25,
-                        px: 1,
+                        color: "rgba(232, 216, 199, 0.88)",
+                        py: 0.15,
+                        px: 0.75,
                         minWidth: 0,
+                        fontSize: "0.75rem",
                       }}
                     >
                       {rowBusy ? "…" : "Generate"}
@@ -302,8 +316,8 @@ export default function ClaimCoveragePanel({
           {claimSpanGaps.length > 0 ? (
             <Box
               sx={{
-                mt: 1,
-                pt: 1,
+                mt: 0.85,
+                pt: 0.75,
                 borderTop: "1px solid rgba(232, 216, 199, 0.14)",
               }}
             >
@@ -311,7 +325,7 @@ export default function ClaimCoveragePanel({
                 variant="caption"
                 sx={{
                   m: 0,
-                  mb: 0.5,
+                  mb: 0.35,
                   display: "block",
                   color: "rgba(232, 216, 199, 0.72)",
                   lineHeight: 1.3,
@@ -319,16 +333,16 @@ export default function ClaimCoveragePanel({
               >
                 Unclaimed note lines ({claimSpanGaps.length})
               </Typography>
-              <Stack spacing={0.35}>
+              <Stack spacing={0.3}>
                 {shownGaps.map((line) => (
                   <Typography
                     key={line}
                     variant="body2"
                     sx={{
                       m: 0,
-                      color: "text.secondary",
+                      color: "rgba(232, 216, 199, 0.58)",
                       lineHeight: 1.3,
-                      fontSize: "0.8rem",
+                      fontSize: "0.75rem",
                     }}
                   >
                     {line}
@@ -337,7 +351,7 @@ export default function ClaimCoveragePanel({
                 {moreGaps > 0 ? (
                   <Typography
                     variant="caption"
-                    sx={{ m: 0, color: "rgba(232, 216, 199, 0.55)" }}
+                    sx={{ m: 0, color: "rgba(232, 216, 199, 0.5)" }}
                   >
                     +{moreGaps} more
                   </Typography>
@@ -345,7 +359,7 @@ export default function ClaimCoveragePanel({
               </Stack>
             </Box>
           ) : null}
-        </>
+        </Box>
       ) : null}
     </Box>
   );
