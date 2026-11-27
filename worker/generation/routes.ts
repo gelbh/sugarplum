@@ -672,6 +672,8 @@ jobRoutes.post("/:id/regen", async (c) => {
     throw new HTTPException(409, { message: "Job already in progress" });
   }
 
+  await terminateGenerationWorkflow(c.env, jobId);
+
   // Snapshot rejected fronts before wipe so the consumer can avoid them.
   const rejected = await db
     .prepare(

@@ -405,7 +405,7 @@ export default function DraftReviewPage() {
     return (
       <Box className="sp-stage" sx={stageShellSx}>
         <Container
-          maxWidth={{ xs: "sm", md: "lg" }}
+          maxWidth="lg"
           sx={{ ...pageSx, justifyContent: "center", overflow: "auto" }}
         >
           {jobId && !jobProgress.error ? (
@@ -421,7 +421,7 @@ export default function DraftReviewPage() {
   return (
     <Box className="sp-stage" sx={stageShellSx}>
       <Container
-        maxWidth={fillCard ? false : { xs: "sm", md: "lg" }}
+        maxWidth={fillCard ? false : "lg"}
         sx={{
           ...pageSx,
           ...(fillCard ? { px: { xs: 2, md: 3 } } : {}),

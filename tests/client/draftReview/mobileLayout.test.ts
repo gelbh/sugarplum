@@ -93,7 +93,7 @@ describe("DraftReviewPage mobile layout contract", () => {
   it("uses full-bleed Container when fillCard, otherwise sm/lg", () => {
     const text = pageSrc();
     expect(text).toMatch(
-      /maxWidth=\{fillCard\s*\?\s*false\s*:\s*\{\s*xs:\s*["']sm["']\s*,\s*md:\s*["']lg["']\s*\}\}/,
+      /maxWidth=\{fillCard\s*\?\s*false\s*:\s*["']lg["']\}/,
     );
   });
 

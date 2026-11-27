@@ -394,7 +394,8 @@ export function EditEntryDialog({
   const lifecycleTypeField = () => {
     const raw = draft?.lifecycleType ?? "";
     const preset = LIFECYCLE_TYPE_OPTIONS.find((o) => o.value === raw);
-    const value: LifecycleTypeOption | string = preset ?? raw;
+    const value: LifecycleTypeOption | string | null =
+      raw === "" ? null : (preset ?? raw);
     return (
       <>
         <Autocomplete

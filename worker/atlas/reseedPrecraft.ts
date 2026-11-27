@@ -102,13 +102,15 @@ function filterPrecraftByAvoidPatterns(
   const n = Math.min(claims.length, drafts.length);
   for (let i = 0; i < n; i++) {
     const draft = drafts[i]!;
-    if (precraftFrontMatchesAvoid(draft.front, avoidPatterns)) continue;
+    const front = typeof draft.front === "string" ? draft.front : "";
+    if (precraftFrontMatchesAvoid(front, avoidPatterns)) continue;
     nextClaims.push(claims[i]!);
     nextDrafts.push(draft);
   }
   for (let i = n; i < drafts.length; i++) {
     const draft = drafts[i]!;
-    if (precraftFrontMatchesAvoid(draft.front, avoidPatterns)) continue;
+    const front = typeof draft.front === "string" ? draft.front : "";
+    if (precraftFrontMatchesAvoid(front, avoidPatterns)) continue;
     nextDrafts.push(draft);
   }
   return { claims: nextClaims, drafts: nextDrafts };
