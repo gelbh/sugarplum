@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  quality:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -35,9 +35,6 @@ jobs:
       - name: Module boundaries
         run: npm run check:boundaries
 
-      - name: Test
-        run: npm test
-
       - name: Typecheck and build
         run: npm run build
         env:
@@ -46,3 +43,110 @@ jobs:
 
       - name: Check Workers asset sizes
         run: node scripts/checkWorkersAssetSize.mjs public && node scripts/checkWorkersAssetSize.mjs dist/client
+
+  # Shard policy: +2 shards when the slowest suite test step stays > 5 min (cap 8); decrease when wall < 4 min and cost hurts. Never shard quality.
+  # Measured 2026-11-27: test:client ~55s (no shard); test:worker ~6m23s → 2 shards.
+  test-client:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: test:client
+        run: npm run test:client
+
+  test-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: write
+    strategy:
+      fail-fast: true
+      max-parallel: 4
+      matrix:
+        shard: [1, 2]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: test:worker
+        env:
+          SHARD: ${{ matrix.shard }}
+          SHARD_TOTAL: ${{ strategy.job-total }}
+        run: npm run test:worker -- --reporter=default --reporter=blob --outputFile.blob=.vitest-reports/worker/blob-${SHARD}.json --shard=${SHARD}/${SHARD_TOTAL}
+
+      - name: Upload worker blob
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: vitest-blob-worker-${{ matrix.shard }}
+          path: .vitest-reports/worker/*
+          include-hidden-files: true
+          retention-days: 1
+
+  ci:
+    needs: [quality, test-client, test-worker]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Require leaf jobs
+        run: |
+          test "${{ needs.quality.result }}" = "success"
+          test "${{ needs.test-client.result }}" = "success"
+          test "${{ needs.test-worker.result }}" = "success"
+
+      - name: Checkout
+        if: ${{ needs.test-worker.result == 'success' }}
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        if: ${{ needs.test-worker.result == 'success' }}
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        if: ${{ needs.test-worker.result == 'success' }}
+        run: npm ci
+
+      - name: Download worker blobs
+        if: ${{ needs.test-worker.result == 'success' }}
+        uses: actions/download-artifact@v8
+        with:
+          pattern: vitest-blob-worker-*
+          path: .vitest-reports/worker
+          merge-multiple: true
+
+      - name: Merge worker reports
+        if: ${{ needs.test-worker.result == 'success' }}
+        run: npx vitest --config vitest.worker.config.ts --merge-reports=.vitest-reports/worker
