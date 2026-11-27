@@ -71,8 +71,13 @@ function parseTargets(argv) {
 async function main() {
   const targets = parseTargets(process.argv);
   for (const name of targets) {
-    const mod = await import(`./seed/${name}.mjs`);
-    await mod.seed();
+    try {
+      const mod = await import(`./seed/${name}.mjs`);
+      await mod.seed();
+    } catch (err) {
+      console.error(`Seed target "${name}" failed.`);
+      throw err;
+    }
   }
 }
 
