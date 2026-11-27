@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Local-only bootstrap: dummy Turnstile in .dev.vars + D1 test user/deck.
  * Idempotent. Does not touch remote D1.
@@ -8,38 +7,31 @@
  * Multi-worktree: bind Vite to a free port (see README local signed-in section).
  */
 
-import { spawnSync } from "node:child_process";
 import {
   appendFileSync,
   existsSync,
-  mkdirSync,
   readFileSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 
-const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
+import {
+  DB_NAME,
+  LOCAL_DECK_ID,
+  LOCAL_DEV_EMAIL,
+  LOCAL_DEV_PASSWORD,
+  LOCAL_DEV_PASSWORD_HASH,
+  LOCAL_USER_ID,
+  ROOT,
+  run,
+  runLocalSql,
+  sqlLiteral,
+} from "./shared.mjs";
+
 const DEV_VARS = join(ROOT, ".dev.vars");
-const DB_NAME = "sugarplum";
 
 const DUMMY_SITE_KEY = "1x00000000000000000000AA";
 const DUMMY_SECRET_KEY = "1x0000000000000000000000000000000AA";
-
-/** Fixed local credentials (never for production). */
-const LOCAL_DEV_EMAIL = "dev@local.test";
-const LOCAL_DEV_PASSWORD = "local-dev-password";
-const LOCAL_USER_ID = "00000000-0000-4000-8000-0000000000de";
-const LOCAL_DECK_ID = "00000000-0000-4000-8000-0000000000dd";
-
-/**
- * Precomputed `hashPassword("local-dev-password")` via worker/auth/password.ts.
- * Regenerate with: node --input-type=module -e \
- *   'import { hashPassword } from "./worker/auth/password.ts"; console.log(await hashPassword("local-dev-password"))'
- */
-const LOCAL_DEV_PASSWORD_HASH =
-  "pbkdf2-sha256$100000$xNXQvJK+cIeEYL60/APpsw==$gpEtfPzAyVVdn3Lw9lxsj4Mw/Jtfe3sU/o6atbqyGz8=";
 
 function readDevVar(existing, key) {
   const m = existing.match(new RegExp(`^${key}=(.*)$`, "m"));
@@ -58,8 +50,7 @@ function ensureDevVars() {
   if (lines.length === 0) {
     const site = readDevVar(existing, "TURNSTILE_SITE_KEY");
     const secret = readDevVar(existing, "TURNSTILE_SECRET_KEY");
-    const dummy =
-      site === DUMMY_SITE_KEY && secret === DUMMY_SECRET_KEY;
+    const dummy = site === DUMMY_SITE_KEY && secret === DUMMY_SECRET_KEY;
     if (!dummy) {
       console.warn(
         "Warning: .dev.vars TURNSTILE_* are not Cloudflare local dummy keys; email auth on localhost may fail. Replace with the dummy pair from the README, or delete those lines and re-run db:seed:local.",
@@ -80,26 +71,7 @@ function ensureDevVars() {
   return { wrote: true };
 }
 
-function run(cmd, args) {
-  const res = spawnSync(cmd, args, {
-    cwd: ROOT,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  if (res.status !== 0) {
-    console.error(res.stdout || "");
-    console.error(res.stderr || "");
-    throw new Error(`${cmd} ${args.join(" ")} failed (${res.status})`);
-  }
-  if (res.stdout?.trim()) console.log(res.stdout.trim());
-  return res;
-}
-
-function sqlLiteral(value) {
-  return `'${String(value).replaceAll("'", "''")}'`;
-}
-
-function main() {
+export async function seed() {
   const turnstile = ensureDevVars();
 
   console.log("Applying local D1 migrations…");
@@ -117,13 +89,8 @@ function main() {
     `ON CONFLICT(id) DO NOTHING;`,
   ].join("\n");
 
-  const dir = join(tmpdir(), "sugarplum-seed");
-  mkdirSync(dir, { recursive: true });
-  const sqlPath = join(dir, "local-dev-seed.sql");
-  writeFileSync(sqlPath, sql);
-
   console.log("Seeding local test user + deck…");
-  run("npx", ["wrangler", "d1", "execute", DB_NAME, "--local", "--file", sqlPath]);
+  runLocalSql("base", sql);
 
   console.log("");
   console.log("Local signed-in smoke account:");
@@ -132,13 +99,8 @@ function main() {
   console.log(`  deck:     Local Atlas FR (${LOCAL_DECK_ID})`);
   if (turnstile.wrote) {
     console.log("");
-    console.log("Restart `npm run dev` so the Worker picks up new TURNSTILE_* from .dev.vars.");
+    console.log(
+      "Restart `npm run dev` so the Worker picks up new TURNSTILE_* from .dev.vars.",
+    );
   }
-}
-
-try {
-  main();
-} catch (err) {
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
 }

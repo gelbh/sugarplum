@@ -17,10 +17,7 @@
     "check:asset-size": "node scripts/checkWorkersAssetSize.mjs public",
     "eval:live": "vitest run --config vitest.live.config.ts",
     "db:migrate:local": "wrangler d1 migrations apply sugarplum --local",
-    "db:seed:local": "node scripts/seed-local-dev.mjs",
-    "db:seed:local:insights": "node scripts/seed-local-insights.mjs",
-    "db:seed:local:orchard": "node scripts/seed-local-orchard.mjs",
-    "db:seed:local:hygiene": "node scripts/seed-local-hygiene.mjs",
+    "db:seed:local": "node scripts/seed-local.mjs",
     "generate:problem-html": "node scripts/generate-problem-html.mjs",
     "check:problem-html": "node scripts/generate-problem-html.mjs --check"
   },
