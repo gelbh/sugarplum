@@ -373,6 +373,10 @@ export async function runTextDraftPipeline(args: {
   avoidPatterns?: string[];
   /** Fronts already in the deck. Later chunks also see this run's new fronts. */
   avoidFronts?: string[];
+  /**
+   * Atlas job provenance: extras claim→card must put claim subject on the front.
+   */
+  atlasSubjectAnchor?: boolean;
   /** Emit rules stage before LLM when using TEXT_LLM_STAGES catalog. */
   emitRulesStage?: boolean;
   /** Token totals when this pass must not emit a stage. */
@@ -449,6 +453,7 @@ export async function runTextDraftPipeline(args: {
       topicHints: args.topicHints,
       avoidPatterns: args.avoidPatterns,
       avoidFronts: args.avoidFronts,
+      atlasSubjectAnchor: args.atlasSubjectAnchor,
       // Semantic stage uses Workers AI Neurons; skip on BYO to avoid quota burn.
       embedTexts:
         provider === "workers-ai"
@@ -812,6 +817,7 @@ export async function runPass1Phase(
           topicHints,
           avoidPatterns,
           avoidFronts: deckFronts,
+          atlasSubjectAnchor: Boolean(atlasProvenance),
           emitRulesStage: true,
         });
         textDrafts = textResult.drafts;
@@ -943,6 +949,7 @@ export async function runPass1Phase(
         topicHints,
         avoidPatterns,
         avoidFronts: deckFronts,
+        atlasSubjectAnchor: Boolean(atlasProvenance),
         emitRulesStage: true,
       });
       drafts = textResult.drafts;

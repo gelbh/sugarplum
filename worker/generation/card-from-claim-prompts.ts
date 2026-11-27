@@ -1,5 +1,12 @@
 import type { StudyClaim } from "./claims";
 
+/**
+ * Atlas-job-only system suffix: extras claim→card must name the organism.
+ * Do not fold into CARD_FROM_CLAIM_SYSTEM_PROMPT (paste/PDF stay unchanged).
+ */
+export const CARD_FROM_CLAIM_ATLAS_SUBJECT_ANCHOR_SUFFIX =
+  `- Front must include the claim subject.` as const;
+
 /** System prompt: write ≤1 short flashcard per StudyClaim. */
 export const CARD_FROM_CLAIM_SYSTEM_PROMPT = `You write spaced-repetition flashcards from atomic study claims.
 
@@ -31,6 +38,33 @@ Rules:
 - provenance.excerpt must equal the claim source_span (verbatim; whitespace normalization OK). pages from the claim or [1].
 - Respond with JSON only: {"cards":[ { "type": "qa"|"cloze"|"mcq", "front": string, "back": string, "options"?: string[], "provenance": { "pages": number[], "excerpt": string } } ]}
 - Do not wrap the array in markdown fences. Finish every string and close all braces.`;
+
+export type CardFromClaimPromptOpts = {
+  /** When true (atlas job provenance), require claim subject on the front. */
+  atlasSubjectAnchor?: boolean;
+};
+
+function withAtlasSubjectAnchor(
+  base: string,
+  opts?: CardFromClaimPromptOpts,
+): string {
+  if (!opts?.atlasSubjectAnchor) return base;
+  return `${base}\n${CARD_FROM_CLAIM_ATLAS_SUBJECT_ANCHOR_SUFFIX}`;
+}
+
+/** Default or atlas-gated claim→card system prompt. */
+export function cardFromClaimSystemPrompt(
+  opts?: CardFromClaimPromptOpts,
+): string {
+  return withAtlasSubjectAnchor(CARD_FROM_CLAIM_SYSTEM_PROMPT, opts);
+}
+
+/** Compact default or atlas-gated claim→card system prompt. */
+export function cardFromClaimCompactSystemPrompt(
+  opts?: CardFromClaimPromptOpts,
+): string {
+  return withAtlasSubjectAnchor(CARD_FROM_CLAIM_COMPACT_SYSTEM_PROMPT, opts);
+}
 
 export function cardFromClaimUserPrompt(claims: StudyClaim[]): string {
   return `Write at most one short flashcard per claim. Prefer qa; use cloze for short high-info objects; mcq only for a closed option set already in the source_span. Keep front/back under ~25 words. No compound stems. Omit weak claims.

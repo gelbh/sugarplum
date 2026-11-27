@@ -1,10 +1,9 @@
 import {
-  CARD_FROM_CLAIM_COMPACT_SYSTEM_PROMPT,
-  CARD_FROM_CLAIM_SYSTEM_PROMPT,
+  cardFromClaimCompactSystemPrompt,
   cardFromClaimCompactUserPrompt,
+  cardFromClaimSystemPrompt,
   cardFromClaimUserPrompt,
-} from "./card-from-claim-prompts";
-import {
+} from "./card-from-claim-prompts";import {
   CLAIM_EXTRACT_COMPACT_SYSTEM_PROMPT,
   CLAIM_EXTRACT_SYSTEM_PROMPT,
   CLAIM_GAP_EXTRACT_SYSTEM_PROMPT,
@@ -144,10 +143,15 @@ export async function extractClaimsForGapLines(
 /** Batch write ≤1 card per claim (job pipeline). */
 export async function writeCardsFromClaims(
   claims: StudyClaim[],
-  args: ClaimStageLlm & { extraUserSuffix?: string },
+  args: ClaimStageLlm & {
+    extraUserSuffix?: string;
+    /** Atlas job provenance: require claim subject on card front. */
+    atlasSubjectAnchor?: boolean;
+  },
 ): Promise<CardDraft[]> {
   if (claims.length === 0) return [];
-  const { llm, apiKey, provider, extraUserSuffix } = args;
+  const { llm, apiKey, provider, extraUserSuffix, atlasSubjectAnchor } = args;
+  const promptOpts = { atlasSubjectAnchor: Boolean(atlasSubjectAnchor) };
   const completeOnce = (system: string, user: string) =>
     llm.complete({
       system,
@@ -163,7 +167,7 @@ export async function writeCardsFromClaims(
         parseCardsPayload(
           (
             await completeOnce(
-              CARD_FROM_CLAIM_SYSTEM_PROMPT,
+              cardFromClaimSystemPrompt(promptOpts),
               cardFromClaimUserPrompt(claims),
             )
           ).text,
@@ -172,7 +176,7 @@ export async function writeCardsFromClaims(
         parseCardsPayload(
           (
             await completeOnce(
-              CARD_FROM_CLAIM_COMPACT_SYSTEM_PROMPT,
+              cardFromClaimCompactSystemPrompt(promptOpts),
               cardFromClaimCompactUserPrompt(claims),
             )
           ).text,
