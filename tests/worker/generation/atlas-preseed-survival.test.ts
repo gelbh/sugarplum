@@ -121,9 +121,8 @@ describe("atlas precraft survival after wipe", () => {
     const decision = await reseedAtlasAfterWipe(env, {
       jobId: "job-atlas",
       deckId: "deck-a",
-      atlasProvenance: provenance,
+      atlasProvenance: { ...provenance, hasExtras: true },
       materialText: extrasText,
-      atlasProvenanceJson: JSON.stringify(provenance),
     });
     expect(decision).toBe("continue");
 
@@ -184,9 +183,8 @@ describe("atlas precraft survival after wipe", () => {
     const decision = await reseedAtlasAfterWipe(env, {
       jobId: "job-atlas",
       deckId: "deck-a",
-      atlasProvenance: provenance,
+      atlasProvenance: { ...provenance, hasExtras: false },
       materialText: stub,
-      atlasProvenanceJson: JSON.stringify(provenance),
     });
     expect(decision).toBe("stub_only");
 
@@ -355,5 +353,52 @@ describe("atlasJobHasExtras", () => {
         canonicalName: "Ascaris suum",
       }),
     ).toBe(true);
+  });
+
+  it("missing hasExtras + full dump material → no LLM (stub_only)", () => {
+    const fullDump = [
+      "Parasite: Ascaris suum",
+      "Major organ: small intestine",
+      "Hosts: pig",
+      "",
+      "Generate study cards covering hosts/family (MCQ), lifecycle order (cloze), and which diagnostic test applies at a given week (Q&A).",
+    ].join("\n");
+    expect(
+      atlasJobHasExtras({
+        hasExtrasFlag: null,
+        materialText: fullDump,
+        canonicalName: "Ascaris suum",
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("atlas precraft after full-dump wipe", () => {
+  it("reseeds then returns stub_only when hasExtras absent on full dump", async () => {
+    const env = cfEnv;
+    const fullDump = [
+      "Parasite: Ascaris suum",
+      "Major organ: small intestine",
+      "Hosts: pig",
+      "",
+      "Generate study cards covering hosts/family (MCQ), lifecycle order (cloze), and which diagnostic test applies at a given week (Q&A).",
+    ].join("\n");
+    const provenance = await seedAtlasJob(env, fullDump);
+
+    await env.DB.prepare("DELETE FROM study_claims WHERE job_id = ?")
+      .bind("job-atlas")
+      .run();
+    await env.DB.prepare("DELETE FROM cards WHERE job_id = ?")
+      .bind("job-atlas")
+      .run();
+
+    const decision = await reseedAtlasAfterWipe(env, {
+      jobId: "job-atlas",
+      deckId: "deck-a",
+      atlasProvenance: provenance,
+      materialText: fullDump,
+    });
+    expect(decision).toBe("stub_only");
+    expect((await getCards(env)).length).toBeGreaterThan(0);
   });
 });

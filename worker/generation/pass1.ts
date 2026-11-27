@@ -60,7 +60,7 @@ import {
 import { buildCoverageLedger } from "./coverage";
 import { consumeFreeGenSlot } from "./quota";
 import { parseAtlasJobProvenance } from "../atlas/makeCardsSource";
-import { reseedAtlasAfterWipe } from "../atlas/reseedPrecraft";
+import { ensureAtlasPrecraftAfterWipe } from "../atlas/reseedPrecraft";
 import {
   attachClaimIdsToDrafts,
   insertDraftCards,
@@ -332,6 +332,27 @@ export async function markJobFailed(
   if ((result.meta.changes ?? 0) > 0) {
     await afterRunningJobTerminal(env, jobId);
   }
+}
+
+/** Atlas extras LLM empty but precraft drafts remain → needs_review, not failed. */
+export async function markJobFailedOrAtlasSoftComplete(
+  env: Env,
+  jobId: string,
+  error: string,
+  atlasJob: boolean,
+): Promise<void> {
+  if (atlasJob) {
+    const db = getDb(env);
+    const countRow = await db
+      .prepare("SELECT COUNT(*) AS n FROM cards WHERE job_id = ?")
+      .bind(jobId)
+      .first<{ n: number }>();
+    if (countRow && countRow.n > 0) {
+      await softCompleteGenerationJob(env, jobId, null);
+      return;
+    }
+  }
+  await markJobFailed(env, jobId, error);
 }
 
 async function extractMaterialText(
@@ -612,18 +633,12 @@ export async function runPass1Phase(
       progressRow?.atlas_provenance_json,
     );
     if (reclaimed && atlasProvenance) {
-      let materialText: string | null = null;
-      if (material.kind === "paste" && material.r2_key) {
-        const obj = await env.MATERIALS.get(material.r2_key);
-        materialText = obj ? await obj.text() : null;
-      }
-      const decision = await reseedAtlasAfterWipe(env, {
+      const decision = await ensureAtlasPrecraftAfterWipe(env, {
         jobId,
         deckId,
-        atlasProvenance,
-        materialText,
         atlasProvenanceJson: progressRow?.atlas_provenance_json,
-        progressJson: progressRow?.progress_json,
+        materialKind: material.kind,
+        materialR2Key: material.r2_key,
       });
       if (decision === "stub_only") {
         await softCompleteGenerationJob(env, jobId, null);
@@ -1003,11 +1018,23 @@ export async function runPass1Phase(
     }
     return "done";
   } catch (err) {
-    // Leave last progress_json; only mark status failed.
+    // Leave last progress_json; atlas with precraft → needs_review, else failed.
     const messageText =
       err instanceof Error ? err.message : "Generation failed";
     console.error("generation job failed", jobId, err);
-    await markJobFailed(env, jobId, messageText);
+    const provenanceRow = await db
+      .prepare("SELECT atlas_provenance_json FROM generation_jobs WHERE id = ?")
+      .bind(jobId)
+      .first<{ atlas_provenance_json: string | null }>();
+    const atlasJob = Boolean(
+      parseAtlasJobProvenance(provenanceRow?.atlas_provenance_json),
+    );
+    await markJobFailedOrAtlasSoftComplete(
+      env,
+      jobId,
+      messageText,
+      atlasJob,
+    );
     return "done";
   }
 }

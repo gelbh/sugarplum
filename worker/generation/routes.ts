@@ -15,7 +15,7 @@ import { buildClaimCoverage } from "./claim-coverage";
 import { parseAtlasJobProvenance } from "../atlas/makeCardsSource";
 import {
   AtlasPrecraftReseedError,
-  reseedAtlasAfterWipe,
+  ensureAtlasPrecraftAfterWipe,
 } from "../atlas/reseedPrecraft";
 import {
   ClaimFillBadRequestError,
@@ -709,20 +709,14 @@ jobRoutes.post("/:id/regen", async (c) => {
     .run();
   await db.prepare("DELETE FROM cards WHERE job_id = ?").bind(jobId).run();
 
-  const atlasProvenance = parseAtlasJobProvenance(row.atlas_provenance_json);
-  if (atlasProvenance) {
+  if (parseAtlasJobProvenance(row.atlas_provenance_json)) {
     try {
-      let materialText: string | null = null;
-      if (row.material_kind === "paste" && row.material_r2_key) {
-        const obj = await c.env.MATERIALS.get(row.material_r2_key);
-        materialText = obj ? await obj.text() : null;
-      }
-      const decision = await reseedAtlasAfterWipe(c.env, {
+      const decision = await ensureAtlasPrecraftAfterWipe(c.env, {
         jobId,
         deckId: row.deck_id,
-        atlasProvenance,
-        materialText,
         atlasProvenanceJson: row.atlas_provenance_json,
+        materialKind: row.material_kind,
+        materialR2Key: row.material_r2_key,
       });
       if (decision === "stub_only") {
         await terminateGenerationWorkflow(c.env, jobId);

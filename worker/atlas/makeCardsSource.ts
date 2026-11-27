@@ -209,6 +209,8 @@ export function buildAtlasMakeCardsExtrasSource(
 export type AtlasJobProvenance = {
   atlasEntryId: string;
   citations: string[];
+  /** Present on post-precraft make-cards jobs; absent on pre-migration rows. */
+  hasExtras?: boolean;
 };
 
 export function parseAtlasJobProvenance(
@@ -230,7 +232,10 @@ export function parseAtlasJobProvenance(
     const citations = (parsed as { citations: unknown[] })
       .citations.filter((c): c is string => typeof c === "string" && c.trim().length > 0)
       .map((c) => c.trim());
-    return { atlasEntryId, citations };
+    const hasExtrasRaw = (parsed as { hasExtras?: unknown }).hasExtras;
+    const out: AtlasJobProvenance = { atlasEntryId, citations };
+    if (typeof hasExtrasRaw === "boolean") out.hasExtras = hasExtrasRaw;
+    return out;
   } catch {
     return null;
   }

@@ -33,6 +33,7 @@ function newId(): string {
 /**
  * Insert a queued generation_jobs row and send to GENERATE_QUEUE when bound.
  * Returns the new job id. Mode lives on D1 only (regen requeues without it).
+ * Atlas make-cards uses `createAtlasMakeCardsJob` instead.
  */
 export async function enqueueGeneration(
   env: Env,
@@ -44,15 +45,6 @@ export async function enqueueGeneration(
     /** Atlas Make cards: entry key + citations for draft provenance. */
     atlasEntryId?: string | null;
     atlasCitations?: string[] | null;
-    /** Persist on atlas_provenance_json when atlasEntryId is set. */
-    hasExtras?: boolean;
-    /**
-     * When false, insert the job row only. Caller seeds then requeues or
-     * marks needs_review. Default true.
-     */
-    sendToQueue?: boolean;
-    status?: string;
-    finishedAt?: string | null;
   },
 ): Promise<string> {
   const jobId = newId();
@@ -70,14 +62,8 @@ export async function enqueueGeneration(
           citations: (args.atlasCitations ?? []).filter(
             (c) => typeof c === "string" && c.trim().length > 0,
           ),
-          ...(typeof args.hasExtras === "boolean"
-            ? { hasExtras: args.hasExtras }
-            : {}),
         })
       : null;
-  const status = args.status ?? "queued";
-  const finishedAt =
-    args.finishedAt !== undefined ? args.finishedAt : null;
   const db = getDb(env);
 
   await db
@@ -87,25 +73,23 @@ export async function enqueueGeneration(
     .bind(
       jobId,
       args.materialId,
-      status,
+      "queued",
       null,
       null,
       createdAt,
-      finishedAt,
+      null,
       figureExtractMode,
       topicHintsJson,
       atlasProvenanceJson,
     )
     .run();
 
-  if (args.sendToQueue !== false) {
-    await requeueGeneration(env, {
-      jobId,
-      materialId: args.materialId,
-      deckId: args.deckId,
-      autoFollowup: true,
-    });
-  }
+  await requeueGeneration(env, {
+    jobId,
+    materialId: args.materialId,
+    deckId: args.deckId,
+    autoFollowup: true,
+  });
 
   return jobId;
 }

@@ -41,10 +41,7 @@ import { applySandboxKeyPrefix, sandboxWriteUserId } from "../admin/sandbox-r2";
 import { createR2PutUrl } from "../materials/r2-presign";
 import { sha256Hex } from "../materials/content-hash";
 import { requireOwnedDeck } from "../materials/routes";
-import {
-  enqueueGeneration,
-  requeueGeneration,
-} from "../generation/enqueue";
+import { requeueGeneration } from "../generation/enqueue";
 import type { AppEnv, AtlasRow } from "./types";
 import { isUniqueViolation } from "../db/client";
 import {
@@ -71,6 +68,7 @@ import {
   resolveEntry,
 } from "./entry-helpers";
 import {
+  createAtlasMakeCardsJob,
   parseMakeCardsDeckId,
   parseMakeCardsEntryKeys,
   prepareMakeCardsItems,
@@ -220,22 +218,19 @@ atlasItemRoutes.post("/make-cards", async (c) => {
       )
       .run();
 
-    const finishedAt = item.hasExtras ? null : createdAt;
-    const jobId = await enqueueGeneration(c.env, {
+    const jobId = await createAtlasMakeCardsJob(c.env, {
       materialId,
-      deckId,
-      topicHints: item.topicHints,
-      atlasEntryId: item.entryKey,
-      atlasCitations: item.citations,
-      hasExtras: item.hasExtras,
-      sendToQueue: false,
-      status: item.hasExtras ? "queued" : "needs_review",
-      finishedAt,
+      item,
+      createdAt,
     });
 
     try {
       await seedMakeCardsPrecraft(db, { deckId, jobId, item });
     } catch {
+      await db
+        .prepare("DELETE FROM study_claims WHERE job_id = ?")
+        .bind(jobId)
+        .run();
       await db
         .prepare("DELETE FROM cards WHERE job_id = ?")
         .bind(jobId)

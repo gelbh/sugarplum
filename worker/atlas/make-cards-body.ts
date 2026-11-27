@@ -1,16 +1,17 @@
 import { HTTPException } from "hono/http-exception";
+import type { Env } from "../env";
+import { getDb } from "../db/client";
 import type { AtlasEntryView } from "../../src/atlas/types";
 import type { StudyClaim } from "../generation/claims";
 import type { CardDraft } from "../generation/schema";
-import {
-  attachClaimIdsToDrafts,
-  insertDraftCards,
-} from "../generation/gap-fill";
 import { normalizeTopicHints } from "../generation/topic-hints";
 import { MAX_PASTE_BYTES } from "../materials/limits";
 import { buildAtlasMakeCardsExtrasSource } from "./makeCardsSource";
 import { buildAtlasPrecraftDrafts } from "./precraftDrafts";
-import { atlasLockedStubMaterial } from "./reseedPrecraft";
+import {
+  atlasLockedStubMaterial,
+  insertPrecraftDrafts,
+} from "./reseedPrecraft";
 
 export const MAX_MAKE_CARDS_ENTRIES = 8;
 
@@ -127,20 +128,59 @@ export async function seedMakeCardsPrecraft(
     item: PreparedMakeCardsItem;
   },
 ): Promise<void> {
-  if (args.item.drafts.length === 0 && args.item.claims.length === 0) return;
-  const claims = args.item.claims.map((c) => ({
-    ...c,
-    id: crypto.randomUUID(),
-  }));
-  const drafts = attachClaimIdsToDrafts(args.item.drafts, claims);
-  await insertDraftCards(db, {
+  await insertPrecraftDrafts(db, {
     deckId: args.deckId,
     jobId: args.jobId,
-    drafts,
-    claims,
+    claims: args.item.claims,
+    drafts: args.item.drafts,
     atlasProvenance: {
       atlasEntryId: args.item.entryKey,
       citations: args.item.citations,
+      hasExtras: args.item.hasExtras,
     },
   });
+}
+
+/** Insert atlas make-cards job row only (caller seeds, then requeues or stops). */
+export async function createAtlasMakeCardsJob(
+  env: Env,
+  args: {
+    materialId: string;
+    item: PreparedMakeCardsItem;
+    createdAt: string;
+  },
+): Promise<string> {
+  const jobId = crypto.randomUUID();
+  const status = args.item.hasExtras ? "queued" : "needs_review";
+  const finishedAt = args.item.hasExtras ? null : args.createdAt;
+  const topicHintsJson =
+    args.item.topicHints.length > 0
+      ? JSON.stringify(args.item.topicHints)
+      : null;
+  const atlasProvenanceJson = JSON.stringify({
+    atlasEntryId: args.item.entryKey,
+    citations: args.item.citations.filter(
+      (c) => typeof c === "string" && c.trim().length > 0,
+    ),
+    hasExtras: args.item.hasExtras,
+  });
+  const db = getDb(env);
+  await db
+    .prepare(
+      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at, figure_extract_mode, topic_hints_json, atlas_provenance_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    )
+    .bind(
+      jobId,
+      args.materialId,
+      status,
+      null,
+      null,
+      args.createdAt,
+      finishedAt,
+      "fast",
+      topicHintsJson,
+      atlasProvenanceJson,
+    )
+    .run();
+  return jobId;
 }

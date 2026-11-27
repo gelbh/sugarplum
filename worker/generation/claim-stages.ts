@@ -3,7 +3,8 @@ import {
   cardFromClaimCompactUserPrompt,
   cardFromClaimSystemPrompt,
   cardFromClaimUserPrompt,
-} from "./card-from-claim-prompts";import {
+} from "./card-from-claim-prompts";
+import {
   CLAIM_EXTRACT_COMPACT_SYSTEM_PROMPT,
   CLAIM_EXTRACT_SYSTEM_PROMPT,
   CLAIM_GAP_EXTRACT_SYSTEM_PROMPT,
