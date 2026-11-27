@@ -12,6 +12,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   quality:
@@ -44,7 +45,8 @@ jobs:
       - name: Check Workers asset sizes
         run: node scripts/checkWorkersAssetSize.mjs public && node scripts/checkWorkersAssetSize.mjs dist/client
 
-  # Shard policy: +2 shards when the slowest suite job stays > 5 min (cap 8); decrease when wall < 4 min and cost hurts. Never shard quality.
+  # Shard policy: +2 shards when the slowest suite test step stays > 5 min (cap 8); decrease when wall < 4 min and cost hurts. Never shard quality.
+  # Measured 2026-11-27: test:client ~55s (no shard); test:worker ~6m23s → 2 shards.
   test-client:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -69,6 +71,11 @@ jobs:
   test-worker:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: true
+      max-parallel: 4
+      matrix:
+        shard: [1, 2]
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -85,7 +92,16 @@ jobs:
         run: npm ci
 
       - name: test:worker
-        run: npm run test:worker
+        run: npm run test:worker -- --reporter=default --reporter=blob --outputFile.blob=.vitest-reports/worker/blob-${{ matrix.shard }}.json --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+
+      - name: Upload worker blob
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: vitest-blob-worker-${{ matrix.shard }}
+          path: .vitest-reports/worker/*
+          include-hidden-files: true
+          retention-days: 1
 
   ci:
     needs: [quality, test-client, test-worker]
@@ -97,3 +113,32 @@ jobs:
           test "${{ needs.quality.result }}" = "success"
           test "${{ needs.test-client.result }}" = "success"
           test "${{ needs.test-worker.result }}" = "success"
+
+      - name: Checkout
+        if: ${{ needs.test-worker.result == 'success' }}
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        if: ${{ needs.test-worker.result == 'success' }}
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        if: ${{ needs.test-worker.result == 'success' }}
+        run: npm ci
+
+      - name: Download worker blobs
+        if: ${{ needs.test-worker.result == 'success' }}
+        uses: actions/download-artifact@v8
+        with:
+          pattern: vitest-blob-worker-*
+          path: .vitest-reports/worker
+          merge-multiple: true
+
+      - name: Merge worker reports
+        if: ${{ needs.test-worker.result == 'success' }}
+        run: npx vitest --config vitest.worker.config.ts --merge-reports=.vitest-reports/worker
