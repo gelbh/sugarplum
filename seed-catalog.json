@@ -15,7 +15,7 @@
     {
       "id": "orchard-overview",
       "targets": ["base", "orchard"],
-      "match": { "keywords": ["orchard", "overview", "leaderboard", "daily goal"], "paths": ["**/orchard/**", "**/Overview/**"] }
+      "match": { "keywords": ["orchard", "leaderboard", "daily goal"], "paths": ["**/orchard/**"] }
     },
     {
       "id": "deck-hygiene",
