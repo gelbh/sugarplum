@@ -12,7 +12,6 @@ concurrency:
 
 permissions:
   contents: read
-  actions: write
 
 jobs:
   quality:
@@ -71,6 +70,9 @@ jobs:
   test-worker:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: write
     strategy:
       fail-fast: true
       max-parallel: 4
@@ -92,7 +94,10 @@ jobs:
         run: npm ci
 
       - name: test:worker
-        run: npm run test:worker -- --reporter=default --reporter=blob --outputFile.blob=.vitest-reports/worker/blob-${{ matrix.shard }}.json --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+        env:
+          SHARD: ${{ matrix.shard }}
+          SHARD_TOTAL: ${{ strategy.job-total }}
+        run: npm run test:worker -- --reporter=default --reporter=blob --outputFile.blob=.vitest-reports/worker/blob-${SHARD}.json --shard=${SHARD}/${SHARD_TOTAL}
 
       - name: Upload worker blob
         if: ${{ !cancelled() }}
@@ -107,6 +112,9 @@ jobs:
     needs: [quality, test-client, test-worker]
     if: always()
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     steps:
       - name: Require leaf jobs
         run: |
