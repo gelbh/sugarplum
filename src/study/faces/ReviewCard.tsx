@@ -109,6 +109,9 @@ export default function ReviewCard({
       spacing={fillHeight ? 1.25 : 2}
       sx={{
         outline: "none",
+        width: "100%",
+        maxWidth: 400,
+        alignSelf: "center",
         ...(fillHeight
           ? { flex: 1, minHeight: 0, height: "100%" }
           : {}),
@@ -120,8 +123,9 @@ export default function ReviewCard({
         sx={{
           alignItems: "center",
           justifyContent: "space-between",
-          flexShrink: 0
-        }}>
+          flexShrink: 0,
+        }}
+      >
         <Typography
           variant="caption"
           sx={{
@@ -209,8 +213,9 @@ export default function ReviewCard({
         aria-labelledby="reject-reason-label"
         sx={{
           alignItems: "center",
-          flexShrink: 0
-        }}>
+          flexShrink: 0,
+        }}
+      >
         <Typography
           id="reject-reason-label"
           variant="caption"
@@ -224,8 +229,9 @@ export default function ReviewCard({
           useFlexGap
           sx={{
             flexWrap: "wrap",
-            justifyContent: "center"
-          }}>
+            justifyContent: "center",
+          }}
+        >
           {REJECT_REASONS.map((code) => {
             const selected = reason === code;
             return (
@@ -268,8 +274,9 @@ export default function ReviewCard({
         sx={{
           justifyContent: "center",
           alignItems: "center",
-          flexShrink: 0
-        }}>
+          flexShrink: 0,
+        }}
+      >
         <RoundAction
           label="Reject card"
           rating={1}
