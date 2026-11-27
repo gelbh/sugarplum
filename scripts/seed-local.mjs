@@ -7,21 +7,25 @@
  *   npm run db:seed:local -- --targets=base,insights,orchard,hygiene
  *   npm run db:seed:local -- --targets=all
  *
- * Default is base. base always runs first.
- * Unknown targets exit 1. Valid: base|insights|orchard|hygiene|all
+ * Default is the catalog baseline. The baseline always runs first.
+ * Unknown targets exit 1 and list catalog targets plus all.
  */
 
-const VALID = ["base", "insights", "orchard", "hygiene", "all"];
-const ALL_TARGETS = ["base", "insights", "orchard", "hygiene"];
+import catalog from "../seed-catalog.json" with { type: "json" };
+
+const ALL_TARGETS = [
+  ...new Set(catalog.surfaces.flatMap((surface) => surface.targets)),
+];
+const VALID = new Set([...ALL_TARGETS, "all"]);
 
 function failUnknown() {
-  console.error(`Unknown target. Valid: ${VALID.join("|")}`);
+  console.error(`Unknown target. Valid: ${ALL_TARGETS.join("|")}|all`);
   process.exit(1);
 }
 
 function parseTargets(argv) {
   const args = argv.slice(2);
-  if (args.length === 0) return ["base"];
+  if (args.length === 0) return [catalog.baseline];
 
   let raw = null;
   for (let i = 0; i < args.length; i++) {
@@ -47,7 +51,7 @@ function parseTargets(argv) {
     .map((part) => part.trim())
     .filter((part) => part.length > 0);
   if (parts.length === 0) failUnknown();
-  if (parts.some((part) => !VALID.includes(part))) failUnknown();
+  if (parts.some((part) => !VALID.has(part))) failUnknown();
   if (parts.includes("all")) {
     if (parts.some((part) => part !== "all")) failUnknown();
     return ALL_TARGETS;
@@ -57,8 +61,9 @@ function parseTargets(argv) {
   for (const part of parts) {
     if (!unique.includes(part)) unique.push(part);
   }
-  if (unique[0] !== "base") {
-    return ["base", ...unique.filter((part) => part !== "base")];
+  const baseline = catalog.baseline;
+  if (unique[0] !== baseline) {
+    return [baseline, ...unique.filter((part) => part !== baseline)];
   }
   return unique;
 }

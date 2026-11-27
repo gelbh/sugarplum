@@ -1,5 +1,5 @@
 /**
- * Local-only: fill the seed-local-dev account with accepted cards, schedules,
+ * Local-only: fill the local dev account with accepted cards, schedules,
  * and review history so Insights has something to render.
  *
  * Idempotent for its own rows (ids prefixed seed-insights-*).
@@ -9,15 +9,10 @@
  * Usage: npm run db:seed:local -- --targets=insights
  * Prerequisite: base (user + deck).
  */
-import { mkdirSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-
 import {
-  DB_NAME,
   LOCAL_DECK_ID,
   LOCAL_USER_ID,
-  run,
+  runLocalSql,
   sqlLiteral,
 } from "./shared.mjs";
 
@@ -52,17 +47,13 @@ export async function seed() {
   const lines = [];
 
   lines.push(`-- wipe prior insights seed`);
-  lines.push(
-    `DELETE FROM cards WHERE id LIKE ${sqlLiteral(`${PREFIX}%`)};`,
-  );
+  lines.push(`DELETE FROM cards WHERE id LIKE ${sqlLiteral(`${PREFIX}%`)};`);
   lines.push(
     `UPDATE decks SET subject_id = NULL
      WHERE subject_id LIKE ${sqlLiteral(`${PREFIX}%`)};`,
   );
   lines.push(`DELETE FROM decks WHERE id = ${sqlLiteral(DECK_B)};`);
-  lines.push(
-    `DELETE FROM subjects WHERE id LIKE ${sqlLiteral(`${PREFIX}%`)};`,
-  );
+  lines.push(`DELETE FROM subjects WHERE id LIKE ${sqlLiteral(`${PREFIX}%`)};`);
 
   lines.push(
     `INSERT INTO subjects (id, user_id, title, created_at) VALUES
@@ -95,15 +86,17 @@ export async function seed() {
         enable_load_balance, easy_days_json, updated_at)
      VALUES (
        ${sqlLiteral(LOCAL_USER_ID)}, 20, 200, 0.8, 0.9, 1, 1,
-       ${sqlLiteral(JSON.stringify([
-         "normal",
-         "normal",
-         "normal",
-         "normal",
-         "normal",
-         "normal",
-         "normal",
-       ]))},
+       ${sqlLiteral(
+         JSON.stringify([
+           "normal",
+           "normal",
+           "normal",
+           "normal",
+           "normal",
+           "normal",
+           "normal",
+         ]),
+       )},
        ${sqlLiteral(createdAt)}
      )
      ON CONFLICT(user_id) DO UPDATE SET
@@ -215,15 +208,10 @@ export async function seed() {
     }
   }
 
-  const dir = join(tmpdir(), "sugarplum-seed-insights");
-  mkdirSync(dir, { recursive: true });
-  const sqlPath = join(dir, "local-insights-seed.sql");
-  writeFileSync(sqlPath, lines.join("\n"));
-
   console.log(
     `Seeding ${CARD_COUNT} cards + review history for ${LOCAL_USER_ID}…`,
   );
-  run("npx", ["wrangler", "d1", "execute", DB_NAME, "--local", "--file", sqlPath]);
+  runLocalSql("insights", lines.join("\n"));
   console.log("");
   console.log("Done. Reload /insights as dev@local.test.");
   console.log(`  cards:  ${CARD_COUNT} (ids ${PREFIX}card-*)`);

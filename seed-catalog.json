@@ -5,22 +5,40 @@
     {
       "id": "auth-deck",
       "targets": ["base"],
-      "match": { "keywords": ["sign-in", "atlas", "deck", "auth"], "paths": ["src/**", "worker/auth/**"] }
+      "match": {
+        "keywords": ["sign-in", "atlas", "deck", "auth"],
+        "paths": ["src/**", "worker/auth/**"]
+      }
     },
     {
       "id": "insights",
       "targets": ["base", "insights"],
-      "match": { "keywords": ["insights"], "paths": ["**/insights/**", "**/Insights/**"] }
+      "match": {
+        "keywords": ["insights"],
+        "paths": ["**/insights/**", "**/Insights/**"]
+      }
     },
     {
       "id": "orchard-overview",
       "targets": ["base", "orchard"],
-      "match": { "keywords": ["orchard", "leaderboard", "daily goal"], "paths": ["**/orchard/**"] }
+      "match": {
+        "keywords": ["orchard", "leaderboard", "daily goal"],
+        "paths": [
+          "src/achievements/**",
+          "**/OrchardOverview.tsx",
+          "**/WeeklyBoard.tsx",
+          "**/dailyGoal.ts",
+          "src/routes/AchievementsPage.tsx"
+        ]
+      }
     },
     {
       "id": "deck-hygiene",
       "targets": ["base", "hygiene"],
-      "match": { "keywords": ["hygiene", "essay back", "compound front"], "paths": ["**/hygiene/**"] }
+      "match": {
+        "keywords": ["hygiene", "essay back", "compound front"],
+        "paths": ["**/hygiene/**"]
+      }
     }
   ]
 }

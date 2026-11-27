@@ -5,11 +5,7 @@
  * Prerequisite: base (user + deck).
  * Usage: npm run db:seed:local -- --targets=hygiene
  */
-import { mkdirSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-
-import { DB_NAME, LOCAL_DECK_ID, run, sqlLiteral } from "./shared.mjs";
+import { LOCAL_DECK_ID, runLocalSql, sqlLiteral } from "./shared.mjs";
 
 const PREFIX = "seed-hygiene-";
 
@@ -70,13 +66,8 @@ export async function seed() {
     );
   }
 
-  const dir = join(tmpdir(), "sugarplum-seed-hygiene");
-  mkdirSync(dir, { recursive: true });
-  const sqlPath = join(dir, "local-hygiene-seed.sql");
-  writeFileSync(sqlPath, `${lines.join("\n")}\n`);
-
   console.log("Seeding hygiene-flagged accepted cards…");
-  run("npx", ["wrangler", "d1", "execute", DB_NAME, "--local", "--file", sqlPath]);
+  runLocalSql("hygiene", lines.join("\n"));
 
   console.log("Hygiene seed ready on Local Atlas FR:");
   console.log(`  flagged-ish: 4 (essay + compound; ids ${PREFIX}*)`);

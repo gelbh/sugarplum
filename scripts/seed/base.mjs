@@ -10,11 +10,9 @@
 import {
   appendFileSync,
   existsSync,
-  mkdirSync,
   readFileSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
@@ -26,6 +24,7 @@ import {
   LOCAL_USER_ID,
   ROOT,
   run,
+  runLocalSql,
   sqlLiteral,
 } from "./shared.mjs";
 
@@ -51,8 +50,7 @@ function ensureDevVars() {
   if (lines.length === 0) {
     const site = readDevVar(existing, "TURNSTILE_SITE_KEY");
     const secret = readDevVar(existing, "TURNSTILE_SECRET_KEY");
-    const dummy =
-      site === DUMMY_SITE_KEY && secret === DUMMY_SECRET_KEY;
+    const dummy = site === DUMMY_SITE_KEY && secret === DUMMY_SECRET_KEY;
     if (!dummy) {
       console.warn(
         "Warning: .dev.vars TURNSTILE_* are not Cloudflare local dummy keys; email auth on localhost may fail. Replace with the dummy pair from the README, or delete those lines and re-run db:seed:local.",
@@ -91,13 +89,8 @@ export async function seed() {
     `ON CONFLICT(id) DO NOTHING;`,
   ].join("\n");
 
-  const dir = join(tmpdir(), "sugarplum-seed");
-  mkdirSync(dir, { recursive: true });
-  const sqlPath = join(dir, "local-dev-seed.sql");
-  writeFileSync(sqlPath, sql);
-
   console.log("Seeding local test user + deck…");
-  run("npx", ["wrangler", "d1", "execute", DB_NAME, "--local", "--file", sqlPath]);
+  runLocalSql("base", sql);
 
   console.log("");
   console.log("Local signed-in smoke account:");
@@ -106,6 +99,8 @@ export async function seed() {
   console.log(`  deck:     Local Atlas FR (${LOCAL_DECK_ID})`);
   if (turnstile.wrote) {
     console.log("");
-    console.log("Restart `npm run dev` so the Worker picks up new TURNSTILE_* from .dev.vars.");
+    console.log(
+      "Restart `npm run dev` so the Worker picks up new TURNSTILE_* from .dev.vars.",
+    );
   }
 }

@@ -3,10 +3,16 @@
  */
 
 import { spawnSync } from "node:child_process";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..", "..");
+export const ROOT = join(
+  fileURLToPath(new URL(".", import.meta.url)),
+  "..",
+  "..",
+);
 export const DB_NAME = "sugarplum";
 
 /** Fixed local credentials (never for production). */
@@ -28,6 +34,14 @@ export function sqlLiteral(value) {
 }
 
 export function run(cmd, args) {
+  if (args.includes("d1")) {
+    if (args.includes("--remote")) {
+      throw new Error("refusing --remote for d1 (local seed only)");
+    }
+    if (!args.includes("--local")) {
+      throw new Error("d1 requires --local");
+    }
+  }
   const res = spawnSync(cmd, args, {
     cwd: ROOT,
     encoding: "utf8",
@@ -40,4 +54,20 @@ export function run(cmd, args) {
   }
   if (res.stdout?.trim()) console.log(res.stdout.trim());
   return res;
+}
+
+export function runLocalSql(slug, sql) {
+  const dir = join(tmpdir(), `sugarplum-seed-${slug}`);
+  mkdirSync(dir, { recursive: true });
+  const sqlPath = join(dir, `${slug}.sql`);
+  writeFileSync(sqlPath, sql.endsWith("\n") ? sql : `${sql}\n`);
+  run("npx", [
+    "wrangler",
+    "d1",
+    "execute",
+    DB_NAME,
+    "--local",
+    "--file",
+    sqlPath,
+  ]);
 }

@@ -6,15 +6,10 @@
  * Usage: npm run db:seed:local -- --targets=orchard
  */
 
-import { mkdirSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-
 import {
-  DB_NAME,
   LOCAL_DECK_ID,
   LOCAL_USER_ID,
-  run,
+  runLocalSql,
   sqlLiteral,
 } from "./shared.mjs";
 
@@ -342,21 +337,8 @@ export async function seed() {
     );
   }
 
-  const dir = join(tmpdir(), "sugarplum-seed-orchard");
-  mkdirSync(dir, { recursive: true });
-  const sqlPath = join(dir, "local-orchard-seed.sql");
-  writeFileSync(sqlPath, lines.join("\n"));
-
   console.log("Seeding orchard FR cards + gamification…");
-  run("npx", [
-    "wrangler",
-    "d1",
-    "execute",
-    DB_NAME,
-    "--local",
-    "--file",
-    sqlPath,
-  ]);
+  runLocalSql("orchard", lines.join("\n"));
   console.log("");
   console.log("Orchard seed ready for dev@local.test:");
   console.log(`  streak:     5 (studied ${today} UTC)`);
