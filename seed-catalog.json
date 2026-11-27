@@ -1,0 +1,26 @@
+{
+  "entry": "npm run db:seed:local -- --targets=<targets>",
+  "baseline": "base",
+  "surfaces": [
+    {
+      "id": "auth-deck",
+      "targets": ["base"],
+      "match": { "keywords": ["sign-in", "atlas", "deck", "auth"], "paths": ["src/**", "worker/auth/**"] }
+    },
+    {
+      "id": "insights",
+      "targets": ["base", "insights"],
+      "match": { "keywords": ["insights"], "paths": ["**/insights/**", "**/Insights/**"] }
+    },
+    {
+      "id": "orchard-overview",
+      "targets": ["base", "orchard"],
+      "match": { "keywords": ["orchard", "overview", "leaderboard", "daily goal"], "paths": ["**/orchard/**", "**/Overview/**"] }
+    },
+    {
+      "id": "deck-hygiene",
+      "targets": ["base", "hygiene"],
+      "match": { "keywords": ["hygiene", "essay back", "compound front"], "paths": ["**/hygiene/**"] }
+    }
+  ]
+}
