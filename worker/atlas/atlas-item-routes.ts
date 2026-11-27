@@ -41,7 +41,7 @@ import { applySandboxKeyPrefix, sandboxWriteUserId } from "../admin/sandbox-r2";
 import { createR2PutUrl } from "../materials/r2-presign";
 import { sha256Hex } from "../materials/content-hash";
 import { requireOwnedDeck } from "../materials/routes";
-import { enqueueGeneration } from "../generation/enqueue";
+import { requeueGeneration } from "../generation/enqueue";
 import type { AppEnv, AtlasRow } from "./types";
 import { isUniqueViolation } from "../db/client";
 import {
@@ -68,9 +68,11 @@ import {
   resolveEntry,
 } from "./entry-helpers";
 import {
+  createAtlasMakeCardsJob,
   parseMakeCardsDeckId,
   parseMakeCardsEntryKeys,
   prepareMakeCardsItems,
+  seedMakeCardsPrecraft,
 } from "./make-cards-body";
 import {
   imageExtForContentType,
@@ -175,7 +177,7 @@ atlasItemRoutes.post("/make-cards", async (c) => {
     entries: merged,
   });
 
-  const prepared = prepareMakeCardsItems(entries, entryKeys);
+  const prepared = prepareMakeCardsItems(entries, entryKeys, atlas.id);
   const sandboxId = await sandboxWriteUserId(db, userId);
 
   const jobs: Array<{
@@ -216,13 +218,68 @@ atlasItemRoutes.post("/make-cards", async (c) => {
       )
       .run();
 
-    const jobId = await enqueueGeneration(c.env, {
+    const jobId = await createAtlasMakeCardsJob(c.env, {
       materialId,
-      deckId,
-      topicHints: item.topicHints,
-      atlasEntryId: item.entryKey,
-      atlasCitations: item.citations,
+      item,
+      createdAt,
     });
+
+    try {
+      await seedMakeCardsPrecraft(db, { deckId, jobId, item });
+    } catch {
+      await db
+        .prepare("DELETE FROM study_claims WHERE job_id = ?")
+        .bind(jobId)
+        .run();
+      await db
+        .prepare("DELETE FROM cards WHERE job_id = ?")
+        .bind(jobId)
+        .run();
+      await db
+        .prepare("DELETE FROM generation_jobs WHERE id = ?")
+        .bind(jobId)
+        .run();
+      await db
+        .prepare("DELETE FROM materials WHERE id = ?")
+        .bind(materialId)
+        .run();
+      await c.env.MATERIALS.delete(r2Key);
+      throw new HTTPException(500, {
+        message: "Failed to seed atlas precraft drafts",
+      });
+    }
+
+    if (item.hasExtras) {
+      try {
+        await requeueGeneration(c.env, {
+          jobId,
+          materialId,
+          deckId,
+          autoFollowup: true,
+        });
+      } catch {
+        await db
+          .prepare("DELETE FROM study_claims WHERE job_id = ?")
+          .bind(jobId)
+          .run();
+        await db
+          .prepare("DELETE FROM cards WHERE job_id = ?")
+          .bind(jobId)
+          .run();
+        await db
+          .prepare("DELETE FROM generation_jobs WHERE id = ?")
+          .bind(jobId)
+          .run();
+        await db
+          .prepare("DELETE FROM materials WHERE id = ?")
+          .bind(materialId)
+          .run();
+        await c.env.MATERIALS.delete(r2Key);
+        throw new HTTPException(500, {
+          message: "Failed to enqueue atlas make-cards job",
+        });
+      }
+    }
 
     jobs.push({ entryKey: item.entryKey, materialId, jobId });
   }

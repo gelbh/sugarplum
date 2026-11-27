@@ -12,6 +12,11 @@ import { failRunningJobIfStale } from "./staleFail";
 import { normalizeTopicHints } from "./topic-hints";
 import { parseOptionalJsonBody } from "../optional-json";
 import { buildClaimCoverage } from "./claim-coverage";
+import { parseAtlasJobProvenance } from "../atlas/makeCardsSource";
+import {
+  AtlasPrecraftReseedError,
+  ensureAtlasPrecraftAfterWipe,
+} from "../atlas/reseedPrecraft";
 import {
   ClaimFillBadRequestError,
   ClaimFillConflictError,
@@ -607,14 +612,23 @@ jobRoutes.post("/:id/regen", async (c) => {
 
   const row = await db
     .prepare(
-      `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json, j.created_at, j.finished_at, m.deck_id
+      `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json,
+              j.created_at, j.finished_at, j.atlas_provenance_json,
+              m.deck_id, m.kind AS material_kind, m.r2_key AS material_r2_key
        FROM generation_jobs j
        INNER JOIN materials m ON m.id = j.material_id
        INNER JOIN decks d ON d.id = m.deck_id
        WHERE j.id = ? AND d.user_id = ?`,
     )
     .bind(jobId, userId)
-    .first<JobPollRow & { deck_id: string }>();
+    .first<
+      JobPollRow & {
+        deck_id: string;
+        atlas_provenance_json: string | null;
+        material_kind: string;
+        material_r2_key: string | null;
+      }
+    >();
 
   if (!row) throw new HTTPException(404, { message: "Job not found" });
 
@@ -658,6 +672,8 @@ jobRoutes.post("/:id/regen", async (c) => {
     throw new HTTPException(409, { message: "Job already in progress" });
   }
 
+  await terminateGenerationWorkflow(c.env, jobId);
+
   // Snapshot rejected fronts before wipe so the consumer can avoid them.
   const rejected = await db
     .prepare(
@@ -666,11 +682,13 @@ jobRoutes.post("/:id/regen", async (c) => {
     .bind(jobId, "rejected")
     .all<{ front_json: string; reject_reason: string | null }>();
   const entries: { front: unknown; reason: RejectReason | null }[] = [];
-  for (const row of rejected.results ?? []) {
+  for (const rejectedRow of rejected.results ?? []) {
     try {
       entries.push({
-        front: JSON.parse(row.front_json) as unknown,
-        reason: isRejectReason(row.reject_reason) ? row.reject_reason : null,
+        front: JSON.parse(rejectedRow.front_json) as unknown,
+        reason: isRejectReason(rejectedRow.reject_reason)
+          ? rejectedRow.reject_reason
+          : null,
       });
     } catch {}
   }
@@ -692,6 +710,55 @@ jobRoutes.post("/:id/regen", async (c) => {
     .bind(jobId)
     .run();
   await db.prepare("DELETE FROM cards WHERE job_id = ?").bind(jobId).run();
+
+  if (parseAtlasJobProvenance(row.atlas_provenance_json)) {
+    try {
+      const decision = await ensureAtlasPrecraftAfterWipe(c.env, {
+        jobId,
+        deckId: row.deck_id,
+        atlasProvenanceJson: row.atlas_provenance_json,
+        materialKind: row.material_kind,
+        materialR2Key: row.material_r2_key,
+      });
+      if (decision === "stub_only") {
+        await terminateGenerationWorkflow(c.env, jobId);
+        const finishedAt = new Date().toISOString();
+        await db
+          .prepare(
+            "UPDATE generation_jobs SET status = ?, error = NULL, finished_at = ? WHERE id = ?",
+          )
+          .bind("needs_review", finishedAt, jobId)
+          .run();
+        return c.json({
+          id: row.id,
+          material_id: row.material_id,
+          status: "needs_review",
+          error: null,
+          coverage_json: null,
+          progress: null,
+          created_at: row.created_at,
+          finished_at: finishedAt,
+        });
+      }
+    } catch (err) {
+      const finishedAt = new Date().toISOString();
+      const messageText =
+        err instanceof AtlasPrecraftReseedError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Failed to reseed atlas precraft";
+      await db
+        .prepare(
+          "UPDATE generation_jobs SET status = ?, error = ?, finished_at = ? WHERE id = ?",
+        )
+        .bind("failed", messageText, finishedAt, jobId)
+        .run();
+      throw new HTTPException(502, {
+        message: "Could not reseed atlas precraft; job marked failed",
+      });
+    }
+  }
 
   try {
     await terminateGenerationWorkflow(c.env, jobId);

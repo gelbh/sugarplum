@@ -183,7 +183,7 @@ function fieldsFromDraft(d: EntryDraft): Partial<ParasiteFields> {
     paratenicHosts: splitList(d.paratenicHosts),
     majorOrgan: textOrNull(d.majorOrgan),
     onHostStages: splitList(d.onHostStages),
-    lifecycleType: d.lifecycleType || null,
+    lifecycleType: textOrNull(d.lifecycleType),
     pppDays: pppEmpty ? null : { min: day(d.pppMin), max: day(d.pppMax) },
     distribution: textOrNull(d.distribution),
     distributionWorldwide: d.distributionWorldwide,

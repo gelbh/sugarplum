@@ -132,4 +132,56 @@ describe("parasite template", () => {
   it("rejects unknown field keys on patch", () => {
     expect(() => parseFieldsPatch({ notAField: 1 })).toThrow();
   });
+
+  it("accepts free-text lifecycle types and presets", () => {
+    expect(
+      parasiteFieldsSchema.parse({
+        lifecycleType: "complete metamorphosis",
+      }).lifecycleType,
+    ).toBe("complete metamorphosis");
+    expect(
+      parasiteFieldsSchema.parse({
+        lifecycleType: "incomplete metamorphosis",
+      }).lifecycleType,
+    ).toBe("incomplete metamorphosis");
+    expect(
+      parasiteFieldsSchema.parse({ lifecycleType: "partial" }).lifecycleType,
+    ).toBe("partial");
+    expect(
+      parasiteFieldsSchema.parse({ lifecycleType: "direct" }).lifecycleType,
+    ).toBe("direct");
+    expect(
+      parasiteFieldsSchema.parse({ lifecycleType: "indirect" }).lifecycleType,
+    ).toBe("indirect");
+    expect(
+      parasiteFieldsSchema.parse({ lifecycleType: null }).lifecycleType,
+    ).toBeNull();
+  });
+
+  it("normalizes blank lifecycleType to null and caps length", () => {
+    expect(
+      parasiteFieldsSchema.parse({ lifecycleType: "" }).lifecycleType,
+    ).toBeNull();
+    expect(
+      parasiteFieldsSchema.parse({ lifecycleType: "   " }).lifecycleType,
+    ).toBeNull();
+    expect(() =>
+      parasiteFieldsSchema.parse({ lifecycleType: "x".repeat(81) }),
+    ).toThrow();
+  });
+
+  it("patch accepts free-text lifecycleType", () => {
+    expect(
+      parseFieldsPatch({ lifecycleType: "complete metamorphosis" }),
+    ).toEqual({ lifecycleType: "complete metamorphosis" });
+    expect(parseFieldsPatch({ lifecycleType: "partial" })).toEqual({
+      lifecycleType: "partial",
+    });
+    expect(parseFieldsPatch({ lifecycleType: null })).toEqual({
+      lifecycleType: null,
+    });
+    expect(parseFieldsPatch({ lifecycleType: "  " })).toEqual({
+      lifecycleType: null,
+    });
+  });
 });

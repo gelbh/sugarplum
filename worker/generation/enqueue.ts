@@ -33,6 +33,7 @@ function newId(): string {
 /**
  * Insert a queued generation_jobs row and send to GENERATE_QUEUE when bound.
  * Returns the new job id. Mode lives on D1 only (regen requeues without it).
+ * Atlas make-cards uses `createAtlasMakeCardsJob` instead.
  */
 export async function enqueueGeneration(
   env: Env,

@@ -59,6 +59,11 @@ export type RunGenerationPipelineInput = {
   /** Card fronts already in the deck, plus fronts produced earlier in this run. */
   avoidFronts?: string[];
   /**
+   * When true (job has atlas_provenance_json), claim→card prompts require the
+   * claim subject on the front. Paste/PDF non-atlas jobs leave this unset.
+   */
+  atlasSubjectAnchor?: boolean;
+  /**
    * Optional embedding for semantic claim merge (Workers AI). Fail-open inside
    * mergeClaimsForJob when null/errors.
    */
@@ -337,6 +342,7 @@ export async function runGenerationPipeline(
     topicHints,
     avoidPatterns,
     avoidFronts,
+    atlasSubjectAnchor,
     embedTexts,
     onProgress,
     onChunkDrafts,
@@ -471,6 +477,7 @@ export async function runGenerationPipeline(
         apiKey,
         provider,
         extraUserSuffix: writeExtra,
+        atlasSubjectAnchor,
       },
     );
 
