@@ -138,7 +138,6 @@ function appendStructuredLeftovers(
   }
 }
 
-/** Build paste-text generation source from a dataset/overlay entry view shape. */
 export function buildAtlasMakeCardsSource(
   args: MakeCardsSourceArgs,
 ): AtlasMakeCardsSource {
@@ -167,7 +166,6 @@ export function buildAtlasMakeCardsSource(
   };
 }
 
-/** Extras-only paste text: omit precraft-covered fields; empty when nothing left. */
 export function buildAtlasMakeCardsExtrasSource(
   args: MakeCardsSourceArgs & { coveredFieldKeys: readonly string[] },
 ): AtlasMakeCardsSource {

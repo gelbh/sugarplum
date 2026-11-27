@@ -122,7 +122,6 @@ export function prepareMakeCardsItems(
   return prepared;
 }
 
-/** Insert precraft claims + drafts for a make-cards job. */
 export async function seedMakeCardsPrecraft(
   db: D1Database,
   args: {

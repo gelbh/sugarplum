@@ -52,7 +52,6 @@ function emitQa(args: {
   };
 }
 
-/** Build species-anchored QA drafts + matching claims from typed atlas fields. */
 export function buildAtlasPrecraftDrafts(
   args: PrecraftArgs,
 ): AtlasPrecraftResult {

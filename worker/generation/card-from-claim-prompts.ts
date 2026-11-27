@@ -52,14 +52,12 @@ function withAtlasSubjectAnchor(
   return `${base}\n${CARD_FROM_CLAIM_ATLAS_SUBJECT_ANCHOR_SUFFIX}`;
 }
 
-/** Default or atlas-gated claim→card system prompt. */
 export function cardFromClaimSystemPrompt(
   opts?: CardFromClaimPromptOpts,
 ): string {
   return withAtlasSubjectAnchor(CARD_FROM_CLAIM_SYSTEM_PROMPT, opts);
 }
 
-/** Compact default or atlas-gated claim→card system prompt. */
 export function cardFromClaimCompactSystemPrompt(
   opts?: CardFromClaimPromptOpts,
 ): string {

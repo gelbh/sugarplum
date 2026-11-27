@@ -24,7 +24,6 @@ export class AtlasPrecraftReseedError extends Error {
   }
 }
 
-/** Locked stub material when make-cards has no extras. */
 export function atlasLockedStubMaterial(canonicalName: string): string {
   return `Parasite: ${canonicalName}\n`;
 }
@@ -72,7 +71,6 @@ function avoidPatternStem(pattern: string): string {
     .toLowerCase();
 }
 
-/** True when a precraft front matches a regen avoid-pattern stem. */
 export function precraftFrontMatchesAvoid(
   front: string,
   avoidPatterns: readonly string[],
@@ -116,7 +114,6 @@ function filterPrecraftByAvoidPatterns(
   return { claims: nextClaims, drafts: nextDrafts };
 }
 
-/** Resolve merged entry for reseed: scoped atlas overlay, else bundled dataset. */
 export async function resolveMergedAtlasEntryForReseed(
   db: D1Database,
   args: { deckId: string; atlasEntryId: string; atlasId?: string | null },
@@ -171,7 +168,6 @@ export async function resolveMergedAtlasEntryForReseed(
   return null;
 }
 
-/** Shared precraft write: UUID claims → attach → insertDraftCards. */
 export async function insertPrecraftDrafts(
   db: D1Database,
   args: {

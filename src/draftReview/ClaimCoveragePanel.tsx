@@ -25,7 +25,6 @@ type Props = {
   generatingClaimId?: string | null;
   fillAllBusy?: boolean;
   generateDisabled?: boolean;
-  /** Start collapsed so the resting review surface can fit. */
   defaultCollapsed?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
 };
