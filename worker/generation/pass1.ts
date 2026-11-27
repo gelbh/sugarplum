@@ -60,6 +60,7 @@ import {
 import { buildCoverageLedger } from "./coverage";
 import { consumeFreeGenSlot } from "./quota";
 import { parseAtlasJobProvenance } from "../atlas/makeCardsSource";
+import { reseedAtlasAfterWipe } from "../atlas/reseedPrecraft";
 import {
   attachClaimIdsToDrafts,
   insertDraftCards,
@@ -605,6 +606,25 @@ export async function runPass1Phase(
     const atlasProvenance = parseAtlasJobProvenance(
       progressRow?.atlas_provenance_json,
     );
+    if (reclaimed && atlasProvenance) {
+      let materialText: string | null = null;
+      if (material.kind === "paste" && material.r2_key) {
+        const obj = await env.MATERIALS.get(material.r2_key);
+        materialText = obj ? await obj.text() : null;
+      }
+      const decision = await reseedAtlasAfterWipe(env, {
+        jobId,
+        deckId,
+        atlasProvenance,
+        materialText,
+        atlasProvenanceJson: progressRow?.atlas_provenance_json,
+        progressJson: progressRow?.progress_json,
+      });
+      if (decision === "stub_only") {
+        await softCompleteGenerationJob(env, jobId, null);
+        return "done";
+      }
+    }
     const prior = await loadMaterialWindowResume(db, materialId, jobId);
     const deckFronts = await loadDeckFronts(db, deckId);
     let windowResume: WindowResume | null = null;
