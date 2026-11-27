@@ -95,6 +95,85 @@ describe("prepareMakeCardsItems", () => {
     expect(prepared[0]?.citations).toEqual(["ref-a"]);
   });
 
+  it("returns precraft drafts/claims and extras-only text when leftovers remain", () => {
+    const entries = [
+      entry({
+        id: "ascaris-suum",
+        originKey: "ascaris-suum",
+        canonicalName: "Ascaris suum",
+        commonName: "Pig ascarid",
+        fields: {
+          ...emptyParasiteFields(),
+          group: "nematode",
+          family: "Ascarididae",
+          majorOrgan: "small intestine",
+          definitiveHosts: ["pig"],
+          significance: "Larval migration scars the liver",
+          lifecycleStages: [
+            {
+              name: "egg",
+              location: null,
+              hostRole: null,
+              host: null,
+              durationDays: null,
+              infective: false,
+              diagnostic: true,
+              transmission: null,
+              note: null,
+              imageId: null,
+            },
+          ],
+        },
+        refs: [{ field: null, citation: "WCVM", url: null, note: null }],
+      }),
+    ];
+    const prepared = prepareMakeCardsItems(entries, ["ascaris-suum"]);
+    expect(prepared).toHaveLength(1);
+    const item = prepared[0]!;
+    expect(item.hasExtras).toBe(true);
+    expect(item.drafts.length).toBeGreaterThan(0);
+    expect(item.claims.length).toBe(item.drafts.length);
+    const organ = item.drafts.find(
+      (d) =>
+        typeof d.front === "string" &&
+        d.front.includes("Ascaris suum") &&
+        /major organ/i.test(d.front),
+    );
+    expect(organ?.back).toBe("small intestine");
+    expect(item.text).not.toContain("Major organ:");
+    expect(item.text).toContain("Lifecycle order:");
+    expect(item.text).toContain("Significance:");
+    expect(item.text).not.toMatch(/^Parasite: Ascaris suum\n$/);
+  });
+
+  it("uses locked Parasite stub and hasExtras false when extras are empty", () => {
+    const entries = [
+      entry({
+        id: "thin-1",
+        originKey: "thin-1",
+        canonicalName: "Thinus onlyus",
+        commonName: "Thin worm",
+        fields: {
+          ...emptyParasiteFields(),
+          group: "nematode",
+          majorOrgan: "ileum",
+        },
+      }),
+    ];
+    const prepared = prepareMakeCardsItems(entries, ["thin-1"]);
+    expect(prepared).toHaveLength(1);
+    expect(prepared[0]?.hasExtras).toBe(false);
+    expect(prepared[0]?.text).toBe("Parasite: Thinus onlyus\n");
+    expect(
+      prepared[0]?.drafts.some(
+        (d) =>
+          typeof d.front === "string" &&
+          d.front.includes("Thinus onlyus") &&
+          /major organ/i.test(d.front),
+      ),
+    ).toBe(true);
+  });
+
   it("404s unknown keys", () => {
     try {
       prepareMakeCardsItems([entry({ id: "a" })], ["missing"]);

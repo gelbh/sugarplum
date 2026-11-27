@@ -44,6 +44,15 @@ export async function enqueueGeneration(
     /** Atlas Make cards: entry key + citations for draft provenance. */
     atlasEntryId?: string | null;
     atlasCitations?: string[] | null;
+    /** Persist on atlas_provenance_json when atlasEntryId is set. */
+    hasExtras?: boolean;
+    /**
+     * When false, insert the job row only. Caller seeds then requeues or
+     * marks needs_review. Default true.
+     */
+    sendToQueue?: boolean;
+    status?: string;
+    finishedAt?: string | null;
   },
 ): Promise<string> {
   const jobId = newId();
@@ -61,8 +70,14 @@ export async function enqueueGeneration(
           citations: (args.atlasCitations ?? []).filter(
             (c) => typeof c === "string" && c.trim().length > 0,
           ),
+          ...(typeof args.hasExtras === "boolean"
+            ? { hasExtras: args.hasExtras }
+            : {}),
         })
       : null;
+  const status = args.status ?? "queued";
+  const finishedAt =
+    args.finishedAt !== undefined ? args.finishedAt : null;
   const db = getDb(env);
 
   await db
@@ -72,23 +87,25 @@ export async function enqueueGeneration(
     .bind(
       jobId,
       args.materialId,
-      "queued",
+      status,
       null,
       null,
       createdAt,
-      null,
+      finishedAt,
       figureExtractMode,
       topicHintsJson,
       atlasProvenanceJson,
     )
     .run();
 
-  await requeueGeneration(env, {
-    jobId,
-    materialId: args.materialId,
-    deckId: args.deckId,
-    autoFollowup: true,
-  });
+  if (args.sendToQueue !== false) {
+    await requeueGeneration(env, {
+      jobId,
+      materialId: args.materialId,
+      deckId: args.deckId,
+      autoFollowup: true,
+    });
+  }
 
   return jobId;
 }
