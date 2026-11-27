@@ -15,7 +15,10 @@ import {
   type LlmAdapter,
 } from "./llm";
 import { buildExtraUserSuffix } from "./feedback-hints";
-import { emptyDraftError } from "./empty-draft-error";
+import {
+  EMPTY_DRAFTS_FOR_LEARNING_OBJECTIVES,
+  emptyDraftError,
+} from "./empty-draft-error";
 import {
   critiqueDraftsAgainstSource,
   MAX_PIPELINE_CHUNKS,
@@ -60,6 +63,7 @@ import {
 import { buildCoverageLedger } from "./coverage";
 import { consumeFreeGenSlot } from "./quota";
 import { parseAtlasJobProvenance } from "../atlas/makeCardsSource";
+import { ensureAtlasPrecraftAfterWipe } from "../atlas/reseedPrecraft";
 import {
   attachClaimIdsToDrafts,
   insertDraftCards,
@@ -333,6 +337,33 @@ export async function markJobFailed(
   }
 }
 
+const EMPTY_NOVEL_DRAFT_ERRORS = new Set([
+  "No flashcard drafts could be produced from this material.",
+  EMPTY_DRAFTS_FOR_LEARNING_OBJECTIVES,
+  "New cards repeated cards already in this deck.",
+]);
+
+/** Atlas empty-novel-drafts with precraft present → needs_review; other errors fail. */
+export async function markJobFailedOrAtlasSoftComplete(
+  env: Env,
+  jobId: string,
+  error: string,
+  atlasJob: boolean,
+): Promise<void> {
+  if (atlasJob && EMPTY_NOVEL_DRAFT_ERRORS.has(error)) {
+    const db = getDb(env);
+    const countRow = await db
+      .prepare("SELECT COUNT(*) AS n FROM cards WHERE job_id = ?")
+      .bind(jobId)
+      .first<{ n: number }>();
+    if (countRow && countRow.n > 0) {
+      await softCompleteGenerationJob(env, jobId, null);
+      return;
+    }
+  }
+  await markJobFailed(env, jobId, error);
+}
+
 async function extractMaterialText(
   env: Env,
   material: MaterialRow,
@@ -372,6 +403,10 @@ export async function runTextDraftPipeline(args: {
   avoidPatterns?: string[];
   /** Fronts already in the deck. Later chunks also see this run's new fronts. */
   avoidFronts?: string[];
+  /**
+   * Atlas job provenance: extras claim→card must put claim subject on the front.
+   */
+  atlasSubjectAnchor?: boolean;
   /** Emit rules stage before LLM when using TEXT_LLM_STAGES catalog. */
   emitRulesStage?: boolean;
   /** Token totals when this pass must not emit a stage. */
@@ -448,6 +483,7 @@ export async function runTextDraftPipeline(args: {
       topicHints: args.topicHints,
       avoidPatterns: args.avoidPatterns,
       avoidFronts: args.avoidFronts,
+      atlasSubjectAnchor: args.atlasSubjectAnchor,
       // Semantic stage uses Workers AI Neurons; skip on BYO to avoid quota burn.
       embedTexts:
         provider === "workers-ai"
@@ -605,6 +641,19 @@ export async function runPass1Phase(
     const atlasProvenance = parseAtlasJobProvenance(
       progressRow?.atlas_provenance_json,
     );
+    if (reclaimed && atlasProvenance) {
+      const decision = await ensureAtlasPrecraftAfterWipe(env, {
+        jobId,
+        deckId,
+        atlasProvenanceJson: progressRow?.atlas_provenance_json,
+        materialKind: material.kind,
+        materialR2Key: material.r2_key,
+      });
+      if (decision === "stub_only") {
+        await softCompleteGenerationJob(env, jobId, null);
+        return "done";
+      }
+    }
     const prior = await loadMaterialWindowResume(db, materialId, jobId);
     const deckFronts = await loadDeckFronts(db, deckId);
     let windowResume: WindowResume | null = null;
@@ -792,6 +841,7 @@ export async function runPass1Phase(
           topicHints,
           avoidPatterns,
           avoidFronts: deckFronts,
+          atlasSubjectAnchor: Boolean(atlasProvenance),
           emitRulesStage: true,
         });
         textDrafts = textResult.drafts;
@@ -923,6 +973,7 @@ export async function runPass1Phase(
         topicHints,
         avoidPatterns,
         avoidFronts: deckFronts,
+        atlasSubjectAnchor: Boolean(atlasProvenance),
         emitRulesStage: true,
       });
       drafts = textResult.drafts;
@@ -976,11 +1027,23 @@ export async function runPass1Phase(
     }
     return "done";
   } catch (err) {
-    // Leave last progress_json; only mark status failed.
+    // Leave last progress_json; atlas with precraft → needs_review, else failed.
     const messageText =
       err instanceof Error ? err.message : "Generation failed";
     console.error("generation job failed", jobId, err);
-    await markJobFailed(env, jobId, messageText);
+    const provenanceRow = await db
+      .prepare("SELECT atlas_provenance_json FROM generation_jobs WHERE id = ?")
+      .bind(jobId)
+      .first<{ atlas_provenance_json: string | null }>();
+    const atlasJob = Boolean(
+      parseAtlasJobProvenance(provenanceRow?.atlas_provenance_json),
+    );
+    await markJobFailedOrAtlasSoftComplete(
+      env,
+      jobId,
+      messageText,
+      atlasJob,
+    );
     return "done";
   }
 }

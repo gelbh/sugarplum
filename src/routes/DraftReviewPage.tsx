@@ -31,6 +31,7 @@ import {
   CreateFlowNoticeFade,
   NoticeUndoButton,
 } from "../library/CreateFlowNotice";
+import { TOP_BAR_HEIGHT } from "../app/shell/chromeTokens";
 import StageBreadcrumbs, { type StageCrumb } from "../shared/ui/StageBreadcrumbs";
 import { type EmptyJobDraftCtas } from "../journey/emptyJobDraftCtas";
 import JobProgressPanel from "../progress/JobProgressPanel";
@@ -378,7 +379,6 @@ export default function DraftReviewPage() {
     typeof error === "string" &&
     (error.includes("not found in storage") ||
       error.startsWith("R2 object missing:"));
-
   const stageShellSx = {
     flex: 1,
     height: "100%",
@@ -405,7 +405,7 @@ export default function DraftReviewPage() {
     return (
       <Box className="sp-stage" sx={stageShellSx}>
         <Container
-          maxWidth="sm"
+          maxWidth="lg"
           sx={{ ...pageSx, justifyContent: "center", overflow: "auto" }}
         >
           {jobId && !jobProgress.error ? (
@@ -420,7 +420,50 @@ export default function DraftReviewPage() {
 
   return (
     <Box className="sp-stage" sx={stageShellSx}>
-      <Container maxWidth="sm" sx={pageSx}>
+      <Container
+        maxWidth={fillCard ? false : "lg"}
+        sx={{
+          ...pageSx,
+          ...(fillCard ? { px: { xs: 2, md: 3 } } : {}),
+        }}
+      >
+        <Box
+          sx={{
+            position: "fixed",
+            top: `calc(${TOP_BAR_HEIGHT}px + env(safe-area-inset-top, 0px) + 10px)`,
+            left: 0,
+            right: 0,
+            zIndex: (theme) => theme.zIndex.snackbar,
+            display: "flex",
+            justifyContent: "center",
+            px: 1.5,
+            pointerEvents: "none",
+            "& > *": {
+              pointerEvents: "auto",
+              width: "100%",
+              maxWidth: "min(440px, calc(100% - 24px))",
+            },
+          }}
+        >
+          <CreateFlowNoticeFade
+            open={notice != null}
+            tone={notice?.tone ?? "info"}
+            stage
+            onClose={() => setNotice(null)}
+            action={
+              notice?.undoCardId ? (
+                <NoticeUndoButton
+                  disabled={undoBusy || busy}
+                  onClick={() => {
+                    void onUndoDecision();
+                  }}
+                />
+              ) : undefined
+            }
+          >
+            {notice?.message ?? ""}
+          </CreateFlowNoticeFade>
+        </Box>
         <Stack
           ref={scrollLeafRef}
           spacing={0}
@@ -432,46 +475,52 @@ export default function DraftReviewPage() {
           }}
         >
           <Stack
-            spacing={1}
+            spacing={fillCard ? 1.25 : 1}
             sx={{
               width: "100%",
-              flexShrink: 0,
-              // Centers short phone layouts; overflowing expand collapses margins and scrolls from top.
-              my: fillCard ? 0 : "auto",
+              ...(fillCard
+                ? {
+                    flex: 1,
+                    minHeight: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                  }
+                : { flexShrink: 0, my: "auto" }),
             }}
           >
-          <Stack spacing={0.75} sx={{ flexShrink: 0 }}>
+          <Stack
+            spacing={fillCard ? 0.35 : 0.75}
+            sx={{ flexShrink: 0 }}
+          >
             {fillCard ? <StageBreadcrumbs crumbs={crumbs} /> : null}
-            <Box>
+            <Typography
+              variant={fillCard ? "h5" : "h4"}
+              component="h1"
+              sx={{
+                m: 0,
+                fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
+                fontWeight: 400,
+                letterSpacing: "0.02em",
+                lineHeight: 1.15,
+                color: "var(--sp-ivory)",
+              }}
+            >
+              Draft review
+            </Typography>
+            {!fillCard ? (
               <Typography
-                variant="h4"
-                component="h1"
+                variant="body2"
                 sx={{
-                  m: 0,
-                  fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
-                  fontWeight: 400,
-                  letterSpacing: "0.02em",
-                  lineHeight: 1.15,
-                  color: "var(--sp-ivory)",
+                  mt: 0.5,
+                  maxWidth: "52ch",
+                  lineHeight: 1.4,
+                  color: "rgba(232, 216, 199, 0.62)",
                 }}
               >
-                Draft review
+                Edit before cards enter study. Drafts never appear in due until
+                accepted.
               </Typography>
-              {fillCard ? (
-                <Typography
-                  variant="body2"
-                  sx={{
-                    mt: 0.75,
-                    maxWidth: "42ch",
-                    lineHeight: 1.45,
-                    color: "rgba(232, 216, 199, 0.72)",
-                  }}
-                >
-                  Edit before cards enter study. Drafts never appear in due until
-                  accepted.
-                </Typography>
-              ) : null}
-            </Box>
+            ) : null}
           </Stack>
 
           {error && !failedEmpty ? (
@@ -486,37 +535,24 @@ export default function DraftReviewPage() {
           {showEnrichmentBanner ? (
             <EnrichmentBanner percent={enrichProgress.percent} />
           ) : null}
-          <Box sx={{ flexShrink: 0 }}>
-            <CreateFlowNoticeFade
-              open={notice != null}
-              tone={notice?.tone ?? "info"}
-              stage
-              onClose={() => setNotice(null)}
-              action={
-                notice?.undoCardId ? (
-                  <NoticeUndoButton
-                    disabled={undoBusy || busy}
-                    onClick={() => {
-                      void onUndoDecision();
-                    }}
-                  />
-                ) : undefined
-              }
-            >
-              {notice?.message ?? ""}
-            </CreateFlowNoticeFade>
-          </Box>
 
           {!current &&
           jobStatus === "needs_review" &&
           claimCoverage &&
           (claimCoverage.summary.total > 0 || claimSpanGaps.length > 0) ? (
-            <Box sx={{ width: "100%", mb: 2 }}>
+            <Box
+              sx={{
+                width: "100%",
+                maxWidth: 400,
+                alignSelf: "center",
+                mb: 2,
+              }}
+            >
               <ClaimCoveragePanel
                 coverage={claimCoverage}
                 drafts={drafts}
                 claimSpanGaps={claimSpanGaps}
-                defaultCollapsed={!fillCard}
+                defaultCollapsed
                 onExpandedChange={onClaimCoverageExpanded}
                 onJumpToDraft={jumpToDraft}
                 onGenerateOrphan={(claimId) => {
@@ -722,42 +758,52 @@ export default function DraftReviewPage() {
                 sx={{
                   flex: fillCard ? 1 : "none",
                   minHeight: fillCard ? 0 : undefined,
+                  width: "100%",
                   display: "flex",
                   flexDirection: "column",
+                  alignItems: "center",
                   overflow: fillCard ? "hidden" : "visible",
-                  gap: 1,
+                  gap: 1.25,
                 }}
               >
                 {jobStatus === "needs_review" &&
                 claimCoverage &&
                 (claimCoverage.summary.total > 0 ||
                   claimSpanGaps.length > 0) ? (
-                  <ClaimCoveragePanel
-                    coverage={claimCoverage}
-                    drafts={drafts}
-                    claimSpanGaps={claimSpanGaps}
-                    defaultCollapsed={!fillCard}
-                    onExpandedChange={onClaimCoverageExpanded}
-                    onJumpToDraft={jumpToDraft}
-                    onGenerateOrphan={(claimId) => {
-                      void onGenerateOrphan(claimId);
+                  <Box
+                    sx={{
+                      width: "100%",
+                      maxWidth: 400,
+                      flexShrink: 0,
                     }}
-                    onFillAllOrphans={() => {
-                      void onFillAllOrphans();
-                    }}
-                    onCancelFillAll={() => {
-                      void onCancelFillAll();
-                    }}
-                    generatingClaimId={generatingClaimId}
-                    fillAllBusy={fillAllBusy}
-                    generateDisabled={
-                      busy ||
-                      cardRegenBusy ||
-                      dirty ||
-                      generatingClaimId != null ||
-                      fillAllBusy
-                    }
-                  />
+                  >
+                    <ClaimCoveragePanel
+                      coverage={claimCoverage}
+                      drafts={drafts}
+                      claimSpanGaps={claimSpanGaps}
+                      defaultCollapsed
+                      onExpandedChange={onClaimCoverageExpanded}
+                      onJumpToDraft={jumpToDraft}
+                      onGenerateOrphan={(claimId) => {
+                        void onGenerateOrphan(claimId);
+                      }}
+                      onFillAllOrphans={() => {
+                        void onFillAllOrphans();
+                      }}
+                      onCancelFillAll={() => {
+                        void onCancelFillAll();
+                      }}
+                      generatingClaimId={generatingClaimId}
+                      fillAllBusy={fillAllBusy}
+                      generateDisabled={
+                        busy ||
+                        cardRegenBusy ||
+                        dirty ||
+                        generatingClaimId != null ||
+                        fillAllBusy
+                      }
+                    />
+                  </Box>
                 ) : null}
                 <Box
                   data-card-id={current.id}
@@ -766,8 +812,10 @@ export default function DraftReviewPage() {
                     flexShrink: fillCard ? 1 : 0,
                     minHeight: fillCard ? 0 : undefined,
                     width: "100%",
+                    maxWidth: 400,
                     display: "flex",
                     flexDirection: "column",
+                    alignItems: "center",
                   }}
                 >
                   <ReviewCard
@@ -780,7 +828,10 @@ export default function DraftReviewPage() {
                     onChange={onEditorChange}
                     onDecide={onDecideAndReveal}
                     renderOcclusionRegionEditor={({ front, onChange }) => (
-                      <OcclusionRegionEditor front={front} onChange={onChange} />
+                      <OcclusionRegionEditor
+                        front={front}
+                        onChange={onChange}
+                      />
                     )}
                     regen={{
                       busy: cardRegenBusy,

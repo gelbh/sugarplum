@@ -18,6 +18,13 @@ const text = z.string().trim().min(1);
 /** Nullable text without a default (shared by full + patch schemas). */
 const nullableText = text.nullable();
 const optionalText = nullableText.default(null);
+/** Free-text lifecycle label: trim, empty → null, max 80 (distribution-style). */
+const lifecycleTypeCore = z
+  .string()
+  .trim()
+  .max(80)
+  .nullable()
+  .transform((v) => (v ? v : null));
 const textListCore = z.array(text);
 const textList = textListCore.default([]);
 const weekCore = z.number().min(0).nullable();
@@ -86,7 +93,7 @@ export const parasiteFieldsSchema = z.object({
   climateBands: climateList,
   zoonotic: z.enum(ZOONOTIC_VALUES).nullable().default(null),
   significance: optionalText,
-  lifecycleType: z.enum(["direct", "indirect"]).nullable().default(null),
+  lifecycleType: lifecycleTypeCore.default(null),
   pppDays: pppDaysSchema.nullable().default(null),
   lifecycleStages: z.array(lifecycleStageSchema).default([]),
   diagnosticStage: optionalText,
@@ -115,7 +122,7 @@ export const parasiteFieldsPatchSchema = z
     climateBands: climateListCore.optional(),
     zoonotic: z.enum(ZOONOTIC_VALUES).nullable().optional(),
     significance: nullableText.optional(),
-    lifecycleType: z.enum(["direct", "indirect"]).nullable().optional(),
+    lifecycleType: lifecycleTypeCore.optional(),
     pppDays: pppDaysSchema.nullable().optional(),
     lifecycleStages: z.array(lifecycleStageSchema).optional(),
     diagnosticStage: nullableText.optional(),

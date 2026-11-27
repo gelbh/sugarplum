@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import Alert from "@mui/material/Alert";
+import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
@@ -72,7 +73,9 @@ const LIFECYCLE_TYPE_OPTIONS = [
   { value: "", label: "Not set" },
   { value: "direct", label: "Direct" },
   { value: "indirect", label: "Indirect" },
-];
+  { value: "complete metamorphosis", label: "Complete metamorphosis" },
+  { value: "incomplete metamorphosis", label: "Incomplete metamorphosis" },
+] as const;
 const GROUP_OPTIONS = PARASITE_GROUPS.map((g) => ({
   value: g,
   label: GROUP_LABELS[g].plural,
@@ -82,7 +85,18 @@ const ZOONOTIC_OPTIONS = [
   ...ZOONOTIC_VALUES.map((z) => ({ value: z, label: ZOONOTIC_LABELS[z] })),
 ];
 
-type SelectDraftKey = "group" | "lifecycleType" | "zoonotic";
+type SelectDraftKey = "group" | "zoonotic";
+type LifecycleTypeOption = (typeof LIFECYCLE_TYPE_OPTIONS)[number];
+
+function lifecycleTypeFromInput(input: string): string {
+  const trimmed = input.trim();
+  const byValue = LIFECYCLE_TYPE_OPTIONS.find((o) => o.value === trimmed);
+  if (byValue) return byValue.value;
+  const byLabel = LIFECYCLE_TYPE_OPTIONS.find(
+    (o) => o.label.toLowerCase() === trimmed.toLowerCase(),
+  );
+  return byLabel ? byLabel.value : input;
+}
 
 function Section({ id, children }: { id: EditSectionId; children: ReactNode }) {
   const title = EDIT_SECTION_TITLES[id];
@@ -377,6 +391,60 @@ export function EditEntryDialog({
     </>
   );
 
+  const lifecycleTypeField = () => {
+    const raw = draft?.lifecycleType ?? "";
+    const preset = LIFECYCLE_TYPE_OPTIONS.find((o) => o.value === raw);
+    const value: LifecycleTypeOption | string | null =
+      raw === "" ? null : (preset ?? raw);
+    return (
+      <>
+        <Autocomplete
+          freeSolo
+          options={[...LIFECYCLE_TYPE_OPTIONS]}
+          getOptionLabel={(opt) =>
+            typeof opt === "string"
+              ? (LIFECYCLE_TYPE_OPTIONS.find((o) => o.value === opt)?.label ??
+                opt)
+              : opt.label
+          }
+          isOptionEqualToValue={(a, b) => {
+            const av = typeof a === "string" ? a : a.value;
+            const bv = typeof b === "string" ? b : b.value;
+            return av === bv;
+          }}
+          value={value}
+          onChange={(_, next) => {
+            if (next === null) {
+              update("lifecycleType", "");
+              return;
+            }
+            update(
+              "lifecycleType",
+              typeof next === "string"
+                ? lifecycleTypeFromInput(next)
+                : next.value,
+            );
+          }}
+          onInputChange={(_, input, reason) => {
+            if (reason === "input") {
+              update("lifecycleType", lifecycleTypeFromInput(input));
+            }
+          }}
+          disabled={busy}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label={FIELD_LABELS.lifecycleType}
+              error={Boolean(fieldErrors.lifecycleType)}
+              helperText={fieldErrors.lifecycleType}
+            />
+          )}
+        />
+        {edited("lifecycleType")}
+      </>
+    );
+  };
+
   return (
     <Dialog
       open={open}
@@ -457,11 +525,7 @@ export function EditEntryDialog({
                 {text("onHostStages", FIELD_LABELS.onHostStages, {
                   helper: LIST_HELP,
                 })}
-                {select(
-                  "lifecycleType",
-                  FIELD_LABELS.lifecycleType,
-                  LIFECYCLE_TYPE_OPTIONS,
-                )}
+                {lifecycleTypeField()}
                 <PppRangeField
                   min={draft.pppMin}
                   max={draft.pppMax}
